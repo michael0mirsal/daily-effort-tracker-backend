@@ -8,18 +8,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const PORT = process.env.PORT || 4000;
+// ✅ Serve welcome page when visiting root URL
+
 
 // ===== Middleware =====
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-
+app.get("/", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
+});
 // ===== File paths =====
 const EFFORT_FILE = path.join(__dirname, "efforts.json");
 const ROUTINE_FILE = path.join(__dirname, "routines.json");
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running → http://localhost:${PORT}`);
-});
+
 
 // ===== Ensure data files exist =====
 function ensureFile(file) {
@@ -176,11 +179,7 @@ app.get("/api/kidsStars/week", (req, res) => {
 // ======================================================
 // ✅ Start server (only once, at the end)
 // ======================================================
-const PORT = process.env.PORT || 4000;
-// ✅ Serve welcome page when visiting root URL
-app.get("/", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
-});
+
 
 
 app.listen(PORT, '0.0.0.0', () => {
