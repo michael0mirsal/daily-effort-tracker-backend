@@ -272,13 +272,7 @@ function attachCheckboxListeners() {
 // ✅ Save routine
 document.getElementById("saveBtn").onclick = async () => {
   const items = getAllTasks();
-  const date= new Date();
-const localDate = date.getFullYear() + '-' +
-                  String(date.getMonth() + 1).padStart(2, '0') + '-' +
-                  String(date.getDate()).padStart(2, '0');
-
-document.getElementById("loadDate").value = localDate;
-await loadRoutineByDate(localDate, true);
+  const date = new Date().toISOString().split("T")[0];
   const checkedData = items.filter(i => i.done).length;
 
   try {
@@ -390,14 +384,7 @@ document.getElementById("loadByDateBtn").onclick = async () => {
 
 // ✅ Auto-load today's routine on page open
 window.addEventListener("DOMContentLoaded", async () => {
-  const today = new Date();
-const localDate = today.getFullYear() + '-' +
-                  String(today.getMonth() + 1).padStart(2, '0') + '-' +
-                  String(today.getDate()).padStart(2, '0');
-
-document.getElementById("loadDate").value = localDate;
-await loadRoutineByDate(localDate, true);
-
+  const today = new Date().toISOString().split("T")[0];
   document.getElementById("loadDate").value = today;
   await loadRoutineByDate(today, true);
 });
