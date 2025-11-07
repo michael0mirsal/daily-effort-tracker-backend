@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>📋 View My Routine</title>
+<style>
+  body { font-family: "Comic Sans MS"; background: #f0f9ff; text-align: center; padding: 20px; }
+  .routine-box { background: white; margin: 15px auto; padding: 15px; border-radius: 15px; width: 80%; max-width: 700px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  h2 { background: linear-gradient(90deg, #a1c4fd, #c2e9fb); padding: 8px; border-radius: 10px; color: #333; }
+  ul { list-style-type: none; padding: 0; }
+  li { font-size: 1.1rem; margin: 6px 0; }
+  button { margin-top: 20px; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; background: #66a6ff; color: white; font-size: 1rem; }
+  button:hover { background: #4f83ff; }
+</style>
+</head>
+<body>
+<h1>📋 My Saved Routine</h1>
+<div id="output">Loading...</div>
+<button onclick="window.location.href='choose.html'">⬅️ Back</button>
+
+<script>
+  const user = localStorage.getItem("currentUser");
+  if (!user) {
+    window.location.href = "login.html";
+  }
+
+  async function loadRoutine() {
+    const res = await fetch(`/api/routines/${user}`);
+    const data = await res.json();
+    const out = document.getElementById("output");
+
+    if (data.error) {
+      out.innerHTML = `<p>${data.error}</p>`;
+      return;
+    }
+
+    out.innerHTML = "";
+    for (let section in data) {
+      const tasks = data[section]
+        .map(t => `<li>${t.checked ? "✅" : "⬜"} ${t.task}</li>`)
+        .join("");
+      out.innerHTML += `
+        <div class="routine-box">
+          <h2>${section.replace("Table","").toUpperCase()}</h2>
+          <ul>${tasks}</ul>
+        </div>`;
+    }
+  }
+
+  loadRoutine();
+</script>
+</body>
+</html>

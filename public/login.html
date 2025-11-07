@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🔐 Login</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff, #cbebff);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    input, select {
+      padding: 10px;
+      margin: 8px;
+      border: 2px solid #4f9ef7;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #4f9ef7;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #357acb;
+    }
+  </style>
+</head>
+<body>
+  <h1>👋 Welcome Back!</h1>
+  <h2>Please log in</h2>
+
+  <input type="text" id="username" placeholder="Enter your name" />
+  <select id="role">
+    <option value="kid">Kid 👧</option>
+    <option value="parent">Parent 👩‍👧</option>
+  </select>
+  <br>
+  <button onclick="login()">🚀 Login</button>
+
+  <script>
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const role = document.getElementById("role").value;
+
+      if (!username) {
+        alert("Please enter your name");
+        return;
+      }
+
+      // ✅ Save with a consistent key
+      const userData = { name: username, role };
+      localStorage.setItem("currentUser", JSON.stringify(userData));
+
+      // ✅ Redirect
+      window.location.href = "choose.html";
+    }
+  </script>
+
+</body>
+</html>

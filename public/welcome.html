@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🌞 Welcome to My Daily Effort Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      text-align: center;
+      font-family: "Comic Sans MS", Arial, sans-serif;
+      padding-top: 80px;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #333;
+    }
+    button {
+      margin-top: 30px;
+      padding: 15px 35px;
+      font-size: 1.2em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌈 Welcome to My Daily Effort Tracker</h1>
+  <p>Track your daily activities and routines easily 🎯</p>
+
+  <button id="startBtn">🚀 Start / Login</button>
+
+  <script>
+    // ✅ Step 1: Check if already logged in
+    const user = localStorage.getItem("currentUser");
+    if (user) {
+      // Go directly to choose.html if logged in
+      window.location.href = "choose.html";
+    }
+
+    // ✅ Step 2: Only handle button click if not logged in
+    document.getElementById("startBtn").addEventListener("click", () => {
+      window.location.href = "login.html";
+    });
+  </script>
+
+</body>
+</html>

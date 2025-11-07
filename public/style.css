@@ -1,0 +1,248 @@
+body {
+  font-family: "Comic Sans MS", cursive;
+  background: linear-gradient(120deg, #a8edea, #fed6e3);
+  text-align: center;
+  padding: 30px;
+  color: #444;
+}
+
+h1 {
+  font-size: 2.5em;
+  color: #6b4eff;
+  text-shadow: 2px 2px #fff;
+ 
+}
+
+.tracker-card {
+  background: white;
+  border-radius: 25px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  margin: 20px auto;
+  padding: 25px;
+  max-width: 750px;
+  transition: 0.3s;
+}
+
+.tracker-card:hover {
+  transform: scale(1.02);
+}
+
+.name-select {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #4a148c;
+}
+
+input, select, button {
+  margin: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #ddd;
+  font-size: 1em;
+}
+.header {
+  position: relative;
+  text-align: center;
+}
+
+#log {
+  position: fixed;
+  top: 14px;
+  right: 20px;
+  background: #6b4eff;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  z-index: 10050; /* above other fixed elements */
+}
+
+#log:hover { background: #5540ff; transform: translateY(-1px); }
+
+button {
+  background: #6b4eff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+   text-align: right;
+}
+
+button:hover {
+  background: #ff6b81;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 0.95em;
+}
+
+th, td {
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+th {
+  background: #ffe4f2;
+  color: #333;
+  border: 2px solid #fff;
+}
+
+td {
+  background: #f8f8ff;
+  border: 2px solid #fff;
+}
+
+tr:nth-child(even) td {
+  background: #f0f9ff;
+}
+
+.form-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#showTable th {
+  background-color: #d3f8e2;
+}
+
+#showTable td {
+  background-color: #fdfdff;
+}
+.motivation-box {
+  text-align: center;
+  margin-top: 30px;
+  background-color: #fff3cd;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  animation: pop 1s ease;
+}
+.motivation-box img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+.motivation-box p {
+  font-size: 1.3rem;
+  color: #333;
+  font-family: "Comic Sans MS", cursive;
+  margin-top: 10px;
+}
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+#motivation {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+#motivation.show {
+  opacity: 1;
+}
+.motivation-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.motivation-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  background-color: #fff9d6;
+  border-radius: 10px;
+  padding: 4px 8px;
+  box-shadow: 0 0 6px rgba(255, 200, 50, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.motivation-box:hover {
+  transform: scale(1.05);
+}
+
+.motivation-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.motivation-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+}
+/* 🏦 Saving Box (Always visible) */
+/* 🏦 Saving Box (Always visible, single title) */
+#checkedStarsBox {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(145deg, #fff7c5, #ffec8a);
+  color: #333;
+  font-weight: bold;
+  padding: 10px 25px;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(255, 223, 0, 0.6);
+  border: 2px solid gold;
+  z-index: 9999;
+  text-align: center;
+  font-size: 18px;
+  transition: all 0.4s ease;
+  animation: glowPulse 2s infinite;
+}
+
+/* 🌟 Star Counter */
+#checkedStarsDisplay {
+  color: #ffcc00;
+  font-weight: bold;
+  font-size: 22px;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+  margin-left: 5px;
+}
+
+
+/* 🌟 Star Counter inside Box */
+#checkedStarsDisplay {
+  color: #ffcc00;
+  font-weight: bold;
+  font-size: 22px;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+  margin-left: 5px;
+}
+
+/* ✨ Pulse Animation */
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 15px rgba(255, 223, 0, 0.6); }
+  50% { box-shadow: 0 0 30px rgba(255, 215, 0, 1); transform: translateX(-50%) scale(1.05); }
+  100% { box-shadow: 0 0 15px rgba(255, 223, 0, 0.6); transform: translateX(-50%) scale(1); }
+}
+
+/* ✨ Floating stars animation effect */
+@keyframes floatStar {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-50px) scale(0.6); opacity: 0; }
+}
+body {
+  display: block;             /* allow normal document flow */
+  min-height: 100vh;         /* full-page minimum height */
+  padding: 30px;
+  text-align: center;
+  font-family: "Comic Sans MS", Arial, sans-serif;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  color: #333;
+  animation: fadeIn 1.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌞 Daily Routine</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff8dc;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { color: #ff9800; }
+
+    table {
+      width: 90%;
+      margin: 10px auto;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 5px #ccc;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th { background: #ffecb3; }
+
+    button {
+      margin: 8px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      background: #ffb74d;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background: #ffa726; }
+
+    input[type="text"], input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin: 5px;
+    }
+
+    .routine-section {
+      margin-top: 30px;
+      background: #fffbea;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .report-table {
+      margin-top: 30px;
+      border: 2px solid #ffb74d;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fffdf4;
+    }
+
+    .stars {
+      color: #ffcc00;
+      font-size: 1.2em;
+      white-space: nowrap;
+    }
+
+    .load-section {
+      margin-top: 15px;
+      background: #fff9e6;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .prayer {
+      background: #fff3cd;
+      border-left: 6px solid #ffb74d;
+      padding: 15px;
+      margin: 25px auto;
+      border-radius: 8px;
+      width: 85%;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="pageTitle">🌞 Daily Routine</h1>
+  <button id="logoutBtn">Logout</button>
+  <button id="saveBtn">💾 Save Routine</button>
+  <button id="loadBtn">📂 View All Reports</button>
+  <button id="backBtn">⬅️ Back</button>
+<!-- ⭐ Stars Box for routines -->
+<div id="routineStarsBox" style="
+  text-align:center;
+  margin: 15px auto;
+  font-size:1.3em;
+  font-weight:bold;
+  background:linear-gradient(135deg, #fff5a8, #ffd54f);
+  color:#8b5e00;
+  border:2px solid #f3c623;
+  border-radius:15px;
+  padding:10px 20px;
+  width:fit-content;
+  box-shadow:0 0 15px rgba(255,215,0,0.4);
+">
+  🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
+</div>
+
+  <div class="load-section">
+    <h3>📅 Load Routine by Date</h3>
+    <input type="date" id="loadDate" />
+    <button id="loadByDateBtn">🔍 Load Routine</button>
+  </div>
+
+  <!-- 🌅 Morning Prayer -->
+  <div class="prayer">
+    <h3>🌅 “Hello, Jesus!”</h3>
+    <p> it’s a brand new day, 🌞<br>
+    Thank You for helping me in every way.<br>
+    I’ll smile, be kind, and do my best,<br>
+    With You beside me, I feel so blessed! 🙏</p>
+  </div>
+
+  <!-- ☀️ Morning -->
+  <div class="routine-section">
+    <h2>☀️ Morning Routine</h2>
+    <table id="morningTable">
+      <thead><tr><th>Task</th><th>Status</th></tr></thead>
+      <tbody id="morningBody">
+        <tr><td>Wake up early ⏰</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Talk to Jesus </td><td><input type="checkbox" /></td></tr>
+        <tr><td>Brush teeth 🪥</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Eat breakfast 🥣 </td><td><input type="checkbox" /></td></tr>
+        <tr><td>Get dressed 👕</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Say goodbye and go to school 👋 </td><td><input type="checkbox" /></td></tr>
+        <tr><td>Make a to-do list </td><td><input type="checkbox" /></td></tr>
+      </tbody>
+    </table>
+    <input type="text" id="morningInput" placeholder="Add morning task" />
+    <button onclick="addTask('morning')">➕ Add</button>
+  </div>
+
+  <!-- 🎒 After School -->
+  <div class="routine-section">
+    <h2>🎒 After School Routine</h2>
+    <table id="afterTable">
+      <thead><tr><th>Task</th><th>Status</th></tr></thead>
+      <tbody id="afterBody">
+        <tr><td>Wash hands and change clothes 🧼</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Eat healthy a snack 🍎</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Do homework 📚</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Help with small chores at home 🧹🏠</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Physical Play</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Bond and Connect as a Family 🏠</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Accomplish an important task</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Balance Screen Time Wisely</td><td><input type="checkbox" /></td></tr>
+      </tbody>
+    </table>
+    <input type="text" id="afterInput" placeholder="Add after-school task" />
+    <button onclick="addTask('after')">➕ Add</button>
+  </div>
+
+  <!-- 🌙 Bedtime Prayer -->
+  <div class="prayer">
+    <h3>🌙 “Goodnight, My Best Friend Jesus”</h3>
+    <p>Goodnight, my Lord Jesus, I’m ready for bed, 🌙<br>
+    Thank You for all the things You said.<br>
+    I laughed, I played, I learned a lot,<br>
+    Please bless my dreams and keep me safe tonight. 💫</p>
+  </div>
+
+  <!-- 🌙 Night -->
+  <div class="routine-section">
+    <h2>🌙 Sleeping Routine</h2>
+    <table id="nightTable">
+      <thead><tr><th>Task</th><th>Status</th></tr></thead>
+      <tbody id="nightBody">
+        <tr><td>Take a shower 🚿</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Limit daytime naps</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Don't go to bed hungry </td><td><input type="checkbox" /></td></tr>
+        <tr><td>Pack school bag 🎒 </td><td><input type="checkbox" /></td></tr>
+        <tr><td>Brush our teeth</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Keeping a regular bedtime 🚿</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Hugs & kisses 🛌</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Read a bedtime story or quiet time 📖</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Say good night and sleep 😴</td><td><input type="checkbox" /></td></tr>
+      </tbody>
+    </table>
+    <input type="text" id="nightInput" placeholder="Add night task" />
+    <button onclick="addTask('night')">➕ Add</button>
+  </div>
+
+  <!-- 📅 Report -->
+  <div class="report-table" id="reportSection" style="display:none;">
+    <h2>📅 Routine Report</h2>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Completed Tasks</th><th>⭐ Star Rating</th></tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ✅ JS Script -->
+ <script>
+const user = JSON.parse(localStorage.getItem("currentUser"));
+if (!user) window.location.href = "login.html";
+document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
+
+const sections = ["morning", "after", "night"];
+let currentLoadedDate = null; // Track the currently loaded routine
+
+function addTask(type) {
+  const input = document.getElementById(type + "Input");
+  const task = input.value.trim();
+  if (!task) return;
+  const body = document.getElementById(type + "Body");
+  const row = document.createElement("tr");
+  row.innerHTML = `<td>${task}</td><td><input type="checkbox" /></td>`;
+  body.appendChild(row);
+  input.value = "";
+  attachCheckboxListeners(); // ensure new task checkboxes update stars
+}
+
+function getAllTasks() {
+  const routines = [];
+  sections.forEach(section => {
+    const rows = document.querySelectorAll(`#${section}Body tr`);
+    rows.forEach(row => {
+      const task = row.children[0].textContent;
+      const done = row.querySelector("input").checked;
+      routines.push({ section, task, done });
+    });
+  });
+  return routines;
+}
+
+function clearAllCheckboxes() {
+  document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
+}
+
+function getStars(count) {
+  return "⭐".repeat(count) || "⚪";
+}
+
+// ✅ Update stars box and report table dynamically
+function updateRoutineStars() {
+  const items = getAllTasks();
+  const checkedCount = items.filter(i => i.done).length;
+  document.getElementById("routineStarsDisplay").textContent = `${checkedCount}⭐`;
+
+  // Update report table row for the currently loaded date
+  if (currentLoadedDate) {
+    const reportRows = document.querySelectorAll("#reportBody tr");
+    reportRows.forEach(row => {
+      if (row.children[0].textContent === currentLoadedDate) {
+        const totalTasks = items.length;
+        row.children[1].textContent = `${checkedCount}/${totalTasks} ✅`;
+        row.children[2].textContent = getStars(checkedCount);
+      }
+    });
+  }
+}
+
+function attachCheckboxListeners() {
+  document.querySelectorAll("input[type='checkbox']").forEach(cb => {
+    cb.addEventListener("change", updateRoutineStars);
+  });
+}
+
+// ✅ Save routine
+document.getElementById("saveBtn").onclick = async () => {
+  const items = getAllTasks();
+  const date = new Date().toISOString().split("T")[0];
+  const checkedData = items.filter(i => i.done).length;
+
+  try {
+    const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: user.name, date, items, checkedData })
+});
+    const data = await res.json();
+    if (res.ok) alert("✅ Routine saved successfully!");
+    else alert("❌ Error saving routine: " + data.error);
+    currentLoadedDate = date; // track saved date
+    updateRoutineStars();
+  } catch (err) {
+    console.error("Error saving routine:", err);
+    alert("❌ Failed to save routine");
+  }
+};
+
+// ✅ Load all routines for report
+document.getElementById("loadBtn").onclick = async () => {
+  try {
+    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/${encodeURIComponent(user.name)}`);
+    const data = await res.json();
+    if (!data.length) return alert("❌ No saved routine found.");
+
+    const reportBody = document.getElementById("reportBody");
+    reportBody.innerHTML = "";
+    document.getElementById("reportSection").style.display = "block";
+
+    data.forEach(r => {
+      const doneCount = r.items.filter(i => i.done).length;
+      const total = r.items.length;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.date}</td><td>${doneCount}/${total} ✅</td><td class="stars">${getStars(doneCount)}</td>`;
+      reportBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error loading routines:", err);
+    alert("❌ Failed to load routines!");
+  }
+};
+
+// ✅ Load routine by date
+async function loadRoutineByDate(date, auto = false) {
+  try {
+    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}`);
+    const data = await res.json();
+
+    if (!data || !data.length) {
+      if (!auto) alert(`❌ No routine found for ${date}`);
+      return;
+    }
+
+    const routines = data[0];
+    clearAllCheckboxes();
+
+    routines.items.forEach(t => {
+      const sectionBody = document.getElementById(t.section + "Body");
+      const rows = Array.from(sectionBody.querySelectorAll("tr"));
+      let found = false;
+      for (const row of rows) {
+        if (row.children[0].textContent === t.task) {
+          row.querySelector("input").checked = t.done;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${t.task}</td><td><input type="checkbox" ${t.done ? "checked" : ""}/></td>`;
+        sectionBody.appendChild(row);
+      }
+    });
+
+    attachCheckboxListeners(); // ensure all checkboxes update stars
+    currentLoadedDate = date; // track current loaded date
+    updateRoutineStars();
+
+    const today = new Date();
+    const selected = new Date(date);
+    const isPast = selected < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    document.querySelectorAll("input[type='checkbox'], input[type='text'], button").forEach(el => {
+      if (el.id === "saveBtn" || el.textContent.includes("➕")) {
+        el.disabled = isPast;
+        el.style.opacity = isPast ? "0.5" : "1";
+        el.style.cursor = isPast ? "not-allowed" : "pointer";
+      } else if (el.type === "checkbox" || el.type === "text") {
+        el.disabled = isPast;
+      }
+    });
+
+    if (!auto) {
+      alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
+    }
+  } catch (err) {
+    console.error("Error loading by date:", err);
+    if (!auto) alert("❌ Failed to load routine by date");
+  }
+}
+
+// ✅ Manual "Load Routine" button
+document.getElementById("loadByDateBtn").onclick = async () => {
+  const selectedDate = document.getElementById("loadDate").value;
+  if (!selectedDate) return alert("Please select a date.");
+  await loadRoutineByDate(selectedDate);
+};
+
+// ✅ Auto-load today's routine on page open
+window.addEventListener("DOMContentLoaded", async () => {
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("loadDate").value = today;
+  await loadRoutineByDate(today, true);
+});
+
+document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem("currentUser");
+  window.location.href = "login.html";
+};
+</script>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🌞 Kids Daily Stars Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Comic Neue', 'Comic Sans MS', Arial, sans-serif;
+      background: linear-gradient(to bottom, #fff8dc 0%, #ffecb3 100%);
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* Animated motivational banner */
+    #motivation {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #ff6f00;
+      text-shadow: 2px 2px #ffe082;
+      animation: floatColors 3s infinite alternate, floatY 3s infinite alternate;
+    }
+
+    @keyframes floatColors {
+      0% { color: #ff6f00; text-shadow: 2px 2px #ffe082; }
+      50% { color: #ff9800; text-shadow: 2px 2px #ffcc80; }
+      100% { color: #ff6f00; text-shadow: 2px 2px #ffe082; }
+    }
+    @keyframes floatY {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-8px); }
+    }
+
+    h2 { 
+      color: #ff6f00; 
+      font-size: 2rem;
+      margin-bottom: 15px; 
+      text-shadow: 2px 2px #ffe082;
+    }
+    #logoutBtn {
+      background: #ff9800;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    #logoutBtn:hover {
+      background: #fb8c00;
+      transform: scale(1.05);
+    }
+    #kidsChartsContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 25px;
+    }
+    .chart-card {
+      width: 360px;
+      background: linear-gradient(to bottom right, #fff3e0, #ffe0b2);
+      padding: 20px;
+      border-radius: 25px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .chart-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.35);
+    }
+    .chart-card h3 {
+      margin: 10px 0;
+      color: #ff6f00;
+      font-size: 1.5rem;
+    }
+    .winner-badge {
+      position: absolute;
+      top: -12px;
+      left: 25%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, #ffd700 0%, #ffb300 100%);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #000;
+      font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      animation: bounce 1s ease infinite alternate;
+    }
+    @keyframes bounce {
+      0% { transform: translateX(-50%) translateY(0); }
+      100% { transform: translateX(-50%) translateY(-5px); }
+    }
+    canvas {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<button id="logoutBtn">Logout</button>
+<div id="motivation">✨ Keep shining and earn your stars every day! ✨</div>
+<h2>📊 Kids Daily Stars</h2>
+<div id="kidsChartsContainer"></div>
+
+<script>
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("currentUser");
+  window.location.href = "login.html";
+});
+
+async function createKidsCharts() {
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) {
+    alert("Please log in!");
+    window.location.href = "login.html";
+    return;
+  }
+
+  const container = document.getElementById("kidsChartsContainer");
+  container.innerHTML = "";
+
+  try {
+    const res = await fetch("http://localhost:4000/api/kidsStars/week");
+    const data = await res.json();
+
+    // Calculate weekly totals
+    const totals = {};
+    const dateObj = new Date();
+    const firstDay = new Date();
+    firstDay.setDate(dateObj.getDate() - dateObj.getDay() + 6); // Saturday
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(firstDay);
+      d.setDate(firstDay.getDate() + i);
+      weekDates.push(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    }
+
+    data.forEach(k => {
+      totals[k.name] = k.starsPerDay
+        .filter(d => {
+          const dDate = new Date(d.date);
+          const key = `${dDate.getFullYear()}-${dDate.getMonth()}-${dDate.getDate()}`;
+          return weekDates.includes(key);
+        })
+        .reduce((sum, d) => sum + (d.stars || 0), 0);
+    });
+
+    const winnerName = Object.keys(totals).reduce((a, b) => totals[a] > totals[b] ? a : b);
+
+    if (currentUser.role === "kid") {
+      const kidData = data.find(k => k.name === currentUser.name);
+      if (!kidData) return alert("No stars data found for you!");
+      createChartForKid(kidData, kidData.name === winnerName, totals[kidData.name]);
+    } else {
+      data.forEach(kid => createChartForKid(kid, kid.name === winnerName, totals[kid.name]));
+    }
+  } catch (err) {
+    console.error("Error fetching kids stars:", err);
+    alert("Failed to load kids stars from server!");
+  }
+}
+
+function createChartForKid(kid, isWinner = false, totalStars = 0) {
+  const container = document.getElementById("kidsChartsContainer");
+
+  const chartWrapper = document.createElement("div");
+  chartWrapper.className = "chart-card";
+
+  if (isWinner) {
+    const badge = document.createElement("div");
+    badge.className = "winner-badge";
+    badge.textContent = `🏆 Weekly Winner – ${totalStars} Stars!`;
+    chartWrapper.appendChild(badge);
+  }
+
+  const title = document.createElement("h3");
+  title.textContent = kid.name;
+  chartWrapper.appendChild(title);
+
+  const canvas = document.createElement("canvas");
+  chartWrapper.appendChild(canvas);
+  container.appendChild(chartWrapper);
+
+  const weekdays = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
+  const dataArr = [];
+  const bgColors = [];
+  const labels = [];
+  const dateObj = new Date();
+  const firstDay = new Date();
+  firstDay.setDate(dateObj.getDate() - dateObj.getDay() + 6);
+
+  weekdays.forEach((day, idx) => {
+    const currentDate = new Date(firstDay);
+    currentDate.setDate(firstDay.getDate() + idx);
+    const formatted = `${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
+
+    const found = kid.starsPerDay.find(d => {
+      const dDate = new Date(d.date);
+      return dDate.getFullYear() === currentDate.getFullYear() &&
+             dDate.getMonth() === currentDate.getMonth() &&
+             dDate.getDate() === currentDate.getDate();
+    });
+
+    const stars = found ? found.stars : 0;
+    dataArr.push(stars);
+
+    const isToday = dateObj.getFullYear() === currentDate.getFullYear() &&
+                    dateObj.getMonth() === currentDate.getMonth() &&
+                    dateObj.getDate() === currentDate.getDate();
+    bgColors.push(isToday ? "#ff6f00" : "#ffd54f");
+
+    labels.push(`${day}\n(${formatted})`);
+  });
+
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, '#ffe082');
+  gradient.addColorStop(1, '#ff6f00');
+
+  const maxStars = Math.max(...dataArr);
+  const yMax = maxStars + 5;
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: `${kid.name}'s Stars`,
+        data: dataArr,
+        backgroundColor: bgColors.map(c => c === "#ff6f00" ? "#ff6f00" : gradient),
+        borderColor: "#ffb74d",
+        borderWidth: 1,
+        borderRadius: 10,
+        hoverBackgroundColor: "#ff8f00"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          color: '#ff6f00',
+          font: { weight: 'bold', size: 14 }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 12 } } },
+        y: { beginAtZero: true, max: yMax, ticks: { stepSize: 1 } }
+      },
+      animation: { duration: 1000, easing: 'easeOutBounce' }
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
+window.addEventListener("DOMContentLoaded", createKidsCharts);
+</script>
+</body>
+</html>
