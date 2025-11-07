@@ -8,20 +8,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running → http://localhost:${PORT}`);
-});
-
-
-// ===== File paths =====
-const EFFORT_FILE = path.join(__dirname, "efforts.json");
-const ROUTINE_FILE = path.join(__dirname, "routines.json");
 
 // ===== Middleware =====
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// ===== File paths =====
+const EFFORT_FILE = path.join(__dirname, "efforts.json");
+const ROUTINE_FILE = path.join(__dirname, "routines.json");
 
 // ===== Ensure data files exist =====
 function ensureFile(file) {
@@ -39,7 +34,6 @@ function loadJSON(file) {
     return [];
   }
 }
-
 function saveJSON(file, data) {
   try {
     fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
@@ -82,7 +76,6 @@ app.get("/api/debug/efforts", (req, res) => res.json(loadJSON(EFFORT_FILE)));
 // ✅ ROUTINE APIs
 // ======================================================
 app.post("/api/routines/save", (req, res) => {
-  console.log("Saving routine:", req.body); // Debug log
   const { name, date, items } = req.body;
   if (!name || !date || !Array.isArray(items))
     return res.status(400).json({ error: "Invalid routine data" });
@@ -94,32 +87,21 @@ app.post("/api/routines/save", (req, res) => {
   if (index >= 0) all[index] = routine;
   else all.push(routine);
 
-  if (saveJSON(ROUTINE_FILE, all)) {
-    console.log("Routine saved successfully!");
+  if (saveJSON(ROUTINE_FILE, all))
     res.json({ message: "✅ Routine saved!" });
-  } else {
+  else
     res.status(500).json({ error: "Failed to save routine" });
-  }
 });
 
 // ✅ Search routine by name and date
 app.get("/api/routines/search", async (req, res) => {
   try {
     const { name, date } = req.query;
-    console.log("📩 Query received:", { name, date });
-
-    const file = await fs.promises.readFile(ROUTINE_FILE, "utf8");
-    const data = JSON.parse(file);
-    console.log("📘 Total routines in file:", data.length);
-
-    const matched = data.filter(r => {
-      const nameMatch = r.name?.trim().toLowerCase() === name?.trim().toLowerCase();
-      const dateMatch = r.date?.trim() === date?.trim();
-      console.log(`🔎 Checking "${r.name}" (${r.date}) -> nameMatch: ${nameMatch}, dateMatch: ${dateMatch}`);
-      return nameMatch && dateMatch;
-    });
-
-    console.log("✅ Found matches:", matched.length);
+    const data = JSON.parse(await fs.promises.readFile(ROUTINE_FILE, "utf8"));
+    const matched = data.filter(r =>
+      r.name?.trim().toLowerCase() === name?.trim().toLowerCase() &&
+      r.date?.trim() === date?.trim()
+    );
     res.json(matched);
   } catch (err) {
     console.error("❌ Error in /api/routines/search:", err);
@@ -127,16 +109,12 @@ app.get("/api/routines/search", async (req, res) => {
   }
 });
 
-// ✅ NEW: Get all routines for a single user
+// ✅ Get all routines for a single user
 app.get("/api/routines/:name", (req, res) => {
   try {
     const { name } = req.params;
     const all = loadJSON(ROUTINE_FILE);
-
-    const userRoutines = all.filter(
-      r => r.name?.trim().toLowerCase() === name.trim().toLowerCase()
-    );
-
+    const userRoutines = all.filter(r => r.name?.trim().toLowerCase() === name.trim().toLowerCase());
     res.json(userRoutines);
   } catch (err) {
     console.error("❌ Failed to load routines:", err);
@@ -144,65 +122,36 @@ app.get("/api/routines/:name", (req, res) => {
   }
 });
 
-// ======================================================
-// ✅ Start server
-// ======================================================
-app.listen(PORT, () => {
-  console.log(`✅ Server running → http://localhost:${PORT}`);
-});
-// PATCH - update a single effort evaluation
 // ✅ PATCH - update a single effort evaluation
 app.patch("/api/efforts/updateEvaluation", (req, res) => {
   const { name, date, index, evaluation } = req.body;
-
-  if (!name || !date || index === undefined) {
+  if (!name || !date || index === undefined)
     return res.status(400).json({ message: "Missing fields." });
-  }
 
   try {
     let efforts = loadJSON(EFFORT_FILE);
+    const userEffort = efforts.find(r => r.name === name && r.date === date);
+    if (!userEffort) return res.status(404).json({ message: "Effort not found." });
+    if (!userEffort.items[index]) return res.status(400).json({ message: "Invalid index." });
 
-    // find record for this user and date
-    const userEffort = efforts.find(
-      (r) => r.name === name && r.date === date
-    );
-
-    if (!userEffort) {
-      return res.status(404).json({ message: "Effort not found." });
-    }
-
-    if (!userEffort.items[index]) {
-      return res.status(400).json({ message: "Invalid index." });
-    }
-
-    // update evaluation
     userEffort.items[index].evaluation = evaluation;
-
-    // save the file
-    if (saveJSON(EFFORT_FILE, efforts)) {
+    if (saveJSON(EFFORT_FILE, efforts))
       res.json({ message: "✅ Evaluation updated successfully!" });
-    } else {
+    else
       res.status(500).json({ message: "Failed to save updated evaluation." });
-    }
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ message: "Server error while updating evaluation." });
   }
 });
-// GET all kids with stars per day
-// GET today's total stars for a single kid
-// STEP 3: Combined stars endpoint
-// STEP 3: Combined stars endpoint (file-based version)
+
 // ✅ Weekly stars summary for all kids
 app.get("/api/kidsStars/week", (req, res) => {
   try {
     const efforts = loadJSON(EFFORT_FILE);
     const routines = loadJSON(ROUTINE_FILE);
-
-    // Get all unique kids' names
     const kids = [...new Set([...efforts, ...routines].map(r => r.name))];
 
-    // Get the last 7 days
     const today = new Date();
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
@@ -214,7 +163,6 @@ app.get("/api/kidsStars/week", (req, res) => {
       const starsPerDay = days.map(date => {
         let totalStars = 0;
 
-        // Effort stars
         efforts
           .filter(r => r.name === name && r.date === date)
           .forEach(rec => {
@@ -222,7 +170,6 @@ app.get("/api/kidsStars/week", (req, res) => {
               totalStars += rec.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
           });
 
-        // Routine stars (1 per done)
         routines
           .filter(r => r.name === name && r.date === date)
           .forEach(rec => {
@@ -243,6 +190,10 @@ app.get("/api/kidsStars/week", (req, res) => {
   }
 });
 
-
-
-
+// ======================================================
+// ✅ Start server (only once, at the very end)
+// ======================================================
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running → http://localhost:${PORT}`);
+});
