@@ -138,9 +138,9 @@ const res = await fetch(`${API_BASE}/api/kidsStars/week`);
     const totals = {};
     const dateObj = new Date();
     const firstDay = new Date();
-    firstDay.setDate(dateObj.getDate()+ 7); // Saturday
+    firstDay.setDate(dateObj.getDate()-dateObj.getDate()+ 6); // Saturday
     const weekDates = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(firstDay);
       d.setDate(firstDay.getDate() + i);
       weekDates.push(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
