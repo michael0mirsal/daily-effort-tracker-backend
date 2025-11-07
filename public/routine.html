@@ -90,22 +90,22 @@
   <button id="saveBtn">💾 Save Routine</button>
   <button id="loadBtn">📂 View All Reports</button>
   <button id="backBtn">⬅️ Back</button>
-<!-- ⭐ Stars Box for routines -->
-<div id="routineStarsBox" style="
-  text-align:center;
-  margin: 15px auto;
-  font-size:1.3em;
-  font-weight:bold;
-  background:linear-gradient(135deg, #fff5a8, #ffd54f);
-  color:#8b5e00;
-  border:2px solid #f3c623;
-  border-radius:15px;
-  padding:10px 20px;
-  width:fit-content;
-  box-shadow:0 0 15px rgba(255,215,0,0.4);
-">
-  🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
-</div>
+
+  <div id="routineStarsBox" style="
+    text-align:center;
+    margin: 15px auto;
+    font-size:1.3em;
+    font-weight:bold;
+    background:linear-gradient(135deg, #fff5a8, #ffd54f);
+    color:#8b5e00;
+    border:2px solid #f3c623;
+    border-radius:15px;
+    padding:10px 20px;
+    width:fit-content;
+    box-shadow:0 0 15px rgba(255,215,0,0.4);
+  ">
+    🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
+  </div>
 
   <div class="load-section">
     <h3>📅 Load Routine by Date</h3>
@@ -202,14 +202,21 @@
     </table>
   </div>
 
-  <!-- ✅ JS Script -->
- <script>
+<script>
 const user = JSON.parse(localStorage.getItem("currentUser"));
 if (!user) window.location.href = "login.html";
 document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
 
 const sections = ["morning", "after", "night"];
 let currentLoadedDate = null; // Track the currently loaded routine
+
+// --- Helper to get today's local date ---
+function getLocalDate() {
+  const today = new Date();
+  return today.getFullYear() + '-' +
+         String(today.getMonth() + 1).padStart(2, '0') + '-' +
+         String(today.getDate()).padStart(2, '0');
+}
 
 function addTask(type) {
   const input = document.getElementById(type + "Input");
@@ -220,7 +227,7 @@ function addTask(type) {
   row.innerHTML = `<td>${task}</td><td><input type="checkbox" /></td>`;
   body.appendChild(row);
   input.value = "";
-  attachCheckboxListeners(); // ensure new task checkboxes update stars
+  attachCheckboxListeners();
 }
 
 function getAllTasks() {
@@ -244,13 +251,11 @@ function getStars(count) {
   return "⭐".repeat(count) || "⚪";
 }
 
-// ✅ Update stars box and report table dynamically
 function updateRoutineStars() {
   const items = getAllTasks();
   const checkedCount = items.filter(i => i.done).length;
   document.getElementById("routineStarsDisplay").textContent = `${checkedCount}⭐`;
 
-  // Update report table row for the currently loaded date
   if (currentLoadedDate) {
     const reportRows = document.querySelectorAll("#reportBody tr");
     reportRows.forEach(row => {
@@ -272,19 +277,19 @@ function attachCheckboxListeners() {
 // ✅ Save routine
 document.getElementById("saveBtn").onclick = async () => {
   const items = getAllTasks();
-  const date = new Date().toISOString().split("T")[0];
+  const date = getLocalDate();
   const checkedData = items.filter(i => i.done).length;
 
   try {
     const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name: user.name, date, items, checkedData })
-});
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: user.name, date, items, checkedData })
+    });
     const data = await res.json();
     if (res.ok) alert("✅ Routine saved successfully!");
     else alert("❌ Error saving routine: " + data.error);
-    currentLoadedDate = date; // track saved date
+    currentLoadedDate = date;
     updateRoutineStars();
   } catch (err) {
     console.error("Error saving routine:", err);
@@ -292,7 +297,7 @@ document.getElementById("saveBtn").onclick = async () => {
   }
 };
 
-// ✅ Load all routines for report
+// ✅ Load all routines
 document.getElementById("loadBtn").onclick = async () => {
   try {
     const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/${encodeURIComponent(user.name)}`);
@@ -348,13 +353,13 @@ async function loadRoutineByDate(date, auto = false) {
       }
     });
 
-    attachCheckboxListeners(); // ensure all checkboxes update stars
-    currentLoadedDate = date; // track current loaded date
+    attachCheckboxListeners();
+    currentLoadedDate = date;
     updateRoutineStars();
 
-    const today = new Date();
+    const today = new Date(getLocalDate());
     const selected = new Date(date);
-    const isPast = selected < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isPast = selected < today;
 
     document.querySelectorAll("input[type='checkbox'], input[type='text'], button").forEach(el => {
       if (el.id === "saveBtn" || el.textContent.includes("➕")) {
@@ -375,16 +380,15 @@ async function loadRoutineByDate(date, auto = false) {
   }
 }
 
-// ✅ Manual "Load Routine" button
 document.getElementById("loadByDateBtn").onclick = async () => {
   const selectedDate = document.getElementById("loadDate").value;
   if (!selectedDate) return alert("Please select a date.");
   await loadRoutineByDate(selectedDate);
 };
 
-// ✅ Auto-load today's routine on page open
+// ✅ Auto-load today's routine using local date
 window.addEventListener("DOMContentLoaded", async () => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDate();
   document.getElementById("loadDate").value = today;
   await loadRoutineByDate(today, true);
 });
@@ -395,9 +399,6 @@ document.getElementById("logoutBtn").onclick = () => {
   window.location.href = "login.html";
 };
 </script>
-
-
-
 
 </body>
 </html>
