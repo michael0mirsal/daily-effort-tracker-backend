@@ -128,9 +128,12 @@ async function createKidsCharts() {
   container.innerHTML = "";
 
   try {
-    const res = await fetch("http://localhost:4000/api/kidsStars/week");
-    const data = await res.json();
+     const API_BASE = window.location.hostname.includes("localhost")
+  ? "http://localhost:4000"
+  : "https://daily-effort-tracker-backend-production.up.railway.app";
 
+const res = await fetch(`${API_BASE}/api/kidsStars/week`);
+    const data = await res.json();
     // Calculate weekly totals
     const totals = {};
     const dateObj = new Date();
