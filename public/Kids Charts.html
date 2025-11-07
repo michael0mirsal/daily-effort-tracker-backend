@@ -109,14 +109,18 @@
 <div id="kidsChartsContainer"></div>
 
 <script>
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("currentUser");
+  window.location.href = "login.html";
+});
+
+// Convert UTC date string to local YYYY-M-D
 function toLocalYMD(dateStr) {
   const d = new Date(dateStr);
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  return `${d.getFullYear()}-${month}-${day}`;
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 }
 
-// Calculate previous Saturday as week start
+// Get current week starting from last Saturday
 function getWeekDates() {
   const today = new Date();
   const day = today.getDay(); // 0=Sun, 6=Sat
@@ -135,7 +139,7 @@ function getWeekDates() {
 
 async function createKidsCharts() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  if (!currentUser) { window.location.href = "login.html"; return; }
+  if (!currentUser) { alert("Please log in!"); window.location.href="login.html"; return; }
 
   const container = document.getElementById("kidsChartsContainer");
   container.innerHTML = "";
@@ -151,7 +155,7 @@ async function createKidsCharts() {
     const weekDates = getWeekDates();
     const todayStr = toLocalYMD(new Date());
 
-    // Compute totals
+    // Calculate weekly totals
     const totals = {};
     data.forEach(k => {
       totals[k.name] = k.starsPerDay
@@ -159,7 +163,8 @@ async function createKidsCharts() {
         .reduce((sum, d) => sum + (d.stars || 0), 0);
     });
 
-    const winnerName = Object.keys(totals).reduce((a,b) => totals[a] >= totals[b] ? a : b);
+    // Determine winner
+    const winnerName = Object.keys(totals).reduce((a, b) => totals[a] >= totals[b] ? a : b);
 
     if (currentUser.role === "kid") {
       const kidData = data.find(k => k.name === currentUser.name);
@@ -169,12 +174,12 @@ async function createKidsCharts() {
       data.forEach(kid => createChartForKid(kid, kid.name === winnerName, totals[kid.name], weekDates, todayStr));
     }
   } catch(err) {
-    console.error(err);
+    console.error("Error fetching kids stars:", err);
     alert("Failed to load kids stars from server!");
   }
 }
 
-function createChartForKid(kid, isWinner, totalStars, weekDates, todayStr) {
+function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
   const container = document.getElementById("kidsChartsContainer");
   const chartWrapper = document.createElement("div");
   chartWrapper.className = "chart-card";
@@ -219,9 +224,32 @@ function createChartForKid(kid, isWinner, totalStars, weekDates, todayStr) {
 
   new Chart(canvas, {
     type: "bar",
-    data: { labels, datasets:[{label:`${kid.name}'s Stars`, data:dataArr, backgroundColor:bgColors.map(c=>c==="#ff6f00"? "#ff6f00":gradient), borderColor:"#ffb74d", borderWidth:1, borderRadius:10, hoverBackgroundColor:"#ff8f00"}] },
-    options: { responsive:true, plugins:{legend:{display:false}, tooltip:{enabled:true}, datalabels:{anchor:'end', align:'top', color:'#ff6f00', font:{weight:'bold', size:14}}}, scales:{x:{ticks:{font:{size:12}}}, y:{beginAtZero:true, max:yMax, ticks:{stepSize:1}}}, animation:{duration:1000, easing:'easeOutBounce'} },
-    plugins:[ChartDataLabels]
+    data: {
+      labels,
+      datasets: [{
+        label: `${kid.name}'s Stars`,
+        data: dataArr,
+        backgroundColor: bgColors.map(c => c === "#ff6f00" ? "#ff6f00" : gradient),
+        borderColor: "#ffb74d",
+        borderWidth: 1,
+        borderRadius: 10,
+        hoverBackgroundColor: "#ff8f00"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        datalabels: { anchor:'end', align:'top', color:'#ff6f00', font:{weight:'bold', size:14} }
+      },
+      scales: {
+        x: { ticks:{ font:{ size:12 } } },
+        y: { beginAtZero:true, max:yMax, ticks:{ stepSize:1 } }
+      },
+      animation: { duration:1000, easing:'easeOutBounce' }
+    },
+    plugins: [ChartDataLabels]
   });
 }
 
