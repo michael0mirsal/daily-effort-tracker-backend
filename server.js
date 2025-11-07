@@ -215,6 +215,11 @@ app.get("/api/kidsStars/week", (req, res) => {
 // ======================================================
 // ✅ Start server
 // ======================================================
+
+app.get("/api/test", (req, res) => {
+  res.json({ message: "✅ Server is alive!" });
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running → http://localhost:${PORT}`);
 });
