@@ -34,6 +34,7 @@ function loadJSON(file) {
     return [];
   }
 }
+
 function saveJSON(file, data) {
   try {
     fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
@@ -87,71 +88,63 @@ app.post("/api/routines/save", (req, res) => {
   if (index >= 0) all[index] = routine;
   else all.push(routine);
 
-  if (saveJSON(ROUTINE_FILE, all))
+  if (saveJSON(ROUTINE_FILE, all)) {
     res.json({ message: "✅ Routine saved!" });
-  else
+  } else {
     res.status(500).json({ error: "Failed to save routine" });
+  }
 });
 
 // ✅ Search routine by name and date
 app.get("/api/routines/search", async (req, res) => {
   try {
     const { name, date } = req.query;
-    const data = JSON.parse(await fs.promises.readFile(ROUTINE_FILE, "utf8"));
-    const matched = data.filter(r =>
-      r.name?.trim().toLowerCase() === name?.trim().toLowerCase() &&
-      r.date?.trim() === date?.trim()
+    const file = await fs.promises.readFile(ROUTINE_FILE, "utf8");
+    const data = JSON.parse(file);
+    const matched = data.filter(
+      r => r.name?.trim().toLowerCase() === name?.trim().toLowerCase() && r.date?.trim() === date?.trim()
     );
     res.json(matched);
   } catch (err) {
-    console.error("❌ Error in /api/routines/search:", err);
     res.status(500).json({ error: "Server error while searching routines" });
   }
 });
 
-// ✅ Get all routines for a single user
+// ✅ Get all routines for a user
 app.get("/api/routines/:name", (req, res) => {
   try {
     const { name } = req.params;
     const all = loadJSON(ROUTINE_FILE);
-    const userRoutines = all.filter(r => r.name?.trim().toLowerCase() === name.trim().toLowerCase());
+    const userRoutines = all.filter(
+      r => r.name?.trim().toLowerCase() === name.trim().toLowerCase()
+    );
     res.json(userRoutines);
-  } catch (err) {
-    console.error("❌ Failed to load routines:", err);
+  } catch {
     res.status(500).json({ message: "❌ Failed to load routines!" });
   }
 });
 
-// ✅ PATCH - update a single effort evaluation
+// ✅ PATCH evaluation
 app.patch("/api/efforts/updateEvaluation", (req, res) => {
   const { name, date, index, evaluation } = req.body;
-  if (!name || !date || index === undefined)
-    return res.status(400).json({ message: "Missing fields." });
+  if (!name || !date || index === undefined) return res.status(400).json({ message: "Missing fields." });
 
-  try {
-    let efforts = loadJSON(EFFORT_FILE);
-    const userEffort = efforts.find(r => r.name === name && r.date === date);
-    if (!userEffort) return res.status(404).json({ message: "Effort not found." });
-    if (!userEffort.items[index]) return res.status(400).json({ message: "Invalid index." });
+  let efforts = loadJSON(EFFORT_FILE);
+  const userEffort = efforts.find(r => r.name === name && r.date === date);
+  if (!userEffort) return res.status(404).json({ message: "Effort not found." });
+  if (!userEffort.items[index]) return res.status(400).json({ message: "Invalid index." });
 
-    userEffort.items[index].evaluation = evaluation;
-    if (saveJSON(EFFORT_FILE, efforts))
-      res.json({ message: "✅ Evaluation updated successfully!" });
-    else
-      res.status(500).json({ message: "Failed to save updated evaluation." });
-  } catch (err) {
-    console.error("Update error:", err);
-    res.status(500).json({ message: "Server error while updating evaluation." });
-  }
+  userEffort.items[index].evaluation = evaluation;
+  if (saveJSON(EFFORT_FILE, efforts)) res.json({ message: "✅ Evaluation updated!" });
+  else res.status(500).json({ message: "Failed to save update." });
 });
 
-// ✅ Weekly stars summary for all kids
+// ✅ Weekly stars summary
 app.get("/api/kidsStars/week", (req, res) => {
   try {
     const efforts = loadJSON(EFFORT_FILE);
     const routines = loadJSON(ROUTINE_FILE);
     const kids = [...new Set([...efforts, ...routines].map(r => r.name))];
-
     const today = new Date();
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
@@ -159,39 +152,26 @@ app.get("/api/kidsStars/week", (req, res) => {
       return d.toISOString().split("T")[0];
     });
 
-    const result = kids.map(name => {
-      const starsPerDay = days.map(date => {
-        let totalStars = 0;
-
-        efforts
-          .filter(r => r.name === name && r.date === date)
-          .forEach(rec => {
-            if (Array.isArray(rec.items))
-              totalStars += rec.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-          });
-
-        routines
-          .filter(r => r.name === name && r.date === date)
-          .forEach(rec => {
-            const completed = (rec.items || []).filter(i => i.done).length;
-            totalStars += completed;
-          });
-
-        return { date, stars: totalStars };
-      });
-
-      return { name, starsPerDay };
-    });
+    const result = kids.map(name => ({
+      name,
+      starsPerDay: days.map(date => {
+        let total = 0;
+        efforts.filter(r => r.name === name && r.date === date)
+          .forEach(r => total += r.items?.reduce((s, it) => s + (Number(it.evaluation) || 0), 0) || 0);
+        routines.filter(r => r.name === name && r.date === date)
+          .forEach(r => total += (r.items || []).filter(i => i.done).length);
+        return { date, stars: total };
+      })
+    }));
 
     res.json(result);
-  } catch (err) {
-    console.error("❌ Error in /api/kidsStars/week:", err);
+  } catch {
     res.status(500).json({ error: "Server error" });
   }
 });
 
 // ======================================================
-// ✅ Start server (only once, at the very end)
+// ✅ Start server (only once, at the end)
 // ======================================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => {
