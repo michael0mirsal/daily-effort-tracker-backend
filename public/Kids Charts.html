@@ -109,24 +109,33 @@
 <div id="kidsChartsContainer"></div>
 
 <script>
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("currentUser");
-  window.location.href = "login.html";
-});
-
-// Convert UTC date string to local YYYY-M-D
 function toLocalYMD(dateStr) {
   const d = new Date(dateStr);
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
+// Calculate previous Saturday as week start
+function getWeekDates() {
+  const today = new Date();
+  const day = today.getDay(); // 0=Sun, 6=Sat
+  const diff = (day + 1) % 7; // days since last Saturday
+  const sat = new Date(today);
+  sat.setDate(today.getDate() - diff);
+
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sat);
+    d.setDate(sat.getDate() + i);
+    weekDates.push(toLocalYMD(d));
+  }
+  return weekDates;
 }
 
 async function createKidsCharts() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  if (!currentUser) {
-    alert("Please log in!");
-    window.location.href = "login.html";
-    return;
-  }
+  if (!currentUser) { window.location.href = "login.html"; return; }
 
   const container = document.getElementById("kidsChartsContainer");
   container.innerHTML = "";
@@ -139,21 +148,10 @@ async function createKidsCharts() {
     const res = await fetch(`${API_BASE}/api/kidsStars/week`);
     const data = await res.json();
 
-    // Get current date info
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+    const weekDates = getWeekDates();
+    const todayStr = toLocalYMD(new Date());
 
-    // Calculate current week starting Saturday
-    const firstDay = new Date(today);
-    firstDay.setDate(firstDay.getDate() - firstDay.getDay() + 6); // Saturday
-    const weekDates = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(firstDay);
-      d.setDate(firstDay.getDate() + i);
-      weekDates.push(`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`);
-    }
-
-    // Weekly totals
+    // Compute totals
     const totals = {};
     data.forEach(k => {
       totals[k.name] = k.starsPerDay
@@ -161,24 +159,23 @@ async function createKidsCharts() {
         .reduce((sum, d) => sum + (d.stars || 0), 0);
     });
 
-    const winnerName = Object.keys(totals).reduce((a, b) => totals[a] > totals[b] ? a : b);
+    const winnerName = Object.keys(totals).reduce((a,b) => totals[a] >= totals[b] ? a : b);
 
     if (currentUser.role === "kid") {
       const kidData = data.find(k => k.name === currentUser.name);
       if (!kidData) return alert("No stars data found for you!");
-      createChartForKid(kidData, kidData.name === winnerName, totals[kidData.name]);
+      createChartForKid(kidData, kidData.name === winnerName, totals[kidData.name], weekDates, todayStr);
     } else {
-      data.forEach(kid => createChartForKid(kid, kid.name === winnerName, totals[kid.name]));
+      data.forEach(kid => createChartForKid(kid, kid.name === winnerName, totals[kid.name], weekDates, todayStr));
     }
-  } catch (err) {
-    console.error("Error fetching kids stars:", err);
+  } catch(err) {
+    console.error(err);
     alert("Failed to load kids stars from server!");
   }
 }
 
-function createChartForKid(kid, isWinner = false, totalStars = 0) {
+function createChartForKid(kid, isWinner, totalStars, weekDates, todayStr) {
   const container = document.getElementById("kidsChartsContainer");
-
   const chartWrapper = document.createElement("div");
   chartWrapper.className = "chart-card";
 
@@ -197,27 +194,19 @@ function createChartForKid(kid, isWinner = false, totalStars = 0) {
   chartWrapper.appendChild(canvas);
   container.appendChild(chartWrapper);
 
-  const weekdays = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
+  const weekdays = ["Sat","Sun","Mon","Tue","Wed","Thu","Fri"];
   const dataArr = [];
   const bgColors = [];
   const labels = [];
-  const today = new Date();
-  const firstDay = new Date(today);
-  firstDay.setDate(firstDay.getDate() - firstDay.getDay() + 6);
 
-  weekdays.forEach((day, idx) => {
-    const currentDate = new Date(firstDay);
-    currentDate.setDate(firstDay.getDate() + idx);
-    const formatted = `${currentDate.getMonth()+1}-${currentDate.getDate()}`;
-
-    const found = kid.starsPerDay.find(d => toLocalYMD(d.date) === `${currentDate.getFullYear()}-${currentDate.getMonth()+1}-${currentDate.getDate()}`);
+  weekDates.forEach((dateStr, idx) => {
+    const found = kid.starsPerDay.find(d => toLocalYMD(d.date) === dateStr);
     const stars = found ? found.stars : 0;
     dataArr.push(stars);
 
-    const isToday = toLocalYMD(found ? found.date : currentDate) === toLocalYMD(today);
-    bgColors.push(isToday ? "#ff6f00" : "#ffd54f");
-
-    labels.push(`${day}\n(${formatted})`);
+    bgColors.push(dateStr === todayStr ? "#ff6f00" : "#ffd54f");
+    const [year, month, day] = dateStr.split("-");
+    labels.push(`${weekdays[idx]}\n(${month}-${day})`);
   });
 
   const ctx = canvas.getContext("2d");
@@ -230,41 +219,14 @@ function createChartForKid(kid, isWinner = false, totalStars = 0) {
 
   new Chart(canvas, {
     type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: `${kid.name}'s Stars`,
-        data: dataArr,
-        backgroundColor: bgColors.map(c => c === "#ff6f00" ? "#ff6f00" : gradient),
-        borderColor: "#ffb74d",
-        borderWidth: 1,
-        borderRadius: 10,
-        hoverBackgroundColor: "#ff8f00"
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true },
-        datalabels: {
-          anchor: 'end',
-          align: 'top',
-          color: '#ff6f00',
-          font: { weight: 'bold', size: 14 }
-        }
-      },
-      scales: {
-        x: { ticks: { font: { size: 12 } } },
-        y: { beginAtZero: true, max: yMax, ticks: { stepSize: 1 } }
-      },
-      animation: { duration: 1000, easing: 'easeOutBounce' }
-    },
-    plugins: [ChartDataLabels],
+    data: { labels, datasets:[{label:`${kid.name}'s Stars`, data:dataArr, backgroundColor:bgColors.map(c=>c==="#ff6f00"? "#ff6f00":gradient), borderColor:"#ffb74d", borderWidth:1, borderRadius:10, hoverBackgroundColor:"#ff8f00"}] },
+    options: { responsive:true, plugins:{legend:{display:false}, tooltip:{enabled:true}, datalabels:{anchor:'end', align:'top', color:'#ff6f00', font:{weight:'bold', size:14}}}, scales:{x:{ticks:{font:{size:12}}}, y:{beginAtZero:true, max:yMax, ticks:{stepSize:1}}}, animation:{duration:1000, easing:'easeOutBounce'} },
+    plugins:[ChartDataLabels]
   });
 }
 
 window.addEventListener("DOMContentLoaded", createKidsCharts);
 </script>
+
 </body>
 </html>
