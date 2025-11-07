@@ -192,13 +192,13 @@ function createChartForKid(kid, isWinner = false, totalStars = 0) {
   chartWrapper.appendChild(canvas);
   container.appendChild(chartWrapper);
 
-  const weekdays = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
+  const weekdays = ["Fri","Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
   const dataArr = [];
   const bgColors = [];
   const labels = [];
   const dateObj = new Date();
   const firstDay = new Date();
-  firstDay.setDate(dateObj.getDate() - dateObj.getDay() + 6);
+  firstDay.setDate(dateObj.getDate() - dateObj.getDay() + 7);
 
   weekdays.forEach((day, idx) => {
     const currentDate = new Date(firstDay);
