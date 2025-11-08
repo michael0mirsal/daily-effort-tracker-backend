@@ -59,43 +59,41 @@
 
   <script>
     async function login() {
-      const nickname = document.getElementById("nickname").value.trim();
-      const role = document.getElementById("role").value;
-      const passkey = document.getElementById("passkey").value.trim();
+  const nickname = document.getElementById("nickname").value.trim();
+  const role = document.getElementById("role").value;
+  const passkey = document.getElementById("passkey").value.trim();
 
-      if (!nickname || !passkey) {
-        alert("Please fill all fields");
-        return;
-      }
+  if (!nickname || !passkey) {
+    alert("Please fill all fields");
+    return;
+  }
 
-      try {
-        const res = await fetch('/api/families/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nickname, role, passkey })
-        });
+  try {
+    const res = await fetch('/api/families/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nickname, role: role, passKey: passkey }) // ✅ fixed
+    });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Login failed');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Login failed');
 
-        // Save family info + current user info in localStorage
-        const user = {
-          nickname: nickname,
-          role: role,
-          family: data.family.name,
-          dad: data.family.dad || '',
-          mom: data.family.mom || '',
-          members: data.family.members || []
-        };
+    const user = {
+      nickname: nickname,
+      role: role,
+      family: data.family.name,
+      dad: data.family.dad || '',
+      mom: data.family.mom || '',
+      members: data.family.members || []
+    };
 
-        localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    window.location.href = 'choose.html';
+  } catch (err) {
+    alert("❌ Error: " + err.message);
+  }
+}
 
-        // Redirect to choose page
-        window.location.href = 'choose.html';
-      } catch (err) {
-        alert("❌ Error: " + err.message);
-      }
-    }
   </script>
 
 </body>
