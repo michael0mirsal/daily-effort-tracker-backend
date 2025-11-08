@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>🆕 Create Family</title>
   <style>
     body {
@@ -21,6 +21,7 @@
       font-size: 16px;
       border-radius: 8px;
       border: 1px solid #4f9ef7;
+      width: 250px;
     }
     button {
       background-color: #4f9ef7;
@@ -44,8 +45,10 @@
 </head>
 <body>
   <h2>🆕 Create a New Family</h2>
+
   <input id="family" placeholder="Family name (e.g. Mirsal Family)" /><br/>
-  <input id="nickname" placeholder="Your nickname (e.g. Mom)" /><br/>
+  <input id="dad" placeholder="Dad's name" /><br/>
+  <input id="mom" placeholder="Mom's name" /><br/>
   <input id="passkey" placeholder="Family pass key" type="password" /><br/>
   <button onclick="signup()">Create Family</button>
   <div class="message" id="msg"></div>
@@ -53,22 +56,22 @@
   <script>
     async function signup() {
       const family = document.getElementById('family').value.trim();
-      const nickname = document.getElementById('nickname').value.trim();
+      const dad = document.getElementById('dad').value.trim();
+      const mom = document.getElementById('mom').value.trim();
       const passkey = document.getElementById('passkey').value.trim();
       const msg = document.getElementById('msg');
       msg.textContent = '';
 
-      if (!family || !nickname || !passkey) {
+      if (!family || !dad || !mom || !passkey) {
         msg.style.color = 'red';
         return msg.textContent = '❌ Please fill all fields';
       }
 
       try {
-        // ✅ Use relative path to backend
         const res = await fetch('/api/families/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ family, nickname, passkey })
+          body: JSON.stringify({ family, dad, mom, passkey })
         });
 
         const data = await res.json();
@@ -78,13 +81,19 @@
           throw new Error(data.message || 'Signup failed');
         }
 
-        // ✅ Save current user locally
-        localStorage.setItem('currentUser', JSON.stringify({ family, nickname }));
+        // Save family info locally for next step (adding kids)
+        localStorage.setItem('currentFamily', JSON.stringify({
+          family,
+          dad,
+          mom,
+          passkey
+        }));
+
         msg.style.color = 'green';
-        msg.textContent = '🎉 Family created successfully! Redirecting...';
+        msg.textContent = '🎉 Family created! Redirecting to add kids...';
 
         setTimeout(() => {
-          window.location.href = 'choose.html';
+          window.location.href = 'add-kids.html'; // page to add family kids
         }, 1500);
 
       } catch (err) {
