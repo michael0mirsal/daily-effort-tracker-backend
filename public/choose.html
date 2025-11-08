@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <title>Choose Activity 🌻</title>
   <style>
     body {
@@ -155,21 +155,27 @@
   <footer>Made with 🌻 Love and Joy</footer>
 
   <script>
-    const user = JSON.parse(localStorage.getItem("currentUser"));
-    if (!user) window.location.href = "login.html";
+    // ✅ Load current user from localStorage
+    const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
+    if (!user) {
+      alert("Not logged in");
+      window.location.href = "welcome.html";
+    }
 
-    document.getElementById("welcomeText").innerHTML = `🌞 Welcome, <b>${user.name}</b>!`;
+    // ✅ Greeting
+    document.getElementById("welcomeText").innerHTML = `🌞 Hello <b>${user.nickname}</b> from <b>${user.family}</b>!`;
 
     const optionsDiv = document.getElementById("options");
+
     if (user.role === "parent") {
-      // Show parent options and motivation text
+      // Parent view
       document.getElementById("motivationText").style.display = "block";
       optionsDiv.innerHTML = `
         <h2>👩‍👧 Parent Options</h2>
         <button onclick="window.location.href='Kids Charts.html'">📊 View Children's Efforts</button>
       `;
     } else {
-      // Show kids options and stars box
+      // Kid view
       document.getElementById("starsBox").style.display = "block";
       optionsDiv.innerHTML = `
         <h2>🧒 What would you like to do?</h2>
@@ -177,13 +183,13 @@
         <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
       `;
 
-      // ✅ Load today's total stars
+      // Load today's stars
       async function loadTodayStars() {
         const today = new Date().toLocaleDateString("en-CA"); 
         let totalStars = 0;
 
         try {
-          const resEfforts = await fetch(`/api/efforts/search?name=${encodeURIComponent(user.name)}&date=${encodeURIComponent(today)}`);
+          const resEfforts = await fetch(`/api/efforts/search?name=${encodeURIComponent(user.nickname)}&date=${encodeURIComponent(today)}`);
           const effortsData = await resEfforts.json();
 
           if (Array.isArray(effortsData)) {
@@ -194,13 +200,12 @@
             });
           }
 
-          const routinesRes = await fetch(`/api/routines/search?name=${encodeURIComponent(user.name)}&date=${encodeURIComponent(today)}`);
+          const routinesRes = await fetch(`/api/routines/search?name=${encodeURIComponent(user.nickname)}&date=${encodeURIComponent(today)}`);
           const routinesData = await routinesRes.json();
 
           if (Array.isArray(routinesData) && routinesData.length > 0) {
             const items = routinesData[0].items || [];
-            const completedCount = items.filter(i => i.done).length;
-            totalStars += completedCount * 1;
+            totalStars += items.filter(i => i.done).length;
           }
 
           document.getElementById("starsCount").textContent = `${totalStars}⭐`;
