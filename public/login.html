@@ -15,41 +15,11 @@
       align-items: center;
     }
 
-    h1 {
-      margin-bottom: 15px;
-      color: #2c3e50;
-    }
-
-    input, select {
-      padding: 10px;
-      margin: 8px;
-      border: 2px solid #4f9ef7;
-      border-radius: 10px;
-      font-size: 16px;
-    }
-
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 30px;
-      margin: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background-color: #2980b9;
-    }
-
-    .section {
-      background: rgba(255,255,255,0.7);
-      padding: 20px 40px;
-      border-radius: 15px;
-      margin: 15px 0;
-    }
+    h1 { margin-bottom: 15px; color: #2c3e50; }
+    input, select { padding: 10px; margin: 8px; border: 2px solid #4f9ef7; border-radius: 10px; font-size: 16px; }
+    button { background-color: #3498db; color: white; border: none; border-radius: 12px; padding: 12px 30px; margin: 10px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+    button:hover { background-color: #2980b9; }
+    .section { background: rgba(255,255,255,0.7); padding: 20px 40px; border-radius: 15px; margin: 15px 0; }
   </style>
 </head>
 <body>
@@ -57,7 +27,7 @@
   <h1>👨‍👩‍👧 Family Stars App</h1>
 
   <!-- Section 1: Sign Up / Sign In Choice -->
-  <div class="section">
+  <div class="section" id="choiceSection">
     <p>Please choose:</p>
     <button onclick="goToSignup()">🆕 Sign Up (New Family)</button>
     <button onclick="showLoginForm()">🔐 Sign In (Existing Family)</button>
@@ -66,12 +36,14 @@
   <!-- Section 2: Login Form (hidden initially) -->
   <div class="section" id="loginSection" style="display:none;">
     <h2>👋 Welcome Back!</h2>
-    <input type="text" id="username" placeholder="Enter your nickname" />
+    <input type="text" id="familyName" placeholder="Enter family name" /><br/>
+    <input type="text" id="nickname" placeholder="Enter your nickname" /><br/>
     <select id="role">
       <option value="kid">Kid 👧</option>
       <option value="parent">Parent 👩‍👧</option>
     </select>
     <br>
+    <input type="password" id="passkey" placeholder="Family pass key" /><br/>
     <button onclick="login()">🚀 Login</button>
   </div>
 
@@ -81,22 +53,45 @@
     }
 
     function showLoginForm() {
+      document.getElementById("choiceSection").style.display = "none";
       document.getElementById("loginSection").style.display = "block";
     }
 
-    function login() {
-      const username = document.getElementById("username").value.trim();
+    async function login() {
+      const family = document.getElementById("familyName").value.trim();
+      const nickname = document.getElementById("nickname").value.trim();
       const role = document.getElementById("role").value;
+      const passkey = document.getElementById("passkey").value.trim();
 
-      if (!username) {
-        alert("Please enter your nickname");
+      if (!family || !nickname || !passkey) {
+        alert("Please fill all fields");
         return;
       }
 
-      const userData = { nickname: username, role };
-      localStorage.setItem("currentUser", JSON.stringify(userData));
+      try {
+        // ✅ Login request to backend
+        const res = await fetch(`/api/families/signin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family, nickname, passkey })
+        });
 
-      window.location.href = "choose.html";
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Login failed');
+
+        // Save current user info locally (including family)
+        localStorage.setItem("currentUser", JSON.stringify({
+          family: data.family.name,
+          dad: data.family.dad,
+          mom: data.family.mom,
+          nickname: nickname,
+          role: role
+        }));
+
+        window.location.href = "choose.html";
+      } catch (err) {
+        alert("❌ Error: " + err.message);
+      }
     }
   </script>
 
