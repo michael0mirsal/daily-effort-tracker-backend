@@ -1,39 +1,96 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Create Family</title>
-  <style>body{font-family:Arial;text-align:center;padding:40px}input,button{padding:10px;margin:8px}</style>
+  <meta charset="UTF-8" />
+  <title>🆕 Create Family</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: linear-gradient(135deg, #f0f9ff, #cbebff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    input, button {
+      padding: 12px;
+      margin: 8px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #4f9ef7;
+    }
+    button {
+      background-color: #4f9ef7;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #357acb;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h2>🆕 Create Family</h2>
+  <h2>🆕 Create a New Family</h2>
   <input id="family" placeholder="Family name (e.g. Mirsal Family)" /><br/>
   <input id="nickname" placeholder="Your nickname (e.g. Mom)" /><br/>
   <input id="passkey" placeholder="Family pass key" type="password" /><br/>
-  <button onclick="signup()">Create</button>
+  <button onclick="signup()">Create Family</button>
+  <div class="message" id="msg"></div>
 
   <script>
     async function signup() {
       const family = document.getElementById('family').value.trim();
       const nickname = document.getElementById('nickname').value.trim();
       const passkey = document.getElementById('passkey').value.trim();
-      if (!family || !nickname || !passkey) return alert('Fill all fields');
+      const msg = document.getElementById('msg');
+      msg.textContent = '';
+
+      if (!family || !nickname || !passkey) {
+        msg.style.color = 'red';
+        return msg.textContent = '❌ Please fill all fields';
+      }
 
       try {
-        const res = await fetch('https://your-app.onrailway.app/api/families/signup', {
+        // ✅ Use relative path to backend
+        const res = await fetch('/api/families/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ family, nickname, passkey })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Signup failed');
 
-        // Save current user locally
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.style.color = 'red';
+          throw new Error(data.message || 'Signup failed');
+        }
+
+        // ✅ Save current user locally
         localStorage.setItem('currentUser', JSON.stringify({ family, nickname }));
-        alert('Family created 🎉');
-        location.href = 'choose.html';
+        msg.style.color = 'green';
+        msg.textContent = '🎉 Family created successfully! Redirecting...';
+
+        setTimeout(() => {
+          window.location.href = 'choose.html';
+        }, 1500);
+
       } catch (err) {
-        alert('Error: ' + err.message);
+        msg.style.color = 'red';
+        msg.textContent = '❌ Error: ' + err.message;
+        console.error(err);
       }
     }
   </script>
