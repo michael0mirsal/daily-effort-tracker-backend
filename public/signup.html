@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Create Family</title>
+  <style>body{font-family:Arial;text-align:center;padding:40px}input,button{padding:10px;margin:8px}</style>
+</head>
+<body>
+  <h2>🆕 Create Family</h2>
+  <input id="family" placeholder="Family name (e.g. Mirsal Family)" /><br/>
+  <input id="nickname" placeholder="Your nickname (e.g. Mom)" /><br/>
+  <input id="passkey" placeholder="Family pass key" type="password" /><br/>
+  <button onclick="signup()">Create</button>
+
+  <script>
+    async function signup() {
+      const family = document.getElementById('family').value.trim();
+      const nickname = document.getElementById('nickname').value.trim();
+      const passkey = document.getElementById('passkey').value.trim();
+      if (!family || !nickname || !passkey) return alert('Fill all fields');
+
+      try {
+        const res = await fetch('http://localhost:4000/api/families/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family, nickname, passkey })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Signup failed');
+
+        // Save current user locally
+        localStorage.setItem('currentUser', JSON.stringify({ family, nickname }));
+        alert('Family created 🎉');
+        location.href = 'choose.html';
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
