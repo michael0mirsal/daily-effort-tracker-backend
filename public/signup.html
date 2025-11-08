@@ -20,7 +20,7 @@
       if (!family || !nickname || !passkey) return alert('Fill all fields');
 
       try {
-        const res = await fetch('http://localhost:4000/api/families/signup', {
+        const res = await fetch('https://your-app.onrailway.app/api/families/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ family, nickname, passkey })
