@@ -42,8 +42,8 @@ function findFamilyByName(families, name) {
 // ✅ POST /signup - create new family
 // ======================================================
 router.post("/signup", async (req, res) => {
-  const { family, nickname, passkey } = req.body;
-  if (!family || !nickname || !passkey)
+  const { family, dad, mom, passkey } = req.body;
+  if (!family || !dad || !mom || !passkey)
     return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
@@ -56,14 +56,16 @@ router.post("/signup", async (req, res) => {
   const newFamily = {
     id: Date.now(),
     name: family,
+    dad,
+    mom,
     passhash: hash,
-    members: [{ id: Date.now() + 1, nickname }]
+    members: []
   };
 
   families.push(newFamily);
   saveFamilies(families);
 
-  res.json({ message: "Family created", family: { name: family, members: newFamily.members } });
+  res.json({ message: "Family created", family: { name: family, dad, mom, members: [] } });
 });
 
 // ======================================================
