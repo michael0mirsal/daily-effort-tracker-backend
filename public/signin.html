@@ -64,7 +64,7 @@
       const passkey = document.getElementById("passkey").value.trim();
 
       if (!nickname || !passkey) {
-        alert("Please fill all fields");
+        alert("❌ Please fill all fields");
         return;
       }
 
@@ -72,18 +72,17 @@
         const res = await fetch('/api/families/signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            name: nickname,   // 🔹 backend expects "name"
-            role: role,
-            passKey: passkey  // 🔹 backend expects "passKey"
+          body: JSON.stringify({
+            name: nickname,   // must match backend
+            role: role,       // must match backend
+            passKey: passkey  // must match backend exactly
           })
         });
 
         const data = await res.json();
-
         if (!res.ok) throw new Error(data.message || 'Login failed');
 
-        // Save family info + current user info in localStorage
+        // Save current user + family info in localStorage
         const user = {
           nickname: nickname,
           role: role,
