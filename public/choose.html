@@ -1,7 +1,7 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <title>Choose Activity 🌻</title>
   <style>
     body {
@@ -19,7 +19,6 @@
       overflow: hidden;
     }
 
-    /* Animated background circles */
     .circle {
       position: absolute;
       border-radius: 50%;
@@ -42,7 +41,6 @@
       color: #ff6f00;
       text-shadow: 2px 2px #fff;
       z-index: 1;
-      animation: fadeInDown 1s ease-out;
     }
 
     h2 {
@@ -51,7 +49,6 @@
       color: #8b4513;
       text-shadow: 1px 1px #fff;
       z-index: 1;
-      animation: fadeIn 1.5s ease-in;
     }
 
     #options {
@@ -59,17 +56,20 @@
       z-index: 1;
     }
 
-    #starsBox {
-      display: none; /* shown only for kids */
-      background: rgba(255, 255, 255, 0.6);
+    #starsBox, #motivationText {
       border-radius: 20px;
       padding: 10px 25px;
       font-size: 1.2rem;
-      color: #d35400;
       font-weight: bold;
       box-shadow: 0 3px 10px rgba(0,0,0,0.2);
       margin-bottom: 15px;
       animation: fadeIn 1.5s ease-in;
+    }
+
+    #starsBox {
+      display: none;
+      background: rgba(255, 255, 255, 0.6);
+      color: #d35400;
     }
 
     #starsCount {
@@ -82,13 +82,10 @@
     }
 
     #motivationText {
-      display: none; /* shown only for parents */
+      display: none;
       font-size: 1.4rem;
       color: #2e8b57;
-      font-weight: bold;
       text-shadow: 1px 1px #fff;
-      margin-bottom: 15px;
-      animation: fadeIn 1.5s ease-in;
     }
 
     button {
@@ -134,19 +131,16 @@
   </style>
 </head>
 <body>
-  <!-- Background circles -->
   <div class="circle"></div>
   <div class="circle"></div>
   <div class="circle"></div>
 
   <h1 id="welcomeText">🌞 Welcome!</h1>
 
-  <!-- Stars box for kids -->
   <div id="starsBox">
     Today you earned <span id="starsCount">0⭐</span> Keep going!
   </div>
 
-  <!-- Motivation text for parents -->
   <div id="motivationText">Keep supporting your kids! 🌟 Check their progress below!</div>
 
   <div id="options"></div>
@@ -155,54 +149,57 @@
   <footer>Made with 🌻 Love and Joy</footer>
 
   <script>
-    // ✅ Load current user from localStorage
     const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
+
     if (!user) {
       alert("Not logged in");
-      window.location.href = "welcome.html";
+      window.location.href = "signin.html";
     }
 
-    // ✅ Greeting
-    document.getElementById("welcomeText").innerHTML = `🌞 Hello <b>${user.nickname}</b> from <b>${user.family}</b>!`;
+    document.getElementById("welcomeText").innerHTML = 
+      `🌞 Hello <b>${user.nickname}</b> from <b>${user.family}</b>!`;
 
     const optionsDiv = document.getElementById("options");
 
+    function goToDailyEfforts() {
+      if (!user) { window.location.href = "signin.html"; return; }
+      window.location.href = "daily-efforts.html";
+    }
+
+    function goToDailyRoutine() {
+      if (!user) { window.location.href = "signin.html"; return; }
+      window.location.href = "routine.html";
+    }
+
     if (user.role === "parent") {
-      // Parent view
       document.getElementById("motivationText").style.display = "block";
       optionsDiv.innerHTML = `
         <h2>👩‍👧 Parent Options</h2>
         <button onclick="window.location.href='Kids Charts.html'">📊 View Children's Efforts</button>
       `;
     } else {
-      // Kid view
       document.getElementById("starsBox").style.display = "block";
       optionsDiv.innerHTML = `
         <h2>🧒 What would you like to do?</h2>
-        <button onclick="window.location.href='index.html'">🌟 Daily Efforts</button>
-        <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
+        <button onclick="goToDailyEfforts()">🌟 Daily Efforts</button>
+        <button onclick="goToDailyRoutine()">📅 Daily Routine</button>
       `;
 
-      // Load today's stars
       async function loadTodayStars() {
-        const today = new Date().toLocaleDateString("en-CA"); 
+        const today = new Date().toLocaleDateString("en-CA");
         let totalStars = 0;
 
         try {
           const resEfforts = await fetch(`/api/efforts/search?name=${encodeURIComponent(user.nickname)}&date=${encodeURIComponent(today)}`);
           const effortsData = await resEfforts.json();
-
           if (Array.isArray(effortsData)) {
             effortsData.forEach(rec => {
-              if (Array.isArray(rec.items)) {
-                totalStars += rec.items.reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
-              }
+              if (Array.isArray(rec.items)) totalStars += rec.items.reduce((s, it) => s + (Number(it.evaluation)||0),0);
             });
           }
 
           const routinesRes = await fetch(`/api/routines/search?name=${encodeURIComponent(user.nickname)}&date=${encodeURIComponent(today)}`);
           const routinesData = await routinesRes.json();
-
           if (Array.isArray(routinesData) && routinesData.length > 0) {
             const items = routinesData[0].items || [];
             totalStars += items.filter(i => i.done).length;
@@ -210,7 +207,7 @@
 
           document.getElementById("starsCount").textContent = `${totalStars}⭐`;
 
-        } catch (err) {
+        } catch(err) {
           console.error("❌ Error loading today's stars:", err);
           document.getElementById("starsCount").textContent = "❌ Error";
         }
@@ -221,7 +218,7 @@
 
     function logout() {
       localStorage.removeItem("currentUser");
-      window.location.href = "welcome.html";
+      window.location.href = "signin.html";
     }
   </script>
 </body>
