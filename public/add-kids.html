@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>👶 Add Family Kids</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 8px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #4f9ef7;
+      width: 250px;
+    }
+    button {
+      background-color: #4f9ef7;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.3s;
+      width: 150px;
+    }
+    button:hover {
+      background-color: #357acb;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    #kidsList {
+      margin-top: 20px;
+      text-align: left;
+      width: 300px;
+    }
+    .kidItem {
+      background: rgba(255,255,255,0.7);
+      padding: 5px 10px;
+      border-radius: 6px;
+      margin: 5px 0;
+    }
+    .message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>👶 Add Kids to Family</h2>
+
+  <input id="kidName" placeholder="Kid's nickname" /><br/>
+  <input id="kidAge" placeholder="Age (optional)" type="number" /><br/>
+  <select id="kidRole">
+    <option value="kid">Kid 👧/👦</option>
+  </select><br/>
+  <button onclick="addKid()">➕ Add Kid</button>
+  <div class="message" id="msg"></div>
+
+  <div id="kidsList"></div>
+  <button onclick="finish()" style="margin-top:20px;">✅ Finish & Save</button>
+
+  <script>
+    const msg = document.getElementById('msg');
+    const kidsListDiv = document.getElementById('kidsList');
+
+    // Retrieve family info from localStorage
+    const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
+    if (!familyData.family || !familyData.passkey) {
+      alert('Family info missing. Please create a family first.');
+      window.location.href = 'signup.html';
+    }
+
+    let kids = [];
+
+    function renderKids() {
+      kidsListDiv.innerHTML = '';
+      kids.forEach((k, idx) => {
+        const div = document.createElement('div');
+        div.className = 'kidItem';
+        div.textContent = `${k.nickname}${k.age ? ' (' + k.age + ' yrs)' : ''}`;
+        kidsListDiv.appendChild(div);
+      });
+    }
+
+    function addKid() {
+      const nickname = document.getElementById('kidName').value.trim();
+      const age = document.getElementById('kidAge').value.trim();
+      const role = document.getElementById('kidRole').value;
+
+      if (!nickname) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Please enter kid\'s nickname';
+        return;
+      }
+
+      kids.push({ nickname, age: age || null, role });
+      renderKids();
+
+      document.getElementById('kidName').value = '';
+      document.getElementById('kidAge').value = '';
+      msg.textContent = '';
+    }
+
+    async function finish() {
+      if (kids.length === 0) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Add at least one kid';
+        return;
+      }
+
+      try {
+        for (const kid of kids) {
+          const res = await fetch('/api/families/add-member', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              family: familyData.family,
+              nickname: kid.nickname,
+              passkey: familyData.passkey
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Failed to add kid');
+        }
+
+        msg.style.color = 'green';
+        msg.textContent = '🎉 All kids added successfully! Redirecting...';
+
+        setTimeout(() => {
+          // After adding kids, go to choose page
+          window.location.href = 'choose.html';
+        }, 1500);
+
+      } catch (err) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Error: ' + err.message;
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
