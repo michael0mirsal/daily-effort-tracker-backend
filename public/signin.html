@@ -1,40 +1,102 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Family Sign In</title>
-  <style>body{font-family:Arial;text-align:center;padding:40px}input,button{padding:10px;margin:8px}</style>
+  <meta charset="UTF-8">
+  <title>🔐 Family Stars Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, #f0f9ff, #cbebff);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    input, select {
+      padding: 10px;
+      margin: 8px;
+      border: 2px solid #4f9ef7;
+      border-radius: 10px;
+      font-size: 16px;
+      width: 250px;
+    }
+    button {
+      background-color: #4f9ef7;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+      margin-top: 10px;
+    }
+    button:hover { background-color: #357acb; }
+    .section {
+      background: rgba(255,255,255,0.7);
+      padding: 20px 40px;
+      border-radius: 15px;
+      margin: 15px 0;
+    }
+  </style>
 </head>
 <body>
-  <h2>🔐 Sign In</h2>
-  <input id="family" placeholder="Family name" /><br/>
-  <input id="nickname" placeholder="Your nickname" /><br/>
-  <input id="passkey" placeholder="Family pass key" type="password" /><br/>
-  <button onclick="signin()">Sign In</button>
+
+  <h1>👨‍👩‍👧 Family Stars Login</h1>
+
+  <div class="section">
+    <h2>👋 Welcome Back!</h2>
+    <input type="text" id="nickname" placeholder="Enter your name" /><br/>
+    <select id="role">
+      <option value="kid">Kid 👧</option>
+      <option value="parent">Parent 👩‍👧</option>
+    </select><br/>
+    <input type="password" id="passkey" placeholder="Family pass key" /><br/>
+    <button onclick="login()">🚀 Login</button>
+  </div>
 
   <script>
-    async function signin() {
-      const family = document.getElementById('family').value.trim();
-      const nickname = document.getElementById('nickname').value.trim();
-      const passkey = document.getElementById('passkey').value.trim();
-      if (!family || !nickname || !passkey) return alert('Fill all fields');
+    async function login() {
+      const nickname = document.getElementById("nickname").value.trim();
+      const role = document.getElementById("role").value;
+      const passkey = document.getElementById("passkey").value.trim();
+
+      if (!nickname || !passkey) {
+        alert("Please fill all fields");
+        return;
+      }
 
       try {
-        const res = await fetch('http://localhost:4000/api/families/signin', {
+        const res = await fetch('/api/families/signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ family, nickname, passkey })
+          body: JSON.stringify({ nickname, role, passkey })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Sign in failed');
 
-        localStorage.setItem('currentUser', JSON.stringify({ family: data.family.name, nickname }));
-        alert(`Welcome back, ${nickname}!`);
-        location.href = 'choose.html';
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Login failed');
+
+        // Save family info + current user info in localStorage
+        const user = {
+          nickname: nickname,
+          role: role,
+          family: data.family.name,
+          dad: data.family.dad || '',
+          mom: data.family.mom || '',
+          members: data.family.members || []
+        };
+
+        localStorage.setItem('currentUser', JSON.stringify(user));
+
+        // Redirect to choose page
+        window.location.href = 'choose.html';
       } catch (err) {
-        alert('Error: ' + err.message);
+        alert("❌ Error: " + err.message);
       }
     }
   </script>
+
 </body>
 </html>
