@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Family Sign In</title>
+  <style>body{font-family:Arial;text-align:center;padding:40px}input,button{padding:10px;margin:8px}</style>
+</head>
+<body>
+  <h2>🔐 Sign In</h2>
+  <input id="family" placeholder="Family name" /><br/>
+  <input id="nickname" placeholder="Your nickname" /><br/>
+  <input id="passkey" placeholder="Family pass key" type="password" /><br/>
+  <button onclick="signin()">Sign In</button>
+
+  <script>
+    async function signin() {
+      const family = document.getElementById('family').value.trim();
+      const nickname = document.getElementById('nickname').value.trim();
+      const passkey = document.getElementById('passkey').value.trim();
+      if (!family || !nickname || !passkey) return alert('Fill all fields');
+
+      try {
+        const res = await fetch('http://localhost:4000/api/families/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family, nickname, passkey })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Sign in failed');
+
+        localStorage.setItem('currentUser', JSON.stringify({ family: data.family.name, nickname }));
+        alert(`Welcome back, ${nickname}!`);
+        location.href = 'choose.html';
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
