@@ -128,5 +128,14 @@ router.post("/add-member", (req, res) => {
 
   res.json({ message: "Member added", family: found });
 });
+// ✅ GET /api/family/:familyName - return family data
+router.get("/family/:familyName", (req, res) => {
+  const familyName = req.params.familyName;
+  const families = loadFamilies();
+  const family = families.find(f => f.name.toLowerCase() === familyName.toLowerCase());
+  if (!family) return res.status(404).json({ message: "Family not found" });
+  res.json(family);
+});
+
 
 export default router;
