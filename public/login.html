@@ -69,7 +69,7 @@
     }
 
     try {
-      const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+      const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/family/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ family, name, passkey }) // ✅ send 'name'
