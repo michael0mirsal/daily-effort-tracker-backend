@@ -161,37 +161,44 @@
 
     // ✅ Load family data dynamically from backend
     async function loadFamilyTree() {
-      const treeDiv = document.getElementById("treeContainer");
-      try {
-        const res = await fetch(`http://localhost:4000/api/family/${user.family}`);
-        const family = await res.json();
+  const treeDiv = document.getElementById("treeContainer");
+  treeDiv.innerHTML = "Loading family tree...";
 
-        treeDiv.innerHTML = `
-          <div class="member">👨‍👩‍👧 ${family.familyName}</div>
-          <div class="parents">
-            <div class="member">👩 ${family.mom}</div>
-            <div class="member">👨 ${family.dad}</div>
-          </div>
-          <div class="children">
-            ${family.kids.map(k => `<div class="member">🧒 ${k.name} (${k.age || ""})</div>`).join("")}
-          </div>
-        `;
+  try {
+    const res = await fetch(`http://localhost:4000/api/family/${user.family}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        highlightUser();
-      } catch (err) {
-        treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
-        console.error(err);
-      }
+    const family = await res.json();
+
+    treeDiv.innerHTML = `
+      <div class="member">👨‍👩‍👧 ${family.name}</div>
+      <div class="parents">
+        <div class="member">👩 ${family.mom}</div>
+        <div class="member">👨 ${family.dad}</div>
+      </div>
+      <div class="children">
+        ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
+      </div>
+    `;
+
+    highlightUser();
+  } catch (err) {
+    treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
+    console.error("Error loading family tree:", err);
+  }
+}
+
+// Highlight current user
+function highlightUser() {
+  const members = document.querySelectorAll('.member');
+  members.forEach(m => {
+    if (m.textContent.includes(user.name)) {
+      m.classList.add('highlighted');
     }
+  });
+}
 
-    function highlightUser() {
-      const members = document.querySelectorAll('.member');
-      members.forEach(m => {
-        if (m.textContent.includes(user.name)) {
-          m.classList.add('highlighted');
-        }
-      });
-    }
+loadFamilyTree();
 
     function logout() {
       localStorage.removeItem("currentUser");
