@@ -40,13 +40,6 @@
       position: relative;
     }
 
-    .tree-line {
-      width: 2px;
-      background-color: #8b4513;
-      height: 20px;
-      margin: 0 auto;
-    }
-
     .member {
       background: #fff3cd;
       padding: 10px 20px;
@@ -55,7 +48,7 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       font-size: 1.1rem;
       color: #5c4033;
-      position: relative;
+      margin: 5px;
       transition: transform 0.3s ease, background 0.3s ease;
     }
 
@@ -69,31 +62,11 @@
       box-shadow: 0 0 20px #ffcc00;
     }
 
-    .parents {
+    .parents, .children {
       display: flex;
       justify-content: center;
-      gap: 40px;
-      margin-bottom: 15px;
-      position: relative;
-    }
-
-    .children {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 15px;
-      position: relative;
-    }
-
-    /* connecting lines between parents and children */
-    .connector {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background-color: #8b4513;
-      z-index: 0;
+      gap: 30px;
+      flex-wrap: wrap;
     }
 
     /* 🌞 Right Section - main content */
@@ -163,30 +136,14 @@
 <body>
   <!-- 🌳 LEFT: Family Tree -->
   <div id="familyTree">
-    <div class="tree">
-      <div class="member" id="familyRoot">👨‍👩‍👧 The Smith Family</div>
-      <div class="tree-line"></div>
-
-      <div class="parents">
-        <div class="member" id="mom">👩 Mom</div>
-        <div class="member" id="dad">👨 Dad</div>
-        <div class="connector"></div>
-      </div>
-
-      <div class="tree-line"></div>
-
-      <div class="children">
-        <div class="member" id="kid1">🧒 Madrona</div>
-        <div class="member" id="kid2">👦 Leo</div>
-      </div>
-    </div>
+    <div class="tree" id="treeContainer">Loading family tree...</div>
   </div>
 
   <!-- 🌞 RIGHT: Main Page -->
   <div id="mainContent">
     <h1 id="welcomeText">🌞 Welcome!</h1>
     <div id="starsBox">Today you earned <span id="starsCount">0⭐</span> Keep going!</div>
-    <div id="motivationText">Keep supporting your kids! 🌟 Check their progress below!</div>
+    <div id="motivationText">Keep supporting your kids! 🌟</div>
     <div id="options"></div>
     <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
     <footer>Made with 🌻 Love and Joy</footer>
@@ -200,13 +157,52 @@
     }
 
     document.getElementById("welcomeText").innerHTML =
-      `🌞 Hello <b>${user.name}</b> from <b>${user.family}</b>!`;
+      `🌞 Hello <b>${user.name}</b> (${user.role}) from <b>${user.family}</b>!`;
 
+    // ✅ Load family data dynamically from backend
+    async function loadFamilyTree() {
+      const treeDiv = document.getElementById("treeContainer");
+      try {
+        const res = await fetch(`http://localhost:4000/api/family/${user.family}`);
+        const family = await res.json();
+
+        treeDiv.innerHTML = `
+          <div class="member">👨‍👩‍👧 ${family.familyName}</div>
+          <div class="parents">
+            <div class="member">👩 ${family.mom}</div>
+            <div class="member">👨 ${family.dad}</div>
+          </div>
+          <div class="children">
+            ${family.kids.map(k => `<div class="member">🧒 ${k.name} (${k.age || ""})</div>`).join("")}
+          </div>
+        `;
+
+        highlightUser();
+      } catch (err) {
+        treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
+        console.error(err);
+      }
+    }
+
+    function highlightUser() {
+      const members = document.querySelectorAll('.member');
+      members.forEach(m => {
+        if (m.textContent.includes(user.name)) {
+          m.classList.add('highlighted');
+        }
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem("currentUser");
+      window.location.href = "signin.html";
+    }
+
+    // 🟢 Load family data
+    loadFamilyTree();
+
+    // 🎯 Role-based UI
     const optionsDiv = document.getElementById("options");
-
-    function goToDailyEfforts() { window.location.href = "daily-efforts.html"; }
-    function goToDailyRoutine() { window.location.href = "routine.html"; }
-
     if (user.role === "parent") {
       document.getElementById("motivationText").style.display = "block";
       optionsDiv.innerHTML = `
@@ -217,25 +213,9 @@
       document.getElementById("starsBox").style.display = "block";
       optionsDiv.innerHTML = `
         <h2>🧒 What would you like to do?</h2>
-        <button onclick="goToDailyEfforts()">🌟 Daily Efforts</button>
-        <button onclick="goToDailyRoutine()">📅 Daily Routine</button>
+        <button onclick="window.location.href='daily-efforts.html'">🌟 Daily Efforts</button>
+        <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
       `;
-    }
-
-    // 🌟 Highlight current kid in family tree
-    function highlightKid() {
-      const kidNodes = document.querySelectorAll('.member');
-      kidNodes.forEach(node => {
-        if (node.textContent.includes(user.name)) {
-          node.classList.add('highlighted');
-        }
-      });
-    }
-    highlightKid();
-
-    function logout() {
-      localStorage.removeItem("currentUser");
-      window.location.href = "signin.html";
     }
   </script>
 </body>
