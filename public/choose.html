@@ -18,131 +18,36 @@
       overflow: hidden;
     }
 
-    /* 🌳 Family Tree Section */
-    #familyTree {
-      flex: 0 0 35%;
-      height: 90%;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-right: 4px dashed rgba(255, 255, 255, 0.7);
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 0 30px 30px 0;
-      box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-    }
+    #familyTree { flex:0 0 35%; height:90%; position:relative; display:flex; justify-content:center; align-items:center; border-right:4px dashed rgba(255,255,255,0.7); background:rgba(255,255,255,0.3); border-radius:0 30px 30px 0; box-shadow:inset -5px 0 10px rgba(0,0,0,0.1); padding:20px; }
+    .tree { display:flex; flex-direction:column; align-items:center; position:relative; }
+    .member { background:#fff3cd; padding:10px 20px; border-radius:50%; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:1.1rem; color:#5c4033; margin:5px; transition:transform 0.3s ease, background 0.3s ease; }
+    .member:hover { transform:scale(1.1); background:#ffecb3; }
+    .highlighted { background:#ffeb3b !important; box-shadow:0 0 20px #ffcc00; }
+    .parents, .children { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
 
-    .tree {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
+    #mainContent { flex:0 0 65%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; position:relative; }
+    h1 { font-size:2.5rem; margin-bottom:5px; color:#ff6f00; text-shadow:2px 2px #fff; }
+    h2 { font-size:1.6rem; margin-top:25px; color:#8b4513; text-shadow:1px 1px #fff; }
+    #starsBox, #motivationText { border-radius:20px; padding:10px 25px; font-size:1.2rem; font-weight:bold; box-shadow:0 3px 10px rgba(0,0,0,0.2); margin-bottom:15px; }
+    #starsBox { display:none; background:rgba(255,255,255,0.6); color:#d35400; }
+    #starsCount { color:#ff4500; font-size:1.8rem; font-weight:bold; text-shadow:2px 2px 6px rgba(255,200,0,0.6); }
+    #motivationText { display:none; font-size:1.4rem; color:#2e8b57; text-shadow:1px 1px #fff; }
 
-    .member {
-      background: #fff3cd;
-      padding: 10px 20px;
-      border-radius: 50%;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      font-size: 1.1rem;
-      color: #5c4033;
-      margin: 5px;
-      transition: transform 0.3s ease, background 0.3s ease;
-    }
-
-    .member:hover {
-      transform: scale(1.1);
-      background: #ffecb3;
-    }
-
-    .highlighted {
-      background: #ffeb3b !important;
-      box-shadow: 0 0 20px #ffcc00;
-    }
-
-    .parents, .children {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
-    }
-
-    /* 🌞 Right Section - main content */
-    #mainContent {
-      flex: 0 0 65%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 20px;
-      position: relative;
-    }
-
-    h1 { font-size: 2.5rem; margin-bottom: 5px; color: #ff6f00; text-shadow: 2px 2px #fff; }
-    h2 { font-size: 1.6rem; margin-top: 25px; color: #8b4513; text-shadow: 1px 1px #fff; }
-
-    #starsBox, #motivationText {
-      border-radius: 20px;
-      padding: 10px 25px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-      margin-bottom: 15px;
-    }
-
-    #starsBox { display: none; background: rgba(255, 255, 255, 0.6); color: #d35400; }
-    #starsCount { color: #ff4500; font-size: 1.8rem; font-weight: bold; text-shadow: 2px 2px 6px rgba(255,200,0,0.6); }
-    #motivationText { display: none; font-size: 1.4rem; color: #2e8b57; text-shadow: 1px 1px #fff; }
-
-    button {
-      margin: 15px;
-      padding: 15px 40px;
-      font-size: 1.2rem;
-      border-radius: 25px;
-      border: none;
-      cursor: pointer;
-      background: linear-gradient(45deg, #fff3cd, #ffe082);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      color: #5c4033;
-      transition: all 0.3s ease;
-      font-weight: bold;
-    }
-
-    button:hover {
-      transform: translateY(-4px) scale(1.05);
-      background: linear-gradient(45deg, #fff9c4, #ffecb3);
-    }
-
-    #logoutBtn {
-      background: linear-gradient(45deg, #ffb3b3, #ff8080);
-      color: white;
-      margin-top: 30px;
-    }
-
-    #logoutBtn:hover { background: linear-gradient(45deg, #ff9999, #ff6666); }
-
-    footer {
-      position: absolute;
-      bottom: 10px;
-      font-size: 0.9rem;
-      color: rgba(80,50,20,0.6);
-    }
+    button { margin:15px; padding:15px 40px; font-size:1.2rem; border-radius:25px; border:none; cursor:pointer; background:linear-gradient(45deg, #fff3cd, #ffe082); box-shadow:0 4px 10px rgba(0,0,0,0.2); color:#5c4033; transition:all 0.3s ease; font-weight:bold; }
+    button:hover { transform:translateY(-4px) scale(1.05); background:linear-gradient(45deg, #fff9c4, #ffecb3); }
+    #logoutBtn { background:linear-gradient(45deg, #ffb3b3, #ff8080); color:white; margin-top:30px; }
+    #logoutBtn:hover { background:linear-gradient(45deg, #ff9999, #ff6666); }
+    footer { position:absolute; bottom:10px; font-size:0.9rem; color:rgba(80,50,20,0.6); }
   </style>
 </head>
 <body>
-  <!-- 🌳 LEFT: Family Tree -->
   <div id="familyTree">
     <div class="tree" id="treeContainer">Loading family tree...</div>
   </div>
 
-  <!-- 🌞 RIGHT: Main Page -->
   <div id="mainContent">
     <h1 id="welcomeText">🌞 Welcome!</h1>
-    <div id="starsBox">Today you earned <span id="starsCount">0⭐</span> Keep going!</div>
+    <div id="starsBox"></div>
     <div id="motivationText">Keep supporting your kids! 🌟</div>
     <div id="options"></div>
     <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
@@ -150,21 +55,6 @@
   </div>
 
   <script>
-    const starsBox = document.getElementById("starsBox");
-
-  // Example: fetch today's stars count for the user
-  let stars = 0; // Replace this with actual stars from your data
-
-  // Dynamic message based on stars
-  if (stars === 0) {
-    starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
-  } else if (stars === 1) {
-    starsBox.innerHTML = `🌟 You earned 1⭐ today! Keep shining!`;
-  } else {
-    starsBox.innerHTML = `🌟 You earned <span id="starsCount">${stars}⭐</span> today! Great job!`;
-  }
-
-  starsBox.style.display = "block";
     const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
     if (!user) {
       alert("Not logged in");
@@ -172,61 +62,62 @@
     }
 
     document.getElementById("welcomeText").innerHTML =
-      `🌞 Hello <b>${user.name}</b> <b>${user.family}</b>!`;
+      `🌞 Hello <b>${user.name}</b> from <b>${user.family}</b>!`;
 
-    // ✅ Load family data dynamically from backend
-    async function loadFamilyTree() {
-  const treeDiv = document.getElementById("treeContainer");
-  treeDiv.innerHTML = "Loading family tree...";
+    // 🌟 Stars box logic
+    const starsBox = document.getElementById("starsBox");
 
-  try {
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/families/family/${user.family}`);
+    // Fetch today's stars from backend (example: 0)
+    let stars = 0; // TODO: Replace with real API fetch for today's stars
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const family = await res.json();
-
-    treeDiv.innerHTML = `
-      <div class="member">👨‍👩‍👧 ${family.name}</div>
-      <div class="parents">
-        <div class="member">👩 ${family.mom}</div>
-        <div class="member">👨 ${family.dad}</div>
-      </div>
-      <div class="children">
-        ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
-      </div>
-    `;
-
-    highlightUser();
-  } catch (err) {
-    treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
-    console.error("Error loading family tree:", err);
-  }
-}
-
-// Highlight current user
-function highlightUser() {
-  const members = document.querySelectorAll('.member');
-  members.forEach(m => {
-    if (m.textContent.includes(user.name)) {
-      m.classList.add('highlighted');
+    if (stars === 0) {
+      starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
+    } else if (stars === 1) {
+      starsBox.innerHTML = `🌟 You earned 1⭐ today! Keep shining!`;
+    } else {
+      starsBox.innerHTML = `🌟 You earned <span id="starsCount">${stars}⭐</span> today! Great job!`;
     }
-  });
-}
+    starsBox.style.display = "block";
 
-// Call only once
+    // ✅ Load family tree
+    async function loadFamilyTree() {
+      const treeDiv = document.getElementById("treeContainer");
+      treeDiv.innerHTML = "Loading family tree...";
+      try {
+        const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/families/family/${user.family}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const family = await res.json();
+        treeDiv.innerHTML = `
+          <div class="member">👨‍👩‍👧 ${family.name}</div>
+          <div class="parents">
+            <div class="member">👩 ${family.mom}</div>
+            <div class="member">👨 ${family.dad}</div>
+          </div>
+          <div class="children">
+            ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
+          </div>
+        `;
+        highlightUser();
+      } catch (err) {
+        treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
+        console.error("Error loading family tree:", err);
+      }
+    }
 
-loadFamilyTree();
+    function highlightUser() {
+      document.querySelectorAll('.member').forEach(m => {
+        if (m.textContent.includes(user.name)) m.classList.add('highlighted');
+      });
+    }
+
+    loadFamilyTree();
 
     function logout() {
       localStorage.removeItem("currentUser");
       window.location.href = "signin.html";
     }
 
-    // 🟢 Load family data
-    loadFamilyTree();
-
-    // 🎯 Role-based UI
+    // Role-based UI
     const optionsDiv = document.getElementById("options");
     if (user.role === "parent") {
       document.getElementById("motivationText").style.display = "block";
@@ -235,7 +126,6 @@ loadFamilyTree();
         <button onclick="window.location.href='kids-charts.html'">📊 View Children's Efforts</button>
       `;
     } else {
-      document.getElementById("starsBox").style.display = "block";
       optionsDiv.innerHTML = `
         <h2>🧒 What would you like to do?</h2>
         <button onclick="window.location.href='daily-efforts.html'">🌟 Daily Efforts</button>
