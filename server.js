@@ -18,13 +18,14 @@ const PORT = process.env.PORT || 8080; // Railway prefers 8080
 // ======================================================
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+
 
 // ✅ Serve a welcome page (optional)
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
 });
 
+app.use(express.static(path.join(__dirname, "public")));
 // ======================================================
 // ✅ Connect Family Login System Routes
 // ======================================================
