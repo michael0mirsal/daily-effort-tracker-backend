@@ -330,7 +330,10 @@ const existing = await res.json();
         total += Number(inp.value) || 0;
       });
       document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
-      document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
+      document.getElementById("backBtn").onclick = () => {
+  window.location.href = "choose.html";
+};
+
     }
   </script>
 </body>
