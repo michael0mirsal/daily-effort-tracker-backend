@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, "../data/families.json");
 
-// ✅ Ensure the JSON file exists
+// ✅ Ensure JSON file exists
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "[]", "utf8");
 
 // ======================================================
@@ -65,54 +65,68 @@ router.post("/signup", async (req, res) => {
   families.push(newFamily);
   saveFamilies(families);
 
-  res.json({ message: "Family created", family: { name: family, dad, mom, members: [] } });
+  res.json({
+    message: "Family created",
+    family: { name: family, dad, mom, members: [] }
+  });
 });
 
 // ======================================================
-// ✅ POST /signin - login to existing family
+// ✅ POST /signin - login with name, role, and passkey
 // ======================================================
 router.post("/signin", async (req, res) => {
-  const { family, nickname, passkey } = req.body;
-  if (!family || !nickname || !passkey)
+  const { name, role, passkey } = req.body;
+  if (!name || !role || !passkey)
     return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
-  const found = findFamilyByName(families, family);
-  if (!found) return res.status(401).json({ message: "Family not found or wrong passkey" });
+
+  // Find family by matching dad/mom name or by member name
+  const found = families.find(
+    f =>
+      f.dad.toLowerCase() === name.toLowerCase() ||
+      f.mom.toLowerCase() === name.toLowerCase() ||
+      f.members.some(m => m.name.toLowerCase() === name.toLowerCase())
+  );
+
+  if (!found)
+    return res.status(401).json({ message: "Family not found or wrong passkey" });
 
   const match = await bcrypt.compare(passkey, found.passhash);
-  if (!match) return res.status(401).json({ message: "Family not found or wrong passkey" });
+  if (!match)
+    return res.status(401).json({ message: "Family not found or wrong passkey" });
 
-  // Add member if new
-  const existing = found.members.find(m => m.nickname.toLowerCase() === nickname.toLowerCase());
-  if (!existing) {
-    const member = { id: Date.now(), nickname };
-    found.members.push(member);
+  // Add new member if not parent and not existing
+  if (role === "kid" && !found.members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+    found.members.push({ id: Date.now(), name, role });
     saveFamilies(families);
   }
 
-  res.json({ message: "Login successful", family: { name: found.name }, nickname });
+  res.json({
+    message: "Login successful",
+    family: found
+  });
 });
 
 // ======================================================
-// ✅ POST /add-member - add new member to family
+// ✅ POST /add-member - add a new member to a family
 // ======================================================
 router.post("/add-member", (req, res) => {
-  const { family, nickname } = req.body;
-  if (!family || !nickname) return res.status(400).json({ message: "Missing data" });
+  const { family, name, role } = req.body;
+  if (!family || !name || !role)
+    return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
   const found = findFamilyByName(families, family);
   if (!found) return res.status(404).json({ message: "Family not found" });
 
-  if (found.members.some(m => m.nickname.toLowerCase() === nickname.toLowerCase()))
-    return res.status(400).json({ message: "Nickname already exists" });
+  if (found.members.some(m => m.name.toLowerCase() === name.toLowerCase()))
+    return res.status(400).json({ message: "Member already exists" });
 
-  const member = { id: Date.now(), nickname };
-  found.members.push(member);
+  found.members.push({ id: Date.now(), name, role });
   saveFamilies(families);
 
-  res.json({ message: "Member added", member });
+  res.json({ message: "Member added", family: found });
 });
 
 export default router;
