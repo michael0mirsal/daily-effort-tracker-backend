@@ -165,7 +165,8 @@
   treeDiv.innerHTML = "Loading family tree...";
 
   try {
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/family/${user.family}`);
+    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/families/${user.family}`);
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const family = await res.json();
