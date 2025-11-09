@@ -47,7 +47,7 @@ input, select, button {
 
 #log {
   position: fixed;
-  top: 28px;
+  top: 50px;
   right: 20px;
   background: #6b4eff;
   color: white;
@@ -63,8 +63,8 @@ input, select, button {
   position: fixed;
   top: 14px;
   right: 20px;
-  background: #6b4eff;
-  color: white;
+  background: #e8e8af;
+  color: rgb(56, 43, 171);
   border: none;
   padding: 10px 16px;
   font-size: 1rem;
