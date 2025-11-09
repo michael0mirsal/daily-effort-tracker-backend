@@ -48,52 +48,51 @@
   </div>
 
   <script>
-    function goToSignup() {
-      window.location.href = "signup.html";
+  function goToSignup() {
+    window.location.href = "signup.html";
+  }
+
+  function showLoginForm() {
+    document.getElementById("choiceSection").style.display = "none";
+    document.getElementById("loginSection").style.display = "block";
+  }
+
+  async function login() {
+    const family = document.getElementById("familyName").value.trim();
+    const name = document.getElementById("nickname").value.trim(); // rename here
+    const role = document.getElementById("role").value;
+    const passkey = document.getElementById("passkey").value.trim();
+
+    if (!family || !name || !passkey) {
+      alert("Please fill all fields");
+      return;
     }
 
-    function showLoginForm() {
-      document.getElementById("choiceSection").style.display = "none";
-      document.getElementById("loginSection").style.display = "block";
+    try {
+      const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ family, name, passkey }) // ✅ send 'name'
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
+
+      localStorage.setItem("currentUser", JSON.stringify({
+        family: data.family.name,
+        dad: data.family.dad,
+        mom: data.family.mom,
+        name: name,
+        role: role
+      }));
+
+      window.location.href = "signin.html";
+    } catch (err) {
+      alert("❌ Error: " + err.message);
     }
+  }
+</script>
 
-    async function login() {
-      const family = document.getElementById("familyName").value.trim();
-      const nickname = document.getElementById("nickname").value.trim();
-      const role = document.getElementById("role").value;
-      const passkey = document.getElementById("passkey").value.trim();
-
-      if (!family || !nickname || !passkey) {
-        alert("Please fill all fields");
-        return;
-      }
-
-      try {
-        // ✅ Login request to backend
-        const res = await fetch(`/api/families/signin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ family, nickname, passkey })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Login failed');
-
-        // Save current user info locally (including family)
-        localStorage.setItem("currentUser", JSON.stringify({
-          family: data.family.name,
-          dad: data.family.dad,
-          mom: data.family.mom,
-          nickname: nickname,
-          role: role
-        }));
-
-        window.location.href = "signin.html";
-      } catch (err) {
-        alert("❌ Error: " + err.message);
-      }
-    }
-  </script>
 
 </body>
 </html>
