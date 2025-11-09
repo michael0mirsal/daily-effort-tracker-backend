@@ -81,7 +81,6 @@ router.post("/signin", async (req, res) => {
 
   const families = loadFamilies();
 
-  // Find family by matching dad/mom name or by member name
   const found = families.find(
     f =>
       f.dad.toLowerCase() === name.toLowerCase() ||
@@ -128,6 +127,7 @@ router.post("/add-member", (req, res) => {
 
   res.json({ message: "Member added", family: found });
 });
+
 // ✅ GET /api/family/:familyName - return family data
 router.get("/family/:familyName", (req, res) => {
   const familyName = req.params.familyName;
@@ -137,5 +137,12 @@ router.get("/family/:familyName", (req, res) => {
   res.json(family);
 });
 
+// ======================================================
+// 🔹 DEBUG ROUTE - view all families (temporary, safe for testing)
+// ======================================================
+router.get("/debug", (req, res) => {
+  const families = loadFamilies();
+  res.json(families);
+});
 
 export default router;
