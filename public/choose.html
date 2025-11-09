@@ -91,10 +91,13 @@
 
   <script>
     const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
-    if (!user) { alert("Not logged in"); window.location.href="signin.html"; }
+    if (!user) {
+      alert("Not logged in");
+      window.location.href = "signin.html";
+    }
 
     document.getElementById("welcomeText").innerHTML =
-      `🌞 Hello <b>${user.nickname}</b> from <b>${user.family}</b>!`;
+      `🌞 Hello <b>${user.name}</b> from <b>${user.family}</b>!`;
 
     const optionsDiv = document.getElementById("options");
 
@@ -121,15 +124,16 @@
         let totalStars = 0;
 
         try {
-          const resEfforts = await fetch(`/api/efforts/search?name=${encodeURIComponent(user.nickname)}&date=${encodeURIComponent(today)}`);
+          const resEfforts = await fetch(`/api/efforts/search?name=${encodeURIComponent(user.name)}&date=${encodeURIComponent(today)}`);
           const effortsData = await resEfforts.json();
           if (Array.isArray(effortsData)) {
             effortsData.forEach(r => {
-              if (Array.isArray(r.items)) totalStars += r.items.reduce((sum,it)=>sum+(Number(it.evaluation)||0),0);
+              if (Array.isArray(r.items))
+                totalStars += r.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
             });
           }
 
-          const resRoutines = await fetch(`/api/routines/search?name=${encodeURIComponent(user.nickname)}&date=${encodeURIComponent(today)}`);
+          const resRoutines = await fetch(`/api/routines/search?name=${encodeURIComponent(user.name)}&date=${encodeURIComponent(today)}`);
           const routinesData = await resRoutines.json();
           if (Array.isArray(routinesData) && routinesData.length > 0) {
             const items = routinesData[0].items || [];
@@ -137,7 +141,7 @@
           }
 
           document.getElementById("starsCount").textContent = `${totalStars}⭐`;
-        } catch(err) {
+        } catch (err) {
           console.error("❌ Error loading today's stars:", err);
           document.getElementById("starsCount").textContent = "❌ Error";
         }
