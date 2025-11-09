@@ -36,6 +36,7 @@
   <div class="header">
     <h1>🌈 My Daily Effort Tracker</h1>
     <h2>Welcome, <span id="userName"></span>!</h2>
+    <button id="backBtn">⬅️ Back</button>
     <button id="log" onclick="logout()">🚪 Logout</button>
   </div>
   <hr>
@@ -329,6 +330,7 @@ const existing = await res.json();
         total += Number(inp.value) || 0;
       });
       document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
+      document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
     }
   </script>
 </body>
