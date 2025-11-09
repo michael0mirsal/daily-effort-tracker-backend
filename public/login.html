@@ -72,7 +72,7 @@
       const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ family, name, passkey }) // ✅ send 'name'
+        body: JSON.stringify({ name, role, passkey }) // ✅ send 'name'
       });
 
       const data = await res.json();
