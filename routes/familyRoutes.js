@@ -80,7 +80,7 @@ router.post("/signin", async (req, res) => {
     return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
-  let found = families.find(
+  const found = families.find(
     f =>
       f.dad.toLowerCase() === name.toLowerCase() ||
       f.mom.toLowerCase() === name.toLowerCase() ||
@@ -94,20 +94,24 @@ router.post("/signin", async (req, res) => {
   if (!match)
     return res.status(401).json({ message: "Wrong passkey" });
 
-  // ✅ Validate role logic
-  if (role === "dad" && found.dad.toLowerCase() !== name.toLowerCase())
-    return res.status(403).json({ message: "You are not the dad of this family" });
-
-  if (role === "mom" && found.mom.toLowerCase() !== name.toLowerCase())
-    return res.status(403).json({ message: "You are not the mom of this family" });
-
-  if (
-    role === "kid" &&
-    !found.members.some(m => m.name.toLowerCase() === name.toLowerCase())
-  ) {
-    // Add new kid if not found
-    found.members.push({ id: Date.now(), name, role });
-    saveFamilies(families);
+  // ✅ STRONG ROLE VALIDATION
+  if (role === "dad") {
+    if (found.dad.toLowerCase() !== name.toLowerCase())
+      return res.status(403).json({ message: "You are not the dad of this family" });
+  } else if (role === "mom") {
+    if (found.mom.toLowerCase() !== name.toLowerCase())
+      return res.status(403).json({ message: "You are not the mom of this family" });
+  } else if (role === "kid") {
+    const kidExists = found.members.some(
+      m => m.name.toLowerCase() === name.toLowerCase() && m.role === "kid"
+    );
+    if (!kidExists) {
+      // Add new kid if not found
+      found.members.push({ id: Date.now(), name, role: "kid" });
+      saveFamilies(families);
+    }
+  } else {
+    return res.status(400).json({ message: "Invalid role" });
   }
 
   res.json({
