@@ -80,23 +80,31 @@ router.post("/signin", async (req, res) => {
     return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
+  let found;
 
-  const found = families.find(
-    f =>
-      f.dad.toLowerCase() === name.toLowerCase() ||
-      f.mom.toLowerCase() === name.toLowerCase() ||
+  // Strict role-based matching
+  if (role === "dad") {
+    found = families.find(f => f.dad.toLowerCase() === name.toLowerCase());
+  } else if (role === "mom") {
+    found = families.find(f => f.mom.toLowerCase() === name.toLowerCase());
+  } else if (role === "kid") {
+    found = families.find(f =>
       f.members.some(m => m.name.toLowerCase() === name.toLowerCase())
-  );
+    );
+  }
 
   if (!found)
-    return res.status(401).json({ message: "Family not found or wrong passkey" });
+    return res.status(401).json({ message: "Family not found or wrong role" });
 
   const match = await bcrypt.compare(passkey, found.passhash);
   if (!match)
-    return res.status(401).json({ message: "Family not found or wrong passkey" });
+    return res.status(401).json({ message: "Wrong passkey" });
 
-  // Add new member if not parent and not existing
-  if (role === "kid" && !found.members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+  // Add kid if not already in members
+  if (
+    role === "kid" &&
+    !found.members.some(m => m.name.toLowerCase() === name.toLowerCase())
+  ) {
     found.members.push({ id: Date.now(), name, role });
     saveFamilies(families);
   }
@@ -128,7 +136,9 @@ router.post("/add-member", (req, res) => {
   res.json({ message: "Member added", family: found });
 });
 
+// ======================================================
 // ✅ GET /api/family/:familyName - return family data
+// ======================================================
 router.get("/family/:familyName", (req, res) => {
   const familyName = req.params.familyName;
   const families = loadFamilies();
@@ -138,7 +148,7 @@ router.get("/family/:familyName", (req, res) => {
 });
 
 // ======================================================
-// 🔹 DEBUG ROUTE - view all families (temporary, safe for testing)
+// 🔹 DEBUG - list all families (optional, dev only)
 // ======================================================
 router.get("/debug", (req, res) => {
   const families = loadFamilies();
