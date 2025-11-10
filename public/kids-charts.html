@@ -13,8 +13,15 @@
       padding: 20px;
       text-align: center;
     }
+    #familyName {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ff6f00;
+      text-shadow: 2px 2px #ffe082;
+      margin-bottom: 10px;
+    }
     #motivation {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       font-weight: bold;
       margin-bottom: 15px;
       color: #ff6f00;
@@ -32,7 +39,7 @@
     }
     h2 { 
       color: #ff6f00; 
-      font-size: 2rem;
+      font-size: 1.8rem;
       margin-bottom: 15px; 
       text-shadow: 2px 2px #ffe082;
     }
@@ -84,6 +91,7 @@
 <body>
 
 <button id="logoutBtn">Logout</button>
+<div id="familyName"></div>
 <div id="motivation">✨ Keep shining and earn your stars every day! ✨</div>
 <h2>📊 Kids Daily Stars</h2>
 <div id="kidsChartsContainer"></div>
@@ -99,10 +107,12 @@ function toLocalYMD(dateStr) {
   return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 }
 
-// ✅ Load only kids from the logged-in family
 async function createKidsCharts() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   if (!currentUser) { alert("Please log in!"); window.location.href="login.html"; return; }
+
+  // ✅ Show family name
+  document.getElementById("familyName").textContent = `🏡 Family: ${currentUser.family}`;
 
   const container = document.getElementById("kidsChartsContainer");
   container.innerHTML = "";
@@ -132,7 +142,6 @@ async function createKidsCharts() {
   }
 }
 
-// ✅ Create chart for each kid
 async function createChartForKid(kid, API_BASE) {
   const container = document.getElementById("kidsChartsContainer");
   const chartCard = document.createElement("div");
@@ -145,7 +154,6 @@ async function createChartForKid(kid, API_BASE) {
   container.appendChild(chartCard);
 
   try {
-    // ✅ Fetch kid's stars data (example endpoint)
     const res = await fetch(`${API_BASE}/api/stars/${kid.id}`);
     const starsData = await res.json();
 
