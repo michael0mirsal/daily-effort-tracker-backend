@@ -21,7 +21,7 @@
       margin-bottom: 10px;
     }
     #motivation {
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       font-weight: bold;
       margin-bottom: 15px;
       color: #ff6f00;
@@ -39,7 +39,7 @@
     }
     h2 { 
       color: #ff6f00; 
-      font-size: 1.8rem;
+      font-size: 2rem;
       margin-bottom: 15px; 
       text-shadow: 2px 2px #ffe082;
     }
@@ -83,6 +83,24 @@
       color: #ff6f00;
       font-size: 1.5rem;
     }
+    .winner-badge {
+      position: absolute;
+      top: -12px;
+      left: 25%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, #ffd700 0%, #ffb300 100%);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #000;
+      font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      animation: bounce 1s ease infinite alternate;
+    }
+    @keyframes bounce {
+      0% { transform: translateX(-50%) translateY(0); }
+      100% { transform: translateX(-50%) translateY(-5px); }
+    }
     canvas {
       margin-top: 10px;
     }
@@ -102,9 +120,27 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
   window.location.href = "login.html";
 });
 
+// Convert UTC date string to local YYYY-M-D
 function toLocalYMD(dateStr) {
   const d = new Date(dateStr);
   return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+// Get current week starting from last Saturday
+function getWeekDates() {
+  const today = new Date();
+  const day = today.getDay(); // 0=Sun, 6=Sat
+  const diff = (day + 1) % 7; // days since last Saturday
+  const sat = new Date(today);
+  sat.setDate(today.getDate() - diff);
+
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sat);
+    d.setDate(sat.getDate() + i);
+    weekDates.push(toLocalYMD(d));
+  }
+  return weekDates;
 }
 
 async function createKidsCharts() {
@@ -122,68 +158,110 @@ async function createKidsCharts() {
       ? "http://localhost:4000"
       : "https://daily-effort-tracker-backend-production.up.railway.app";
 
-    // ✅ Get only this user's family data
-    const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const family = await res.json();
+    const res = await fetch(`${API_BASE}/api/kidsStars/week`);
+    const data = await res.json();
+    const weekDates = getWeekDates();
+    const todayStr = toLocalYMD(new Date());
 
-    if (!family.members || family.members.length === 0) {
-      container.innerHTML = "<p>No kids found in this family.</p>";
-      return;
-    }
+    // Calculate weekly totals
+    const totals = {};
+    data.forEach(k => {
+      totals[k.name] = k.starsPerDay
+        .filter(d => weekDates.includes(toLocalYMD(d.date)))
+        .reduce((sum, d) => sum + (d.stars || 0), 0);
+    });
 
-    for (const kid of family.members) {
-      await createChartForKid(kid, API_BASE);
-    }
+    // Determine winner
+    const winnerName = Object.keys(totals).reduce((a, b) => totals[a] >= totals[b] ? a : b);
 
-  } catch (err) {
-    console.error("Error loading family charts:", err);
-    alert("❌ Failed to load family charts!");
+    // Show only current family members
+    const familyMembers = data.filter(k => k.family === currentUser.family);
+
+    familyMembers.forEach(kid => createChartForKid(
+      kid,
+      kid.name === winnerName,
+      totals[kid.name],
+      weekDates,
+      todayStr
+    ));
+
+  } catch(err) {
+    console.error("Error fetching kids stars:", err);
+    alert("Failed to load kids stars from server!");
   }
 }
 
-async function createChartForKid(kid, API_BASE) {
+function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
   const container = document.getElementById("kidsChartsContainer");
-  const chartCard = document.createElement("div");
-  chartCard.className = "chart-card";
-  const title = document.createElement("h3");
-  title.textContent = `🧒 ${kid.name}`;
-  chartCard.appendChild(title);
-  const canvas = document.createElement("canvas");
-  chartCard.appendChild(canvas);
-  container.appendChild(chartCard);
+  const chartWrapper = document.createElement("div");
+  chartWrapper.className = "chart-card";
 
-  try {
-    const res = await fetch(`${API_BASE}/api/stars/${kid.id}`);
-    const starsData = await res.json();
-
-    const days = starsData.map(d => toLocalYMD(d.date));
-    const stars = starsData.map(d => d.stars);
-
-    new Chart(canvas, {
-      type: "bar",
-      data: {
-        labels: days,
-        datasets: [{
-          label: `${kid.name}'s Stars`,
-          data: stars,
-          backgroundColor: "#ffb74d"
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: true },
-          datalabels: { anchor: 'end', align: 'top', color: '#ff6f00' }
-        },
-        scales: { y: { beginAtZero: true, max: 5 } }
-      },
-      plugins: [ChartDataLabels]
-    });
-  } catch (err) {
-    console.error(`Error loading stars for kid ${kid.name}:`, err);
+  if (isWinner) {
+    const badge = document.createElement("div");
+    badge.className = "winner-badge";
+    badge.textContent = `🏆 Weekly Winner – ${totalStars} Stars!`;
+    chartWrapper.appendChild(badge);
   }
+
+  const title = document.createElement("h3");
+  title.textContent = kid.name;
+  chartWrapper.appendChild(title);
+
+  const canvas = document.createElement("canvas");
+  chartWrapper.appendChild(canvas);
+  container.appendChild(chartWrapper);
+
+  const weekdays = ["Sat","Sun","Mon","Tue","Wed","Thu","Fri"];
+  const dataArr = [];
+  const bgColors = [];
+  const labels = [];
+
+  weekDates.forEach((dateStr, idx) => {
+    const found = kid.starsPerDay.find(d => toLocalYMD(d.date) === dateStr);
+    const stars = found ? found.stars : 0;
+    dataArr.push(stars);
+    bgColors.push(dateStr === todayStr ? "#ff6f00" : "#ffd54f");
+    const [year, month, day] = dateStr.split("-");
+    labels.push(`${weekdays[idx]}\n(${month}-${day})`);
+  });
+
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, '#ffe082');
+  gradient.addColorStop(1, '#ff6f00');
+
+  const maxStars = Math.max(...dataArr);
+  const yMax = maxStars + 5;
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: `${kid.name}'s Stars`,
+        data: dataArr,
+        backgroundColor: bgColors.map(c => c === "#ff6f00" ? "#ff6f00" : gradient),
+        borderColor: "#ffb74d",
+        borderWidth: 1,
+        borderRadius: 10,
+        hoverBackgroundColor: "#ff8f00"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        datalabels: { anchor:'end', align:'top', color:'#ff6f00', font:{weight:'bold', size:14} }
+      },
+      scales: {
+        x: { ticks:{ font:{ size:12 } } },
+        y: { beginAtZero:true, max:yMax, ticks:{ stepSize:1 } }
+      },
+      animation: { duration:1000, easing:'easeOutBounce' }
+    },
+    plugins: [ChartDataLabels]
+  });
 }
 
 window.addEventListener("DOMContentLoaded", createKidsCharts);
