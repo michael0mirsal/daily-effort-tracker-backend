@@ -156,17 +156,26 @@ async function createKidsCharts() {
       : "https://daily-effort-tracker-backend-production.up.railway.app";
 
     // Fetch family members
-    const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const family = await res.json();
+    // Fetch family members
+const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+const families = await res.json();
 
-    if (!family.members || family.members.length === 0) {
-      container.innerHTML = "<p>No members found in this family.</p>";
-      return;
-    }
+if (!families || families.length === 0) {
+  container.innerHTML = "<p>No family found.</p>";
+  return;
+}
 
-    // Only kids
-    const kids = family.members.filter(m => m.role === "kid");
+const family = families[0];
+
+if (!family.members || family.members.length === 0) {
+  container.innerHTML = "<p>No members found in this family.</p>";
+  return;
+}
+
+// Only kids
+const kids = family.members.filter(m => m.role === "kid");
+
     if (kids.length === 0) {
       container.innerHTML = "<p>No kids found in this family.</p>";
       return;
