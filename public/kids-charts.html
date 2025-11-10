@@ -112,7 +112,7 @@ async function createKidsCharts() {
   if (!currentUser) { alert("Please log in!"); window.location.href="login.html"; return; }
 
   // ✅ Show family name
-  document.getElementById("familyName").textContent = `🏡 Family: ${currentUser.family}`;
+  document.getElementById("familyName").textContent = `🏡 ${currentUser.family}'Family`;
 
   const container = document.getElementById("kidsChartsContainer");
   container.innerHTML = "";
