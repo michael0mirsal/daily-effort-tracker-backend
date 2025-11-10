@@ -118,20 +118,27 @@
     }
 
     // Role-based UI
-    const optionsDiv = document.getElementById("options");
-    if (user.role === "parent") {
-      document.getElementById("motivationText").style.display = "block";
-      optionsDiv.innerHTML = `
-        <h2>👩‍👧 Parent Options</h2>
-        <button onclick="window.location.href='kids-charts.html'">📊 View Children's Efforts</button>
-      `;
-    } else {
-      optionsDiv.innerHTML = `
-        <h2>🧒 What would you like to do?</h2>
-        <button onclick="window.location.href='index.html'">🌟 Daily Efforts</button>
-        <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
-      `;
-    }
+    // ✅ Role-based UI
+const optionsDiv = document.getElementById("options");
+
+if (user.role === "dad" || user.role === "mom") {
+  document.getElementById("motivationText").style.display = "block";
+  optionsDiv.innerHTML = `
+    <h2>👩‍👧 Parent Options</h2>
+    <button onclick="window.location.href='kids-charts.html'">📊 View Children's Efforts</button>
+  `;
+} else if (user.role === "kid") {
+  optionsDiv.innerHTML = `
+    <h2>🧒 What would you like to do?</h2>
+    <button onclick="window.location.href='index.html'">🌟 Daily Efforts</button>
+    <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
+  `;
+} else {
+  optionsDiv.innerHTML = `
+    <p style="color:red;">⚠️ Unknown role detected. Please log in again.</p>
+  `;
+}
+
   </script>
 </body>
 </html>
