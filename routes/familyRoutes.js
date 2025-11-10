@@ -74,12 +74,17 @@ router.post("/signup", async (req, res) => {
 // ======================================================
 // ✅ POST /signin - login with name, role, and passkey
 // ======================================================
+// ======================================================
+// ✅ POST /signin - login with name, role, and passkey
+// ======================================================
 router.post("/signin", async (req, res) => {
   const { name, role, passkey } = req.body;
   if (!name || !role || !passkey)
     return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
+
+  // ✅ Step 1: Find the family that contains this name in any role
   const found = families.find(
     f =>
       f.dad.toLowerCase() === name.toLowerCase() ||
@@ -90,33 +95,34 @@ router.post("/signin", async (req, res) => {
   if (!found)
     return res.status(401).json({ message: "Family not found" });
 
+  // ✅ Step 2: Check passkey matches the family password
   const match = await bcrypt.compare(passkey, found.passhash);
   if (!match)
     return res.status(401).json({ message: "Wrong passkey" });
 
-  // ✅ STRONG ROLE VALIDATION
-  if (role === "dad") {
-    if (found.dad.toLowerCase() !== name.toLowerCase())
-      return res.status(403).json({ message: "You are not the dad of this family" });
-  } else if (role === "mom") {
-    if (found.mom.toLowerCase() !== name.toLowerCase())
-      return res.status(403).json({ message: "You are not the mom of this family" });
+  // ✅ Step 3: Check exact role match
+  let isValid = false;
+
+  if (role === "dad" && found.dad.toLowerCase() === name.toLowerCase()) {
+    isValid = true;
+  } else if (role === "mom" && found.mom.toLowerCase() === name.toLowerCase()) {
+    isValid = true;
   } else if (role === "kid") {
-    const kidExists = found.members.some(
+    const kid = found.members.find(
       m => m.name.toLowerCase() === name.toLowerCase() && m.role === "kid"
     );
-    if (!kidExists) {
-      // Add new kid if not found
-      found.members.push({ id: Date.now(), name, role: "kid" });
-      saveFamilies(families);
-    }
-  } else {
-    return res.status(400).json({ message: "Invalid role" });
+    if (kid) isValid = true;
   }
+
+  if (!isValid)
+    return res
+      .status(403)
+      .json({ message: "Role mismatch — name does not belong to that role" });
 
   res.json({
     message: "Login successful",
-    family: found
+    family: found,
+    user: { name, role }
   });
 });
 
