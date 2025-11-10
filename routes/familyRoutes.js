@@ -80,31 +80,32 @@ router.post("/signin", async (req, res) => {
     return res.status(400).json({ message: "Missing data" });
 
   const families = loadFamilies();
-  let found;
-
-  // Strict role-based matching
-  if (role === "dad") {
-    found = families.find(f => f.dad.toLowerCase() === name.toLowerCase());
-  } else if (role === "mom") {
-    found = families.find(f => f.mom.toLowerCase() === name.toLowerCase());
-  } else if (role === "kid") {
-    found = families.find(f =>
+  let found = families.find(
+    f =>
+      f.dad.toLowerCase() === name.toLowerCase() ||
+      f.mom.toLowerCase() === name.toLowerCase() ||
       f.members.some(m => m.name.toLowerCase() === name.toLowerCase())
-    );
-  }
+  );
 
   if (!found)
-    return res.status(401).json({ message: "Family not found or wrong role" });
+    return res.status(401).json({ message: "Family not found" });
 
   const match = await bcrypt.compare(passkey, found.passhash);
   if (!match)
     return res.status(401).json({ message: "Wrong passkey" });
 
-  // Add kid if not already in members
+  // ✅ Validate role logic
+  if (role === "dad" && found.dad.toLowerCase() !== name.toLowerCase())
+    return res.status(403).json({ message: "You are not the dad of this family" });
+
+  if (role === "mom" && found.mom.toLowerCase() !== name.toLowerCase())
+    return res.status(403).json({ message: "You are not the mom of this family" });
+
   if (
     role === "kid" &&
     !found.members.some(m => m.name.toLowerCase() === name.toLowerCase())
   ) {
+    // Add new kid if not found
     found.members.push({ id: Date.now(), name, role });
     saveFamilies(families);
   }
@@ -148,7 +149,7 @@ router.get("/family/:familyName", (req, res) => {
 });
 
 // ======================================================
-// 🔹 DEBUG - list all families (optional, dev only)
+// 🔹 DEBUG - list all families (for testing only)
 // ======================================================
 router.get("/debug", (req, res) => {
   const families = loadFamilies();
