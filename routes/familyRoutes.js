@@ -115,9 +115,10 @@ router.post("/signin", async (req, res) => {
   }
 
   if (!isValid)
-    return res
-      .status(403)
-      .json({ message: "Role mismatch — name does not belong to that role" });
+return res
+  .status(403)
+  .json({ message: `This name is not registered as a ${role} in this family.` });
+
 
   res.json({
     message: "Login successful",
