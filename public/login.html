@@ -14,6 +14,13 @@
       justify-content: center;
       align-items: center;
     }
+    #homeBtn {
+      background-color: #6fcf97;
+      margin-top: 25px;
+    }
+    #homeBtn:hover {
+      background-color: #57b883;
+    }
 
     h1 { margin-bottom: 15px; color: #2c3e50; }
     input, select { padding: 10px; margin: 8px; border: 2px solid #4f9ef7; border-radius: 10px; font-size: 16px; }
@@ -46,6 +53,8 @@
     <input type="password" id="passkey" placeholder="Family pass key" /><br/>
     <button onclick="login()">🚀 Login</button>
   </div>
+<!-- 🏠 Home Page Button -->
+  <button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 
   <script>
   function goToSignup() {
@@ -89,6 +98,9 @@
       window.location.href = "choose.html";
     } catch (err) {
       alert("❌ Error: " + err.message);
+    }
+    function goHome() {
+      window.location.href = 'welcome.html';
     }
   }
 </script>
