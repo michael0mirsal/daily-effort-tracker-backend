@@ -2,65 +2,163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🆕 Create Family</title>
+  <title>🆕 Create Family | Family Stars</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       text-align: center;
-      padding: 40px;
-      background: linear-gradient(135deg, #f0f9ff, #cbebff);
+      background: linear-gradient(135deg, #f0f9ff, #d6f3ff, #eaf9ff);
       min-height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
-    input, button {
-      padding: 12px;
-      margin: 8px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #4f9ef7;
-      width: 250px;
-    }
-    button {
-      background-color: #4f9ef7;
-      color: white;
-      cursor: pointer;
-      border: none;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background-color: #357acb;
-    }
+
     h2 {
-      color: #2c3e50;
-      margin-bottom: 20px;
+      font-size: 2em;
+      color: #2d3436;
+      margin-bottom: 15px;
+      animation: fadeInDown 1.2s ease;
     }
+
+    .form-box {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 35px 45px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      animation: fadeInUp 1.2s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    input {
+      padding: 12px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: 2px solid #74b9ff;
+      width: 260px;
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(116,185,255,0.8);
+      transform: scale(1.02);
+    }
+
+    button {
+      background-color: #74b9ff;
+      color: white;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 18px;
+      margin-top: 15px;
+      transition: transform 0.2s, background 0.3s;
+    }
+
+    button:hover {
+      background-color: #0984e3;
+      transform: scale(1.07);
+    }
+
     .message {
       margin-top: 15px;
       font-weight: bold;
+      color: #e74c3c;
     }
-  </style>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Create Family</title>
-  <style>
-    body { font-family: Arial; text-align:center; padding:40px }
-    input, button { padding:10px; margin:8px; width:250px; }
+
+    /* Floating hearts and sparkles */
+    .float {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.8;
+      animation: floatUp 9s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(100vh) scale(1); opacity: 1; }
+      to { transform: translateY(-10vh) scale(1.4); opacity: 0; }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Motivational messages */
+    #motivation {
+      position: absolute;
+      bottom: 20px;
+      font-size: 1.1em;
+      color: #2d3436;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeText 7s infinite;
+    }
+
+    @keyframes fadeText {
+      0%, 100% { opacity: 0; }
+      20%, 80% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
-  <h2>🆕 Create a New Family</h2>
-  <input id="family" placeholder="Family's Nickname" /><br/>
-  <input id="dad" placeholder="Dad's name" /><br/>
-  <input id="mom" placeholder="Mom's name" /><br/>
-  <input id="passkey" placeholder="Family pass key" type="password" /><br/>
-  <button onclick="signup()">Create Family</button>
-  <div id="msg" style="color:red;margin-top:10px;"></div>
+
+  <h2>🆕 Create Your Family Account</h2>
+
+  <div class="form-box">
+    <input id="family" placeholder="🏡 Family's Nickname" /><br/>
+    <input id="dad" placeholder="👨 Dad's Name" /><br/>
+    <input id="mom" placeholder="👩 Mom's Name" /><br/>
+    <input id="passkey" placeholder="🔐 Family Pass Key" type="password" /><br/>
+    <button onclick="signup()">✨ Create Family</button>
+    <div id="msg" class="message"></div>
+  </div>
+
+  <div id="motivation">💖 Building family teamwork starts with one click!</div>
 
   <script>
+    // Floating elements animation
+    const emojis = ['💖','⭐','✨','🌈','💫','💛'];
+    function createFloat() {
+      const el = document.createElement('div');
+      el.className = 'float';
+      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.animationDuration = (7 + Math.random() * 5) + 's';
+      el.style.fontSize = (16 + Math.random() * 26) + 'px';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 9000);
+    }
+    setInterval(createFloat, 800);
+
+    // Motivational rotating messages
+    const messages = [
+      "🌟 A strong family starts with shared goals.",
+      "💪 Together, every effort shines brighter.",
+      "🎯 Track, reward, and celebrate daily progress.",
+      "❤️ Inspire your kids with small, consistent wins.",
+      "🌈 Love + Effort = Growth!"
+    ];
+    const mot = document.getElementById("motivation");
+    let i = 0;
+    setInterval(() => {
+      mot.textContent = messages[i % messages.length];
+      i++;
+    }, 7000);
+
+    // Signup logic (same as your backend)
     async function signup() {
       const family = document.getElementById('family').value.trim();
       const dad = document.getElementById('dad').value.trim();
@@ -69,13 +167,12 @@
       const msg = document.getElementById('msg');
 
       if (!family || !dad || !mom || !passkey) {
-        msg.textContent = '❌ Fill all fields';
+        msg.textContent = '❌ Please fill all fields';
         return;
       }
 
       try {
         const res = await fetch('https://daily-effort-tracker-backend-production.up.railway.app/api/families/signup', {
-
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ family, dad, mom, passkey })
@@ -84,13 +181,12 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Signup failed');
 
-        // Save family info locally for adding kids
         localStorage.setItem('currentFamily', JSON.stringify({ family, passkey }));
 
-        alert('Family created 🎉, Press OK to Add Your Childs');
+        alert('🎉 Family created successfully! Let’s add your kids now.');
         location.href = 'add-kids.html';
 
-      } catch(err) {
+      } catch (err) {
         msg.textContent = '❌ Error: ' + err.message;
       }
     }
