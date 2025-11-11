@@ -5,82 +5,169 @@
   <title>👶 Manage Family Kids</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Comic Sans MS', Arial, sans-serif;
       text-align: center;
       padding: 40px;
       background: linear-gradient(135deg, #fff0f5, #ffe4e1);
       min-height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: center;
+      position: relative;
     }
-    input, select, button {
+
+    h2 {
+      font-size: 2em;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      animation: fadeInDown 1s ease;
+    }
+
+    .form-box {
+      background: rgba(255,255,255,0.85);
+      padding: 25px 35px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      animation: fadeInUp 1s ease;
+      backdrop-filter: blur(6px);
+    }
+
+    input, select {
       padding: 10px;
       margin: 8px;
       font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #4f9ef7;
-      width: 250px;
+      border-radius: 12px;
+      border: 2px solid #74b9ff;
+      width: 260px;
+      transition: transform 0.2s, box-shadow 0.3s;
     }
+
+    input:focus, select:focus {
+      outline: none;
+      transform: scale(1.03);
+      box-shadow: 0 0 10px rgba(116,185,255,0.6);
+    }
+
     button {
-      background-color: #4f9ef7;
+      background-color: #ff7675;
       color: white;
       cursor: pointer;
       border: none;
-      transition: background 0.3s;
-      width: 150px;
+      border-radius: 14px;
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      transition: transform 0.2s, background 0.3s;
     }
-    button:hover { background-color: #357acb; }
-    h2 { color: #2c3e50; margin-bottom: 20px; }
+
+    button:hover {
+      background-color: #d63031;
+      transform: scale(1.1) rotate(-2deg);
+    }
+
     #kidsList {
       margin-top: 20px;
       text-align: left;
       width: 320px;
     }
+
     .kidItem {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.9);
       padding: 8px 10px;
-      border-radius: 6px;
+      border-radius: 10px;
       margin: 5px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-    .kidItem span {
       font-weight: bold;
     }
+
     .kidActions button {
       width: auto;
       padding: 5px 10px;
       margin-left: 5px;
       font-size: 13px;
+      background-color: #74b9ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      transition: transform 0.2s, background 0.3s;
     }
+
+    .kidActions button:hover {
+      background-color: #0984e3;
+      transform: scale(1.05);
+    }
+
     .message {
       margin-top: 15px;
       font-weight: bold;
+      font-size: 1em;
+    }
+
+    /* Floating emojis */
+    .float {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.8;
+      animation: floatUp 9s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(100vh) scale(1); opacity: 1; }
+      to { transform: translateY(-10vh) scale(1.4); opacity: 0; }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #motivation {
+      position: absolute;
+      bottom: 15px;
+      font-size: 1.2em;
+      color: #d63031;
+      font-weight: bold;
+      opacity: 0;
+      animation: fadeText 7s infinite;
+    }
+
+    @keyframes fadeText {
+      0%, 100% { opacity: 0; }
+      20%, 80% { opacity: 1; }
     }
   </style>
 </head>
 <body>
+
   <h2>👶 Manage Family Kids</h2>
 
-  <input id="kidName" placeholder="Kid's name" /><br/>
-  <input id="kidAge" placeholder="Age (optional)" type="number" /><br/>
-  <select id="kidRole">
-    <option value="kid">Kid 👧/👦</option>
-  </select><br/>
-  <button onclick="addKid()">➕ Add Kid</button>
-  <div class="message" id="msg"></div>
+  <div class="form-box">
+    <input id="kidName" placeholder="Kid's name" /><br/>
+    <input id="kidAge" placeholder="Age (optional)" type="number" /><br/>
+    <select id="kidRole">
+      <option value="kid">Kid 👧/👦</option>
+    </select><br/>
+    <button onclick="addKid()">➕ Add Kid</button>
+    <div class="message" id="msg"></div>
+  </div>
 
   <div id="kidsList"></div>
   <button onclick="finish()" style="margin-top:20px;">✅ Finish & Save</button>
+  <div id="motivation">🌟 Encourage your kids and celebrate their daily efforts!</div>
 
   <script>
     const msg = document.getElementById('msg');
     const kidsListDiv = document.getElementById('kidsList');
-
-    // ✅ Retrieve family info from localStorage
     const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
     if (!familyData.family || !familyData.passkey) {
       alert('Family info missing. Please create a family first.');
@@ -89,7 +176,6 @@
 
     let kids = [];
 
-    // 🧠 Load existing kids from backend
     async function loadKids() {
       try {
         const res = await fetch(`/api/families/family/${familyData.family}`);
@@ -132,7 +218,6 @@
 
       kids.push({ name, age: age || null, role });
       renderKids();
-
       document.getElementById('kidName').value = '';
       document.getElementById('kidAge').value = '';
       msg.textContent = '';
@@ -142,18 +227,15 @@
       const kid = kids[index];
       const newName = prompt("Edit name:", kid.name);
       if (!newName) return;
-
       const newAge = prompt("Edit age (optional):", kid.age || '');
       kids[index].name = newName.trim();
       kids[index].age = newAge ? parseInt(newAge) : null;
-
       renderKids();
     }
 
     async function deleteKid(index) {
       const kid = kids[index];
       if (!confirm(`Delete ${kid.name}?`)) return;
-
       try {
         const res = await fetch('/api/families/delete-member', {
           method: 'DELETE',
@@ -164,7 +246,6 @@
           })
         });
         if (!res.ok) throw new Error("Failed to delete on server");
-
         kids.splice(index, 1);
         renderKids();
       } catch (err) {
@@ -179,7 +260,6 @@
         msg.textContent = '❌ Add at least one kid';
         return;
       }
-
       try {
         for (const kid of kids) {
           const res = await fetch('/api/families/add-member', {
@@ -191,17 +271,12 @@
               role: kid.role
             })
           });
-
           const data = await res.json();
           if (!res.ok) throw new Error(data.message || 'Failed to add kid');
         }
-
         msg.style.color = 'green';
         msg.textContent = '🎉 All kids saved successfully! Redirecting...';
-        setTimeout(() => {
-          window.location.href = 'signin.html';
-        }, 1500);
-
+        setTimeout(() => { window.location.href = 'signin.html'; }, 1500);
       } catch (err) {
         msg.style.color = 'red';
         msg.textContent = '❌ Error: ' + err.message;
@@ -209,7 +284,36 @@
       }
     }
 
-    loadKids(); // Load existing kids at start
+    loadKids();
+
+    // Floating emojis
+    const emojis = ['💖','⭐','✨','🌈','🎈','🍭'];
+    function createFloat() {
+      const el = document.createElement('div');
+      el.className = 'float';
+      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.animationDuration = (6 + Math.random() * 5) + 's';
+      el.style.fontSize = (16 + Math.random() * 26) + 'px';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 9000);
+    }
+    setInterval(createFloat, 800);
+
+    // Motivational messages
+    const messages = [
+      "🌟 Encourage your kids daily!",
+      "🎯 Celebrate their achievements!",
+      "💖 Motivation + Love = Growth!",
+      "🎈 Make learning fun and joyful!",
+      "⭐ Track progress and inspire effort!"
+    ];
+    const mot = document.getElementById("motivation");
+    let i = 0;
+    setInterval(() => {
+      mot.textContent = messages[i % messages.length];
+      i++;
+    }, 7000);
   </script>
 </body>
 </html>
