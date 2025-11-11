@@ -164,14 +164,15 @@ async function createKidsCharts() {
 
     // === Try the family-based logic first ===
     const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const families = await res.json();
 
-    console.log("CurrentUser:", currentUser);
     console.log("Fetched Families:", families);
 
     if (families && families.length > 0 && families[0].members && families[0].members.length > 0) {
       const family = families[0];
       kids = family.members.filter(m => m.role === "kid");
+      console.log("✅ Family members:", kids);
     } else {
       console.warn("⚠️ No valid family found, falling back to /api/kidsStars/week");
       useFallback = true;
@@ -180,18 +181,21 @@ async function createKidsCharts() {
     // === Fallback to old API if no kids found ===
     if (useFallback || kids.length === 0) {
       const resFallback = await fetch(`${API_BASE}/api/kidsStars/week`);
+      if (!resFallback.ok) throw new Error(`HTTP ${resFallback.status}`);
       const data = await resFallback.json();
       console.log("Fallback data:", data);
 
       if (!data || data.length === 0) throw new Error("No data from fallback API");
 
-      // 🔧 Filter fallback data by current user's family if available
+      // 🔧 Filter fallback data by current user's family if possible
       const filtered = data.filter(k =>
-        k.family === currentUser.family || k.familyName === currentUser.family
+        k.family === currentUser.family ||
+        k.familyName === currentUser.family ||
+        k.name?.toLowerCase().includes(currentUser.family?.toLowerCase())
       );
-      kids = filtered.length > 0 ? filtered : data;
 
-      console.log("Using filtered fallback kids:", kids);
+      kids = filtered.length > 0 ? filtered : data;
+      console.log("✅ Using filtered fallback kids:", kids);
     }
 
     if (kids.length === 0) {
@@ -225,6 +229,7 @@ async function createKidsCharts() {
 
     // Determine weekly winner
     const winnerName = Object.keys(totals).reduce((a, b) => totals[a] >= totals[b] ? a : b);
+    console.log("🏆 Weekly Winner:", winnerName);
 
     // Show charts
     if (currentUser.role === "kid") {
@@ -232,11 +237,13 @@ async function createKidsCharts() {
       if (!kidData) return alert("No stars data found for you!");
       createChartForKid(kidData, kidData.name === winnerName, totals[kidData.name], weekDates, todayStr);
     } else {
-      kids.forEach(kid => createChartForKid(kid, kid.name === winnerName, totals[kid.name], weekDates, todayStr));
+      kids.forEach(kid =>
+        createChartForKid(kid, kid.name === winnerName, totals[kid.name], weekDates, todayStr)
+      );
     }
 
   } catch (err) {
-    console.error("Error fetching kids stars:", err);
+    console.error("❌ Error fetching kids stars:", err);
     alert("Failed to load kids stars from server!");
   }
 }
@@ -316,5 +323,6 @@ function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, tod
 
 window.addEventListener("DOMContentLoaded", createKidsCharts);
 </script>
+
 </body>
 </html>
