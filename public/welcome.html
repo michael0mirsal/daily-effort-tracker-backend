@@ -3,50 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <title>🌞 Welcome to My Daily Effort Tracker</title>
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
       text-align: center;
-      font-family: "Comic Sans MS", Arial, sans-serif;
+      font-family: "Poppins", "Comic Sans MS", Arial, sans-serif;
       padding-top: 80px;
-      background: linear-gradient(135deg, #f6d365, #fda085);
+      background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
       color: #333;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
+
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 10px;
+      animation: fadeInDown 1s ease-out;
+    }
+
+    p {
+      font-size: 1.2em;
+      margin-bottom: 40px;
+      animation: fadeInUp 1.5s ease-out;
+    }
+
     button {
-      margin-top: 30px;
-      padding: 15px 35px;
+      padding: 15px 40px;
       font-size: 1.2em;
       background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 30px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s, background 0.3s;
+      animation: bounceIn 2s infinite alternate;
     }
+
     button:hover {
-      background-color: #45a049;
+      background-color: #3e9e45;
+      transform: scale(1.05);
+    }
+
+    .info-box {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 25px 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      width: 60%;
+      max-width: 600px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .info-text {
+      font-size: 1.1em;
+      color: #444;
+      margin-top: 15px;
+      min-height: 60px;
+      transition: opacity 1s;
+    }
+
+    /* ✨ Animations */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes bounceIn {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
     }
   </style>
 </head>
 <body>
 
   <h1>🌈 Welcome to My Daily Effort Tracker</h1>
-  <p>Track your daily activities and routines easily 🎯</p>
+  <p>Empowering families to grow, learn, and shine together ✨</p>
+
+  <div class="info-box">
+    <div id="infoText" class="info-text">
+      💡 Track your child’s progress and celebrate small wins!
+    </div>
+  </div>
 
   <button id="startBtn">🚀 Start / Login</button>
 
   <script>
-    // ✅ Step 1: Check if already logged in
+    // ✅ Redirect if already logged in
     const user = localStorage.getItem("currentUser");
     if (user) {
-      // Go directly to choose.html if logged in
       window.location.href = "choose.html";
     }
 
-    // ✅ Step 2: Only handle button click if not logged in
     document.getElementById("startBtn").addEventListener("click", () => {
       window.location.href = "login.html";
     });
+
+    // ✨ Rotating motivational messages
+    const messages = [
+      "💡 Track your child’s progress and celebrate small wins!",
+      "👨‍👩‍👧 Build stronger family connections through shared goals.",
+      "⭐ Motivate your kids with stars and kind words of encouragement.",
+      "🎯 Teach consistency and commitment through daily effort.",
+      "🎁 Reward progress — even the small steps — to keep motivation high!",
+      "💬 Encourage open talk about goals, dreams, and challenges."
+    ];
+
+    let index = 0;
+    const infoText = document.getElementById("infoText");
+
+    setInterval(() => {
+      infoText.style.opacity = 0;
+      setTimeout(() => {
+        index = (index + 1) % messages.length;
+        infoText.innerHTML = messages[index];
+        infoText.style.opacity = 1;
+      }, 1000);
+    }, 4000);
   </script>
 
 </body>
