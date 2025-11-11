@@ -40,6 +40,13 @@
       border-radius: 15px;
       margin: 15px 0;
     }
+    #homeBtn {
+      background-color: #6fcf97;
+      margin-top: 25px;
+    }
+    #homeBtn:hover {
+      background-color: #57b883;
+    }
   </style>
 </head>
 <body>
@@ -50,13 +57,16 @@
     <h2>👋 Welcome Back!</h2>
     <input type="text" id="name" placeholder="Enter your name" /><br/>
     <select id="role">
-  <option value="dad">Dad 👨</option>
-  <option value="mom">Mom 👩</option>
-  <option value="kid">Kid 👧</option>
-</select><br/>
+      <option value="dad">Dad 👨</option>
+      <option value="mom">Mom 👩</option>
+      <option value="kid">Kid 👧</option>
+    </select><br/>
     <input type="password" id="passkey" placeholder="Family pass key" /><br/>
     <button onclick="login()">🚀 Login</button>
   </div>
+
+  <!-- 🏠 Home Page Button -->
+  <button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 
   <script>
     async function login() {
@@ -83,7 +93,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Login failed');
 
-        // Save current user + family info in localStorage
+        // ✅ Save current user + family info in localStorage
         const user = {
           name: name,
           role: role,
@@ -95,11 +105,15 @@
 
         localStorage.setItem('currentUser', JSON.stringify(user));
 
-        // Redirect to choose page
+        // ✅ Redirect to choose page
         window.location.href = 'choose.html';
       } catch (err) {
         alert("❌ Error: " + err.message);
       }
+    }
+
+    function goHome() {
+      window.location.href = 'welcome.html';
     }
   </script>
 
