@@ -123,7 +123,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // Convert UTC date string to local YYYY-M-D
 function toLocalYMD(dateStr) {
   const d = new Date(dateStr);
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
 // Get current week starting from last Saturday
@@ -144,7 +144,11 @@ function getWeekDates() {
 
 async function createKidsCharts() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  if (!currentUser) { alert("Please log in!"); window.location.href="login.html"; return; }
+  if (!currentUser) {
+    alert("Please log in!");
+    window.location.href = "login.html";
+    return;
+  }
 
   document.getElementById("familyName").textContent = `🏡 ${currentUser.family}'s Family`;
   const container = document.getElementById("kidsChartsContainer");
@@ -160,8 +164,10 @@ async function createKidsCharts() {
 
     // === Try the family-based logic first ===
     const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const families = await res.json();
+
+    console.log("CurrentUser:", currentUser);
+    console.log("Fetched Families:", families);
 
     if (families && families.length > 0 && families[0].members && families[0].members.length > 0) {
       const family = families[0];
@@ -174,10 +180,18 @@ async function createKidsCharts() {
     // === Fallback to old API if no kids found ===
     if (useFallback || kids.length === 0) {
       const resFallback = await fetch(`${API_BASE}/api/kidsStars/week`);
-      if (!resFallback.ok) throw new Error(`HTTP ${resFallback.status}`);
       const data = await resFallback.json();
+      console.log("Fallback data:", data);
+
       if (!data || data.length === 0) throw new Error("No data from fallback API");
-      kids = data;
+
+      // 🔧 Filter fallback data by current user's family if available
+      const filtered = data.filter(k =>
+        k.family === currentUser.family || k.familyName === currentUser.family
+      );
+      kids = filtered.length > 0 ? filtered : data;
+
+      console.log("Using filtered fallback kids:", kids);
     }
 
     if (kids.length === 0) {
@@ -195,19 +209,17 @@ async function createKidsCharts() {
         console.log("Fetching stars for", kid.name, kid.id);
         const resStars = await fetch(`${API_BASE}/api/stars/${kid.id}`);
         const starsData = await resStars.json();
-        console.log("Stars data:", starsData);
         kid.starsPerDay = starsData;
         totals[kid.name] = starsData
           .filter(d => weekDates.includes(toLocalYMD(d.date)))
           .reduce((sum, d) => sum + (d.stars || 0), 0);
       }
-    } 
-    // === If using fallback, stars already included ===
-    else {
+    } else {
+      // === If using fallback, stars are already included ===
       kids.forEach(kid => {
         totals[kid.name] = kid.starsPerDay
-          .filter(d => weekDates.includes(toLocalYMD(d.date)))
-          .reduce((sum, d) => sum + (d.stars || 0), 0);
+          ?.filter(d => weekDates.includes(toLocalYMD(d.date)))
+          .reduce((sum, d) => sum + (d.stars || 0), 0) || 0;
       });
     }
 
@@ -223,7 +235,7 @@ async function createKidsCharts() {
       kids.forEach(kid => createChartForKid(kid, kid.name === winnerName, totals[kid.name], weekDates, todayStr));
     }
 
-  } catch(err) {
+  } catch (err) {
     console.error("Error fetching kids stars:", err);
     alert("Failed to load kids stars from server!");
   }
@@ -249,7 +261,7 @@ function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, tod
   chartWrapper.appendChild(canvas);
   container.appendChild(chartWrapper);
 
-  const weekdays = ["Sat","Sun","Mon","Tue","Wed","Thu","Fri"];
+  const weekdays = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
   const dataArr = [];
   const bgColors = [];
   const labels = [];
@@ -265,8 +277,8 @@ function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, tod
 
   const ctx = canvas.getContext("2d");
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, '#ffe082');
-  gradient.addColorStop(1, '#ff6f00');
+  gradient.addColorStop(0, "#ffe082");
+  gradient.addColorStop(1, "#ff6f00");
 
   const maxStars = Math.max(...dataArr);
   const yMax = maxStars + 5;
@@ -290,13 +302,13 @@ function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, tod
       plugins: {
         legend: { display: false },
         tooltip: { enabled: true },
-        datalabels: { anchor:'end', align:'top', color:'#ff6f00', font:{weight:'bold', size:14} }
+        datalabels: { anchor: "end", align: "top", color: "#ff6f00", font: { weight: "bold", size: 14 } }
       },
       scales: {
-        x: { ticks:{ font:{ size:12 } } },
-        y: { beginAtZero:true, max:yMax, ticks:{ stepSize:1 } }
+        x: { ticks: { font: { size: 12 } } },
+        y: { beginAtZero: true, max: yMax, ticks: { stepSize: 1 } }
       },
-      animation: { duration:1000, easing:'easeOutBounce' }
+      animation: { duration: 1000, easing: "easeOutBounce" }
     },
     plugins: [ChartDataLabels]
   });
