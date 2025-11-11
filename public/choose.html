@@ -116,9 +116,9 @@
 
         if (todayStars === 0) {
           starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
-        } else if (todayStars === 1) {
-          starsBox.innerHTML = `🌟 You earned 1⭐ today! Keep shining!`;
-        } else {
+        } else if (todayStars < 10) {
+          starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! You have more!, continue🔥`;
+        } else if (todayStars > 10) {
           starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Great job!`;
         }
         starsBox.style.display = "block";
