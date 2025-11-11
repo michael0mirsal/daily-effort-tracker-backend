@@ -2,45 +2,130 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🏠 Family Tracker </title>
+  <title>🏠 Family Tracker</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Poppins", "Comic Sans MS", sans-serif;
       text-align: center;
-      background: linear-gradient(135deg, #dff9fb, #c7ecee);
+      background: linear-gradient(135deg, #a8edea, #fed6e3);
       height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      color: #2c3e50;
     }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2em;
+      animation: fadeInDown 1s ease-out;
+    }
+
+    p.subtitle {
+      font-size: 1.1em;
+      margin-bottom: 30px;
+      color: #555;
+      animation: fadeInUp 1.5s ease-out;
+    }
+
+    .section {
+      background: rgba(255,255,255,0.85);
+      padding: 25px 40px;
+      border-radius: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin: 10px 0;
+      width: 320px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    input, select {
+      padding: 10px;
+      margin: 8px;
+      border: 2px solid #4f9ef7;
+      border-radius: 10px;
+      font-size: 16px;
+      width: 90%;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 30px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.3s, background 0.3s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
     #homeBtn {
       background-color: #6fcf97;
       margin-top: 25px;
     }
+
     #homeBtn:hover {
       background-color: #57b883;
     }
 
-    h1 { margin-bottom: 15px; color: #2c3e50; }
-    input, select { padding: 10px; margin: 8px; border: 2px solid #4f9ef7; border-radius: 10px; font-size: 16px; }
-    button { background-color: #3498db; color: white; border: none; border-radius: 12px; padding: 12px 30px; margin: 10px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-    button:hover { background-color: #2980b9; }
-    .section { background: rgba(255,255,255,0.7); padding: 20px 40px; border-radius: 15px; margin: 15px 0; }
+    .tip-box {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 15px;
+      padding: 15px 25px;
+      font-size: 1em;
+      color: #333;
+      width: 70%;
+      max-width: 500px;
+      margin-top: 20px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .floating {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.5;
+      animation: float 8s linear infinite;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0); opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-800px) translateX(50px); opacity: 0; }
+    }
   </style>
 </head>
 <body>
 
-  <h1>👨‍👩‍👧 Family Tracker </h1>
+  <h1>👨‍👩‍👧 Family Tracker</h1>
+  <p class="subtitle">Track 🌟 Motivate ❤️ Celebrate</p>
 
-  <!-- Section 1: Sign Up / Sign In Choice -->
+  <!-- Section 1: Sign Up / Sign In -->
   <div class="section" id="choiceSection">
-    <p>Please choose:</p>
-    <button onclick="goToSignup()">🆕 Sign Up (New Family)</button>
-    <button onclick="showLoginForm()">🔐 Sign In (Existing Family)</button>
+    <p>Welcome! Please choose:</p>
+    <button onclick="goToSignup()">🆕 Create New Family</button>
+    <button onclick="showLoginForm()">🔐 Existing Family Login</button>
   </div>
 
-  <!-- Section 2: Login Form (hidden initially) -->
+  <!-- Section 2: Login Form -->
   <div class="section" id="loginSection" style="display:none;">
     <h2>👋 Welcome Back!</h2>
     <input type="text" id="familyName" placeholder="Enter family name" /><br/>
@@ -48,63 +133,105 @@
     <select id="role">
       <option value="kid">Kid 👧</option>
       <option value="parent">Parent 👩‍👧</option>
-    </select>
-    <br>
+    </select><br>
     <input type="password" id="passkey" placeholder="Family pass key" /><br/>
     <button onclick="login()">🚀 Login</button>
   </div>
-<!-- 🏠 Home Page Button -->
+
+  <!-- 🏠 Home Button -->
   <button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 
+  <!-- 💬 Dynamic Tips -->
+  <div class="tip-box" id="tipBox">
+    💡 Kids grow stronger when their effort is seen and celebrated!
+  </div>
+
   <script>
-  function goToSignup() {
-    window.location.href = "signup.html";
-  }
-
-  function showLoginForm() {
-    document.getElementById("choiceSection").style.display = "none";
-    document.getElementById("loginSection").style.display = "block";
-  }
-
-  async function login() {
-    const family = document.getElementById("familyName").value.trim();
-    const name = document.getElementById("nickname").value.trim(); // rename here
-    const role = document.getElementById("role").value;
-    const passkey = document.getElementById("passkey").value.trim();
-
-    if (!family || !name || !passkey) {
-      alert("Please fill all fields");
-      return;
+    // Navigation functions
+    function goToSignup() {
+      window.location.href = "signup.html";
     }
 
-    try {
-      const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, role, passkey }) // ✅ send 'name'
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
-
-      localStorage.setItem("currentUser", JSON.stringify({
-        family: data.family.name,
-        dad: data.family.dad,
-        mom: data.family.mom,
-        name: name,
-        role: role
-      }));
-
-      window.location.href = "choose.html";
-    } catch (err) {
-      alert("❌ Error: " + err.message);
+    function showLoginForm() {
+      document.getElementById("choiceSection").style.display = "none";
+      document.getElementById("loginSection").style.display = "block";
     }
-  }
-  function goHome() {
-      window.location.href = 'welcome.html';
+
+    function goHome() {
+      window.location.href = "welcome.html";
     }
-</script>
 
+    // Login logic
+    async function login() {
+      const family = document.getElementById("familyName").value.trim();
+      const name = document.getElementById("nickname").value.trim();
+      const role = document.getElementById("role").value;
+      const passkey = document.getElementById("passkey").value.trim();
 
+      if (!family || !name || !passkey) {
+        alert("❌ Please fill all fields");
+        return;
+      }
+
+      try {
+        const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, role, passkey })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Login failed");
+
+        localStorage.setItem("currentUser", JSON.stringify({
+          family: data.family.name,
+          dad: data.family.dad,
+          mom: data.family.mom,
+          name: name,
+          role: role
+        }));
+
+        window.location.href = "choose.html";
+      } catch (err) {
+        alert("❌ Error: " + err.message);
+      }
+    }
+
+    // 💬 Rotating motivational tips
+    const tips = [
+      "💡 Kids grow stronger when their effort is seen and celebrated!",
+      "🎯 Parents can track progress and build healthy routines.",
+      "🌟 Every small win deserves a big smile!",
+      "❤️ Connection grows when families share daily goals.",
+      "🎁 Reward effort, not just success – it builds confidence.",
+      "👨‍👩‍👧 Together, you can turn habits into happy memories."
+    ];
+
+    let tipIndex = 0;
+    const tipBox = document.getElementById("tipBox");
+
+    setInterval(() => {
+      tipBox.style.opacity = 0;
+      setTimeout(() => {
+        tipIndex = (tipIndex + 1) % tips.length;
+        tipBox.innerHTML = tips[tipIndex];
+        tipBox.style.opacity = 1;
+      }, 1000);
+    }, 5000);
+
+    // 🌈 Floating emojis for atmosphere
+    function createFloatingEmoji() {
+      const emojis = ["⭐", "💖", "🌈", "✨", "🎉"];
+      const emoji = document.createElement("div");
+      emoji.className = "floating";
+      emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      emoji.style.left = Math.random() * window.innerWidth + "px";
+      emoji.style.bottom = "-50px";
+      emoji.style.animationDuration = 6 + Math.random() * 5 + "s";
+      document.body.appendChild(emoji);
+      setTimeout(() => emoji.remove(), 10000);
+    }
+    setInterval(createFloatingEmoji, 800);
+  </script>
 </body>
 </html>
