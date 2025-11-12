@@ -131,7 +131,6 @@
     <input type="text" id="familyName" placeholder="Enter family name" /><br/>
     <input type="text" id="name" placeholder="Enter your name" /><br/>
 
-    <!-- ✅ Updated role options -->
     <select id="role">
       <option value="dad">Dad 👨</option>
       <option value="mom">Mom 👩</option>
@@ -145,7 +144,6 @@
   <!-- 🏠 Home Button -->
   <button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 
-  <!-- 💬 Dynamic Tips -->
   <div class="tip-box" id="tipBox">
     💡 Kids grow stronger when their effort is seen and celebrated!
   </div>
@@ -164,7 +162,7 @@
       window.location.href = "welcome.html";
     }
 
-    // ✅ Login validation and family data match
+    // ✅ Improved login validation
     async function login() {
       const family = document.getElementById("familyName").value.trim();
       const name = document.getElementById("name").value.trim();
@@ -172,7 +170,7 @@
       const passkey = document.getElementById("passkey").value.trim();
 
       if (!family || !name || !passkey) {
-        alert("❌ Please fill all fields");
+        alert("❌ Please fill in all fields.");
         return;
       }
 
@@ -186,15 +184,26 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Login failed");
 
-        const fam = data.family;
+        // 🧩 Fix: handle both formats (object or array)
+        const fam = data.family || data[0];
+
+        if (!fam || !fam.dad || !fam.mom) {
+          alert("⚠️ Missing data from server. Please check your family record.");
+          console.log("Server data:", data);
+          return;
+        }
+
+        const nameLower = name.toLowerCase();
+        const dadLower = fam.dad.toLowerCase();
+        const momLower = fam.mom.toLowerCase();
 
         let valid = false;
-        if (role === "dad" && name === fam.dad) valid = true;
-        else if (role === "mom" && name === fam.mom) valid = true;
-        else if (role === "kid" && fam.members.some(m => m.name === name && m.role === "kid")) valid = true;
+        if (role === "dad" && nameLower === dadLower) valid = true;
+        else if (role === "mom" && nameLower === momLower) valid = true;
+        else if (role === "kid" && fam.members.some(m => m.name.toLowerCase() === nameLower && m.role === "kid")) valid = true;
 
         if (!valid) {
-          alert("❌ Name and role do not match this family record.");
+          alert("❌ The entered name and role do not match this family record.");
           return;
         }
 
@@ -202,14 +211,16 @@
           family: fam.name,
           dad: fam.dad,
           mom: fam.mom,
-          name: name,
-          role: role
+          name,
+          role
         }));
 
+        alert("✅ Welcome back, " + name + "!");
         window.location.href = "choose.html";
 
       } catch (err) {
         alert("❌ Error: " + err.message);
+        console.error(err);
       }
     }
 
