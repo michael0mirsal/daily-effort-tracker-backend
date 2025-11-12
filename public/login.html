@@ -129,7 +129,7 @@
   <div class="section" id="loginSection" style="display:none;">
     <h2>👋 Welcome Back!</h2>
     <input type="text" id="familyName" placeholder="Enter family name" /><br/>
-    <input type="text" id="nickname" placeholder="Enter your name" /><br/>
+    <input type="text" id="name" placeholder="Enter your name" /><br/>
 
     <!-- ✅ Updated role options -->
     <select id="role">
@@ -151,7 +151,6 @@
   </div>
 
   <script>
-    // Navigation
     function goToSignup() {
       window.location.href = "signup.html";
     }
@@ -165,7 +164,7 @@
       window.location.href = "welcome.html";
     }
 
-    // ✅ Updated login logic for dad/mom/kid roles
+    // ✅ Login validation and family data match
     async function login() {
       const family = document.getElementById("familyName").value.trim();
       const name = document.getElementById("name").value.trim();
@@ -181,28 +180,40 @@
         const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, role, passkey })
+          body: JSON.stringify({ family, passkey })
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Login failed");
 
-        // ✅ Store family info with dad, mom, and current role
+        const fam = data.family;
+
+        let valid = false;
+        if (role === "dad" && name === fam.dad) valid = true;
+        else if (role === "mom" && name === fam.mom) valid = true;
+        else if (role === "kid" && fam.members.some(m => m.name === name && m.role === "kid")) valid = true;
+
+        if (!valid) {
+          alert("❌ Name and role do not match this family record.");
+          return;
+        }
+
         localStorage.setItem("currentUser", JSON.stringify({
-          family: data.family.name,
-          dad: data.family.dad,
-          mom: data.family.mom,
+          family: fam.name,
+          dad: fam.dad,
+          mom: fam.mom,
           name: name,
           role: role
         }));
 
         window.location.href = "choose.html";
+
       } catch (err) {
         alert("❌ Error: " + err.message);
       }
     }
 
-    // 💬 Motivational Tips
+    // 💬 Rotating motivational tips
     const tips = [
       "💡 Kids grow stronger when their effort is seen and celebrated!",
       "🎯 Parents can track progress and build healthy routines.",
