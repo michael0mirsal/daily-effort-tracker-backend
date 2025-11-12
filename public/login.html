@@ -129,7 +129,7 @@
   <div class="section" id="loginSection" style="display:none;">
     <h2>👋 Welcome Back!</h2>
     <input type="text" id="familyName" placeholder="Enter family name" /><br/>
-    <input type="text" id="nickname" placeholder="Enter your nickname" /><br/>
+    <input type="text" id="nickname" placeholder="Enter your name" /><br/>
 
     <!-- ✅ Updated role options -->
     <select id="role">
@@ -168,7 +168,7 @@
     // ✅ Updated login logic for dad/mom/kid roles
     async function login() {
       const family = document.getElementById("familyName").value.trim();
-      const name = document.getElementById("nickname").value.trim();
+      const name = document.getElementById("name").value.trim();
       const role = document.getElementById("role").value;
       const passkey = document.getElementById("passkey").value.trim();
 
