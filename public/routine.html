@@ -279,26 +279,35 @@ function attachCheckboxListeners() {
 // --- helper functions (getAllTasks, updateRoutineStars, attachCheckboxListeners, etc.) ---
 
 // ✅ Save routine (replace your old saveBtn handler)
-// ✅ Save routine (replace your old saveBtn handler)
 document.getElementById("saveBtn").onclick = async () => {
   const items = getAllTasks();
   const date = getLocalDate();
   const checkedData = items.filter(i => i.done).length;
 
-  const payload = { name: user.name, date, items, checkedData, family: user.family || "" };
+  const payload = { 
+    name: user.name, 
+    date, 
+    items, 
+    checkedData, 
+    family: user.family || "" // for saving stars by family
+  };
   console.log("Saving routine payload:", payload);
 
   try {
-    const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family || ", {
+    const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
+
     const data = await res.json();
     console.log("Backend response:", data);
 
-    if (res.ok) alert("✅ Routine saved successfully!");
-    else alert("❌ Error saving routine: " + (data.error || JSON.stringify(data)));
+    if (res.ok) {
+      alert("✅ Routine saved successfully!");
+    } else {
+      alert("❌ Error saving routine: " + (data.error || JSON.stringify(data)));
+    }
 
     currentLoadedDate = date;
     updateRoutineStars();
@@ -307,6 +316,7 @@ document.getElementById("saveBtn").onclick = async () => {
     alert("❌ Failed to save routine");
   }
 };
+
 
 
 // --- other handlers (loadBtn, loadByDateBtn, backBtn, logoutBtn, DOMContentLoaded) ---
