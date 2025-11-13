@@ -100,34 +100,38 @@
 
     // ✅ Load today's stars from /api/kidsStars/week
     async function loadStars() {
-      try {
-        const res = await fetch(`${API_BASE}/api/kidsStars/week`);
-        if (!res.ok) throw new Error("Failed to fetch stars");
-        const allStars = await res.json();
+  try {
+    // Fetch all kids stars
+    const res = await fetch(`${API_BASE}/api/kidsStars/week`);
+    if (!res.ok) throw new Error("Failed to fetch stars");
+    const allStars = await res.json();
 
-        const today = new Date().toISOString().split("T")[0];
-        const kidData = allStars.find(k => k.name === user.name);
-        let todayStars = 0;
+    const today = new Date().toISOString().split("T")[0];
 
-        if (kidData) {
-          const todayRecord = kidData.starsPerDay.find(s => s.date === today);
-          if (todayRecord) todayStars = todayRecord.stars;
-        }
+    // 🔹 Filter by both name and family
+    const kidData = allStars.find(k => k.name === user.name && k.family === user.family);
+    let todayStars = 0;
 
-        if (todayStars === 0) {
-          starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
-        } else if (todayStars < 10) {
-          starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! You have more!, continue🔥`;
-        } else if (todayStars > 10) {
-          starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Great job!`;
-        }
-        starsBox.style.display = "block";
-      } catch (err) {
-        console.error("Error loading stars:", err);
-        starsBox.innerHTML = "⚠️ Unable to load today's stars.";
-        starsBox.style.display = "block";
-      }
+    if (kidData) {
+      const todayRecord = kidData.starsPerDay.find(s => s.date === today);
+      if (todayRecord) todayStars = todayRecord.stars;
     }
+
+    if (todayStars === 0) {
+      starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
+    } else if (todayStars < 10) {
+      starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Keep going🔥`;
+    } else {
+      starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Amazing job!`;
+    }
+    starsBox.style.display = "block";
+  } catch (err) {
+    console.error("Error loading stars:", err);
+    starsBox.innerHTML = "⚠️ Unable to load today's stars.";
+    starsBox.style.display = "block";
+  }
+}
+
 
     loadFamilyTree();
     loadStars();
