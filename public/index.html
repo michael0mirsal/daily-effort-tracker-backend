@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>🌞 My Daily Effort Tracker</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- ✨ Toast Popup Style -->
   <style>
     #toast {
       visibility: hidden;
@@ -31,7 +29,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="header">
     <h1>🌈 My Daily Effort Tracker</h1>
@@ -41,25 +38,10 @@
   </div>
   <hr>
 
-  <!-- 🏦 Saving Box -->
-  <div id="checkedStarsBox" style="
-    text-align:center;
-    margin-bottom:15px;
-    font-size:1.3em;
-    font-weight:bold;
-    background:linear-gradient(135deg, #fff5a8, #ffd54f);
-    color:#8b5e00;
-    border:2px solid #f3c623;
-    border-radius:15px;
-    padding:10px 20px;
-    box-shadow:0 0 15px rgba(255,215,0,0.4);
-    width:fit-content;
-    margin:auto;
-  ">
+  <div id="checkedStarsBox" style="text-align:center; margin-bottom:15px; font-size:1.3em; font-weight:bold; background:linear-gradient(135deg, #fff5a8, #ffd54f); color:#8b5e00; border:2px solid #f3c623; border-radius:15px; padding:10px 20px; box-shadow:0 0 15px rgba(255,215,0,0.4); width:fit-content; margin:auto;">
     🏦 Stars Box: <span id="checkedStarsDisplay">0⭐</span>
   </div>
 
-  <!-- 👩‍👧 User Role -->
   <div style="margin-bottom: 15px; text-align: center;">
     <label style="font-weight: bold;">👩‍👧 Select User Role:</label>
     <select id="roleSelect">
@@ -68,26 +50,21 @@
     </select>
   </div>
 
-  <!-- 📝 Add New Effort -->
   <div class="tracker-card">
     <h2>📝 Add New Effort</h2>
-
     <div class="form-row">
       <input type="date" id="date" />
       <input type="text" id="activity" placeholder="Activity (e.g., Reading, Math)" />
       <input type="number" id="timeMin" placeholder="Time (min)" />
     </div>
-
     <div class="form-row">
       <input type="number" id="evaluation" placeholder="Evaluation (1–10)" min="1" max="10" />
       <input type="text" id="note" placeholder="Note (optional)" />
     </div>
-
     <div class="buttons">
       <button id="addBtn">➕ Add</button>
       <button id="saveBtn">💾 Save Day</button>
     </div>
-
     <table id="effortTable">
       <thead>
         <tr>
@@ -102,7 +79,6 @@
     </table>
   </div>
 
-  <!-- 🔍 Show Efforts -->
   <div class="tracker-card">
     <h2>🔍 Show Efforts</h2>
     <div class="form-row">
@@ -110,7 +86,6 @@
       <input type="date" id="filterDate" />
       <button id="showBtn">👀 Show Effort</button>
     </div>
-
     <table id="showTable">
       <thead>
         <tr>
@@ -127,15 +102,14 @@
     </table>
   </div>
 
-  <!-- ✨ Toast Popup -->
   <div id="toast">✨ Saved!</div>
 
-  <!-- 🧠 Script -->
   <script>
-    // ✅ Load current user
+    const API_BASE = "https://daily-effort-tracker-backend-production.up.railway.app";
     const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
     let currentUser = storedUser.name;
     let currentRole = storedUser.role;
+    let currentFamily = storedUser.family; // ✅ Added family
 
     if (!currentUser) {
       window.location.href = "login.html";
@@ -147,7 +121,7 @@
 
     document.getElementById("roleSelect").addEventListener("change", (e) => {
       currentRole = e.target.value;
-      localStorage.setItem("currentUser", JSON.stringify({ name: currentUser, role: currentRole }));
+      localStorage.setItem("currentUser", JSON.stringify({ name: currentUser, role: currentRole, family: currentFamily }));
     });
 
     function logout() {
@@ -157,7 +131,7 @@
 
     function isPastDate(selectedDate) {
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setHours(0,0,0,0);
       const chosen = new Date(selectedDate);
       return chosen < today;
     }
@@ -172,22 +146,15 @@
       const evaluation = document.getElementById("evaluation").value;
       const note = document.getElementById("note").value;
 
-      if (!date || !activity) {
-        alert("Please fill date and activity.");
-        return;
-      }
+      if (!date || !activity) { alert("Please fill date and activity."); return; }
+      if (isPastDate(date)) { alert("❌ You cannot add efforts for past dates!"); return; }
 
-      if (isPastDate(date)) {
-        alert("❌ You cannot add efforts for past dates!");
-        return;
-      }
-
-      const newItem = { name: currentUser, date, activity, timeMin, evaluation, note };
+      const newItem = { name: currentUser, family: currentFamily, date, activity, timeMin, evaluation, note }; // ✅ Added family
       addedItems.push(newItem);
 
       tableBody.innerHTML = addedItems.map((it, i) => `
         <tr>
-          <td>${i + 1}</td>
+          <td>${i+1}</td>
           <td>${it.activity}</td>
           <td>${it.timeMin}</td>
           <td>${it.evaluation}</td>
@@ -196,67 +163,57 @@
       `).join("");
     });
 
-    // ✅ Save efforts to server
     document.getElementById("saveBtn").addEventListener("click", async () => {
-  if (addedItems.length === 0) return alert("Please add at least one effort.");
+      if (addedItems.length === 0) return alert("Please add at least one effort.");
+      const date = addedItems[0].date;
+      if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
 
-  const date = addedItems[0].date;
-  if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
+      try {
+        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&date=${date}`);
+        const existing = await res.json();
 
-  try {
-    // 🔍 Check if existing efforts for same date already exist
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/efforts/search?name=${currentUser}&date=${date}`);
-const existing = await res.json();
+        let finalItems = [...addedItems];
+        if (existing.length && existing[0].items) finalItems = [...existing[0].items, ...addedItems];
 
-    let finalItems = [...addedItems];
-    if (existing.length && existing[0].items) {
-      // 🧩 Merge new items with existing ones
-      finalItems = [...existing[0].items, ...addedItems];
-    }
+        const effortData = {
+          name: currentUser,
+          family: currentFamily, // ✅ Include family
+          date,
+          items: finalItems
+        };
 
-    const effortData = {
-      name: currentUser,
-      date,
-      items: finalItems
-    };
+        const response = await fetch(`${API_BASE}/api/efforts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(effortData)
+        });
+        const data = await response.json();
+        alert(data.message || "✅ Effort saved successfully!");
 
-    // 💾 Save merged efforts
-    const response = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/efforts", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(effortData)
-});
+        const totalStars = finalItems.reduce((sum, it) => sum + (Number(it.evaluation)||0), 0);
+        document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
 
-    const data = await response.json();
-    alert(data.message || "✅ Effort saved successfully!");
+        addedItems.length = 0;
+        tableBody.innerHTML = "";
+        showToast("✨ Efforts added!");
+      } catch (err) {
+        console.error("❌ Save failed:", err);
+        alert("⚠️ Could not save to server.");
+      }
+    });
 
-    const totalStars = finalItems.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-    document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
-
-    addedItems.length = 0;
-    tableBody.innerHTML = "";
-    showToast("✨ Efforts added!");
-
-  } catch (err) {
-    console.error("❌ Save failed:", err);
-    alert("⚠️ Could not save to server.");
-  }
-});
-
-    // ✅ Toast helper
-    function showToast(message = "✨ Saved!") {
+    function showToast(message="✨ Saved!") {
       const toast = document.getElementById("toast");
       toast.textContent = message;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 2000);
+      setTimeout(()=>toast.classList.remove("show"),2000);
     }
 
-    // ✅ Show efforts and allow parent to edit stars
     document.getElementById("showBtn").addEventListener("click", async () => {
       const date = document.getElementById("filterDate").value;
 
       try {
-        const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/efforts/search?name=${currentUser}${date ? `&date=${date}` : ""}`);
+        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}${date ? `&date=${date}` : ""}`);
         const data = await res.json();
 
         const effortList = document.getElementById("effortList");
@@ -266,59 +223,57 @@ const existing = await res.json();
           return;
         }
 
-        const allItems = data.flatMap(r =>
-          (r.items || []).map((it, index) => ({ ...it, date: r.date, name: r.name, index }))
-        );
+        const allItems = data.flatMap(r => (r.items||[]).map((it,index)=>({ ...it, date: r.date, name: r.name, index })));
 
-        effortList.innerHTML = allItems.map((item, i) => `
+        effortList.innerHTML = allItems.map((item,i)=>`
           <tr>
-            <td>${i + 1}</td>
-            <td>${item.activity || ""}</td>
-            <td>${item.timeMin || ""}</td>
+            <td>${i+1}</td>
+            <td>${item.activity||""}</td>
+            <td>${item.timeMin||""}</td>
             <td>
-              ${currentRole === "parent"
-                ? `<input type="number" class="starInput" min="0" max="10" value="${item.evaluation}" data-name="${item.name}" data-date="${item.date}" data-index="${item.index}">`
-                : `${item.evaluation || ""}`
+              ${currentRole==="parent"
+                ? `<input type="number" class="starInput" min="0" max="10" value="${item.evaluation}" data-name="${item.name}" data-family="${item.family||currentFamily}" data-date="${item.date}" data-index="${item.index}">`
+                : `${item.evaluation||""}`
               }
             </td>
-            <td>${item.note || ""}</td>
-            <td>${item.date || ""}</td>
-            <td>${item.name || currentUser}</td>
+            <td>${item.note||""}</td>
+            <td>${item.date||""}</td>
+            <td>${item.name||currentUser}</td>
           </tr>
         `).join("");
 
         updateStars();
 
-        // ✅ Parent changes evaluation -> auto-save
         document.querySelectorAll(".starInput").forEach(input => {
-          input.addEventListener("change", async (e) => {
-            if (currentRole !== "parent") return;
+          input.addEventListener("change", async (e)=>{
+            if(currentRole!=="parent") return;
             const box = e.target;
             const newEval = Number(box.value);
 
             const saveData = {
               name: box.dataset.name,
+              family: box.dataset.family, // ✅ Include family
               date: box.dataset.date,
               index: box.dataset.index,
               evaluation: newEval
             };
 
             try {
-              await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/efforts/updateEvaluation", {
-  method: "PATCH",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(saveData)
-});
+              await fetch(`${API_BASE}/api/efforts/updateEvaluation`, {
+                method:"PATCH",
+                headers:{ "Content-Type":"application/json" },
+                body: JSON.stringify(saveData)
+              });
               updateStars();
               showToast("✨ Stars updated!");
-            } catch (err) {
+            } catch(err){
               console.error("❌ Failed to update evaluation:", err);
               alert("⚠️ Could not save star update!");
             }
           });
         });
 
-      } catch (err) {
+      } catch(err){
         console.error("Error loading efforts:", err);
         alert("⚠️ Could not load efforts.");
       }
@@ -326,14 +281,11 @@ const existing = await res.json();
 
     function updateStars() {
       let total = 0;
-      document.querySelectorAll(".starInput").forEach(inp => {
-        total += Number(inp.value) || 0;
-      });
+      document.querySelectorAll(".starInput").forEach(inp => { total += Number(inp.value)||0; });
       document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
     }
-    document.getElementById("backBtn").onclick = () => {
-  window.location.href = "choose.html";
-};
+
+    document.getElementById("backBtn").onclick = ()=>{ window.location.href="choose.html"; };
   </script>
 </body>
 </html>
