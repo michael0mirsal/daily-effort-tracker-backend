@@ -83,7 +83,7 @@ router.post("/signup", async (req, res) => {
 router.post("/signin", async (req, res) => {
   const { family, name, role, passkey } = req.body;
 
-  // 🧩 Validation
+  // 🧩 Basic validation
   if (!passkey) return res.status(400).json({ message: "Missing passkey" });
 
   const families = loadFamilies();
@@ -113,42 +113,49 @@ router.post("/signin", async (req, res) => {
   if (!name || !role)
     return res.status(400).json({ message: "Missing data" });
 
-  found = families.find(
-    f =>
-      f.dad.toLowerCase() === name.toLowerCase() ||
-      f.mom.toLowerCase() === name.toLowerCase() ||
-      f.members.some(m => m.name.toLowerCase() === name.toLowerCase())
+  // Step 1: find all families that contain this member name
+  const matchingFamilies = families.filter(f =>
+    f.dad.toLowerCase() === name.toLowerCase() ||
+    f.mom.toLowerCase() === name.toLowerCase() ||
+    f.members.some(m => m.name.toLowerCase() === name.toLowerCase())
   );
 
-  if (!found)
-    return res.status(404).json({ message: "Family not found for this member" });
+  // Step 2: multiple families found, ask frontend to select
+  if (matchingFamilies.length > 1 && !family) {
+    return res.status(409).json({ families: matchingFamilies.map(f => ({ name: f.name })) });
+  }
 
+  // Step 3: select the correct family
+  found = family
+    ? matchingFamilies.find(f => f.name.toLowerCase() === family.toLowerCase())
+    : matchingFamilies[0];
+
+  if (!found) return res.status(404).json({ message: "Family not found for this member" });
+
+  // Step 4: verify passkey
   const match = await bcrypt.compare(passkey, found.passhash);
-  if (!match)
-    return res.status(401).json({ message: "Wrong passkey" });
+  if (!match) return res.status(401).json({ message: "Wrong passkey" });
 
+  // Step 5: check role
   let isValid = false;
-
-  if (role === "dad" && found.dad.toLowerCase() === name.toLowerCase()) {
-    isValid = true;
-  } else if (role === "mom" && found.mom.toLowerCase() === name.toLowerCase()) {
-    isValid = true;
-  } else if (role === "kid") {
-    const kid = found.members.find(
-      m => m.name.toLowerCase() === name.toLowerCase() && m.role === "kid"
-    );
+  if (role === "dad" && found.dad.toLowerCase() === name.toLowerCase()) isValid = true;
+  else if (role === "mom" && found.mom.toLowerCase() === name.toLowerCase()) isValid = true;
+  else if (role === "kid") {
+    const kid = found.members.find(m => m.name.toLowerCase() === name.toLowerCase() && m.role === "kid");
     if (kid) isValid = true;
   }
 
   if (!isValid)
     return res.status(403).json({ message: `This name is not registered as a ${role} in this family.` });
 
+  // ✅ Success
   res.json({
     message: "Login successful (member mode)",
     family: found,
     user: { name, role }
   });
 });
+
 
 
 // ======================================================
