@@ -210,7 +210,7 @@ document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Rout
 const sections = ["morning", "after", "night"];
 let currentLoadedDate = null;
 
-// --- Helper to get today's local date ---
+// --- Helper: get today's date in YYYY-MM-DD ---
 function getLocalDate() {
   const today = new Date();
   return today.getFullYear() + '-' +
@@ -218,6 +218,7 @@ function getLocalDate() {
          String(today.getDate()).padStart(2, '0');
 }
 
+// --- Add a new task to a section ---
 function addTask(type) {
   const input = document.getElementById(type + "Input");
   const task = input.value.trim();
@@ -230,6 +231,7 @@ function addTask(type) {
   attachCheckboxListeners();
 }
 
+// --- Get all tasks from all sections ---
 function getAllTasks() {
   const routines = [];
   sections.forEach(section => {
@@ -243,14 +245,17 @@ function getAllTasks() {
   return routines;
 }
 
+// --- Clear all checkboxes ---
 function clearAllCheckboxes() {
   document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
 }
 
+// --- Convert number of checked tasks to stars ---
 function getStars(count) {
   return "⭐".repeat(count) || "⚪";
 }
 
+// --- Update routine stars display ---
 function updateRoutineStars() {
   const items = getAllTasks();
   const checkedCount = items.filter(i => i.done).length;
@@ -268,17 +273,14 @@ function updateRoutineStars() {
   }
 }
 
+// --- Attach change event to all checkboxes ---
 function attachCheckboxListeners() {
   document.querySelectorAll("input[type='checkbox']").forEach(cb => {
     cb.addEventListener("change", updateRoutineStars);
   });
 }
 
-
-
-// --- helper functions (getAllTasks, updateRoutineStars, attachCheckboxListeners, etc.) ---
-
-// ✅ Save routine (replace your old saveBtn handler)
+// --- SAVE routine ---
 document.getElementById("saveBtn").onclick = async () => {
   const items = getAllTasks();
   const date = getLocalDate();
@@ -289,7 +291,7 @@ document.getElementById("saveBtn").onclick = async () => {
     date, 
     items, 
     checkedData, 
-    family: user.family || "" // for saving stars by family
+    family: user.family || "" 
   };
   console.log("Saving routine payload:", payload);
 
@@ -317,12 +319,7 @@ document.getElementById("saveBtn").onclick = async () => {
   }
 };
 
-
-
-// --- other handlers (loadBtn, loadByDateBtn, backBtn, logoutBtn, DOMContentLoaded) ---
-
-
-// ✅ Load all routines
+// --- LOAD all routines ---
 document.getElementById("loadBtn").onclick = async () => {
   try {
     const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/${encodeURIComponent(user.name)}`);
@@ -346,10 +343,10 @@ document.getElementById("loadBtn").onclick = async () => {
   }
 };
 
-// ✅ Load routine by date
+// --- LOAD routine by date (include family!) ---
 async function loadRoutineByDate(date, auto = false) {
   try {
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}`);
+    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family || "")}`);
     const data = await res.json();
 
     if (!data || !data.length) {
@@ -411,19 +408,30 @@ document.getElementById("loadByDateBtn").onclick = async () => {
   await loadRoutineByDate(selectedDate);
 };
 
-// ✅ Auto-load today's routine
+// --- AUTO load today's routine ---
 window.addEventListener("DOMContentLoaded", async () => {
   const today = getLocalDate();
   document.getElementById("loadDate").value = today;
   await loadRoutineByDate(today, true);
+
+  // --- Optional: Load weekly stars by family ---
+  try {
+    const starsRes = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/kidsStars/week?family=${encodeURIComponent(user.family || "")}`);
+    const starsData = await starsRes.json();
+    console.log("Weekly stars:", starsData);
+    // You can update your UI here to show family stars
+  } catch (err) {
+    console.error("Error fetching weekly stars:", err);
+  }
 });
 
+// --- Navigation buttons ---
 document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
 document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("currentUser");
   window.location.href = "login.html";
 };
-
 </script>
+
 </body>
 </html>
