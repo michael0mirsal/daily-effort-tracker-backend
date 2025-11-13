@@ -74,29 +74,6 @@
       background-color: #57b883;
     }
 
-    /* Floating hearts, stars, sparkles */
-    .float {
-      position: absolute;
-      font-size: 22px;
-      opacity: 0.8;
-      animation: floatUp 8s linear infinite;
-    }
-
-    @keyframes floatUp {
-      from { transform: translateY(100vh) scale(1); opacity: 1; }
-      to { transform: translateY(-10vh) scale(1.4); opacity: 0; }
-    }
-
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
     /* Motivational messages */
     #motivation {
       position: absolute;
@@ -112,6 +89,13 @@
       0%, 100% { opacity: 0; }
       20%, 80% { opacity: 1; }
     }
+
+    /* Optional smooth fade animation for dropdown */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
   </style>
 </head>
 <body>
@@ -127,6 +111,13 @@
       <option value="kid">Kid 👧</option>
     </select><br/>
     <input type="password" id="passkey" placeholder="Family pass key" /><br/>
+
+    <!-- Hidden family selector (appears only if needed) -->
+    <div id="familySelectContainer" style="display:none; animation: fadeInUp 0.5s ease;">
+      <p>🧩 Multiple families found with this name. Please choose yours:</p>
+      <select id="familySelect"></select>
+    </div>
+
     <button onclick="login()">🚀 Login</button>
   </div>
 
@@ -135,21 +126,8 @@
   <div id="motivation">🌟 Family teamwork builds habits that last forever!</div>
 
   <script>
-    // Floating animations generator
-    const emojis = ['💖', '⭐', '✨', '🌈', '💫', '💛'];
-    function createFloat() {
-      const el = document.createElement('div');
-      el.className = 'float';
-      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-      el.style.left = Math.random() * 100 + 'vw';
-      el.style.animationDuration = (6 + Math.random() * 5) + 's';
-      el.style.fontSize = (16 + Math.random() * 24) + 'px';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 8000);
-    }
-    setInterval(createFloat, 700);
-
-    // Rotating motivational messages
+    // 💫 Rotating motivational messages
+    const mot = document.getElementById("motivation");
     const messages = [
       "💪 Track your child’s daily effort with love.",
       "🎁 Reward consistency, not perfection.",
@@ -157,33 +135,45 @@
       "❤️ Families that track together, grow together.",
       "🌟 Every star means a step toward greatness!"
     ];
-    const mot = document.getElementById("motivation");
     let i = 0;
     setInterval(() => {
-      mot.textContent = messages[i % messages.length];
-      i++;
+      mot.textContent = messages[i++ % messages.length];
     }, 6000);
 
-    // Login logic
+    // 🚀 Login Logic
     async function login() {
       const name = document.getElementById("name").value.trim();
       const role = document.getElementById("role").value;
       const passkey = document.getElementById("passkey").value.trim();
+      const familySelectContainer = document.getElementById("familySelectContainer");
+      const familySelect = document.getElementById("familySelect");
 
       if (!name || !role || !passkey) {
         alert("❌ Please fill all fields");
         return;
       }
 
+      // If user already selected a family from dropdown
+      let selectedFamily = familySelectContainer.style.display !== "none" ? familySelect.value : null;
+
       try {
-        const res = await fetch('/api/families/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, role, passkey })
+        const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, role, passkey, family: selectedFamily })
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Login failed');
+
+        // 🔸 When multiple families have same name
+        if (res.status === 409 && data.families) {
+          familySelect.innerHTML = data.families.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+          familySelectContainer.style.display = "block";
+          alert("⚠️ This name exists in multiple families. Please select your family and try again.");
+          return;
+        }
+
+        if (!res.ok) throw new Error(data.message || "Login failed");
 
         const user = {
           name,
@@ -193,17 +183,18 @@
           mom: data.family.mom || '',
           members: data.family.members || []
         };
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        window.location.href = 'choose.html';
+
+        localStorage.setItem("currentUser", JSON.stringify(user));
+        window.location.href = "choose.html";
+
       } catch (err) {
         alert("❌ Error: " + err.message);
       }
     }
 
     function goHome() {
-      window.location.href = 'welcome.html';
+      window.location.href = "welcome.html";
     }
   </script>
-
 </body>
 </html>
