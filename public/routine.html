@@ -208,7 +208,7 @@ if (!user) window.location.href = "login.html";
 document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
 
 const sections = ["morning", "after", "night"];
-let currentLoadedDate = null; // Track the currently loaded routine
+let currentLoadedDate = null;
 
 // --- Helper to get today's local date ---
 function getLocalDate() {
@@ -284,7 +284,7 @@ document.getElementById("saveBtn").onclick = async () => {
     const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: user.name, date, items, checkedData })
+      body: JSON.stringify({ name: user.name, date, items, checkedData, family: user.family || "" })
     });
     const data = await res.json();
     if (res.ok) alert("✅ Routine saved successfully!");
@@ -386,7 +386,7 @@ document.getElementById("loadByDateBtn").onclick = async () => {
   await loadRoutineByDate(selectedDate);
 };
 
-// ✅ Auto-load today's routine using local date
+// ✅ Auto-load today's routine
 window.addEventListener("DOMContentLoaded", async () => {
   const today = getLocalDate();
   document.getElementById("loadDate").value = today;
@@ -398,7 +398,7 @@ document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("currentUser");
   window.location.href = "login.html";
 };
-</script>
 
+</script>
 </body>
 </html>
