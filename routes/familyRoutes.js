@@ -77,15 +77,43 @@ router.post("/signup", async (req, res) => {
 // ======================================================
 // ✅ POST /signin - login with name, role, and passkey
 // ======================================================
+// ======================================================
+// ✅ POST /signin - login by family name OR member name
+// ======================================================
 router.post("/signin", async (req, res) => {
-  const { name, role, passkey } = req.body;
-  if (!name || !role || !passkey)
-    return res.status(400).json({ message: "Missing data" });
+  const { family, name, role, passkey } = req.body;
+
+  // 🧩 Validation
+  if (!passkey) return res.status(400).json({ message: "Missing passkey" });
 
   const families = loadFamilies();
+  let found = null;
 
-  // ✅ Step 1: Find the family that contains this name in any role
-  const found = families.find(
+  // ====================================================
+  // ✅ 1️⃣ Login by FAMILY NAME (official method)
+  // ====================================================
+  if (family) {
+    found = findFamilyByName(families, family);
+    if (!found)
+      return res.status(404).json({ message: "Family not found" });
+
+    const match = await bcrypt.compare(passkey, found.passhash);
+    if (!match)
+      return res.status(401).json({ message: "Wrong passkey" });
+
+    return res.json({
+      message: "Login successful (family mode)",
+      family: found
+    });
+  }
+
+  // ====================================================
+  // ✅ 2️⃣ Login by MEMBER NAME + ROLE (alternative mode)
+  // ====================================================
+  if (!name || !role)
+    return res.status(400).json({ message: "Missing data" });
+
+  found = families.find(
     f =>
       f.dad.toLowerCase() === name.toLowerCase() ||
       f.mom.toLowerCase() === name.toLowerCase() ||
@@ -93,14 +121,12 @@ router.post("/signin", async (req, res) => {
   );
 
   if (!found)
-    return res.status(401).json({ message: "Family not found" });
+    return res.status(404).json({ message: "Family not found for this member" });
 
-  // ✅ Step 2: Check passkey matches the family password
   const match = await bcrypt.compare(passkey, found.passhash);
   if (!match)
     return res.status(401).json({ message: "Wrong passkey" });
 
-  // ✅ Step 3: Check exact role match
   let isValid = false;
 
   if (role === "dad" && found.dad.toLowerCase() === name.toLowerCase()) {
@@ -115,17 +141,15 @@ router.post("/signin", async (req, res) => {
   }
 
   if (!isValid)
-return res
-  .status(403)
-  .json({ message: `This name is not registered as a ${role} in this family.` });
-
+    return res.status(403).json({ message: `This name is not registered as a ${role} in this family.` });
 
   res.json({
-    message: "Login successful",
+    message: "Login successful (member mode)",
     family: found,
     user: { name, role }
   });
 });
+
 
 // ======================================================
 // ✅ POST /add-member - add a new member to a family
