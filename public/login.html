@@ -141,7 +141,6 @@
     <button onclick="login()">🚀 Login</button>
   </div>
 
-  <!-- 🏠 Home Button -->
   <button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 
   <div class="tip-box" id="tipBox">
@@ -162,7 +161,7 @@
       window.location.href = "welcome.html";
     }
 
-    // ✅ Improved login validation
+    // ✅ Improved login validation with family isolation
     async function login() {
       const family = document.getElementById("familyName").value.trim();
       const name = document.getElementById("name").value.trim();
@@ -175,32 +174,31 @@
       }
 
       try {
+        // Always validate by family name + passkey
         const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name,role, passkey })
+          body: JSON.stringify({ family, passkey })
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Login failed");
 
-        // 🧩 Fix: handle both formats (object or array)
         const fam = data.family || data[0];
-
-        if (!fam || !fam.dad || !fam.mom) {
-          alert("⚠️ Missing data from server. Please check your family record.");
-          console.log("Server data:", data);
+        if (!fam || !fam.name) {
+          alert("⚠️ Missing or invalid family data from server.");
+          console.log("Server response:", data);
           return;
         }
 
         const nameLower = name.toLowerCase();
-        const dadLower = fam.dad.toLowerCase();
-        const momLower = fam.mom.toLowerCase();
+        const dadLower = fam.dad?.toLowerCase() || "";
+        const momLower = fam.mom?.toLowerCase() || "";
 
         let valid = false;
         if (role === "dad" && nameLower === dadLower) valid = true;
         else if (role === "mom" && nameLower === momLower) valid = true;
-        else if (role === "kid" && fam.members.some(m => m.name.toLowerCase() === nameLower && m.role === "kid")) valid = true;
+        else if (role === "kid" && fam.members?.some(m => m.name.toLowerCase() === nameLower && m.role === "kid")) valid = true;
 
         if (!valid) {
           alert("❌ The entered name and role do not match this family record.");
@@ -220,7 +218,7 @@
 
       } catch (err) {
         alert("❌ Error: " + err.message);
-        console.error(err);
+        console.error("Login error:", err);
       }
     }
 
