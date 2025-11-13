@@ -65,14 +65,20 @@ function saveJSON(file, data) {
 // ======================================================
 // ✅ Effort APIs
 // ======================================================
+// ✅ Effort APIs (with family field)
+// ======================================================
 app.post("/api/efforts", (req, res) => {
-  const { name, date, items, checkedData } = req.body;
+  const { name, date, items, checkedData, family } = req.body;
+
   if (!name || !date || !Array.isArray(items))
     return res.status(400).json({ error: "Invalid data" });
 
+  if (!family) return res.status(400).json({ error: "Missing family" });
+
   const all = loadJSON(EFFORT_FILE);
-  const index = all.findIndex((r) => r.name === name && r.date === date);
-  const record = { name, date, items, checkedData };
+  const index = all.findIndex((r) => r.name === name && r.family === family && r.date === date);
+  const record = { name, family, date, items, checkedData };
+
   if (index >= 0) all[index] = record;
   else all.push(record);
 
@@ -95,24 +101,25 @@ app.get("/api/debug/efforts", (req, res) => res.json(loadJSON(EFFORT_FILE)));
 
 // ======================================================
 // ✅ Routine APIs
+// ✅ Routine APIs (with family field)
 // ======================================================
 app.post("/api/routines/save", (req, res) => {
-  const { name, date, items } = req.body;
+  const { name, date, items, family } = req.body;
+
   if (!name || !date || !Array.isArray(items))
     return res.status(400).json({ error: "Invalid routine data" });
 
+  if (!family) return res.status(400).json({ error: "Missing family" });
+
   const all = loadJSON(ROUTINE_FILE);
-  const index = all.findIndex((r) => r.name === name && r.date === date);
-  const routine = { name, date, items };
+  const index = all.findIndex((r) => r.name === name && r.family === family && r.date === date);
+  const routine = { name, family, date, items };
 
   if (index >= 0) all[index] = routine;
   else all.push(routine);
 
-  if (saveJSON(ROUTINE_FILE, all)) {
-    res.json({ message: "✅ Routine saved!" });
-  } else {
-    res.status(500).json({ error: "Failed to save routine" });
-  }
+  if (saveJSON(ROUTINE_FILE, all)) res.json({ message: "✅ Routine saved!" });
+  else res.status(500).json({ error: "Failed to save routine" });
 });
 
 // ✅ Search routine by name and date
@@ -178,11 +185,26 @@ app.patch("/api/efforts/updateEvaluation", (req, res) => {
 });
 
 // ✅ Weekly stars summary for all kids
+// ✅ Weekly stars summary for all kids (with family)
 app.get("/api/kidsStars/week", (req, res) => {
   try {
     const efforts = loadJSON(EFFORT_FILE);
     const routines = loadJSON(ROUTINE_FILE);
-    const kids = [...new Set([...efforts, ...routines].map((r) => r.name))];
+    const families = loadJSON(path.join(__dirname, "families.json")); // Assuming families.json stores all families
+
+    // Collect all kids with their family
+    const kidsWithFamily = [];
+
+    families.forEach(family => {
+      // Dad
+      if (family.dad) kidsWithFamily.push({ name: family.dad, family: family.name });
+      // Mom
+      if (family.mom) kidsWithFamily.push({ name: family.mom, family: family.name });
+      // Kids
+      (family.members || []).forEach(m => {
+        kidsWithFamily.push({ name: m.name, family: family.name });
+      });
+    });
 
     const today = new Date();
     const days = Array.from({ length: 7 }, (_, i) => {
@@ -191,13 +213,14 @@ app.get("/api/kidsStars/week", (req, res) => {
       return d.toISOString().split("T")[0];
     });
 
-    const result = kids.map((name) => {
-      const starsPerDay = days.map((date) => {
+    const result = kidsWithFamily.map(k => {
+      const starsPerDay = days.map(date => {
         let totalStars = 0;
 
+        // Sum effort stars
         efforts
-          .filter((r) => r.name === name && r.date === date)
-          .forEach((rec) => {
+          .filter(r => r.name === k.name && r.family === k.family && r.date === date)
+          .forEach(rec => {
             if (Array.isArray(rec.items))
               totalStars += rec.items.reduce(
                 (sum, it) => sum + (Number(it.evaluation) || 0),
@@ -205,17 +228,18 @@ app.get("/api/kidsStars/week", (req, res) => {
               );
           });
 
+        // Sum routine stars
         routines
-          .filter((r) => r.name === name && r.date === date)
-          .forEach((rec) => {
-            const completed = (rec.items || []).filter((i) => i.done).length;
+          .filter(r => r.name === k.name && r.family === k.family && r.date === date)
+          .forEach(rec => {
+            const completed = (rec.items || []).filter(i => i.done).length;
             totalStars += completed;
           });
 
         return { date, stars: totalStars };
       });
 
-      return { name, starsPerDay };
+      return { name: k.name, family: k.family, starsPerDay };
     });
 
     res.json(result);
@@ -224,6 +248,7 @@ app.get("/api/kidsStars/week", (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // ======================================================
 // ✅ Health Check + Start Server
