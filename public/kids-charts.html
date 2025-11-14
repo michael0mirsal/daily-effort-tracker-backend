@@ -161,7 +161,7 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend-production.up.railway.app";
 
   try {
-    const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
+    const res = await fetch(`${API_BASE}/api/families/${currentUser.family}`);
     if (!res.ok) throw new Error("Family not found");
 
     const families = await res.json();
