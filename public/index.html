@@ -170,7 +170,8 @@
 
   try {
     // --- Fetch existing efforts for this kid, family, and date ---
-    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
+    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
+
     const existing = await res.json();
 
     // --- Prepare final items with deduplication ---
@@ -243,7 +244,8 @@
       const date = document.getElementById("filterDate").value;
 
       try {
-        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}${date ? `&date=${date}` : ""}`);
+        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
+
         const data = await res.json();
 
         const effortList = document.getElementById("effortList");
