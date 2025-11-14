@@ -145,108 +145,86 @@ function getWeekDates() {
 async function createKidsCharts() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   if (!currentUser) {
-    alert("Please log in!");
+    alert("⚠ Please log in first.");
     window.location.href = "login.html";
     return;
   }
 
-  document.getElementById("familyName").textContent = `🏡 ${currentUser.family}'s Family`;
+  document.getElementById("familyName").textContent =
+    `🏡 ${currentUser.family}'s Family`;
+
   const container = document.getElementById("kidsChartsContainer");
   container.innerHTML = "";
 
+  const API_BASE = window.location.hostname.includes("localhost")
+    ? "http://localhost:4000"
+    : "https://daily-effort-tracker-backend-production.up.railway.app";
+
   try {
-    const API_BASE = window.location.hostname.includes("localhost")
-      ? "http://localhost:4000"
-      : "https://daily-effort-tracker-backend-production.up.railway.app";
-
-    let kids = [];
-    let useFallback = false;
-
-    // === Try the family-based logic first ===
+    // 1️⃣ STRICT — Fetch family (NO FALLBACK)
     const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error("Family not found");
+
     const families = await res.json();
+    const family = families[0];
 
-    console.log("Fetched Families:", families);
-
-    if (families && families.length > 0 && families[0].members && families[0].members.length > 0) {
-      const family = families[0];
-      kids = family.members.filter(m => m.role === "kid");
-      console.log("✅ Family members:", kids);
-    } else {
-      console.warn("⚠️ No valid family found, falling back to /api/kidsStars/week");
-      useFallback = true;
+    if (!family || !family.members) {
+      alert("⚠ Family data missing on the server.");
+      return;
     }
 
-    // === Fallback to old API if no kids found ===
-    if (useFallback || kids.length === 0) {
-      const resFallback = await fetch(`${API_BASE}/api/kidsStars/week`);
-      if (!resFallback.ok) throw new Error(`HTTP ${resFallback.status}`);
-      const data = await resFallback.json();
-      console.log("Fallback data:", data);
-
-      if (!data || data.length === 0) throw new Error("No data from fallback API");
-
-      // 🔧 Filter fallback data by current user's family if possible
-      const filtered = data.filter(k =>
-        k.family === currentUser.family ||
-        k.familyName === currentUser.family ||
-        k.name?.toLowerCase().includes(currentUser.family?.toLowerCase())
-      );
-
-      kids = filtered.length > 0 ? filtered : data;
-      console.log("✅ Using filtered fallback kids:", kids);
-    }
-
+    // 2️⃣ KIDS ONLY
+    const kids = family.members.filter(m => m.role === "kid");
     if (kids.length === 0) {
       container.innerHTML = "<p>No kids found in this family.</p>";
       return;
     }
 
+    // 3️⃣ PREPARE WEEK
     const weekDates = getWeekDates();
     const todayStr = toLocalYMD(new Date());
     const totals = {};
 
-    // === Fetch stars dynamically (for family-based) ===
-    if (!useFallback && kids[0].id) {
-      for (const kid of kids) {
-        console.log("Fetching stars for", kid.name, kid.id);
-        const resStars = await fetch(`${API_BASE}/api/stars/${kid.id}`);
-        const starsData = await resStars.json();
-        kid.starsPerDay = starsData;
-        totals[kid.name] = starsData
-          .filter(d => weekDates.includes(toLocalYMD(d.date)))
-          .reduce((sum, d) => sum + (d.stars || 0), 0);
+    // 4️⃣ STRICT — Stars per kid
+    for (const kid of kids) {
+      if (!kid.id) {
+        console.warn("Kid missing ID:", kid);
+        continue;
       }
-    } else {
-      // === If using fallback, stars are already included ===
-      kids.forEach(kid => {
-        totals[kid.name] = kid.starsPerDay
-          ?.filter(d => weekDates.includes(toLocalYMD(d.date)))
-          .reduce((sum, d) => sum + (d.stars || 0), 0) || 0;
-      });
+
+      const starRes = await fetch(`${API_BASE}/api/stars/${kid.id}`);
+      if (!starRes.ok) throw new Error("Star data missing");
+
+      const starData = await starRes.json();
+      kid.starsPerDay = starData;
+
+      totals[kid.name] = starData
+        .filter(d => weekDates.includes(toLocalYMD(d.date)))
+        .reduce((sum, d) => sum + (d.stars || 0), 0);
     }
 
-    // Determine weekly winner
-    const winnerName = Object.keys(totals).reduce((a, b) => totals[a] >= totals[b] ? a : b);
-    console.log("🏆 Weekly Winner:", winnerName);
+    // 5️⃣ Winner
+    const winnerName = Object.keys(totals)
+      .reduce((a, b) => totals[a] >= totals[b] ? a : b);
 
-    // Show charts
+    // 6️⃣ Render charts
     if (currentUser.role === "kid") {
-      const kidData = kids.find(k => k.id === currentUser.id || k.name === currentUser.name);
-      if (!kidData) return alert("No stars data found for you!");
-      createChartForKid(kidData, kidData.name === winnerName, totals[kidData.name], weekDates, todayStr);
+      const k = kids.find(k => k.name === currentUser.name);
+      if (!k) return alert("⚠ No data found for your kid account");
+
+      createChartForKid(k, k.name === winnerName, totals[k.name], weekDates, todayStr);
     } else {
-      kids.forEach(kid =>
-        createChartForKid(kid, kid.name === winnerName, totals[kid.name], weekDates, todayStr)
+      kids.forEach(k =>
+        createChartForKid(k, k.name === winnerName, totals[k.name], weekDates, todayStr)
       );
     }
 
   } catch (err) {
-    console.error("❌ Error fetching kids stars:", err);
-    alert("Failed to load kids stars from server!");
+    console.error("❌ Error:", err);
+    alert("⚠ Failed to load stars. Please try again.");
   }
 }
+
 
 function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
   const container = document.getElementById("kidsChartsContainer");
