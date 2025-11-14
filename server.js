@@ -72,43 +72,44 @@ app.post("/api/efforts", (req, res) => {
 
   if (!name || !date || !Array.isArray(items))
     return res.status(400).json({ error: "Invalid data" });
+
   if (!family) return res.status(400).json({ error: "Missing family" });
 
-  // --- Save effort ---
-  const all = loadJSON(EFFORT_FILE);
-  const index = all.findIndex((r) => r.name === name && r.family === family && r.date === date);
+  // --- Load existing efforts ---
+  const allEfforts = loadJSON(EFFORT_FILE); // routines/efforts JSON
+  const effortIndex = allEfforts.findIndex(
+    (r) => r.name === name && r.family === family && r.date === date
+  );
+
   const record = { name, family, date, items, checkedData };
 
-  if (index >= 0) all[index] = record;
-  else all.push(record);
+  if (effortIndex >= 0) allEfforts[effortIndex] = record;
+  else allEfforts.push(record);
 
-  const saved = saveJSON(EFFORT_FILE, all);
-  if (!saved) return res.status(500).json({ error: "Failed to save effort" });
+  if (!saveJSON(EFFORT_FILE, allEfforts))
+    return res.status(500).json({ error: "Failed to save effort" });
 
-  // --- Step 4: Update weekly stars ---
-  const starsFile = "kidsStars.json"; // path to your stars JSON
-  const allStars = loadJSON(starsFile); // [] if file empty
-  const todayStars = calculateStars(items);
+  // --- Update kidsStars.json ---
+  const allStars = loadJSON(KIDS_STARS_FILE); // stars per kid
 
-  const kidIndex = allStars.findIndex(k => k.name === name && k.family === family);
-  if (kidIndex === -1) {
-    // new entry
-    allStars.push({ name, family, starsPerDay: [{ date, stars: todayStars }] });
-  } else {
-    // update existing
-    const dayIndex = allStars[kidIndex].starsPerDay.findIndex(d => d.date === date);
-    if (dayIndex === -1) {
-      allStars[kidIndex].starsPerDay.push({ date, stars: todayStars });
-    } else {
-      allStars[kidIndex].starsPerDay[dayIndex].stars = todayStars;
-    }
+  let kidIndex = allStars.findIndex(k => k.name === name && k.family === family);
+  if (kidIndex < 0) {
+    allStars.push({ name, family, starsPerDay: [] });
+    kidIndex = allStars.length - 1;
   }
 
-  saveJSON(starsFile, allStars); // ignore failure for now
+  const totalStars = items.reduce((sum, it) => sum + Number(it.evaluation || 0), 0);
 
-  // --- Respond ---
-  res.json({ message: "✅ Effort saved and stars updated!" });
+  const todayIndex = allStars[kidIndex].starsPerDay.findIndex(d => d.date === date);
+  if (todayIndex >= 0) allStars[kidIndex].starsPerDay[todayIndex].stars = totalStars;
+  else allStars[kidIndex].starsPerDay.push({ date, stars: totalStars });
+
+  if (!saveJSON(KIDS_STARS_FILE, allStars))
+    return res.status(500).json({ error: "Failed to update stars" });
+
+  res.json({ message: "✅ Effort saved and stars updated!", starsToday: totalStars });
 });
+
 
 
 app.get("/api/efforts/search", (req, res) => {
