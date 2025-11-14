@@ -302,7 +302,7 @@ document.getElementById("saveBtn").onclick = async () => {
   console.log("Saving routine payload:", payload);
 
   try {
-    const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save", {
+    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
