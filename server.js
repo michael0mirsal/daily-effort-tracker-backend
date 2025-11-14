@@ -104,7 +104,7 @@ app.get("/api/debug/efforts", (req, res) => res.json(loadJSON(EFFORT_FILE)));
 // ✅ Routine APIs (with family field)
 // ======================================================
 app.post("/api/routines/save", (req, res) => {
-  const { name, date, items, family } = req.body;
+  const { name, date, items, family, checkedData } = req.body;
 
   if (!name || !date || !Array.isArray(items))
     return res.status(400).json({ error: "Invalid routine data" });
@@ -112,15 +112,24 @@ app.post("/api/routines/save", (req, res) => {
   if (!family) return res.status(400).json({ error: "Missing family" });
 
   const all = loadJSON(ROUTINE_FILE);
-  const index = all.findIndex((r) => r.name === name && r.family === family && r.date === date);
-  const routine = { name, family, date, items };
+
+  const index = all.findIndex(r =>
+    r.name === name &&
+    r.family === family &&
+    r.date === date
+  );
+
+  const routine = { name, family, date, items, checkedData };
 
   if (index >= 0) all[index] = routine;
   else all.push(routine);
 
-  if (saveJSON(ROUTINE_FILE, all)) res.json({ message: "✅ Routine saved!" });
-  else res.status(500).json({ error: "Failed to save routine" });
+  if (saveJSON(ROUTINE_FILE, all))
+    res.json({ message: "✅ Routine saved!" });
+  else
+    res.status(500).json({ error: "Failed to save routine" });
 });
+
 
 // ✅ Search routine by name and date
 app.get("/api/routines/search", async (req, res) => {
