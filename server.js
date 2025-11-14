@@ -111,12 +111,10 @@ app.post("/api/routines/save", (req, res) => {
 
   if (!family) return res.status(400).json({ error: "Missing family" });
 
+  // Save routine
   const all = loadJSON(ROUTINE_FILE);
-
   const index = all.findIndex(r =>
-    r.name === name &&
-    r.family === family &&
-    r.date === date
+    r.name === name && r.family === family && r.date === date
   );
 
   const routine = { name, family, date, items, checkedData };
@@ -124,11 +122,22 @@ app.post("/api/routines/save", (req, res) => {
   if (index >= 0) all[index] = routine;
   else all.push(routine);
 
-  if (saveJSON(ROUTINE_FILE, all))
-    res.json({ message: "✅ Routine saved!" });
-  else
-    res.status(500).json({ error: "Failed to save routine" });
+  saveJSON(ROUTINE_FILE, all);
+
+  // ⭐ ALSO SAVE STARS ⭐
+  const starsAll = loadJSON(STARS_FILE);
+  starsAll.push({
+    name,
+    family,
+    date,
+    stars: checkedData
+  });
+
+  saveJSON(STARS_FILE, starsAll);
+
+  res.json({ message: "✅ Routine saved!" });
 });
+
 
 
 // ✅ Search routine by name and date
