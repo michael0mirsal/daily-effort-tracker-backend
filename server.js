@@ -72,9 +72,9 @@ app.post("/api/efforts", (req, res) => {
 
   if (!name || !date || !Array.isArray(items))
     return res.status(400).json({ error: "Invalid data" });
-
   if (!family) return res.status(400).json({ error: "Missing family" });
 
+  // --- Save effort ---
   const all = loadJSON(EFFORT_FILE);
   const index = all.findIndex((r) => r.name === name && r.family === family && r.date === date);
   const record = { name, family, date, items, checkedData };
@@ -82,9 +82,34 @@ app.post("/api/efforts", (req, res) => {
   if (index >= 0) all[index] = record;
   else all.push(record);
 
-  if (saveJSON(EFFORT_FILE, all)) res.json({ message: "✅ Effort saved!" });
-  else res.status(500).json({ error: "Failed to save effort" });
+  const saved = saveJSON(EFFORT_FILE, all);
+  if (!saved) return res.status(500).json({ error: "Failed to save effort" });
+
+  // --- Step 4: Update weekly stars ---
+  const starsFile = "kidsStars.json"; // path to your stars JSON
+  const allStars = loadJSON(starsFile); // [] if file empty
+  const todayStars = calculateStars(items);
+
+  const kidIndex = allStars.findIndex(k => k.name === name && k.family === family);
+  if (kidIndex === -1) {
+    // new entry
+    allStars.push({ name, family, starsPerDay: [{ date, stars: todayStars }] });
+  } else {
+    // update existing
+    const dayIndex = allStars[kidIndex].starsPerDay.findIndex(d => d.date === date);
+    if (dayIndex === -1) {
+      allStars[kidIndex].starsPerDay.push({ date, stars: todayStars });
+    } else {
+      allStars[kidIndex].starsPerDay[dayIndex].stars = todayStars;
+    }
+  }
+
+  saveJSON(starsFile, allStars); // ignore failure for now
+
+  // --- Respond ---
+  res.json({ message: "✅ Effort saved and stars updated!" });
 });
+
 
 app.get("/api/efforts/search", (req, res) => {
   const { name, date } = req.query;
@@ -269,3 +294,8 @@ console.log("📡 Environment PORT =", process.env.PORT);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
 });
+
+function calculateStars(items) {
+  return items.reduce((sum, item) => sum + (Number(item.evaluation) || 0), 0);
+}
+
