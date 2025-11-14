@@ -124,16 +124,6 @@ app.post("/api/routines/save", (req, res) => {
 
   saveJSON(ROUTINE_FILE, all);
 
-  // ⭐ ALSO SAVE STARS ⭐
-  const starsAll = loadJSON(STARS_FILE);
-  starsAll.push({
-    name,
-    family,
-    date,
-    stars: checkedData
-  });
-
-  saveJSON(STARS_FILE, starsAll);
 
   res.json({ message: "✅ Routine saved!" });
 });
