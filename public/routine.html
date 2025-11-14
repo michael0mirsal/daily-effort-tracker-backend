@@ -302,23 +302,46 @@ document.getElementById("saveBtn").onclick = async () => {
   console.log("Saving routine payload:", payload);
 
   try {
-    const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(
+      "https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
 
     const data = await res.json();
     console.log("Backend response:", data);
 
-    if (res.ok) alert("✅ Routine saved successfully!");
-    else alert("❌ Error: " + (data.error || JSON.stringify(data)));
+    if (res.ok) {
+      alert("✅ Routine saved successfully!");
+
+      // --- Update Stars Box immediately ---
+      document.getElementById("routineStarsDisplay").textContent = `${checkedData}⭐`;
+
+      // --- Optional: fetch weekly stars for family ---
+      try {
+        const starsRes = await fetch(
+          `https://daily-effort-tracker-backend-production.up.railway.app/api/kidsStars/week?family=${encodeURIComponent(user.family)}`
+        );
+        const starsData = await starsRes.json();
+        console.log("Weekly stars:", starsData);
+        // You can update your UI to show family leaderboard here
+      } catch (err) {
+        console.error("Error fetching weekly stars:", err);
+      }
+
+    } else {
+      alert("❌ Error saving routine: " + (data.error || JSON.stringify(data)));
+    }
 
   } catch (err) {
     console.error("Error saving routine:", err);
     alert("❌ Failed to save routine");
   }
 };
+
 
 
 // --- LOAD all routines ---
