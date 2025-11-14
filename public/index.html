@@ -149,7 +149,8 @@
       if (!date || !activity) { alert("Please fill date and activity."); return; }
       if (isPastDate(date)) { alert("❌ You cannot add efforts for past dates!"); return; }
 
-      const newItem = { name: currentUser, family: currentFamily, date, activity, timeMin, evaluation, note }; // ✅ Added family
+      const newItem = { activity, timeMin, evaluation, note };
+ // ✅ Added family
       addedItems.push(newItem);
 
       tableBody.innerHTML = addedItems.map((it, i) => `
@@ -193,12 +194,12 @@
 
     // --- Convert evaluation to number to avoid backend issues ---
     finalItems = finalItems.map(it => ({
-      ...it,
-      evaluation: Number(it.evaluation) || 0,
-      name: currentUser,
-      family: currentFamily,
-      date
-    }));
+  activity: it.activity,
+  timeMin: it.timeMin,
+  evaluation: Number(it.evaluation) || 0,
+  note: it.note || ""
+}));
+
 
     // --- Send to backend ---
     const response = await fetch(`${API_BASE}/api/efforts`, {
