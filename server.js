@@ -233,7 +233,7 @@ app.get("/api/kidsStars/week", (req, res) => {
   try {
     const efforts = loadJSON(EFFORT_FILE);
     const routines = loadJSON(ROUTINE_FILE);
-    const families = loadJSON(path.join(__dirname, "families.json")); // Assuming families.json stores all families
+    const families = loadJSON(path.join(__dirname, "data", "families.json")); // Assuming families.json stores all families
 
     // Collect all kids with their family
     const kidsWithFamily = [];
