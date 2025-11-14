@@ -110,18 +110,27 @@ app.post("/api/efforts", (req, res) => {
   res.json({ message: "✅ Effort saved and stars updated!", starsToday: totalStars });
 });
 
-
-
 app.get("/api/efforts/search", (req, res) => {
-  const { name, date } = req.query;
+  const { name, date, family } = req.query;
   let results = loadJSON(EFFORT_FILE);
+
   if (name)
-    results = results.filter(
-      (r) => r.name?.toLowerCase() === name.toLowerCase()
+    results = results.filter(r =>
+      r.name?.toLowerCase() === name.toLowerCase()
     );
-  if (date) results = results.filter((r) => r.date === date);
+
+  if (family)
+    results = results.filter(r =>
+      r.family?.toLowerCase() === family.toLowerCase()
+    );
+
+  if (date)
+    results = results.filter(r => r.date === date);
+
   res.json(results);
 });
+
+
 
 app.get("/api/debug/efforts", (req, res) => res.json(loadJSON(EFFORT_FILE)));
 
