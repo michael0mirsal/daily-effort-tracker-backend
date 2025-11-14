@@ -149,7 +149,8 @@
       if (!date || !activity) { alert("Please fill date and activity."); return; }
       if (isPastDate(date)) { alert("❌ You cannot add efforts for past dates!"); return; }
 
-      const newItem = { activity, timeMin, evaluation, note };
+      const newItem = { date, activity, timeMin, evaluation, note };
+
  // ✅ Added family
       addedItems.push(newItem);
 
