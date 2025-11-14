@@ -169,7 +169,9 @@
       if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
 
       try {
-        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&date=${date}`);
+        
+        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
+
         const existing = await res.json();
 
         let finalItems = [...addedItems];
