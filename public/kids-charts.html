@@ -151,7 +151,7 @@ async function createKidsCharts() {
   }
 
   document.getElementById("familyName").textContent =
-    `🏡 ${currentUser.family}'s Family`;
+    `🏡 ${currentUser.family}'s Family (${currentUser.role.toUpperCase()}: ${currentUser.name})`;
 
   const container = document.getElementById("kidsChartsContainer");
   container.innerHTML = "";
@@ -161,7 +161,6 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend-production.up.railway.app";
 
   try {
-    // 1️⃣ STRICT — Fetch family (NO FALLBACK)
     const res = await fetch(`${API_BASE}/api/families/family/${currentUser.family}`);
     if (!res.ok) throw new Error("Family not found");
 
@@ -173,28 +172,26 @@ async function createKidsCharts() {
       return;
     }
 
-    // 2️⃣ KIDS ONLY
+    // ✅ Show all kids in the family
     const kids = family.members.filter(m => m.role === "kid");
     if (kids.length === 0) {
       container.innerHTML = "<p>No kids found in this family.</p>";
       return;
     }
 
-    // 3️⃣ PREPARE WEEK
+    // Prepare the week dates
     const weekDates = getWeekDates();
     const todayStr = toLocalYMD(new Date());
     const totals = {};
 
-    // 4️⃣ STRICT — Stars per kid
+    // Fetch stars for each kid
     for (const kid of kids) {
-      if (!kid.id) {
-        console.warn("Kid missing ID:", kid);
+      if (!kid.id) continue; // safety
+      const starRes = await fetch(`${API_BASE}/api/stars/${kid.id}`);
+      if (!starRes.ok) {
+        kid.starsPerDay = []; // fallback
         continue;
       }
-
-      const starRes = await fetch(`${API_BASE}/api/stars/${kid.id}`);
-      if (!starRes.ok) throw new Error("Star data missing");
-
       const starData = await starRes.json();
       kid.starsPerDay = starData;
 
@@ -203,27 +200,22 @@ async function createKidsCharts() {
         .reduce((sum, d) => sum + (d.stars || 0), 0);
     }
 
-    // 5️⃣ Winner
-    const winnerName = Object.keys(totals)
-      .reduce((a, b) => totals[a] >= totals[b] ? a : b);
+    // Determine winner
+    const winnerName = Object.keys(totals).reduce((a, b) =>
+      totals[a] >= totals[b] ? a : b
+    );
 
-    // 6️⃣ Render charts
-    if (currentUser.role === "kid") {
-      const k = kids.find(k => k.name === currentUser.name);
-      if (!k) return alert("⚠ No data found for your kid account");
-
-      createChartForKid(k, k.name === winnerName, totals[k.name], weekDates, todayStr);
-    } else {
-      kids.forEach(k =>
-        createChartForKid(k, k.name === winnerName, totals[k.name], weekDates, todayStr)
-      );
-    }
+    // Render charts for all kids
+    kids.forEach(k =>
+      createChartForKid(k, k.name === winnerName, totals[k.name], weekDates, todayStr)
+    );
 
   } catch (err) {
     console.error("❌ Error:", err);
     alert("⚠ Failed to load stars. Please try again.");
   }
 }
+
 
 
 function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
