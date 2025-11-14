@@ -282,17 +282,23 @@ function attachCheckboxListeners() {
 
 // --- SAVE routine ---
 document.getElementById("saveBtn").onclick = async () => {
+  if (!user.family) {
+    alert("❌ Missing family. Login again.");
+    return;
+  }
+
   const items = getAllTasks();
   const date = getLocalDate();
   const checkedData = items.filter(i => i.done).length;
 
   const payload = { 
     name: user.name, 
-    date, 
-    items, 
-    checkedData, 
-    family: user.family || "" 
+    date,
+    items,
+    checkedData,
+    family: user.family
   };
+
   console.log("Saving routine payload:", payload);
 
   try {
@@ -305,19 +311,15 @@ document.getElementById("saveBtn").onclick = async () => {
     const data = await res.json();
     console.log("Backend response:", data);
 
-    if (res.ok) {
-      alert("✅ Routine saved successfully!");
-    } else {
-      alert("❌ Error saving routine: " + (data.error || JSON.stringify(data)));
-    }
+    if (res.ok) alert("✅ Routine saved successfully!");
+    else alert("❌ Error: " + (data.error || JSON.stringify(data)));
 
-    currentLoadedDate = date;
-    updateRoutineStars();
   } catch (err) {
     console.error("Error saving routine:", err);
     alert("❌ Failed to save routine");
   }
 };
+
 
 // --- LOAD all routines ---
 document.getElementById("loadBtn").onclick = async () => {
