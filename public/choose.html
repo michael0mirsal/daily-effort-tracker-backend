@@ -54,113 +54,114 @@
   </div>
 
   <script>
-    const API_BASE = "https://daily-effort-tracker-backend-production.up.railway.app";
-    const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
+const API_BASE = "https://daily-effort-tracker-backend-production.up.railway.app";
+const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
 
-    if (!user) {
-      alert("Not logged in");
-      window.location.href = "signin.html";
+if (!user) {
+  alert("Not logged in");
+  window.location.href = "signin.html";
+}
+
+document.getElementById("welcomeText").innerHTML =
+  `🌞 Hello <b>${user.name}</b>, <b>${user.family}'s Family</b>!`;
+
+const starsBox = document.getElementById("starsBox");
+
+// ✅ Load family tree
+async function loadFamilyTree() {
+  const treeDiv = document.getElementById("treeContainer");
+  treeDiv.innerHTML = "Loading family tree...";
+  try {
+    const res = await fetch(`${API_BASE}/api/families/family/${encodeURIComponent(user.family)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const family = await res.json();
+    treeDiv.innerHTML = `
+      <div class="member">👨‍👩‍👧 ${family.name}</div>
+      <div class="parents">
+        <div class="member">👩 ${family.mom}</div>
+        <div class="member">👨 ${family.dad}</div>
+      </div>
+      <div class="children">
+        ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
+      </div>
+    `;
+    highlightUser();
+  } catch (err) {
+    treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
+    console.error("Error loading family tree:", err);
+  }
+}
+
+function highlightUser() {
+  document.querySelectorAll('.member').forEach(m => {
+    if (m.textContent.includes(user.name)) m.classList.add('highlighted');
+  });
+}
+
+// ✅ Load today's stars
+async function loadStars() {
+  try {
+    const res = await fetch(`${API_BASE}/api/kidsStars/week?family=${encodeURIComponent(user.family)}`);
+    if (!res.ok) throw new Error("Failed to fetch stars");
+    const allStars = await res.json();
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // 🔹 Filter by both name and family
+    const kidData = allStars.find(k => k.name === user.name && k.family === user.family);
+    let todayStars = 0;
+
+    if (kidData) {
+      const todayRecord = kidData.starsPerDay.find(s => s.date === today);
+      if (todayRecord) todayStars = todayRecord.stars;
     }
 
-    document.getElementById("welcomeText").innerHTML =
-      `🌞 Hello <b>${user.name}</b>, <b>${user.family}'s Family</b>!`;
-
-    const starsBox = document.getElementById("starsBox");
-
-    // ✅ Load family tree
-    async function loadFamilyTree() {
-      const treeDiv = document.getElementById("treeContainer");
-      treeDiv.innerHTML = "Loading family tree...";
-      try {
-        const res = await fetch(`${API_BASE}/api/families/family/${user.family}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const family = await res.json();
-        treeDiv.innerHTML = `
-          <div class="member">👨‍👩‍👧 ${family.name}</div>
-          <div class="parents">
-            <div class="member">👩 ${family.mom}</div>
-            <div class="member">👨 ${family.dad}</div>
-          </div>
-          <div class="children">
-            ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
-          </div>
-        `;
-        highlightUser();
-      } catch (err) {
-        treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
-        console.error("Error loading family tree:", err);
-      }
-    }
-
-    function highlightUser() {
-      document.querySelectorAll('.member').forEach(m => {
-        if (m.textContent.includes(user.name)) m.classList.add('highlighted');
-      });
-    }
-
-    // ✅ Load today's stars
-    async function loadStars() {
-      try {
-        const res = await fetch(`${API_BASE}/api/kidsStars/week`);
-        if (!res.ok) throw new Error("Failed to fetch stars");
-        const allStars = await res.json();
-
-        const today = new Date().toISOString().split("T")[0];
-
-        // 🔹 Filter by both name and family
-        const kidData = allStars.find(k => k.name === user.name && k.family === user.family);
-        let todayStars = 0;
-
-        if (kidData) {
-          const todayRecord = kidData.starsPerDay.find(s => s.date === today);
-          if (todayRecord) todayStars = todayRecord.stars;
-        }
-
-        if (todayStars === 0) {
-          starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
-        } else if (todayStars < 10) {
-          starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Keep going🔥`;
-        } else {
-          starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Amazing job!`;
-        }
-        starsBox.style.display = "block";
-      } catch (err) {
-        console.error("Error loading stars:", err);
-        starsBox.innerHTML = "⚠️ Unable to load today's stars.";
-        starsBox.style.display = "block";
-      }
-    }
-
-    loadFamilyTree();
-    loadStars();
-
-    function logout() {
-      localStorage.removeItem("currentUser");
-      window.location.href = "signin.html";
-    }
-
-    // ✅ Role-based UI
-    const optionsDiv = document.getElementById("options");
-    if (user.role === "dad" || user.role === "mom") {
-      document.getElementById("motivationText").style.display = "block";
-      optionsDiv.innerHTML = `
-        <h2>👩‍👧 Parent Options</h2>
-        <button onclick="window.location.href='kids-charts.html'">📊 View Children's Efforts</button>
-      `;
-    } else if (user.role === "kid") {
-      optionsDiv.innerHTML = `
-        <h2>🧒 What would you like to do?</h2>
-        <button onclick="window.location.href='index.html'">🌟 Daily Efforts</button>
-        <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
-      `;
+    if (todayStars === 0) {
+      starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
+    } else if (todayStars < 10) {
+      starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Keep going🔥`;
     } else {
-      optionsDiv.innerHTML = `<p style="color:red;">⚠️ Unknown role detected. Please log in again.</p>`;
+      starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Amazing job!`;
     }
+    starsBox.style.display = "block";
+  } catch (err) {
+    console.error("Error loading stars:", err);
+    starsBox.innerHTML = "⚠️ Unable to load today's stars.";
+    starsBox.style.display = "block";
+  }
+}
 
-    // ✅ Helper: include family when sending efforts/routines
-    function appendFamily(data) {
-      return { ...data, family: user.family };
-    }
-  </script>
+loadFamilyTree();
+loadStars();
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "signin.html";
+}
+
+// ✅ Role-based UI
+const optionsDiv = document.getElementById("options");
+if (user.role === "dad" || user.role === "mom") {
+  document.getElementById("motivationText").style.display = "block";
+  optionsDiv.innerHTML = `
+    <h2>👩‍👧 Parent Options</h2>
+    <button onclick="window.location.href='kids-charts.html'">📊 View Children's Efforts</button>
+  `;
+} else if (user.role === "kid") {
+  optionsDiv.innerHTML = `
+    <h2>🧒 What would you like to do?</h2>
+    <button onclick="window.location.href='index.html'">🌟 Daily Efforts</button>
+    <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
+  `;
+} else {
+  optionsDiv.innerHTML = `<p style="color:red;">⚠️ Unknown role detected. Please log in again.</p>`;
+}
+
+// ✅ Helper: always include family for backend
+function appendFamily(data) {
+  return { ...data, family: user.family };
+}
+</script>
+
 </body>
 </html>
