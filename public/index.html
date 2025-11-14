@@ -282,10 +282,23 @@
     });
 
     function updateStars() {
-      let total = 0;
-      document.querySelectorAll(".starInput").forEach(inp => { total += Number(inp.value)||0; });
-      document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
-    }
+  let total = 0;
+  
+  // Sum parent inputs
+  document.querySelectorAll(".starInput").forEach(inp => { 
+    total += Number(inp.value) || 0; 
+  });
+  
+  // Sum plain text evaluations (for kids)
+  if (currentRole === "kid") {
+    document.querySelectorAll("#effortList td:nth-child(4)").forEach(td => {
+      total += Number(td.textContent) || 0;
+    });
+  }
+  
+  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
+}
+
 
     document.getElementById("backBtn").onclick = ()=>{ window.location.href="choose.html"; };
   </script>
