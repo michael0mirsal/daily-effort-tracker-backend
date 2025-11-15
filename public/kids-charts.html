@@ -190,10 +190,11 @@ async function createKidsCharts() {
     // 3️⃣ Assign stars to each kid
     kids.forEach(kid => {
       const kidWeekData = weeklyStars.find(
-        entry =>
-          entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
-          entry.name === kid.name
-      );
+  entry =>
+    entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
+    entry.name.toLowerCase() === kid.name.toLowerCase()
+);
+
 
       kid.starsPerDay = kidWeekData?.starsPerDay || [];
 
