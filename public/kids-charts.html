@@ -161,7 +161,7 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend-production.up.railway.app";
 
   try {
-    const res = await fetch(`${API_BASE}/api/families/${currentUser.name}`);
+    const res = await fetch(`${API_BASE}/api/families/${currentUser.family}`);
     if (!res.ok) throw new Error("Family not found");
 
     const families = await res.json();
@@ -187,7 +187,7 @@ async function createKidsCharts() {
     // Fetch stars for each kid
     for (const kid of kids) {
       if (!kid.id) continue; // safety
-      const starRes = await fetch(`${API_BASE}/api/stars/${kid.id}`);
+      const starRes = await fetch(`${API_BASE}/api/kidsstars/${kid.id}`);
       if (!starRes.ok) {
         kid.starsPerDay = []; // fallback
         continue;
