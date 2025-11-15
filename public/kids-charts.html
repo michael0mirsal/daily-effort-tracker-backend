@@ -166,8 +166,7 @@ async function createKidsCharts() {
     if (!res.ok) throw new Error("Family not found");
 
     const families = await res.json();
-    const family = families[0];
-
+    const family = families.find(f => f.name.toLowerCase() === currentUser.family.toLowerCase());
     if (!family || !family.members) {
       alert("⚠ Family data missing on the server.");
       return;
@@ -179,7 +178,7 @@ async function createKidsCharts() {
       return;
     }
 
-    // 2️⃣ Load all weekly stars from backend (NEW)
+    // 2️⃣ Load all weekly stars from backend
     const weekRes = await fetch(`${API_BASE}/api/kidsStars/week`);
     if (!weekRes.ok) throw new Error("Cannot load weekly stars");
     const weeklyStars = await weekRes.json();
@@ -192,7 +191,7 @@ async function createKidsCharts() {
     kids.forEach(kid => {
       const kidWeekData = weeklyStars.find(
         entry =>
-          entry.family === currentUser.family &&
+          entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
           entry.name === kid.name
       );
 
@@ -203,7 +202,13 @@ async function createKidsCharts() {
         .reduce((sum, d) => sum + (d.stars || 0), 0);
     });
 
-    // 4️⃣ Winner
+    // ✅ DEBUG: print kids and their stars
+    console.log("🟢 Matched Kids and Stars:");
+    kids.forEach(k => {
+      console.log(k.name, k.starsPerDay.map(d => `${d.date}:${d.stars}`).join(", "));
+    });
+
+    // 4️⃣ Determine weekly winner
     const winnerName = Object.keys(totals).reduce((a, b) =>
       totals[a] >= totals[b] ? a : b
     );
@@ -218,6 +223,7 @@ async function createKidsCharts() {
     alert("⚠ Failed to load stars. Please try again.");
   }
 }
+
 
 function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
   const container = document.getElementById("kidsChartsContainer");
