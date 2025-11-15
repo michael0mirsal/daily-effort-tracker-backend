@@ -130,7 +130,7 @@ function toLocalYMD(dateStr) {
 function getWeekDates() {
   const today = new Date();
   const day = today.getDay();
-  const diff = (day + 1) % 7;
+  const diff = (day + 1) % 7; 
   const sat = new Date(today);
   sat.setDate(today.getDate() - diff);
   const weekDates = [];
@@ -161,6 +161,7 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend-production.up.railway.app";
 
   try {
+    // 1️⃣ Load the family info
     const res = await fetch(`${API_BASE}/api/families/${currentUser.family}`);
     if (!res.ok) throw new Error("Family not found");
 
@@ -172,40 +173,42 @@ async function createKidsCharts() {
       return;
     }
 
-    // ✅ Show all kids in the family
     const kids = family.members.filter(m => m.role === "kid");
     if (kids.length === 0) {
       container.innerHTML = "<p>No kids found in this family.</p>";
       return;
     }
 
-    // Prepare the week dates
+    // 2️⃣ Load all weekly stars from backend (NEW)
+    const weekRes = await fetch(`${API_BASE}/api/kidsStars/week`);
+    if (!weekRes.ok) throw new Error("Cannot load weekly stars");
+    const weeklyStars = await weekRes.json();
+
     const weekDates = getWeekDates();
     const todayStr = toLocalYMD(new Date());
     const totals = {};
 
-    // Fetch stars for each kid
-    for (const kid of kids) {
-      if (!kid.id) continue; // safety
-      const starRes = await fetch(`${API_BASE}/api/kidsstars/${kid.id}`);
-      if (!starRes.ok) {
-        kid.starsPerDay = []; // fallback
-        continue;
-      }
-      const starData = await starRes.json();
-      kid.starsPerDay = starData;
+    // 3️⃣ Assign stars to each kid
+    kids.forEach(kid => {
+      const kidWeekData = weeklyStars.find(
+        entry =>
+          entry.family === currentUser.family &&
+          entry.name === kid.name
+      );
 
-      totals[kid.name] = starData
+      kid.starsPerDay = kidWeekData?.starsPerDay || [];
+
+      totals[kid.name] = kid.starsPerDay
         .filter(d => weekDates.includes(toLocalYMD(d.date)))
         .reduce((sum, d) => sum + (d.stars || 0), 0);
-    }
+    });
 
-    // Determine winner
+    // 4️⃣ Winner
     const winnerName = Object.keys(totals).reduce((a, b) =>
       totals[a] >= totals[b] ? a : b
     );
 
-    // Render charts for all kids
+    // 5️⃣ Render charts
     kids.forEach(k =>
       createChartForKid(k, k.name === winnerName, totals[k.name], weekDates, todayStr)
     );
@@ -215,8 +218,6 @@ async function createKidsCharts() {
     alert("⚠ Failed to load stars. Please try again.");
   }
 }
-
-
 
 function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
   const container = document.getElementById("kidsChartsContainer");
@@ -293,6 +294,7 @@ function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, tod
 
 window.addEventListener("DOMContentLoaded", createKidsCharts);
 </script>
+
 
 </body>
 </html>
