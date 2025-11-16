@@ -157,11 +157,15 @@ app.post("/api/routines/save", (req, res) => {
   res.json({ message: "✅ Routine saved!" });
 });
 
+// --- Search routine by name, date, and family ---
 app.get("/api/routines/search", (req, res) => {
   try {
-    const { name, date } = req.query;
+    const { name, date, family } = req.query;
     const result = loadJSON(ROUTINE_FILE).filter(
-      r => r.name?.trim().toLowerCase() === name?.trim().toLowerCase() && r.date === date
+      r =>
+        r.name?.trim().toLowerCase() === name?.trim().toLowerCase() &&
+        r.date === date &&
+        r.family?.trim().toLowerCase() === (family?.trim().toLowerCase() || "")
     );
     res.json(result);
   } catch (err) {
@@ -170,11 +174,22 @@ app.get("/api/routines/search", (req, res) => {
   }
 });
 
+// --- Get all routines for a kid (with optional family filter) ---
 app.get("/api/routines/:name", (req, res) => {
   try {
     const { name } = req.params;
-    const all = loadJSON(ROUTINE_FILE);
-    res.json(all.filter(r => r.name?.trim().toLowerCase() === name.trim().toLowerCase()));
+    const { family } = req.query; // optional
+    let allRoutines = loadJSON(ROUTINE_FILE).filter(
+      r => r.name?.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+
+    if (family) {
+      allRoutines = allRoutines.filter(
+        r => r.family?.trim().toLowerCase() === family.trim().toLowerCase()
+      );
+    }
+
+    res.json(allRoutines);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to load routines!" });
