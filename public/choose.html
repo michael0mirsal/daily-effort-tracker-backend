@@ -72,7 +72,7 @@ async function loadFamilyTree() {
   const treeDiv = document.getElementById("treeContainer");
   treeDiv.innerHTML = "Loading family tree...";
   try {
-    const res = await fetch(`${API_BASE}/api/families/family/${encodeURIComponent(user.family)}`);
+    const res = await fetch(`${API_BASE}/api/families/${encodeURIComponent(user.family)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const family = await res.json();
     treeDiv.innerHTML = `
