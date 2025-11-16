@@ -341,10 +341,12 @@ async function loadRoutineByDate(date, auto=false) {
   try {
     const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`);
     const data = await res.json();
-    if (!data || !data.length) { if (!auto) alert(`❌ No routine found for ${date}`); return; }
-    if (data.length > 1) console.warn("Multiple routines found for same kid/date/family, using first one");
-
-    const routines = data[0];
+    // --- FRONTEND FAMILY FILTER ---
+    const routine = data.find(r => r.family?.trim().toLowerCase() === user.family?.trim().toLowerCase());
+    if (!routine) {
+      if (!auto) alert(`❌ No routine found for your family on ${date}`);
+      return;
+    }
     clearAllCheckboxes();
 
     routines.items.forEach(t => {
