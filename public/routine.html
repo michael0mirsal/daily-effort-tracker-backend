@@ -86,6 +86,7 @@
 </head>
 <body>
   <h1 id="pageTitle">🌞 Daily Routine</h1>
+  <div style="font-weight:bold; margin-bottom:10px;">Family: <span id="familyName"></span></div>
   <button id="logoutBtn">Logout</button>
   <button id="saveBtn">💾 Save Routine</button>
   <button id="loadBtn">📂 View All Reports</button>
@@ -205,12 +206,17 @@
 <script>
 const user = JSON.parse(localStorage.getItem("currentUser"));
 if (!user) window.location.href = "login.html";
+
+// Display kid + family name
 document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
+if (document.getElementById("familyName")) {
+  document.getElementById("familyName").textContent = user.family || "Unknown";
+}
 
 const sections = ["morning", "after", "night"];
 let currentLoadedDate = null;
 
-// --- Helper: get today's date in YYYY-MM-DD ---
+// --- Get today's date in YYYY-MM-DD ---
 function getLocalDate() {
   const today = new Date();
   return today.getFullYear() + '-' +
@@ -218,12 +224,15 @@ function getLocalDate() {
          String(today.getDate()).padStart(2, '0');
 }
 
-// --- Add a new task to a section ---
+// --- Add task, prevent duplicates ---
 function addTask(type) {
   const input = document.getElementById(type + "Input");
   const task = input.value.trim();
   if (!task) return;
   const body = document.getElementById(type + "Body");
+  const existingTasks = Array.from(body.querySelectorAll("tr")).map(r => r.children[0].textContent.trim().toLowerCase());
+  if (existingTasks.includes(task.toLowerCase())) { alert("Task already exists!"); return; }
+
   const row = document.createElement("tr");
   row.innerHTML = `<td>${task}</td><td><input type="checkbox" /></td>`;
   body.appendChild(row);
@@ -231,15 +240,16 @@ function addTask(type) {
   attachCheckboxListeners();
 }
 
-// --- Get all tasks from all sections ---
+// --- Get all tasks ---
 function getAllTasks() {
   const routines = [];
   sections.forEach(section => {
-    const rows = document.querySelectorAll(`#${section}Body tr`);
-    rows.forEach(row => {
-      const task = row.children[0].textContent;
-      const done = row.querySelector("input").checked;
-      routines.push({ section, task, done });
+    document.querySelectorAll(`#${section}Body tr`).forEach(row => {
+      routines.push({
+        section,
+        task: row.children[0].textContent,
+        done: row.querySelector("input").checked
+      });
     });
   });
   return routines;
@@ -250,20 +260,17 @@ function clearAllCheckboxes() {
   document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
 }
 
-// --- Convert number of checked tasks to stars ---
-function getStars(count) {
-  return "⭐".repeat(count) || "⚪";
-}
+// --- Convert checked count to stars ---
+function getStars(count) { return "⭐".repeat(count) || "⚪"; }
 
-// --- Update routine stars display ---
+// --- Update routine stars and report ---
 function updateRoutineStars() {
   const items = getAllTasks();
   const checkedCount = items.filter(i => i.done).length;
   document.getElementById("routineStarsDisplay").textContent = `${checkedCount}⭐`;
 
   if (currentLoadedDate) {
-    const reportRows = document.querySelectorAll("#reportBody tr");
-    reportRows.forEach(row => {
+    document.querySelectorAll("#reportBody tr").forEach(row => {
       if (row.children[0].textContent === currentLoadedDate) {
         const totalTasks = items.length;
         row.children[1].textContent = `${checkedCount}/${totalTasks} ✅`;
@@ -273,76 +280,40 @@ function updateRoutineStars() {
   }
 }
 
-// --- Attach change event to all checkboxes ---
+// --- Attach checkbox change ---
 function attachCheckboxListeners() {
   document.querySelectorAll("input[type='checkbox']").forEach(cb => {
-    cb.addEventListener("change", updateRoutineStars);
+    cb.onchange = updateRoutineStars;
   });
 }
 
-// --- SAVE routine ---
+// --- SAVE routine (merge / prevent overwrite) ---
 document.getElementById("saveBtn").onclick = async () => {
-  if (!user.family) {
-    alert("❌ Missing family. Login again.");
-    return;
-  }
+  if (!user.family) { alert("❌ Missing family. Login again."); return; }
 
   const items = getAllTasks();
   const date = getLocalDate();
   const checkedData = items.filter(i => i.done).length;
 
-  const payload = { 
-    name: user.name, 
-    date,
-    items,
-    checkedData,
-    family: user.family
-  };
-
+  const payload = { name: user.name, date, items, checkedData, family: user.family };
   console.log("Saving routine payload:", payload);
 
   try {
     const res = await fetch(
       "https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
     );
-
     const data = await res.json();
     console.log("Backend response:", data);
 
     if (res.ok) {
       alert("✅ Routine saved successfully!");
-
-      // --- Update Stars Box immediately ---
       document.getElementById("routineStarsDisplay").textContent = `${checkedData}⭐`;
-
-      // --- Optional: fetch weekly stars for family ---
-      try {
-        const starsRes = await fetch(
-          `https://daily-effort-tracker-backend-production.up.railway.app/api/kidsStars/week?family=${encodeURIComponent(user.family)}`
-        );
-        const starsData = await starsRes.json();
-        console.log("Weekly stars:", starsData);
-        // You can update your UI to show family leaderboard here
-      } catch (err) {
-        console.error("Error fetching weekly stars:", err);
-      }
-
     } else {
       alert("❌ Error saving routine: " + (data.error || JSON.stringify(data)));
     }
-
-  } catch (err) {
-    console.error("Error saving routine:", err);
-    alert("❌ Failed to save routine");
-  }
+  } catch (err) { console.error("Error saving routine:", err); alert("❌ Failed to save routine"); }
 };
-
-
 
 // --- LOAD all routines ---
 document.getElementById("loadBtn").onclick = async () => {
@@ -362,22 +333,16 @@ document.getElementById("loadBtn").onclick = async () => {
       tr.innerHTML = `<td>${r.date}</td><td>${doneCount}/${total} ✅</td><td class="stars">${getStars(doneCount)}</td>`;
       reportBody.appendChild(tr);
     });
-  } catch (err) {
-    console.error("Error loading routines:", err);
-    alert("❌ Failed to load routines!");
-  }
+  } catch (err) { console.error("Error loading routines:", err); alert("❌ Failed to load routines!"); }
 };
 
-// --- LOAD routine by date (include family!) ---
-async function loadRoutineByDate(date, auto = false) {
+// --- LOAD routine by date + family ---
+async function loadRoutineByDate(date, auto=false) {
   try {
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family || "")}`);
+    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`);
     const data = await res.json();
-
-    if (!data || !data.length) {
-      if (!auto) alert(`❌ No routine found for ${date}`);
-      return;
-    }
+    if (!data || !data.length) { if (!auto) alert(`❌ No routine found for ${date}`); return; }
+    if (data.length > 1) console.warn("Multiple routines found for same kid/date/family, using first one");
 
     const routines = data[0];
     clearAllCheckboxes();
@@ -387,7 +352,7 @@ async function loadRoutineByDate(date, auto = false) {
       const rows = Array.from(sectionBody.querySelectorAll("tr"));
       let found = false;
       for (const row of rows) {
-        if (row.children[0].textContent === t.task) {
+        if (row.children[0].textContent.trim().toLowerCase() === t.task.trim().toLowerCase()) {
           row.querySelector("input").checked = t.done;
           found = true;
           break;
@@ -402,29 +367,22 @@ async function loadRoutineByDate(date, auto = false) {
 
     attachCheckboxListeners();
     currentLoadedDate = date;
-    updateRoutineStars();
 
+    // Lock past dates
     const today = new Date(getLocalDate());
     const selected = new Date(date);
     const isPast = selected < today;
-
     document.querySelectorAll("input[type='checkbox'], input[type='text'], button").forEach(el => {
-      if (el.id === "saveBtn" || el.textContent.includes("➕")) {
-        el.disabled = isPast;
-        el.style.opacity = isPast ? "0.5" : "1";
-        el.style.cursor = isPast ? "not-allowed" : "pointer";
-      } else if (el.type === "checkbox" || el.type === "text") {
-        el.disabled = isPast;
+      if (el.id === "saveBtn" || el.textContent.includes("➕")) { 
+        el.disabled = isPast; el.style.opacity = isPast ? 0.5 : 1; el.style.cursor = isPast ? "not-allowed" : "pointer"; 
+      } else if (el.type === "checkbox" || el.type === "text") { 
+        el.disabled = isPast; 
       }
     });
 
-    if (!auto) {
-      alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
-    }
-  } catch (err) {
-    console.error("Error loading by date:", err);
-    if (!auto) alert("❌ Failed to load routine by date");
-  }
+    if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
+    updateRoutineStars();
+  } catch (err) { console.error("Error loading by date:", err); if (!auto) alert("❌ Failed to load routine by date"); }
 }
 
 document.getElementById("loadByDateBtn").onclick = async () => {
@@ -438,25 +396,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   const today = getLocalDate();
   document.getElementById("loadDate").value = today;
   await loadRoutineByDate(today, true);
-
-  // --- Optional: Load weekly stars by family ---
-  try {
-    const starsRes = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/kidsStars/week?family=${encodeURIComponent(user.family || "")}`);
-    const starsData = await starsRes.json();
-    console.log("Weekly stars:", starsData);
-    // You can update your UI here to show family stars
-  } catch (err) {
-    console.error("Error fetching weekly stars:", err);
-  }
 });
 
-// --- Navigation buttons ---
+// --- Navigation ---
 document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
-document.getElementById("logoutBtn").onclick = () => {
-  localStorage.removeItem("currentUser");
-  window.location.href = "login.html";
-};
+document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("currentUser"); window.location.href = "login.html"; };
 </script>
+
 
 </body>
 </html>
