@@ -182,7 +182,7 @@ router.post("/add-member", (req, res) => {
 // ======================================================
 // ✅ GET /api/family/:familyName - return family data
 // ======================================================
-router.get("/family/:familyName", (req, res) => {
+router.get("/:familyName", (req, res) => {
   const familyName = req.params.familyName;
   const families = loadFamilies();
   const family = families.find(f => f.name.toLowerCase() === familyName.toLowerCase());
