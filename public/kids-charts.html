@@ -123,24 +123,22 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // Convert UTC date string to local YYYY-M-D
 function toLocalYMD(dateStr) {
   const d = new Date(dateStr);
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
 }
+
 
 // Get current week starting from last Saturday
 function getWeekDates() {
   const today = new Date();
-  const day = today.getDay();
-  const diff = (day + 1) % 7; 
-  const sat = new Date(today);
-  sat.setDate(today.getDate() - diff);
-  const weekDates = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sat);
-    d.setDate(sat.getDate() + i);
-    weekDates.push(toLocalYMD(d));
-  }
-  return weekDates;
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (6 - i));
+    return d.toISOString().split("T")[0];
+  });
 }
+
 
 async function createKidsCharts() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -189,14 +187,19 @@ async function createKidsCharts() {
 
     // 3️⃣ Assign stars to each kid
     kids.forEach(kid => {
-      const kidWeekData = weeklyStars.find(
-  entry =>
-    entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
-    entry.name.toLowerCase() === kid.name.toLowerCase()
+      const kidWeekData = weeklyStars.find(entry =>
+  entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
+  entry.name.toLowerCase() === kid.name.toLowerCase()
 );
 
 
-      kid.starsPerDay = kidWeekData?.starsPerDay || [];
+
+      if (!kidWeekData) {
+  console.warn("No weekly data for kid:", kid.name);
+  kid.starsPerDay = [];
+} else {
+  kid.starsPerDay = kidWeekData.starsPerDay || [];
+}
 
       totals[kid.name] = kid.starsPerDay
         .filter(d => weekDates.includes(toLocalYMD(d.date)))
@@ -252,7 +255,7 @@ function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, tod
   const labels = [];
 
   weekDates.forEach((dateStr, idx) => {
-    const found = kid.starsPerDay?.find(d => toLocalYMD(d.date) === dateStr);
+    const found = kid.starsPerDay?.find(d => toLocalYMD(new Date(d.date)) === dateStr);
     const stars = found ? found.stars : 0;
     dataArr.push(stars);
     bgColors.push(dateStr === todayStr ? "#ff6f00" : "#ffd54f");
