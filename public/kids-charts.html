@@ -159,12 +159,11 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend-production.up.railway.app";
 
   try {
-    // 1️⃣ Load the family info
+    // 1️⃣ Load the family info (single object)
     const res = await fetch(`${API_BASE}/api/families/${currentUser.family}`);
     if (!res.ok) throw new Error("Family not found");
 
-    const families = await res.json();
-    const family = families.find(f => f.name.toLowerCase() === currentUser.family.toLowerCase());
+    const family = await res.json();
     if (!family || !family.members) {
       alert("⚠ Family data missing on the server.");
       return;
@@ -176,7 +175,7 @@ async function createKidsCharts() {
       return;
     }
 
-    // 2️⃣ Load all weekly stars from backend
+    // 2️⃣ Load all weekly stars
     const weekRes = await fetch(`${API_BASE}/api/kidsStars/week`);
     if (!weekRes.ok) throw new Error("Cannot load weekly stars");
     const weeklyStars = await weekRes.json();
@@ -188,28 +187,14 @@ async function createKidsCharts() {
     // 3️⃣ Assign stars to each kid
     kids.forEach(kid => {
       const kidWeekData = weeklyStars.find(entry =>
-  entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
-  entry.name.toLowerCase() === kid.name.toLowerCase()
-);
+        entry.family.toLowerCase() === currentUser.family.toLowerCase() &&
+        entry.name.toLowerCase() === kid.name.toLowerCase()
+      );
 
-
-
-      if (!kidWeekData) {
-  console.warn("No weekly data for kid:", kid.name);
-  kid.starsPerDay = [];
-} else {
-  kid.starsPerDay = kidWeekData.starsPerDay || [];
-}
-
+      kid.starsPerDay = kidWeekData?.starsPerDay || [];
       totals[kid.name] = kid.starsPerDay
         .filter(d => weekDates.includes(toLocalYMD(d.date)))
         .reduce((sum, d) => sum + (d.stars || 0), 0);
-    });
-
-    // ✅ DEBUG: print kids and their stars
-    console.log("🟢 Matched Kids and Stars:");
-    kids.forEach(k => {
-      console.log(k.name, k.starsPerDay.map(d => `${d.date}:${d.stars}`).join(", "));
     });
 
     // 4️⃣ Determine weekly winner
@@ -227,6 +212,7 @@ async function createKidsCharts() {
     alert("⚠ Failed to load stars. Please try again.");
   }
 }
+
 
 
 function createChartForKid(kid, isWinner = false, totalStars = 0, weekDates, todayStr) {
