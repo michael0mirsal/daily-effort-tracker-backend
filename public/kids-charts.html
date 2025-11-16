@@ -132,12 +132,21 @@ function toLocalYMD(dateStr) {
 // Get current week starting from last Saturday
 function getWeekDates() {
   const today = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
+  const dayOfWeek = today.getDay(); // 0=Sun, 6=Sat
+  const diffToSat = (dayOfWeek + 1) % 7; // days since last Saturday
+  const weekDates = [];
+
+  for (let i = 0; i < 7; i++) {
     const d = new Date(today);
-    d.setDate(today.getDate() - (6 - i));
-    return d.toISOString().split("T")[0];
-  });
+    d.setDate(today.getDate() - diffToSat + i); // last Sat + i
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    weekDates.push(`${d.getFullYear()}-${m}-${day}`);
+  }
+
+  return weekDates;
 }
+
 
 
 async function createKidsCharts() {
