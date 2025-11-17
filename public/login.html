@@ -148,115 +148,126 @@
   </div>
 
   <script>
-    function goToSignup() {
-      window.location.href = "signup.html";
+  function goToSignup() {
+    window.location.href = "signup.html";
+  }
+
+  function showLoginForm() {
+    document.getElementById("choiceSection").style.display = "none";
+    document.getElementById("loginSection").style.display = "block";
+  }
+
+  function goHome() {
+    window.location.href = "welcome.html";
+  }
+
+  // ✅ Improved login validation with family isolation (role auto-detected)
+  async function login() {
+    const family = document.getElementById("familyName").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const userRoleInput = document.getElementById("role").value; // keep UI as-is, but we won't trust it
+    const passkey = document.getElementById("passkey").value.trim();
+
+    if (!family || !name || !passkey) {
+      alert("❌ Please fill in all fields.");
+      return;
     }
 
-    function showLoginForm() {
-      document.getElementById("choiceSection").style.display = "none";
-      document.getElementById("loginSection").style.display = "block";
-    }
+    try {
+      // Always validate by family name + passkey
+      const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ family, name, role: userRoleInput, passkey })
+      });
 
-    function goHome() {
-      window.location.href = "welcome.html";
-    }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
 
-    // ✅ Improved login validation with family isolation
-    async function login() {
-      const family = document.getElementById("familyName").value.trim();
-      const name = document.getElementById("name").value.trim();
-      const role = document.getElementById("role").value;
-      const passkey = document.getElementById("passkey").value.trim();
-
-      if (!family || !name || !passkey) {
-        alert("❌ Please fill in all fields.");
+      // family object might come as data.family (family-mode) or data.family in member-mode
+      const fam = data.family || data[0] || data;
+      if (!fam || !fam.name) {
+        alert("⚠️ Missing or invalid family data from server.");
+        console.log("Server response:", data);
         return;
       }
 
-      try {
-        // Always validate by family name + passkey
-        const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ family, name, role, passkey })
-        });
+      // Normalize
+      const nameLower = name.toLowerCase();
+      const dadLower = (fam.dad || "").toLowerCase();
+      const momLower = (fam.mom || "").toLowerCase();
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Login failed");
-
-        const fam = data.family || data[0];
-        if (!fam || !fam.name) {
-          alert("⚠️ Missing or invalid family data from server.");
-          console.log("Server response:", data);
-          return;
-        }
-
-        const nameLower = name.toLowerCase();
-        const dadLower = fam.dad?.toLowerCase() || "";
-        const momLower = fam.mom?.toLowerCase() || "";
-
-        let valid = false;
-        if (role === "dad" && nameLower === dadLower) valid = true;
-        else if (role === "mom" && nameLower === momLower) valid = true;
-        else if (role === "kid" && fam.members?.some(m => m.name.toLowerCase() === nameLower && m.role === "kid")) valid = true;
-
-        if (!valid) {
-          alert("❌ The entered name and role do not match this family record.");
-          return;
-        }
-
-        localStorage.setItem("currentUser", JSON.stringify({
-          family: fam.name,
-          dad: fam.dad,
-          mom: fam.mom,
-          name,
-          role
-        }));
-
-        alert("✅ Welcome back, " + name + "!");
-        window.location.href = "choose.html";
-
-      } catch (err) {
-        alert("❌ Error: " + err.message);
-        console.error("Login error:", err);
+      // Auto-detect role from server-side family record (do NOT trust front-end role select)
+      let detectedRole = null;
+      if (nameLower === dadLower) detectedRole = "dad";
+      else if (nameLower === momLower) detectedRole = "mom";
+      else if (Array.isArray(fam.members) && fam.members.some(m => (m.name || "").toLowerCase() === nameLower && (m.role || "kid") === "kid")) {
+        detectedRole = "kid";
       }
+
+      if (!detectedRole) {
+        // Name doesn't match any member in the given family
+        alert("❌ The entered name does not match any member of that family.");
+        return;
+      }
+
+      // If backend returned family-mode login (family passkey), we still enforce detection:
+      // if someone tried to login as a different role, we override with detectedRole.
+      // Save detected role to localStorage (server-verified).
+      localStorage.setItem("currentUser", JSON.stringify({
+        family: fam.name,
+        dad: fam.dad,
+        mom: fam.mom,
+        name,
+        role: detectedRole
+      }));
+
+      alert("✅ Welcome back, " + name + "!");
+      window.location.href = "choose.html";
+
+    } catch (err) {
+      alert("❌ Error: " + (err.message || err));
+      console.error("Login error:", err);
     }
+  }
 
-    // 💬 Rotating motivational tips
-    const tips = [
-      "💡 Kids grow stronger when their effort is seen and celebrated!",
-      "🎯 Parents can track progress and build healthy routines.",
-      "🌟 Every small win deserves a big smile!",
-      "❤️ Connection grows when families share daily goals.",
-      "🎁 Reward effort, not just success – it builds confidence.",
-      "👨‍👩‍👧 Together, you can turn habits into happy memories."
-    ];
+  // 💬 Rotating motivational tips
+  const tips = [
+    "💡 Kids grow stronger when their effort is seen and celebrated!",
+    "🎯 Parents can track progress and build healthy routines.",
+    "🌟 Every small win deserves a big smile!",
+    "❤️ Connection grows when families share daily goals.",
+    "🎁 Reward effort, not just success – it builds confidence.",
+    "👨‍👩‍👧 Together, you can turn habits into happy memories."
+  ];
 
-    let tipIndex = 0;
-    const tipBox = document.getElementById("tipBox");
+  let tipIndex = 0;
+  const tipBox = document.getElementById("tipBox");
 
-    setInterval(() => {
-      tipBox.style.opacity = 0;
-      setTimeout(() => {
-        tipIndex = (tipIndex + 1) % tips.length;
-        tipBox.innerHTML = tips[tipIndex];
-        tipBox.style.opacity = 1;
-      }, 1000);
-    }, 5000);
+  setInterval(() => {
+    if (!tipBox) return;
+    tipBox.style.opacity = 0;
+    setTimeout(() => {
+      tipIndex = (tipIndex + 1) % tips.length;
+      tipBox.innerHTML = tips[tipIndex];
+      tipBox.style.opacity = 1;
+    }, 1000);
+  }, 5000);
 
-    // 🌈 Floating emojis
-    function createFloatingEmoji() {
-      const emojis = ["⭐", "💖", "🌈", "✨", "🎉"];
-      const emoji = document.createElement("div");
-      emoji.className = "floating";
-      emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      emoji.style.left = Math.random() * window.innerWidth + "px";
-      emoji.style.bottom = "-50px";
-      emoji.style.animationDuration = 6 + Math.random() * 5 + "s";
-      document.body.appendChild(emoji);
-      setTimeout(() => emoji.remove(), 10000);
-    }
-    setInterval(createFloatingEmoji, 800);
-  </script>
+  // 🌈 Floating emojis
+  function createFloatingEmoji() {
+    const emojis = ["⭐", "💖", "🌈", "✨", "🎉"];
+    const emoji = document.createElement("div");
+    emoji.className = "floating";
+    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    emoji.style.left = Math.random() * window.innerWidth + "px";
+    emoji.style.bottom = "-50px";
+    emoji.style.animationDuration = 6 + Math.random() * 5 + "s";
+    document.body.appendChild(emoji);
+    setTimeout(() => emoji.remove(), 10000);
+  }
+  setInterval(createFloatingEmoji, 800);
+</script>
+
 </body>
 </html>
