@@ -32,7 +32,7 @@
 <body>
   <div class="header">
     <h1>🌈 My Daily Effort Tracker</h1>
-    <h2>Welcome, <span id="userName"></span>!</h2>
+    <h2>Welcome, <span id="userName"></span>'s<span id="familyName"></span></h2>
     <button id="backBtn">⬅️ Back</button>
     <button id="log" onclick="logout()">🚪 Logout</button>
   </div>
@@ -151,7 +151,6 @@
 
       const newItem = { date, activity, timeMin, evaluation, note };
 
- // ✅ Added family
       addedItems.push(newItem);
 
       tableBody.innerHTML = addedItems.map((it, i) => `
@@ -166,74 +165,63 @@
     });
 
     document.getElementById("saveBtn").addEventListener("click", async () => {
-  if (addedItems.length === 0) return alert("Please add at least one effort.");
-  const date = addedItems[0].date;
-  if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
+      if (addedItems.length === 0) return alert("Please add at least one effort.");
+      const date = addedItems[0].date;
+      if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
 
-  try {
-    // --- Fetch existing efforts for this kid, family, and date ---
-    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
+      try {
+        const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
+        const existing = await res.json();
 
-    const existing = await res.json();
+        let finalItems = [];
 
-    // --- Prepare final items with deduplication ---
-    let finalItems = [];
+        if (existing.length && existing[0].items) {
+          const existingKeys = existing[0].items.map(it => it.activity + "_" + it.timeMin);
+          finalItems = [...existing[0].items];
 
-    if (existing.length && existing[0].items) {
-      // Existing activities key: activity + timeMin
-      const existingKeys = existing[0].items.map(it => it.activity + "_" + it.timeMin);
-      finalItems = [...existing[0].items];
+          addedItems.forEach(it => {
+            const key = it.activity + "_" + it.timeMin;
+            if (!existingKeys.includes(key)) finalItems.push(it);
+          });
+        } else {
+          finalItems = [...addedItems];
+        }
 
-      // Add only new items that don't exist
-      addedItems.forEach(it => {
-        const key = it.activity + "_" + it.timeMin;
-        if (!existingKeys.includes(key)) finalItems.push(it);
-      });
-    } else {
-      finalItems = [...addedItems];
-    }
+        finalItems = finalItems.map(it => ({
+          activity: it.activity,
+          timeMin: it.timeMin,
+          evaluation: Number(it.evaluation) || 0,
+          note: it.note || ""
+        }));
 
-    // --- Convert evaluation to number to avoid backend issues ---
-    finalItems = finalItems.map(it => ({
-  activity: it.activity,
-  timeMin: it.timeMin,
-  evaluation: Number(it.evaluation) || 0,
-  note: it.note || ""
-}));
+        const response = await fetch(`${API_BASE}/api/efforts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: currentUser,
+            family: currentFamily,
+            date,
+            items: finalItems
+          })
+        });
 
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to save");
 
-    // --- Send to backend ---
-    const response = await fetch(`${API_BASE}/api/efforts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: currentUser,
-        family: currentFamily,
-        date,
-        items: finalItems
-      })
+        alert(data.message || "✅ Effort saved successfully!");
+
+        const totalStars = finalItems.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+        document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
+
+        addedItems.length = 0;
+        tableBody.innerHTML = "";
+        showToast("✨ Efforts added!");
+
+      } catch (err) {
+        console.error("❌ Save failed:", err);
+        alert("⚠️ Could not save to server.");
+      }
     });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to save");
-
-    alert(data.message || "✅ Effort saved successfully!");
-
-    // --- Update stars display ---
-    const totalStars = finalItems.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-    document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
-
-    // --- Clear addedItems and table display ---
-    addedItems.length = 0;
-    tableBody.innerHTML = "";
-    showToast("✨ Efforts added!");
-
-  } catch (err) {
-    console.error("❌ Save failed:", err);
-    alert("⚠️ Could not save to server.");
-  }
-});
-
 
     function showToast(message="✨ Saved!") {
       const toast = document.getElementById("toast");
@@ -247,7 +235,6 @@
 
       try {
         const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
-
         const data = await res.json();
 
         const effortList = document.getElementById("effortList");
@@ -257,7 +244,16 @@
           return;
         }
 
-        const allItems = data.flatMap(r => (r.items||[]).map((it,index)=>({ ...it, date: r.date, name: r.name, index })));
+        // FIX: include r.family inside item object
+        const allItems = data.flatMap(r =>
+          (r.items || []).map((it, index) => ({
+            ...it,
+            date: r.date,
+            name: r.name,
+            family: r.family,   // FIX - correct family is here
+            index
+          }))
+        );
 
         effortList.innerHTML = allItems.map((item,i)=>`
           <tr>
@@ -266,7 +262,12 @@
             <td>${item.timeMin||""}</td>
             <td>
               ${currentRole==="parent"
-                ? `<input type="number" class="starInput" min="0" max="10" value="${item.evaluation}" data-name="${item.name}" data-family="${item.family||currentFamily}" data-date="${item.date}" data-index="${item.index}">`
+                ? `<input type="number" class="starInput" min="0" max="10"
+                     value="${item.evaluation}"
+                     data-name="${item.name}"
+                     data-family="${item.family}"   // FIX - removed fallback
+                     data-date="${item.date}"
+                     data-index="${item.index}">`
                 : `${item.evaluation||""}`
               }
             </td>
@@ -286,7 +287,7 @@
 
             const saveData = {
               name: box.dataset.name,
-              family: box.dataset.family, // ✅ Include family
+              family: box.dataset.family, // correct family sent
               date: box.dataset.date,
               index: box.dataset.index,
               evaluation: newEval
@@ -314,25 +315,23 @@
     });
 
     function updateStars() {
-  let total = 0;
-  
-  // Sum parent inputs
-  document.querySelectorAll(".starInput").forEach(inp => { 
-    total += Number(inp.value) || 0; 
-  });
-  
-  // Sum plain text evaluations (for kids)
-  if (currentRole === "kid") {
-    document.querySelectorAll("#effortList td:nth-child(4)").forEach(td => {
-      total += Number(td.textContent) || 0;
-    });
-  }
-  
-  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
-}
+      let total = 0;
 
+      document.querySelectorAll(".starInput").forEach(inp => {
+        total += Number(inp.value) || 0;
+      });
+
+      if (currentRole === "kid") {
+        document.querySelectorAll("#effortList td:nth-child(4)").forEach(td => {
+          total += Number(td.textContent) || 0;
+        });
+      }
+
+      document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
+    }
 
     document.getElementById("backBtn").onclick = ()=>{ window.location.href="choose.html"; };
-  </script>
+</script>
+
 </body>
 </html>
