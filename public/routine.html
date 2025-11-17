@@ -349,7 +349,7 @@ async function loadRoutineByDate(date, auto=false) {
     }
     clearAllCheckboxes();
 
-    routines.items.forEach(t => {
+    routine.items.forEach(t => {
       const sectionBody = document.getElementById(t.section + "Body");
       const rows = Array.from(sectionBody.querySelectorAll("tr"));
       let found = false;
