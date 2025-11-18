@@ -195,13 +195,23 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     const existing = await res.json();
 
     let finalItems = [];
+
     if (existing.length && existing[0].items) {
       const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
-      finalItems = [...existing[0].items];
-      addedItems.forEach(it => {
+
+      // Only keep new items
+      const newItems = addedItems.filter(it => {
         const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
-        if (!existingKeys.includes(key)) finalItems.push(it);
+        return !existingKeys.includes(key);
       });
+
+      if (newItems.length === 0) {
+        alert("⚠️ No new activities to save. All items already exist!");
+        return;
+      }
+
+      finalItems = [...existing[0].items, ...newItems];
+
     } else {
       finalItems = [...addedItems];
     }
@@ -239,98 +249,6 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   } catch (err) {
     console.error("❌ Save failed:", err);
     alert("⚠️ Could not save to server.");
-  }
-});
-
-// -------------------------------------------------------------
-// Toast
-// -------------------------------------------------------------
-function showToast(msg="✨ Saved!") {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2000);
-}
-
-// -------------------------------------------------------------
-// Show Efforts
-// -------------------------------------------------------------
-document.getElementById("showBtn").addEventListener("click", async () => {
-  const date = document.getElementById("filterDate").value;
-
-  try {
-    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}${date ? `&date=${date}` : ""}`);
-    const data = await res.json();
-
-    const effortList = document.getElementById("effortList");
-
-    if (!data.length) {
-      effortList.innerHTML = `<tr><td colspan="7" style="text-align:center;">No records found 💬</td></tr>`;
-      document.getElementById("checkedStarsDisplay").textContent = "0⭐";
-      return;
-    }
-
-    const allItems = data.flatMap(r =>
-      (r.items || []).map((it, index) => ({
-        ...it,
-        date: r.date,
-        name: r.name,
-        index
-      }))
-    );
-
-    effortList.innerHTML = allItems.map((item, i) => `
-      <tr>
-        <td>${i+1}</td>
-        <td>${item.activity || ""}</td>
-        <td>${item.timeMin || ""}</td>
-        <td>
-          ${currentRole === "parent"
-            ? `<input type="number" class="starInput" min="0" max="10" value="${item.evaluation}" data-name="${item.name}" data-family="${currentFamily}" data-date="${item.date}" data-index="${item.index}">`
-            : `${item.evaluation || ""}`
-          }
-        </td>
-        <td>${item.note || ""}</td>
-        <td>${item.date || ""}</td>
-        <td>${item.name || currentUser}</td>
-      </tr>
-    `).join("");
-
-    updateStars();
-
-    if (currentRole === "parent") {
-      document.querySelectorAll(".starInput").forEach(input => {
-        input.addEventListener("change", async e => {
-          const box = e.target;
-          const newEval = Number(box.value);
-
-          const saveData = {
-            name: box.dataset.name,
-            family: currentFamily,
-            date: box.dataset.date,
-            index: box.dataset.index,
-            evaluation: newEval
-          };
-
-          try {
-            await fetch(`${API_BASE}/api/efforts/updateEvaluation`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(saveData)
-            });
-            updateStars();
-            showToast("✨ Stars updated!");
-          } catch(err) {
-            console.error("❌ Failed to update evaluation:", err);
-            alert("⚠️ Could not save star update!");
-          }
-        });
-      });
-    }
-
-  } catch (err) {
-    console.error("Error loading efforts:", err);
-    alert("⚠️ Could not load efforts.");
   }
 });
 
