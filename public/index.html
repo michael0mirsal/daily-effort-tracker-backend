@@ -230,28 +230,6 @@ app.post("/api/efforts", async (req, res) => {
 });
 
 
-    finalItems = finalItems.map(it => ({
-      activity: it.activity,
-      timeMin: it.timeMin,
-      evaluation: Number(it.evaluation) || 0,
-      note: it.note || ""
-    }));
-
-    const response = await fetch(`${API_BASE}/api/efforts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: currentUser,
-        family: currentFamily,
-        date,
-        items: finalItems
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to save");
-
-    alert(data.message || "✅ Effort saved successfully!");
 
     const totalStars = finalItems.reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
     document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
