@@ -112,9 +112,17 @@ const currentFamily = storedUser.family;
 if (!currentUser) {
   window.location.href = "login.html";
 } else {
-  document.getElementById("userName").textContent = currentUser;
-  document.getElementById("filterUserName").textContent = currentUser;
+  // 1️⃣ SHOW FAMILY NAME NEXT TO USER
+  document.getElementById("userName").textContent = `${currentUser} (${currentFamily} Family)`;
+  document.getElementById("filterUserName").textContent = `${currentUser} (${currentFamily} Family)`;
 }
+
+// -------------------------------------------------------------
+// 3️⃣ DEFAULT DATE = TODAY
+// -------------------------------------------------------------
+const today = new Date().toISOString().split("T")[0];
+document.getElementById("date").value = today;
+document.getElementById("filterDate").value = today;
 
 // -------------------------------------------------------------
 // Logout
@@ -141,13 +149,24 @@ const addedItems = [];
 
 document.getElementById("addBtn").addEventListener("click", () => {
   const date = document.getElementById("date").value;
-  const activity = document.getElementById("activity").value;
+  const activity = document.getElementById("activity").value.trim();
   const timeMin = document.getElementById("timeMin").value;
   const evaluation = document.getElementById("evaluation").value;
   const note = document.getElementById("note").value;
 
   if (!date || !activity) return alert("Please fill date and activity.");
   if (isPastDate(date)) return alert("❌ You cannot add efforts for past dates!");
+
+  // 2️⃣ DO NOT ACCEPT DUPLICATE ACTIVITY FOR THE SAME DATE
+  const duplicate = addedItems.some(it =>
+    it.activity.trim().toLowerCase() === activity.toLowerCase() &&
+    it.timeMin == timeMin
+  );
+
+  if (duplicate) {
+    alert("⚠️ This activity is already added today.");
+    return;
+  }
 
   addedItems.push({ date, activity, timeMin, evaluation, note });
 
@@ -175,17 +194,41 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
     const existing = await res.json();
 
-    let finalItems = [];
-    if (existing.length && existing[0].items) {
-      const existingKeys = existing[0].items.map(it => it.activity + "_" + it.timeMin);
-      finalItems = [...existing[0].items];
-      addedItems.forEach(it => {
-        const key = it.activity + "_" + it.timeMin;
-        if (!existingKeys.includes(key)) finalItems.push(it);
-      });
-    } else {
-      finalItems = [...addedItems];
-    }
+    // Example: Express route
+app.post("/api/efforts", async (req, res) => {
+  const { name, family, date, items } = req.body;
+
+  // 1️⃣ Fetch existing efforts for this user, family, date
+  const existing = await db.collection("efforts")
+    .find({ name, family, date })
+    .toArray();
+
+  let finalItems = items;
+
+  if (existing.length && existing[0].items) {
+    const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
+    
+    finalItems = [...existing[0].items];
+    
+    items.forEach(it => {
+      const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
+      if (!existingKeys.includes(key)) finalItems.push(it);
+    });
+
+    // Update existing record instead of creating new
+    await db.collection("efforts").updateOne(
+      { _id: existing[0]._id },
+      { $set: { items: finalItems } }
+    );
+
+    return res.json({ message: "✅ Effort updated with new items!" });
+  }
+
+  // No existing data, insert new
+  await db.collection("efforts").insertOne({ name, family, date, items: finalItems });
+  res.json({ message: "✅ Effort saved successfully!" });
+});
+
 
     finalItems = finalItems.map(it => ({
       activity: it.activity,
@@ -279,7 +322,6 @@ document.getElementById("showBtn").addEventListener("click", async () => {
 
     updateStars();
 
-    // Save new evaluation
     if (currentRole === "parent") {
       document.querySelectorAll(".starInput").forEach(input => {
         input.addEventListener("change", async e => {
@@ -340,6 +382,7 @@ document.getElementById("backBtn").onclick = () => {
   window.location.href = "choose.html";
 };
 </script>
+
 
 </body>
 </html>
