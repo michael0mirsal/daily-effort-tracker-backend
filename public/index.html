@@ -194,42 +194,40 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
     const existing = await res.json();
 
-    // Example: Express route
-app.post("/api/efforts", async (req, res) => {
-  const { name, family, date, items } = req.body;
+    let finalItems = [];
+    if (existing.length && existing[0].items) {
+      const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
+      finalItems = [...existing[0].items];
+      addedItems.forEach(it => {
+        const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
+        if (!existingKeys.includes(key)) finalItems.push(it);
+      });
+    } else {
+      finalItems = [...addedItems];
+    }
 
-  // 1️⃣ Fetch existing efforts for this user, family, date
-  const existing = await db.collection("efforts")
-    .find({ name, family, date })
-    .toArray();
+    finalItems = finalItems.map(it => ({
+      activity: it.activity,
+      timeMin: it.timeMin,
+      evaluation: Number(it.evaluation) || 0,
+      note: it.note || ""
+    }));
 
-  let finalItems = items;
-
-  if (existing.length && existing[0].items) {
-    const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
-    
-    finalItems = [...existing[0].items];
-    
-    items.forEach(it => {
-      const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
-      if (!existingKeys.includes(key)) finalItems.push(it);
+    const response = await fetch(`${API_BASE}/api/efforts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: currentUser,
+        family: currentFamily,
+        date,
+        items: finalItems
+      })
     });
 
-    // Update existing record instead of creating new
-    await db.collection("efforts").updateOne(
-      { _id: existing[0]._id },
-      { $set: { items: finalItems } }
-    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to save");
 
-    return res.json({ message: "✅ Effort updated with new items!" });
-  }
-
-  // No existing data, insert new
-  await db.collection("efforts").insertOne({ name, family, date, items: finalItems });
-  res.json({ message: "✅ Effort saved successfully!" });
-});
-
-
+    alert(data.message || "✅ Effort saved successfully!");
 
     const totalStars = finalItems.reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
     document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
