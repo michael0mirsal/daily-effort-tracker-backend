@@ -33,7 +33,7 @@
       animation: fadeInUp 1.5s ease;
     }
 
-    input, select {
+    input {
       padding: 12px;
       margin: 10px;
       border: 2px solid #74b9ff;
@@ -43,7 +43,7 @@
       transition: box-shadow 0.3s;
     }
 
-    input:focus, select:focus {
+    input:focus {
       box-shadow: 0 0 10px rgba(116, 185, 255, 0.7);
       outline: none;
     }
@@ -74,7 +74,6 @@
       background-color: #57b883;
     }
 
-    /* Motivational messages */
     #motivation {
       position: absolute;
       bottom: 15px;
@@ -90,12 +89,10 @@
       20%, 80% { opacity: 1; }
     }
 
-    /* Optional smooth fade animation for dropdown */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
   </style>
 </head>
 <body>
@@ -104,19 +101,10 @@
 
   <div class="section">
     <h2>✨ Login to Track & Shine</h2>
-    <input type="text" id="name" placeholder="Enter your name" /><br/>
-    <select id="role">
-      <option value="dad">Dad 👨</option>
-      <option value="mom">Mom 👩</option>
-      <option value="kid">Kid 👧</option>
-    </select><br/>
-    <input type="password" id="passkey" placeholder="Family pass key" /><br/>
 
-    <!-- Hidden family selector (appears only if needed) -->
-    <div id="familySelectContainer" style="display:none; animation: fadeInUp 0.5s ease;">
-      <p>🧩 Multiple families found with this name. Please choose yours:</p>
-      <select id="familySelect"></select>
-    </div>
+    <input type="text" id="family" placeholder="Enter family name" /><br/>
+    <input type="text" id="name" placeholder="Enter your name" /><br/>
+    <input type="password" id="passkey" placeholder="Family pass key" /><br/>
 
     <button onclick="login()">🚀 Login</button>
   </div>
@@ -126,7 +114,7 @@
   <div id="motivation">🌟 Family teamwork builds habits that last forever!</div>
 
   <script>
-    // 💫 Rotating motivational messages
+    // 💫 rotating motivation
     const mot = document.getElementById("motivation");
     const messages = [
       "💪 Track your child’s daily effort with love.",
@@ -140,48 +128,43 @@
       mot.textContent = messages[i++ % messages.length];
     }, 6000);
 
-    // 🚀 Login Logic
+    // 🚀 STRICT MODE LOGIN
     async function login() {
+      const family = document.getElementById("family").value.trim();
       const name = document.getElementById("name").value.trim();
-      const role = document.getElementById("role").value;
       const passkey = document.getElementById("passkey").value.trim();
-      const familySelectContainer = document.getElementById("familySelectContainer");
-      const familySelect = document.getElementById("familySelect");
 
-      if (!name || !role || !passkey) {
+      if (!family || !name || !passkey) {
         alert("❌ Please fill all fields");
         return;
       }
-
-      // If user already selected a family from dropdown
-      let selectedFamily = familySelectContainer.style.display !== "none" ? familySelect.value : null;
 
       try {
         const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, role, passkey, family: selectedFamily })
+          body: JSON.stringify({ family, name, passkey })
         });
 
         const data = await res.json();
 
-        // 🔸 When multiple families have same name
-        if (res.status === 409 && data.families) {
-          familySelect.innerHTML = data.families.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
-          familySelectContainer.style.display = "block";
-          alert("⚠️ This name exists in multiple families. Please select your family and try again.");
+        if (!res.ok) {
+          if (res.status === 404) alert("❌ Family not found");
+          else if (res.status === 401) alert("❌ Wrong passkey");
+          else if (res.status === 403) alert("❌ This name is not registered in this family");
+          else if (res.status === 429) alert("⏳ Too many attempts. Try again later.");
+          else alert("❌ " + (data.message || "Login failed"));
           return;
         }
 
-        if (!res.ok) throw new Error(data.message || "Login failed");
-
+        // backend now assigns role automatically
         const user = {
           name,
-          role,
           family: data.family.name,
-          dad: data.family.dad || '',
-          mom: data.family.mom || '',
-          members: data.family.members || []
+          role: data.user.role, // backend detected role
+          dad: data.family.dad,
+          mom: data.family.mom,
+          members: data.family.members
         };
 
         localStorage.setItem("currentUser", JSON.stringify(user));
@@ -196,5 +179,6 @@
       window.location.href = "welcome.html";
     }
   </script>
+
 </body>
 </html>
