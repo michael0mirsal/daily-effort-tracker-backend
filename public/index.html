@@ -195,11 +195,82 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     const existing = await res.json();
 
     let finalItems = [];
-
     if (existing.length && existing[0].items) {
       const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
+      finalItems = [...existing[0].items];
+      addedItems.forEach(it => {
+        const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
+        if (!existingKeys.includes(key)) finalItems.push(it);
+      });
+    } else {
+      finalItems = [...addedItems];
+    }
 
-      // Only keep new items
+    finalItems = finalItems.map(it => ({
+      activity: it.activity,
+      timeMin: it.timeMin,
+      evaluation: Number(it.evaluation) || 0,
+      note: it.note || ""
+    }));
+
+    const response = await fetch(`${API_BASE}/api/efforts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: currentUser,
+        family: currentFamily,
+        date,
+        items: finalItems
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to save");
+
+    alert(data.message || "✅ Effort saved successfully!");
+
+    const totalStars = finalItems.reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
+    document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
+
+    addedItems.length = 0;
+    tableBody.innerHTML = "";
+    showToast("✨ Efforts added!");
+
+  } catch (err) {
+    console.error("❌ Save failed:", err);
+    alert("⚠️ Could not save to server.");
+  }
+});
+
+// -------------------------------------------------------------
+// Toast
+// -------------------------------------------------------------
+function showToast(msg="✨ Saved!") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+// -------------------------------------------------------------
+// Show Efforts
+// -------------------------------------------------------------
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  if (addedItems.length === 0) return alert("Please add at least one effort.");
+
+  const date = addedItems[0].date;
+  if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
+    const existing = await res.json();
+
+    let finalItems = [];
+    if (existing.length && existing[0].items) {
+      const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
+      finalItems = [...existing[0].items];
+
+      // 🔹 Fix: only add new activities, warn if all are duplicates
       const newItems = addedItems.filter(it => {
         const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
         return !existingKeys.includes(key);
@@ -210,7 +281,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
         return;
       }
 
-      finalItems = [...existing[0].items, ...newItems];
+      finalItems.push(...newItems);
 
     } else {
       finalItems = [...addedItems];
@@ -251,6 +322,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     alert("⚠️ Could not save to server.");
   }
 });
+
 
 // -------------------------------------------------------------
 // Update star total
