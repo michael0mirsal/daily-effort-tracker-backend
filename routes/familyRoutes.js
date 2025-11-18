@@ -1,3 +1,4 @@
+// familyRoutes.js
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -35,11 +36,50 @@ function saveFamilies(arr) {
 }
 
 function findFamilyByName(families, name) {
-  return families.find(f => f.name.toLowerCase() === name.toLowerCase());
+  if (!name) return null;
+  return families.find(f => (f.name || "").toLowerCase() === name.toLowerCase());
 }
 
 // ======================================================
-// ✅ POST /signup - create new family
+// ✅ Rate limiter (simple in-memory sketch)
+// - Limits by IP address (or by key) to avoid brute-force on /signin.
+// - This is intentionally simple and reset in-memory; for production use
+//   replace with a Redis-backed limiter (e.g., express-rate-limit with store).
+// ======================================================
+const signinAttempts = new Map(); // key -> { count, firstTs }
+const LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_ATTEMPTS = 6;
+
+function checkRateLimit(key) {
+  const now = Date.now();
+  const rec = signinAttempts.get(key);
+  if (!rec) {
+    signinAttempts.set(key, { count: 1, firstTs: now });
+    return { allowed: true, remaining: MAX_ATTEMPTS - 1 };
+  }
+  // reset window if elapsed
+  if (now - rec.firstTs > LIMIT_WINDOW_MS) {
+    signinAttempts.set(key, { count: 1, firstTs: now });
+    return { allowed: true, remaining: MAX_ATTEMPTS - 1 };
+  }
+  rec.count++;
+  signinAttempts.set(key, rec);
+  if (rec.count > MAX_ATTEMPTS) {
+    return { allowed: false, retryAfter: Math.ceil((LIMIT_WINDOW_MS - (now - rec.firstTs)) / 1000) };
+  }
+  return { allowed: true, remaining: MAX_ATTEMPTS - rec.count };
+}
+
+// Periodic cleanup to avoid memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, rec] of signinAttempts.entries()) {
+    if (now - rec.firstTs > LIMIT_WINDOW_MS * 2) signinAttempts.delete(key);
+  }
+}, LIMIT_WINDOW_MS);
+
+// ======================================================
+// ✅ POST /signup - create new family (unchanged, minor safeguards)
 // ======================================================
 router.post("/signup", async (req, res) => {
   const { family, dad, mom, passkey } = req.body;
@@ -72,94 +112,87 @@ router.post("/signup", async (req, res) => {
 });
 
 // ======================================================
-// ✅ POST /signin - login with name, role, and passkey
-// ======================================================
-// ======================================================
-// ✅ POST /signin - login with name, role, and passkey
-// ======================================================
-// ======================================================
-// ✅ POST /signin - login by family name OR member name
+// ✅ POST /signin - STRICT MODE (require `family` always)
+// Security improvements included:
+//  - Require family field (strict mode) to avoid ambiguous multi-family lookup
+//  - Rate limiting (in-memory sketch) per IP to slow brute force
+//  - Clear and appropriate HTTP status codes:
+//      400 -> missing data, 401 -> wrong passkey, 404 -> family not found,
+//      403 -> role/name mismatch, 429 -> too many attempts
+//  - Server-side role detection (do not trust client role input)
+//  - Returns minimal family info + user role (no passhash)
 // ======================================================
 router.post("/signin", async (req, res) => {
-  const { family, name, role, passkey } = req.body;
+  const { family, name, role: clientRole, passkey } = req.body;
 
-  // 🧩 Basic validation
-  if (!passkey) return res.status(400).json({ message: "Missing passkey" });
+  // Rate limiter key: using IP (req.ip). If you prefer per-family use family value.
+  const limiterKey = req.ip || req.headers["x-forwarded-for"] || "unknown";
+  const rl = checkRateLimit(limiterKey);
+  if (!rl.allowed) {
+    return res.status(429).json({ message: "Too many signin attempts. Try again later.", retryAfterSeconds: rl.retryAfter });
+  }
 
-  const families = loadFamilies();
-  let found = null;
+  // Basic validation (strict mode requires family, name, passkey)
+  if (!family || !name || !passkey) {
+    return res.status(400).json({ message: "Missing fields. 'family', 'name' and 'passkey' are required." });
+  }
 
-  // ====================================================
-  // ✅ 1️⃣ Login by FAMILY NAME (official method)
-  // ====================================================
-  if (family) {
-    found = findFamilyByName(families, family);
-    if (!found)
+  try {
+    const families = loadFamilies();
+
+    // Find exact family by name (case-insensitive)
+    const found = findFamilyByName(families, family);
+    if (!found) {
+      // 404 family not found
       return res.status(404).json({ message: "Family not found" });
+    }
 
+    // Compare passkey with stored passhash
     const match = await bcrypt.compare(passkey, found.passhash);
-    if (!match)
+    if (!match) {
+      // 401 wrong passkey
       return res.status(401).json({ message: "Wrong passkey" });
+    }
+
+    // Server-side role detection: do NOT trust clientRole
+    const nameLower = (name || "").toLowerCase();
+    let detectedRole = null;
+    if ((found.dad || "").toLowerCase() === nameLower) detectedRole = "dad";
+    else if ((found.mom || "").toLowerCase() === nameLower) detectedRole = "mom";
+    else if (Array.isArray(found.members) && found.members.some(m => (m.name || "").toLowerCase() === nameLower && (m.role || "kid") === "kid")) {
+      detectedRole = "kid";
+    }
+
+    if (!detectedRole) {
+      // 403 – name does not belong to this family
+      return res.status(403).json({ message: "This name is not registered in the provided family." });
+    }
+
+    // Success: return family object (without sensitive passhash) and user role
+    const safeFamily = {
+      id: found.id,
+      name: found.name,
+      dad: found.dad,
+      mom: found.mom,
+      members: found.members || []
+    };
+
+    // Reset rate limiter for this key on successful login (optional but friendly)
+    if (signinAttempts.has(limiterKey)) signinAttempts.delete(limiterKey);
 
     return res.json({
       message: "Login successful (family mode)",
-      family: found
+      family: safeFamily,
+      user: { name, role: detectedRole }
     });
+  } catch (err) {
+    console.error("Signin error:", err);
+    return res.status(500).json({ message: "Server error during signin" });
   }
-
-  // ====================================================
-  // ✅ 2️⃣ Login by MEMBER NAME + ROLE (alternative mode)
-  // ====================================================
-  if (!name || !role)
-    return res.status(400).json({ message: "Missing data" });
-
-  // Step 1: find all families that contain this member name
-  const matchingFamilies = families.filter(f =>
-    f.dad.toLowerCase() === name.toLowerCase() ||
-    f.mom.toLowerCase() === name.toLowerCase() ||
-    f.members.some(m => m.name.toLowerCase() === name.toLowerCase())
-  );
-
-  // Step 2: multiple families found, ask frontend to select
-  if (matchingFamilies.length > 1 && !family) {
-    return res.status(409).json({ families: matchingFamilies.map(f => ({ name: f.name })) });
-  }
-
-  // Step 3: select the correct family
-  found = family
-    ? matchingFamilies.find(f => f.name.toLowerCase() === family.toLowerCase())
-    : matchingFamilies[0];
-
-  if (!found) return res.status(404).json({ message: "Family not found for this member" });
-
-  // Step 4: verify passkey
-  const match = await bcrypt.compare(passkey, found.passhash);
-  if (!match) return res.status(401).json({ message: "Wrong passkey" });
-
-  // Step 5: check role
-  let isValid = false;
-  if (role === "dad" && found.dad.toLowerCase() === name.toLowerCase()) isValid = true;
-  else if (role === "mom" && found.mom.toLowerCase() === name.toLowerCase()) isValid = true;
-  else if (role === "kid") {
-    const kid = found.members.find(m => m.name.toLowerCase() === name.toLowerCase() && m.role === "kid");
-    if (kid) isValid = true;
-  }
-
-  if (!isValid)
-    return res.status(403).json({ message: `This name is not registered as a ${role} in this family.` });
-
-  // ✅ Success
-  res.json({
-    message: "Login successful (member mode)",
-    family: found,
-    user: { name, role }
-  });
 });
 
-
-
 // ======================================================
-// ✅ POST /add-member - add a new member to a family
+// ✅ POST /add-member - add a new member to a family (unchanged)
 // ======================================================
 router.post("/add-member", (req, res) => {
   const { family, name, role } = req.body;
@@ -180,7 +213,7 @@ router.post("/add-member", (req, res) => {
 });
 
 // ======================================================
-// ✅ GET /api/family/:familyName - return family data
+// ✅ GET /:familyName - return family data (unchanged)
 // ======================================================
 router.get("/:familyName", (req, res) => {
   const familyName = req.params.familyName;
