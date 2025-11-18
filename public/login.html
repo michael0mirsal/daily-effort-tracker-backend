@@ -138,7 +138,8 @@
     </select><br>
 
     <input type="password" id="passkey" placeholder="Family pass key" /><br/>
-    <button onclick="login()">🚀 Login</button>
+    <button id="loginBtn" onclick="login()">🚀 Login</button>
+    <div id="loginNote" style="font-size:0.9em;color:#666;margin-top:6px;"></div>
   </div>
 
   <button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
@@ -148,24 +149,66 @@
   </div>
 
   <script>
-  function goToSignup() {
-    window.location.href = "signup.html";
-  }
-
+  // -----------------------
+  // Basic navigation helpers
+  // -----------------------
+  function goToSignup() { window.location.href = "signup.html"; }
   function showLoginForm() {
     document.getElementById("choiceSection").style.display = "none";
     document.getElementById("loginSection").style.display = "block";
   }
+  function goHome() { window.location.href = "welcome.html"; }
 
-  function goHome() {
-    window.location.href = "welcome.html";
+  // -----------------------
+  // Security & UX settings
+  // -----------------------
+  const API_BASE = "https://daily-effort-tracker-backend-production.up.railway.app";
+  const loginBtn = document.getElementById("loginBtn");
+  const loginNote = document.getElementById("loginNote");
+
+  // Client-side "cooldown" after repeated failed attempts (soft protection).
+  // NOTE: real protection MUST be implemented server-side (rate limiting / lockouts).
+  let failedAttempts = 0;
+  let cooldownUntil = 0; // timestamp ms
+
+  function setCooldown(seconds) {
+    cooldownUntil = Date.now() + seconds * 1000;
+    loginBtn.disabled = true;
+    loginNote.textContent = `Too many attempts. Please wait ${seconds} seconds...`;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      if (remaining <= 0) {
+        clearInterval(interval);
+        loginBtn.disabled = false;
+        loginNote.textContent = "";
+      } else {
+        loginNote.textContent = `Too many attempts. Please wait ${remaining}s...`;
+      }
+    }, 500);
   }
 
-  // ✅ Improved login validation with family isolation (role auto-detected)
+  // Minimal HTTPS enforcement notice
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    // show a non-blocking warning — server must run with HTTPS in production
+    console.warn("Warning: login page is not served over HTTPS. This is insecure in production.");
+    // small user-visible message
+    loginNote.textContent = "⚠️ For security use HTTPS in production.";
+  }
+
+  // -----------------------
+  // Robust login flow
+  // -----------------------
   async function login() {
+    // quick client-side cooldown check
+    if (Date.now() < cooldownUntil) {
+      alert("Please wait before retrying login.");
+      return;
+    }
+
     const family = document.getElementById("familyName").value.trim();
     const name = document.getElementById("name").value.trim();
-    const userRoleInput = document.getElementById("role").value; // keep UI as-is, but we won't trust it
+    // we still include role in request only for UX, but backend MUST ignore and verify server-side
+    const userRoleInput = document.getElementById("role").value;
     const passkey = document.getElementById("passkey").value.trim();
 
     if (!family || !name || !passkey) {
@@ -173,65 +216,157 @@
       return;
     }
 
+    loginBtn.disabled = true;
+    loginNote.textContent = "Checking…";
+
     try {
-      // Always validate by family name + passkey
-      const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+      // Send family + passkey to backend. Backend must:
+      //  - verify passkey for the family
+      //  - NOT expose sensitive data if passkey is wrong
+      //  - return only minimal necessary data (family name, members, roles)
+      // Backend contract expectations are described in comments below.
+      const res = await fetch(`${API_BASE}/api/families/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ family, name, role: userRoleInput, passkey })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      const data = await res.json().catch(() => ({}));
 
-      // family object might come as data.family (family-mode) or data.family in member-mode
-      const fam = data.family || data[0] || data;
-      if (!fam || !fam.name) {
-        alert("⚠️ Missing or invalid family data from server.");
-        console.log("Server response:", data);
+      // Handle common failure cases with helpful messages
+      if (!res.ok) {
+        // If backend returns 409 with list of families, handle client-side selection (see below).
+        if (res.status === 409 && data.families) {
+          // Backend signals multiple families match member name (rare). Ask user to confirm family.
+          const choice = prompt("Multiple families found for that name. Enter the exact family name to use:\n" +
+                                data.families.map(f => f.name).join(", "));
+          if (choice) {
+            // re-call login using the explicit family from user
+            document.getElementById("familyName").value = choice;
+            loginBtn.disabled = false;
+            loginNote.textContent = "";
+            return login(); // call again with updated family
+          } else {
+            loginBtn.disabled = false;
+            loginNote.textContent = "";
+            return;
+          }
+        }
+
+        // Generic error
+        const msg = data.message || `Login failed (status ${res.status})`;
+        failedAttempts++;
+        if (failedAttempts >= 5) {
+          // client-side cooldown (soft). Backend MUST implement server-side rate limiting.
+          setCooldown(30); // 30s cooldown client-side
+        }
+        alert("❌ " + msg);
+        loginBtn.disabled = false;
+        loginNote.textContent = "";
         return;
       }
 
-      // Normalize
+      // ------------------------
+      // At this point res.ok === true
+      // data should contain either:
+      //  - { message: "...", family: <familyObject> }  (family-mode)
+      //  - { message: "...", family: <familyObject>, user: { name, role } } (member-mode)
+      //  - OR (in older backend) just the family object or array — handle gracefully below
+      // ------------------------
+
+      // Normalize family object:
+      // Backend SHOULD return family in data.family (preferred). If older backend returns an array or object,
+      // we try to handle both safely. We do NOT accept an arbitrary array as authoritative without checks.
+      let fam = null;
+      if (data.family && typeof data.family === "object") {
+        fam = data.family;
+      } else if (Array.isArray(data) && data.length === 1 && typeof data[0] === "object") {
+        fam = data[0];
+      } else if (typeof data === "object" && data.name) {
+        // fallback — server returned single family object directly
+        fam = data;
+      } else {
+        // Unexpected server response — do not proceed
+        console.error("Unexpected signin response:", data);
+        alert("⚠️ Unexpected response from server. Check console for details.");
+        loginBtn.disabled = false;
+        loginNote.textContent = "";
+        return;
+      }
+
+      // Validate family shape minimally
+      if (!fam.name) {
+        console.error("Invalid family object:", fam);
+        alert("⚠️ Server returned invalid family information.");
+        loginBtn.disabled = false;
+        loginNote.textContent = "";
+        return;
+      }
+
+      // ------------------------
+      // Server verified family passkey matched. Now we MUST determine role from server-side data.
+      // Do NOT trust the role that was sent from the client.
+      // ------------------------
       const nameLower = name.toLowerCase();
       const dadLower = (fam.dad || "").toLowerCase();
       const momLower = (fam.mom || "").toLowerCase();
-
-      // Auto-detect role from server-side family record (do NOT trust front-end role select)
       let detectedRole = null;
-      if (nameLower === dadLower) detectedRole = "dad";
-      else if (nameLower === momLower) detectedRole = "mom";
+
+      if (dadLower && nameLower === dadLower) detectedRole = "dad";
+      else if (momLower && nameLower === momLower) detectedRole = "mom";
       else if (Array.isArray(fam.members) && fam.members.some(m => (m.name || "").toLowerCase() === nameLower && (m.role || "kid") === "kid")) {
         detectedRole = "kid";
       }
 
       if (!detectedRole) {
-        // Name doesn't match any member in the given family
+        // The name didn't match any member in this family — possible mismatch or malicious attempt
         alert("❌ The entered name does not match any member of that family.");
+        loginBtn.disabled = false;
+        loginNote.textContent = "";
         return;
       }
 
-      // If backend returned family-mode login (family passkey), we still enforce detection:
-      // if someone tried to login as a different role, we override with detectedRole.
-      // Save detected role to localStorage (server-verified).
-      localStorage.setItem("currentUser", JSON.stringify({
+      // ------------------------
+      // Save only minimal, non-sensitive user info in localStorage.
+      // Avoid storing the family's passhash or server tokens here.
+      // localStorage is vulnerable to XSS — ensure your app prevents XSS site-wide.
+      // ------------------------
+      const safeUser = {
         family: fam.name,
-        dad: fam.dad,
-        mom: fam.mom,
         name,
         role: detectedRole
-      }));
+        // do not store dad/mom/passhash unless you have a deliberate reason
+      };
 
+      try {
+        localStorage.setItem("currentUser", JSON.stringify(safeUser));
+      } catch (err) {
+        // localStorage may be restricted by tracking-protection; handle gracefully
+        console.warn("Could not write to localStorage:", err);
+      }
+
+      // Successful login UX
       alert("✅ Welcome back, " + name + "!");
+      // reset failed attempts
+      failedAttempts = 0;
+      loginBtn.disabled = false;
+      loginNote.textContent = "";
+      // Redirect to choose page (unchanged)
       window.location.href = "choose.html";
 
     } catch (err) {
-      alert("❌ Error: " + (err.message || err));
       console.error("Login error:", err);
+      failedAttempts++;
+      if (failedAttempts >= 5) setCooldown(30);
+      alert("❌ Error: " + (err.message || err));
+      loginBtn.disabled = false;
+      loginNote.textContent = "";
     }
   }
 
-  // 💬 Rotating motivational tips
+  // -----------------------
+  // Rotating motivational tips (kept from original)
+  // -----------------------
   const tips = [
     "💡 Kids grow stronger when their effort is seen and celebrated!",
     "🎯 Parents can track progress and build healthy routines.",
@@ -251,10 +386,12 @@
       tipIndex = (tipIndex + 1) % tips.length;
       tipBox.innerHTML = tips[tipIndex];
       tipBox.style.opacity = 1;
-    }, 1000);
+    }, 400);
   }, 5000);
 
-  // 🌈 Floating emojis
+  // -----------------------
+  // Floating emojis (kept)
+  // -----------------------
   function createFloatingEmoji() {
     const emojis = ["⭐", "💖", "🌈", "✨", "🎉"];
     const emoji = document.createElement("div");
@@ -267,7 +404,20 @@
     setTimeout(() => emoji.remove(), 10000);
   }
   setInterval(createFloatingEmoji, 800);
-</script>
+
+  // -----------------------
+  // Important: server-side recommendations (you must implement these on backend)
+  // -----------------------
+  // 1) Rate limiting / lockout for failed signin attempts (IP + account) — critical.
+  // 2) On signin, verify family passkey BEFORE returning family data. If passkey invalid, return 401.
+  // 3) Avoid returning the family's passhash or any secret in the response.
+  // 4) When multiple families match a member name, return 409 with a safe list: { families: [{name}, ...] }.
+  // 5) Prefer returning { family: { name, dad, mom, members:[{name,role},...] } } as the response shape.
+  // 6) Consider separate per-member passkeys or different roles with distinct credentials for stronger separation.
+  // 7) Use HTTPS and secure cookies or short-lived tokens for any authentication tokens you introduce.
+  // -----------------------
+
+  </script>
 
 </body>
 </html>
