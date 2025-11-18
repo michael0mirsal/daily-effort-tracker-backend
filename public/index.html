@@ -270,18 +270,19 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
       const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
       finalItems = [...existing[0].items];
 
-      // 🔹 Fix: only add new activities, warn if all are duplicates
-      const newItems = addedItems.filter(it => {
+      let newItemAdded = false; // track if any new item is added
+      addedItems.forEach(it => {
         const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
-        return !existingKeys.includes(key);
+        if (!existingKeys.includes(key)) {
+          finalItems.push(it);
+          newItemAdded = true;
+        }
       });
 
-      if (newItems.length === 0) {
+      // alert if no new items, but continue execution
+      if (!newItemAdded) {
         alert("⚠️ No new activities to save. All items already exist!");
-        return;
       }
-
-      finalItems.push(...newItems);
 
     } else {
       finalItems = [...addedItems];
