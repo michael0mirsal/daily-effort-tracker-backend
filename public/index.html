@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>🌞 My Daily Effort Tracker</title>
+  <title>🌞 My Daily Activities Tracker</title>
   <link rel="stylesheet" href="style.css" />
   <style>
     #toast {
@@ -32,7 +32,7 @@
 <body>
 
   <div class="header">
-    <h1>🌈 My Daily Effort Tracker</h1>
+    <h1>🌈 My Daily Activities Tracker</h1>
     <h2>Welcome, <span id="userName"></span>!</h2>
     <button id="backBtn">⬅️ Back</button>
     <button onclick="logout()">🚪 Logout</button>
@@ -46,7 +46,7 @@
   <!-- ❌ Removed role dropdown (this caused the bug) -->
 
   <div class="tracker-card">
-    <h2>📝 Add New Effort</h2>
+    <h2>📝 Add New Activity</h2>
     <div class="form-row">
       <input type="date" id="date" />
       <input type="text" id="activity" placeholder="Activity (e.g., Reading, Math)" />
@@ -76,11 +76,11 @@
   </div>
 
   <div class="tracker-card">
-    <h2>🔍 Show Efforts</h2>
+    <h2>🔍 Show Activities</h2>
     <div class="form-row">
       <h3>👧 User: <span id="filterUserName"></span></h3>
       <input type="date" id="filterDate" />
-      <button id="showBtn">👀 Show Effort</button>
+      <button id="showBtn">👀 Show Activity</button>
     </div>
 
     <table id="showTable">
