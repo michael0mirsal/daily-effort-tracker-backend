@@ -104,21 +104,23 @@
 <script>
 const API_BASE = "https://daily-effort-tracker-backend-production.up.railway.app";
 
+// -------------------------------------------------------------
+// Load current user
+// -------------------------------------------------------------
 const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
 let currentUser = storedUser.name;
-const currentRole = storedUser.role;   // 🔒 Role is now fixed
+const currentRole = storedUser.role;
 const currentFamily = storedUser.family;
 
 if (!currentUser) {
   window.location.href = "login.html";
 } else {
-  // 1️⃣ SHOW FAMILY NAME NEXT TO USER
   document.getElementById("userName").textContent = `${currentUser} (${currentFamily} Family)`;
   document.getElementById("filterUserName").textContent = `${currentUser} (${currentFamily} Family)`;
 }
 
 // -------------------------------------------------------------
-// 3️⃣ DEFAULT DATE = TODAY
+// Default date = today
 // -------------------------------------------------------------
 const today = new Date().toISOString().split("T")[0];
 document.getElementById("date").value = today;
@@ -133,16 +135,16 @@ function logout() {
 }
 
 // -------------------------------------------------------------
-// Block past dates
+// Prevent past dates
 // -------------------------------------------------------------
 function isPastDate(selectedDate) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  return new Date(selectedDate) < today;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  return new Date(selectedDate) < now;
 }
 
 // -------------------------------------------------------------
-// Add new effort
+// Add new effort (local only)
 // -------------------------------------------------------------
 const tableBody = document.getElementById("tableBody");
 const addedItems = [];
@@ -154,13 +156,17 @@ document.getElementById("addBtn").addEventListener("click", () => {
   const evaluation = document.getElementById("evaluation").value;
   const note = document.getElementById("note").value;
 
-  if (!date || !activity) return alert("Please fill date and activity.");
-  if (isPastDate(date)) return alert("❌ You cannot add efforts for past dates!");
+  if (!date || !activity)
+    return alert("Please fill date and activity.");
 
-  // 2️⃣ DO NOT ACCEPT DUPLICATE ACTIVITY FOR THE SAME DATE
-  const duplicate = addedItems.some(it =>
-    it.activity.trim().toLowerCase() === activity.toLowerCase() &&
-    it.timeMin == timeMin
+  if (isPastDate(date))
+    return alert("❌ You cannot add efforts for past dates!");
+
+  // Prevent duplicate activity (same name + time)
+  const duplicate = addedItems.some(
+    it =>
+      it.activity.trim().toLowerCase() === activity.toLowerCase() &&
+      it.timeMin == timeMin
   );
 
   if (duplicate) {
@@ -170,42 +176,63 @@ document.getElementById("addBtn").addEventListener("click", () => {
 
   addedItems.push({ date, activity, timeMin, evaluation, note });
 
-  tableBody.innerHTML = addedItems.map((it, i) => `
+  tableBody.innerHTML = addedItems
+    .map(
+      (it, i) => `
     <tr>
-      <td>${i+1}</td>
+      <td>${i + 1}</td>
       <td>${it.activity}</td>
       <td>${it.timeMin}</td>
       <td>${it.evaluation}</td>
       <td>${it.note || ""}</td>
-    </tr>
-  `).join("");
+    </tr>`
+    )
+    .join("");
 });
 
 // -------------------------------------------------------------
-// Save Efforts (POST + dedupe)
+// Save ALL efforts (merge with existing)
 // -------------------------------------------------------------
 document.getElementById("saveBtn").addEventListener("click", async () => {
-  if (addedItems.length === 0) return alert("Please add at least one effort.");
+  if (addedItems.length === 0)
+    return alert("Please add at least one effort.");
 
   const date = addedItems[0].date;
-  if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
+
+  if (isPastDate(date))
+    return alert("❌ Cannot save efforts for past dates!");
 
   try {
-    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
+    // 1. Get existing efforts for this date
+    const res = await fetch(
+      `${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`
+    );
     const existing = await res.json();
 
     let finalItems = [];
+
     if (existing.length && existing[0].items) {
-      const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
+      const existingKeys = existing[0].items.map(
+        it => it.activity.trim().toLowerCase() + "_" + it.timeMin
+      );
+
       finalItems = [...existing[0].items];
+
+      // Add ONLY new items
       addedItems.forEach(it => {
-        const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
-        if (!existingKeys.includes(key)) finalItems.push(it);
+        const key =
+          it.activity.trim().toLowerCase() +
+          "_" +
+          it.timeMin;
+        if (!existingKeys.includes(key)) {
+          finalItems.push(it);
+        }
       });
     } else {
       finalItems = [...addedItems];
     }
 
+    // Clean items
     finalItems = finalItems.map(it => ({
       activity: it.activity,
       timeMin: it.timeMin,
@@ -213,6 +240,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
       note: it.note || ""
     }));
 
+    // 2. Save merged results
     const response = await fetch(`${API_BASE}/api/efforts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -225,13 +253,20 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to save");
+    if (!response.ok)
+      throw new Error(data.error || "Failed to save");
 
     alert(data.message || "✅ Effort saved successfully!");
 
-    const totalStars = finalItems.reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
-    document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
+    // Update stars
+    const totalStars = finalItems.reduce(
+      (s, it) => s + (Number(it.evaluation) || 0),
+      0
+    );
+    document.getElementById("checkedStarsDisplay").textContent =
+      `${totalStars}⭐`;
 
+    // Reset
     addedItems.length = 0;
     tableBody.innerHTML = "";
     showToast("✨ Efforts added!");
@@ -245,103 +280,11 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 // -------------------------------------------------------------
 // Toast
 // -------------------------------------------------------------
-function showToast(msg="✨ Saved!") {
+function showToast(msg = "✨ Saved!") {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2000);
-}
-
-// -------------------------------------------------------------
-// Show Efforts
-// -------------------------------------------------------------
-document.getElementById("saveBtn").addEventListener("click", async () => {
-  if (addedItems.length === 0) return alert("Please add at least one effort.");
-
-  const date = addedItems[0].date;
-  if (isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
-
-  try {
-    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
-    const existing = await res.json();
-
-    let finalItems = [];
-    if (existing.length && existing[0].items) {
-      const existingKeys = existing[0].items.map(it => it.activity.trim().toLowerCase() + "_" + it.timeMin);
-      finalItems = [...existing[0].items];
-
-      let newItemAdded = false; // track if any new item is added
-      addedItems.forEach(it => {
-        const key = it.activity.trim().toLowerCase() + "_" + it.timeMin;
-        if (!existingKeys.includes(key)) {
-          finalItems.push(it);
-          newItemAdded = true;
-        }
-      });
-
-      // alert if no new items, but continue execution
-      if (!newItemAdded) {
-        alert("⚠️ No new activities to save. All items already exist!");
-      }
-
-    } else {
-      finalItems = [...addedItems];
-    }
-
-    finalItems = finalItems.map(it => ({
-      activity: it.activity,
-      timeMin: it.timeMin,
-      evaluation: Number(it.evaluation) || 0,
-      note: it.note || ""
-    }));
-
-    const response = await fetch(`${API_BASE}/api/efforts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: currentUser,
-        family: currentFamily,
-        date,
-        items: finalItems
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to save");
-
-    alert(data.message || "✅ Effort saved successfully!");
-
-    const totalStars = finalItems.reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
-    document.getElementById("checkedStarsDisplay").textContent = `${totalStars}⭐`;
-
-    addedItems.length = 0;
-    tableBody.innerHTML = "";
-    showToast("✨ Efforts added!");
-
-  } catch (err) {
-    console.error("❌ Save failed:", err);
-    alert("⚠️ Could not save to server.");
-  }
-});
-
-
-// -------------------------------------------------------------
-// Update star total
-// -------------------------------------------------------------
-function updateStars() {
-  let total = 0;
-
-  if (currentRole === "parent") {
-    document.querySelectorAll(".starInput").forEach(inp => {
-      total += Number(inp.value) || 0;
-    });
-  } else {
-    document.querySelectorAll("#effortList td:nth-child(4)").forEach(td => {
-      total += Number(td.textContent) || 0;
-    });
-  }
-
-  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
+  setTimeout(() => t.classList.remove("show"), 2000);
 }
 
 // -------------------------------------------------------------
@@ -349,6 +292,7 @@ document.getElementById("backBtn").onclick = () => {
   window.location.href = "choose.html";
 };
 </script>
+
 
 
 </body>
