@@ -127,8 +127,7 @@ router.post("/signin", async (req, res) => {
 // ======================================================
 router.post("/add-member", async (req, res) => {
   const { family, name, role } = req.body;
-  if (!family || !name || !role)
-    return res.status(400).json({ message: "Missing data" });
+  if (!family || !name || !role) return res.status(400).json({ message: "Missing data" });
 
   try {
     const found = await Family.findOne({ name: family });
@@ -137,8 +136,12 @@ router.post("/add-member", async (req, res) => {
     if ((found.members || []).some(m => m.name.toLowerCase() === name.toLowerCase()))
       return res.status(400).json({ message: "Member already exists" });
 
-    // Embedded member like original JSON
-    const newMember = { id: Date.now(), name, role };
+    const newMember = {
+      id: Date.now(), // numeric ID like original
+      name,
+      role
+    };
+
     found.members.push(newMember);
     await found.save();
 
@@ -148,6 +151,7 @@ router.post("/add-member", async (req, res) => {
     res.status(500).json({ message: "Server error while adding member" });
   }
 });
+
 
 // ======================================================
 // ✅ GET /:familyName
