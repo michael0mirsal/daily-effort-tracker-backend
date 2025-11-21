@@ -40,7 +40,7 @@ setInterval(() => {
 }, LIMIT_WINDOW_MS);
 
 // ======================================================
-// ✅ POST /signup - create new family
+// ✅ POST /signup - create new family with id preserved
 // ======================================================
 router.post("/signup", async (req, res) => {
   const { family, dad, mom, passkey } = req.body;
@@ -55,6 +55,7 @@ router.post("/signup", async (req, res) => {
     const hash = await bcrypt.hash(passkey, salt);
 
     const newFamily = new Family({
+      id: Date.now(), // preserve old id style
       name: family,
       dad,
       mom,
@@ -66,7 +67,7 @@ router.post("/signup", async (req, res) => {
 
     res.json({
       message: "Family created",
-      family: { name: family, dad, mom, members: [] }
+      family: { id: newFamily.id, name: family, dad, mom, members: [] }
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -75,7 +76,7 @@ router.post("/signup", async (req, res) => {
 });
 
 // ======================================================
-// ✅ POST /signin - STRICT MODE
+// ✅ POST /signin
 // ======================================================
 router.post("/signin", async (req, res) => {
   const { family, name, passkey } = req.body;
@@ -108,7 +109,7 @@ router.post("/signin", async (req, res) => {
     res.json({
       message: "Login successful (family mode)",
       family: {
-        id: found._id,
+        id: found.id, // preserve old id
         name: found.name,
         dad: found.dad,
         mom: found.mom,
@@ -136,7 +137,7 @@ router.post("/add-member", async (req, res) => {
     if ((found.members || []).some(m => m.name.toLowerCase() === name.toLowerCase()))
       return res.status(400).json({ message: "Member already exists" });
 
-    found.members.push({ name, role });
+    found.members.push({ id: Date.now(), name, role }); // preserve old id style
     await found.save();
 
     res.json({ message: "Member added", family: found });
