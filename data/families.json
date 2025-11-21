@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": 1763742035765,
+    "name": "Smith",
+    "dad": "John",
+    "mom": "Jane",
+    "passhash": "$2a$10$gl9i2Gu2iNWup8LujM/Z8.N.NWEXTgY5nv5NC5jIm1e7gcX0w4PT6",
+    "members": [
+      {
+        "id": 1763742109157,
+        "name": "Alice",
+        "role": "kid"
+      }
+    ]
+  }
+]
