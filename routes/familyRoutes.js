@@ -157,9 +157,9 @@ router.post("/add-member", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Add member error:", err);
-    res.status(500).json({ message: "Server error while adding member" });
-  }
+  console.error("Add member error FULL:", err);   // ← PRINT REAL ERROR
+  res.status(500).json({ message: "Server error while adding member" });
+}
 });
 
 
