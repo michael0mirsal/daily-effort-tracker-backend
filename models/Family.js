@@ -1,18 +1,22 @@
+// models/Family.js
 import mongoose from "mongoose";
 
-const MemberSchema = new mongoose.Schema({
-  id: Number,
-  name: String,
-  role: String
-});
+const memberSchema = new mongoose.Schema(
+  {
+    id: { type: Number, required: true },
+    name: { type: String, required: true },
+    role: { type: String, default: "kid" }
+  },
+  { _id: false } // <--- This disables MongoDB auto _id for members
+);
 
-const FamilySchema = new mongoose.Schema({
-  id: Number,
+const familySchema = new mongoose.Schema({
+  id: { type: Number, required: true }, // numeric ID like original
   name: { type: String, required: true, unique: true },
-  dad: String,
-  mom: String,
-  passhash: String,
-  members: [MemberSchema]  // embedded array like original JSON
+  dad: { type: String, required: true },
+  mom: { type: String, required: true },
+  passhash: { type: String, required: true },
+  members: { type: [memberSchema], default: [] }
 });
 
-export default mongoose.model("Family", FamilySchema);
+export default mongoose.model("Family", familySchema);
