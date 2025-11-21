@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import cors from "cors";
 import { fileURLToPath } from "url";
+import { connectDB } from "./db.js"; // 🌐 MongoDB connection
 import familyRoutes from "./routes/familyRoutes.js"; // 🌳 Family System
 
 const __filename = fileURLToPath(import.meta.url);
