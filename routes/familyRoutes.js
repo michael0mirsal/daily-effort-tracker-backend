@@ -128,24 +128,40 @@ router.post("/signin", async (req, res) => {
 // ======================================================
 router.post("/add-member", async (req, res) => {
   const { family, name, role } = req.body;
-  if (!family || !name || !role) return res.status(400).json({ message: "Missing data" });
+  if (!family || !name || !role) {
+    return res.status(400).json({ message: "Missing data" });
+  }
 
   try {
     const found = await Family.findOne({ name: family });
-    if (!found) return res.status(404).json({ message: "Family not found" });
+    if (!found) {
+      return res.status(404).json({ message: "Family not found" });
+    }
 
-    if ((found.members || []).some(m => m.name.toLowerCase() === name.toLowerCase()))
+    // Check duplicate
+    if (found.members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
       return res.status(400).json({ message: "Member already exists" });
+    }
 
-    found.members.push({ id: Date.now(), name, role }); // preserve old id style
+    // Generate member ID
+    const id = Date.now();
+
+    // Add correct member format
+    found.members.push({ id, name, role });
+
     await found.save();
 
-    res.json({ message: "Member added", family: found });
+    res.json({
+      message: "Member added",
+      family: found
+    });
+
   } catch (err) {
     console.error("Add member error:", err);
     res.status(500).json({ message: "Server error while adding member" });
   }
 });
+
 
 // ======================================================
 // ✅ GET /:familyName
