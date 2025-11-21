@@ -6,10 +6,10 @@ import Family from "../models/Family.js"; // MongoDB Family model
 const router = express.Router();
 
 // ======================================================
-// ✅ Rate limiter (simple in-memory sketch)
+// ✅ Rate limiter (in-memory sketch)
 // ======================================================
 const signinAttempts = new Map(); // key -> { count, firstTs }
-const LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 6;
 
 function checkRateLimit(key) {
@@ -31,7 +31,6 @@ function checkRateLimit(key) {
   return { allowed: true, remaining: MAX_ATTEMPTS - rec.count };
 }
 
-// Periodic cleanup
 setInterval(() => {
   const now = Date.now();
   for (const [key, rec] of signinAttempts.entries()) {
@@ -40,7 +39,7 @@ setInterval(() => {
 }, LIMIT_WINDOW_MS);
 
 // ======================================================
-// ✅ POST /signup - create new family with id preserved
+// ✅ POST /signup
 // ======================================================
 router.post("/signup", async (req, res) => {
   const { family, dad, mom, passkey } = req.body;
@@ -55,7 +54,7 @@ router.post("/signup", async (req, res) => {
     const hash = await bcrypt.hash(passkey, salt);
 
     const newFamily = new Family({
-      id: Date.now(), // preserve old id style
+      id: Date.now(),
       name: family,
       dad,
       mom,
@@ -109,7 +108,7 @@ router.post("/signin", async (req, res) => {
     res.json({
       message: "Login successful (family mode)",
       family: {
-        id: found.id, // preserve old id
+        id: found.id,
         name: found.name,
         dad: found.dad,
         mom: found.mom,
@@ -124,30 +123,23 @@ router.post("/signin", async (req, res) => {
 });
 
 // ======================================================
-// ✅ POST /add-member
+// ✅ POST /add-member (embedded objects)
 // ======================================================
 router.post("/add-member", async (req, res) => {
   const { family, name, role } = req.body;
-  if (!family || !name || !role) return res.status(400).json({ message: "Missing data" });
+  if (!family || !name || !role)
+    return res.status(400).json({ message: "Missing data" });
 
   try {
-    // 1️⃣ Find family
     const found = await Family.findOne({ name: family });
     if (!found) return res.status(404).json({ message: "Family not found" });
 
-    // 2️⃣ Check if member exists
-    const existingMember = await Member.findOne({ name, family: found._id });
-    if (existingMember) return res.status(400).json({ message: "Member already exists" });
+    if ((found.members || []).some(m => m.name.toLowerCase() === name.toLowerCase()))
+      return res.status(400).json({ message: "Member already exists" });
 
-    // 3️⃣ Create new member
-    const memberDoc = await Member.create({
-      name,
-      role,
-      family: found._id
-    });
-
-    // 4️⃣ Push Member ObjectId into Family.members
-    found.members.push(memberDoc._id);
+    // Embedded member like original JSON
+    const newMember = { id: Date.now(), name, role };
+    found.members.push(newMember);
     await found.save();
 
     res.json({ message: "Member added", family: found });
@@ -156,8 +148,6 @@ router.post("/add-member", async (req, res) => {
     res.status(500).json({ message: "Server error while adding member" });
   }
 });
-
-
 
 // ======================================================
 // ✅ GET /:familyName
