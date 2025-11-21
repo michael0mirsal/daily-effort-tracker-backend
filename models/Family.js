@@ -1,11 +1,18 @@
 import mongoose from "mongoose";
 
-const familySchema = new mongoose.Schema({
-  name: { type: String, required: true },
+const MemberSchema = new mongoose.Schema({
+  id: Number,
+  name: String,
+  role: String
+});
+
+const FamilySchema = new mongoose.Schema({
+  id: Number,
+  name: { type: String, required: true, unique: true },
   dad: String,
   mom: String,
   passhash: String,
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "Member" }],
+  members: [MemberSchema]  // embedded array like original JSON
 });
 
-export default mongoose.model("Family", familySchema);
+export default mongoose.model("Family", FamilySchema);
