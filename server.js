@@ -9,6 +9,12 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./db.js"; // 🌐 MongoDB connection
 import familyRoutes from "./routes/familyRoutes.js"; // 🌳 Family System
 
+// Import MongoDB models
+import Family from "./models/Family.js";
+import Member from "./models/Member.js";
+import Task from "./models/Task.js";
+import Routine from "./models/Routine.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -32,189 +38,175 @@ app.get("/", (req, res) => {
 app.use("/api/families", familyRoutes);
 
 // ======================================================
-// ✅ File paths and utilities
+// ✅ Effort APIs (MongoDB version)
 // ======================================================
-const EFFORT_FILE = path.join(__dirname, "efforts.json");
-const ROUTINE_FILE = path.join(__dirname, "routines.json");
-const KIDS_STARS_FILE = path.join(__dirname, "kidsStars.json");
-const FAMILIES_FILE = path.join(__dirname, "data", "families.json");
 
-// Ensure required files exist
-function ensureFile(file) {
-  if (!fs.existsSync(file)) fs.writeFileSync(file, "[]", "utf8");
-}
-ensureFile(EFFORT_FILE);
-ensureFile(ROUTINE_FILE);
-ensureFile(KIDS_STARS_FILE);
-ensureFile(FAMILIES_FILE);
-
-function loadJSON(file) {
+// POST /api/efforts
+app.post("/api/efforts", async (req, res) => {
   try {
-    return JSON.parse(fs.readFileSync(file, "utf8") || "[]");
+    const { name, date, items, checkedData, family } = req.body;
+    if (!name || !date || !Array.isArray(items) || !family) {
+      return res.status(400).json({ error: "Invalid data" });
+    }
+
+    const familyDoc = await Family.findOne({ name: family });
+    if (!familyDoc) return res.status(404).json({ error: "Family not found" });
+
+    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
+    if (!memberDoc) return res.status(404).json({ error: "Member not found" });
+
+    let taskDoc = await Task.findOne({ member: memberDoc._id, date });
+    if (taskDoc) {
+      taskDoc.items = items;
+      taskDoc.checkedData = checkedData || 0;
+    } else {
+      taskDoc = new Task({ member: memberDoc._id, date, items, checkedData: checkedData || 0 });
+    }
+    await taskDoc.save();
+
+    const totalStars = items.reduce((sum, it) => sum + Number(it.evaluation || 0), 0);
+    res.json({ message: "✅ Effort saved and stars updated!", starsToday: totalStars });
   } catch (err) {
-    console.error(`Error reading ${file}:`, err);
-    return [];
-  }
-}
-
-function saveJSON(file, data) {
-  try {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
-    return true;
-  } catch (err) {
-    console.error(`Error writing ${file}:`, err);
-    return false;
-  }
-}
-
-// ======================================================
-// ✅ Effort APIs (with family field)
-// ======================================================
-app.post("/api/efforts", (req, res) => {
-  const { name, date, items, checkedData, family } = req.body;
-  if (!name || !date || !Array.isArray(items))
-    return res.status(400).json({ error: "Invalid data" });
-  if (!family) return res.status(400).json({ error: "Missing family" });
-
-  const allEfforts = loadJSON(EFFORT_FILE);
-  const index = allEfforts.findIndex(
-    (r) => r.name === name && r.family === family && r.date === date
-  );
-
-  const record = { name, family, date, items, checkedData };
-  if (index >= 0) allEfforts[index] = record;
-  else allEfforts.push(record);
-
-  if (!saveJSON(EFFORT_FILE, allEfforts))
-    return res.status(500).json({ error: "Failed to save effort" });
-
-  // Update kid stars
-  const allStars = loadJSON(KIDS_STARS_FILE);
-  let kidIndex = allStars.findIndex(k => k.name === name && k.family === family);
-  if (kidIndex < 0) {
-    allStars.push({ name, family, starsPerDay: [] });
-    kidIndex = allStars.length - 1;
-  }
-
-  const totalStars = items.reduce((sum, it) => sum + Number(it.evaluation || 0), 0);
-  const todayIndex = allStars[kidIndex].starsPerDay.findIndex(d => d.date === date);
-  if (todayIndex >= 0) allStars[kidIndex].starsPerDay[todayIndex].stars = totalStars;
-  else allStars[kidIndex].starsPerDay.push({ date, stars: totalStars });
-
-  if (!saveJSON(KIDS_STARS_FILE, allStars))
-    return res.status(500).json({ error: "Failed to update stars" });
-
-  res.json({ message: "✅ Effort saved and stars updated!", starsToday: totalStars });
-});
-
-app.get("/api/efforts/search", (req, res) => {
-  const { name, date, family } = req.query;
-  let results = loadJSON(EFFORT_FILE);
-  if (name) results = results.filter(r => r.name?.toLowerCase() === name.toLowerCase());
-  if (family) results = results.filter(r => r.family?.toLowerCase() === family.toLowerCase());
-  if (date) results = results.filter(r => r.date === date);
-  res.json(results);
-});
-
-app.get("/api/debug/efforts", (req, res) => res.json(loadJSON(EFFORT_FILE)));
-
-app.patch("/api/efforts/updateEvaluation", (req, res) => {
-  const { name, date, index, evaluation } = req.body;
-  if (!name || !date || index === undefined)
-    return res.status(400).json({ message: "Missing fields." });
-
-  try {
-    let efforts = loadJSON(EFFORT_FILE);
-    const userEffort = efforts.find(r => r.name === name && r.date === date);
-    if (!userEffort) return res.status(404).json({ message: "Effort not found." });
-    if (!userEffort.items[index]) return res.status(400).json({ message: "Invalid index." });
-
-    userEffort.items[index].evaluation = evaluation;
-    if (saveJSON(EFFORT_FILE, efforts))
-      res.json({ message: "✅ Evaluation updated successfully!" });
-    else res.status(500).json({ message: "Failed to save updated evaluation." });
-  } catch (err) {
-    console.error("Update error:", err);
-    res.status(500).json({ message: "Server error while updating evaluation." });
+    console.error(err);
+    res.status(500).json({ error: "Server error saving effort" });
   }
 });
 
-// ======================================================
-// ✅ Routine APIs (with family field)
-// ======================================================
-app.post("/api/routines/save", (req, res) => {
-  const { name, date, items, family, checkedData } = req.body;
-  if (!name || !date || !Array.isArray(items))
-    return res.status(400).json({ error: "Invalid routine data" });
-  if (!family) return res.status(400).json({ error: "Missing family" });
-
-  const all = loadJSON(ROUTINE_FILE);
-  const index = all.findIndex(r => r.name === name && r.family === family && r.date === date);
-  const record = { name, family, date, items, checkedData };
-  if (index >= 0) all[index] = record;
-  else all.push(record);
-  saveJSON(ROUTINE_FILE, all);
-
-  res.json({ message: "✅ Routine saved!" });
-});
-
-// --- Search routine by name, date, and family ---
-app.get("/api/routines/search", (req, res) => {
+// GET /api/efforts/search
+app.get("/api/efforts/search", async (req, res) => {
   try {
     const { name, date, family } = req.query;
-    const result = loadJSON(ROUTINE_FILE).filter(
-      r =>
-        r.name?.trim().toLowerCase() === name?.trim().toLowerCase() &&
-        r.date === date &&
-        r.family?.trim().toLowerCase() === (family?.trim().toLowerCase() || "")
-    );
+    let query = {};
+    if (date) query.date = date;
+
+    let memberIds;
+    if (name || family) {
+      let memberQuery = {};
+      if (name) memberQuery.name = name;
+      if (family) {
+        const familyDoc = await Family.findOne({ name: family });
+        if (!familyDoc) return res.json([]);
+        memberQuery.family = familyDoc._id;
+      }
+      const members = await Member.find(memberQuery);
+      memberIds = members.map(m => m._id);
+      query.member = { $in: memberIds };
+    }
+
+    const tasks = await Task.find(query).populate("member", "name family");
+    const result = tasks.map(t => ({
+      name: t.member.name,
+      family: t.member.family.name || family,
+      date: t.date,
+      items: t.items,
+      checkedData: t.checkedData
+    }));
+
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error while searching routines" });
+    res.status(500).json({ error: "Server error searching efforts" });
   }
 });
 
-// --- Get all routines for a kid (with optional family filter) ---
-app.get("/api/routines/:name", (req, res) => {
+// PATCH /api/efforts/updateEvaluation
+app.patch("/api/efforts/updateEvaluation", async (req, res) => {
   try {
-    const { name } = req.params;
-    const { family } = req.query; // optional
-    let allRoutines = loadJSON(ROUTINE_FILE).filter(
-      r => r.name?.trim().toLowerCase() === name.trim().toLowerCase()
-    );
+    const { name, date, index, evaluation } = req.body;
+    if (!name || !date || index === undefined) return res.status(400).json({ message: "Missing fields." });
 
-    if (family) {
-      allRoutines = allRoutines.filter(
-        r => r.family?.trim().toLowerCase() === family.trim().toLowerCase()
-      );
-    }
+    const memberDoc = await Member.findOne({ name });
+    if (!memberDoc) return res.status(404).json({ message: "Member not found." });
 
-    res.json(allRoutines);
+    const taskDoc = await Task.findOne({ member: memberDoc._id, date });
+    if (!taskDoc) return res.status(404).json({ message: "Task not found." });
+    if (!taskDoc.items[index]) return res.status(400).json({ message: "Invalid index." });
+
+    taskDoc.items[index].evaluation = evaluation;
+    await taskDoc.save();
+
+    res.json({ message: "✅ Evaluation updated successfully!" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to load routines!" });
+    res.status(500).json({ message: "Server error updating evaluation." });
   }
 });
 
 // ======================================================
-// ✅ Weekly stars summary
+// ✅ Routine APIs (MongoDB version)
 // ======================================================
-app.get("/api/kidsStars/week", (req, res) => {
+
+// POST /api/routines/save
+app.post("/api/routines/save", async (req, res) => {
   try {
-    const efforts = loadJSON(EFFORT_FILE);
-    const routines = loadJSON(ROUTINE_FILE);
-    const families = loadJSON(FAMILIES_FILE);
+    const { name, date, items, family, checkedData } = req.body;
+    if (!name || !date || !Array.isArray(items) || !family) return res.status(400).json({ error: "Invalid routine data" });
 
-    const kidsWithFamily = [];
-    families.forEach(family => {
-      if (family.dad) kidsWithFamily.push({ name: family.dad, family: family.name });
-      if (family.mom) kidsWithFamily.push({ name: family.mom, family: family.name });
-      (family.members || []).forEach(m => {
-        kidsWithFamily.push({ name: m.name, family: family.name });
-      });
-    });
+    const familyDoc = await Family.findOne({ name: family });
+    if (!familyDoc) return res.status(404).json({ error: "Family not found" });
 
+    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
+    if (!memberDoc) return res.status(404).json({ error: "Member not found" });
+
+    let routineDoc = await Routine.findOne({ member: memberDoc._id, date });
+    if (routineDoc) {
+      routineDoc.items = items;
+      routineDoc.checkedData = checkedData || 0;
+    } else {
+      routineDoc = new Routine({ member: memberDoc._id, date, items, checkedData: checkedData || 0 });
+    }
+    await routineDoc.save();
+
+    res.json({ message: "✅ Routine saved!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error saving routine" });
+  }
+});
+
+// GET /api/routines/search
+app.get("/api/routines/search", async (req, res) => {
+  try {
+    const { name, date, family } = req.query;
+    let query = {};
+    if (date) query.date = date;
+
+    let memberIds;
+    if (name || family) {
+      let memberQuery = {};
+      if (name) memberQuery.name = name;
+      if (family) {
+        const familyDoc = await Family.findOne({ name: family });
+        if (!familyDoc) return res.json([]);
+        memberQuery.family = familyDoc._id;
+      }
+      const members = await Member.find(memberQuery);
+      memberIds = members.map(m => m._id);
+      query.member = { $in: memberIds };
+    }
+
+    const routines = await Routine.find(query).populate("member", "name family");
+    const result = routines.map(r => ({
+      name: r.member.name,
+      family: r.member.family.name || family,
+      date: r.date,
+      items: r.items,
+      checkedData: r.checkedData
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error searching routines" });
+  }
+});
+
+// ======================================================
+// ✅ Weekly stars summary (MongoDB version)
+// ======================================================
+app.get("/api/kidsStars/week", async (req, res) => {
+  try {
+    const families = await Family.find().populate("members");
     const today = new Date();
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
@@ -222,30 +214,30 @@ app.get("/api/kidsStars/week", (req, res) => {
       return d.toISOString().split("T")[0];
     });
 
-    const result = kidsWithFamily.map(k => ({
-      name: k.name,
-      family: k.family,
-      starsPerDay: days.map(date => {
-        let totalStars = 0;
+    const result = [];
 
-        // Efforts stars
-        efforts
-          .filter(r => r.name === k.name && r.family === k.family && r.date === date)
-          .forEach(rec => {
-            if (Array.isArray(rec.items))
-              totalStars += rec.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-          });
+    for (const family of families) {
+      const allMembers = [family.dad, family.mom, ...(family.members || [])].filter(Boolean);
 
-        // Routines stars
-        routines
-          .filter(r => r.name === k.name && r.family === k.family && r.date === date)
-          .forEach(rec => {
-            totalStars += (rec.items || []).filter(i => i.done).length;
-          });
+      for (const memberName of allMembers) {
+        const memberDoc = await Member.findOne({ name: memberName, family: family._id });
+        if (!memberDoc) continue;
 
-        return { date, stars: totalStars };
-      }),
-    }));
+        const starsPerDay = [];
+        for (const date of days) {
+          const taskDoc = await Task.findOne({ member: memberDoc._id, date });
+          const routineDoc = await Routine.findOne({ member: memberDoc._id, date });
+
+          let totalStars = 0;
+          if (taskDoc?.items?.length) totalStars += taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+          if (routineDoc?.items?.length) totalStars += routineDoc.items.filter(i => i.done).length;
+
+          starsPerDay.push({ date, stars: totalStars });
+        }
+
+        result.push({ name: memberName, family: family.name, starsPerDay });
+      }
+    }
 
     res.json(result);
   } catch (err) {
@@ -269,7 +261,6 @@ console.log("📡 Environment PORT =", process.env.PORT);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
 });
-
 
 // ======================================================
 // ✅ Helper
