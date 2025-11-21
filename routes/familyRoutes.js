@@ -128,39 +128,35 @@ router.post("/signin", async (req, res) => {
 // ======================================================
 router.post("/add-member", async (req, res) => {
   const { family, name, role } = req.body;
-  if (!family || !name || !role) {
-    return res.status(400).json({ message: "Missing data" });
-  }
+  if (!family || !name || !role) return res.status(400).json({ message: "Missing data" });
 
   try {
+    // 1️⃣ Find family
     const found = await Family.findOne({ name: family });
-    if (!found) {
-      return res.status(404).json({ message: "Family not found" });
-    }
+    if (!found) return res.status(404).json({ message: "Family not found" });
 
-    // Check duplicate
-    if (found.members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
-      return res.status(400).json({ message: "Member already exists" });
-    }
+    // 2️⃣ Check if member exists
+    const existingMember = await Member.findOne({ name, family: found._id });
+    if (existingMember) return res.status(400).json({ message: "Member already exists" });
 
-    // Generate member ID
-    const id = Date.now();
-
-    // Add correct member format
-    found.members.push({ id, name, role });
-
-    await found.save();
-
-    res.json({
-      message: "Member added",
-      family: found
+    // 3️⃣ Create new member
+    const memberDoc = await Member.create({
+      name,
+      role,
+      family: found._id
     });
 
+    // 4️⃣ Push Member ObjectId into Family.members
+    found.members.push(memberDoc._id);
+    await found.save();
+
+    res.json({ message: "Member added", family: found });
   } catch (err) {
-  console.error("Add member error FULL:", err);   // ← PRINT REAL ERROR
-  res.status(500).json({ message: "Server error while adding member" });
-}
+    console.error("Add member error:", err);
+    res.status(500).json({ message: "Server error while adding member" });
+  }
 });
+
 
 
 // ======================================================
