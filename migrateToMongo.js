@@ -63,40 +63,46 @@ async function migrate() {
     }
 
     // ----------------- Tasks (Efforts) -----------------
-    const effortsPath = path.join("data", "efforts.json");
-    const effortsData = loadJSON(effortsPath);
+    const EFFORT_FILE = path.join(process.cwd(), "efforts.json");
+const effortsData = loadJSON(EFFORT_FILE);
 
-    for (let e of effortsData) {
-      const member = await Member.findOne({ name: e.name });
-      if (!member) continue;
+for (let e of effortsData) {
+  const memberDoc = await Member.findOne({ name: e.name });
+  if (!memberDoc) continue;
 
-      await Task.create({
-        member: member._id,
-        date: e.date,
-        items: e.items,
-        checkedData: e.checkedData || 0
-      });
-    }
+  const taskDoc = new Task({
+    member: memberDoc._id,
+    date: e.date,
+    items: e.items,
+    checkedData: e.checkedData || 0
+  });
 
-    console.log("✅ Tasks migrated!");
+  await taskDoc.save();
+}
 
-    // ----------------- Routines -----------------
-    const routinesPath = path.join("data", "routines.json");
-    const routinesData = loadJSON(routinesPath);
+console.log("✅ Tasks migrated!");
 
-    for (let r of routinesData) {
-      const member = await Member.findOne({ name: r.name });
-      if (!member) continue;
 
-      await Routine.create({
-        member: member._id,
-        date: r.date,
-        items: r.items,
-        checkedData: r.checkedData || 0
-      });
-    }
+const ROUTINE_FILE = path.join(process.cwd(), "routines.json");
+const routinesData = loadJSON(ROUTINE_FILE);
 
-    console.log("✅ Routines migrated!");
+for (let r of routinesData) {
+  const memberDoc = await Member.findOne({ name: r.name });
+  if (!memberDoc) continue;
+
+  const routineDoc = new Routine({
+    member: memberDoc._id,
+    date: r.date,
+    items: r.items,
+    checkedData: r.checkedData || 0
+  });
+
+  await routineDoc.save();
+}
+
+console.log("✅ Routines migrated!");
+
+
 
     console.log("🎉 FULL Migration Completed!");
     process.exit(0);
