@@ -103,22 +103,32 @@ async function migrate() {
     console.log(`🟣 Migrating routines (${routinesData.length})`);
 
     for (let r of routinesData) {
-      const memberDoc = await Member.findOne({ name: r.name });
+  if (!r.family) {
+    console.log(`❌ Routine skipped — Family not specified: ${r.name}`);
+    continue;
+  }
 
-      if (!memberDoc) {
-        console.log(`❌ Routine skipped — Member not found: ${r.name}`);
-        continue;
-      }
+  const familyDoc = await Family.findOne({ name: r.family });
+  if (!familyDoc) {
+    console.log(`❌ Routine skipped — Family not found: ${r.family}`);
+    continue;
+  }
 
-      await Routine.create({
-        member: memberDoc._id,
-        date: r.date,
-        items: r.items,
-        checkedData: r.checkedData || 0
-      });
-    }
+  const memberDoc = await Member.findOne({ name: r.name, family: familyDoc._id });
+  if (!memberDoc) {
+    console.log(`❌ Routine skipped — Member not found: ${r.name} in family ${r.family}`);
+    continue;
+  }
 
-    console.log("✅ Routines migrated!");
+  await Routine.create({
+    member: memberDoc._id,
+    date: r.date,
+    items: r.items,
+    checkedData: r.checkedData || 0
+  });
+
+  console.log(`✅ Routine saved for ${r.name} in family ${r.family}`);
+}
 
     console.log("🎉 FULL Migration Completed Successfully!");
     process.exit(0);
