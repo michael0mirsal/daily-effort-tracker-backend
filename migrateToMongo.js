@@ -108,13 +108,13 @@ async function migrate() {
     continue;
   }
 
-  const familyDoc = await Family.findOne({ name: r.family });
+  const familyDoc = await Family.findOne({ name: r.family.trim() });
   if (!familyDoc) {
     console.log(`❌ Routine skipped — Family not found: ${r.family}`);
     continue;
   }
 
-  const memberDoc = await Member.findOne({ name: r.name, family: familyDoc._id });
+  const memberDoc = await Member.findOne({ name: r.name.trim(), family: familyDoc._id });
   if (!memberDoc) {
     console.log(`❌ Routine skipped — Member not found: ${r.name} in family ${r.family}`);
     continue;
@@ -129,6 +129,7 @@ async function migrate() {
 
   console.log(`✅ Routine saved for ${r.name} in family ${r.family}`);
 }
+
 
     console.log("🎉 FULL Migration Completed Successfully!");
     process.exit(0);
