@@ -35,10 +35,13 @@ async function migrate() {
     const familiesData = loadJSON(familiesPath);
     console.log(`📦 Found ${familiesData.length} families in JSON`);
 
+    // Map to track members by family name
+    const memberMap = new Map();
+
     for (let f of familiesData) {
       const familyName = f.name.trim();
 
-      // Check if family exists, if yes, use it
+      // Check if family exists
       let familyDoc = await Family.findOne({ name: familyName });
       if (!familyDoc) {
         familyDoc = await Family.create({
@@ -53,17 +56,14 @@ async function migrate() {
         console.log(`⚠️ Family exists: ${familyName}`);
       }
 
-      // Create members
+      // Prepare a map for this family's members
+      memberMap.set(familyName, new Map());
+
       if (Array.isArray(f.members)) {
         for (let m of f.members) {
           const memberName = m.name.trim();
 
-          // Check if member exists in this family
-          let memberDoc = await Member.findOne({
-            name: memberName,
-            family: familyDoc._id
-          });
-
+          let memberDoc = await Member.findOne({ name: memberName, family: familyDoc._id });
           if (!memberDoc) {
             memberDoc = await Member.create({
               name: memberName,
@@ -73,10 +73,12 @@ async function migrate() {
             console.log(`   🔹 Member created: ${memberName} -> Family: ${familyName}`);
           }
 
-          // Ensure member ID is in family.members array
           if (!familyDoc.members.includes(memberDoc._id)) {
             familyDoc.members.push(memberDoc._id);
           }
+
+          // Add to map
+          memberMap.get(familyName).set(memberName, memberDoc);
         }
         await familyDoc.save();
       }
@@ -88,12 +90,23 @@ async function migrate() {
     console.log(`📘 Migrating efforts (${effortsData.length})`);
 
     for (let e of effortsData) {
-      const memberName = e.name.trim();
+      const familyName = e.family?.trim();
+      const memberName = e.name?.trim();
 
-      // Optionally use case-insensitive search
-      const memberDoc = await Member.findOne({ name: memberName });
+      if (!familyName || !memberName) {
+        console.log(`❌ Effort skipped — missing family or name: ${JSON.stringify(e)}`);
+        continue;
+      }
+
+      const familyMembers = memberMap.get(familyName);
+      if (!familyMembers) {
+        console.log(`❌ Effort skipped — family not found in map: ${familyName}`);
+        continue;
+      }
+
+      const memberDoc = familyMembers.get(memberName);
       if (!memberDoc) {
-        console.log(`❌ Effort skipped — Member not found: ${memberName}`);
+        console.log(`❌ Effort skipped — member not found: ${memberName} in family ${familyName}`);
         continue;
       }
 
@@ -103,7 +116,9 @@ async function migrate() {
         items: e.items,
         checkedData: e.checkedData || 0
       });
+      console.log(`✅ Effort saved for ${memberName} in family ${familyName}`);
     }
+
     console.log("✅ Tasks migrated!");
 
     // ---------- Routines ----------
@@ -112,29 +127,23 @@ async function migrate() {
     console.log(`🟣 Migrating routines (${routinesData.length})`);
 
     for (let r of routinesData) {
-      if (!r.family) {
-        console.log(`❌ Routine skipped — Family not specified: ${r.name}`);
+      const familyName = r.family?.trim();
+      const memberName = r.name?.trim();
+
+      if (!familyName || !memberName) {
+        console.log(`❌ Routine skipped — missing family or name: ${JSON.stringify(r)}`);
         continue;
       }
 
-      const familyName = r.family.trim();
-      const familyDoc = await Family.findOne({ name: familyName });
-      if (!familyDoc) {
-        console.log(`❌ Routine skipped — Family not found: ${familyName}`);
+      const familyMembers = memberMap.get(familyName);
+      if (!familyMembers) {
+        console.log(`❌ Routine skipped — family not found in map: ${familyName}`);
         continue;
       }
 
-      const memberName = r.name.trim();
-      const memberDoc = await Member.findOne({
-        name: memberName,
-        family: familyDoc._id
-      });
-
+      const memberDoc = familyMembers.get(memberName);
       if (!memberDoc) {
-        // Debug: list all members in the family
-        const membersInFamily = await Member.find({ family: familyDoc._id });
-        console.log("Members in this family:", membersInFamily.map(m => m.name));
-        console.log(`❌ Routine skipped — Member not found: ${memberName} in family ${familyName}`);
+        console.log(`❌ Routine skipped — member not found: ${memberName} in family ${familyName}`);
         continue;
       }
 
@@ -144,7 +153,6 @@ async function migrate() {
         items: r.items,
         checkedData: r.checkedData || 0
       });
-
       console.log(`✅ Routine saved for ${memberName} in family ${familyName}`);
     }
 
