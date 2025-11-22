@@ -11,14 +11,14 @@ import Routine from "./models/Routine.js";
 
 dotenv.config();
 
-// Helper to safely load JSON
+// Load JSON safely
 const loadJSON = (filePath) => {
   try {
     if (!fs.existsSync(filePath)) {
       console.log(`⚠️ File not found: ${filePath}`);
       return [];
     }
-    return JSON.parse(fs.readFileSync(filePath, "utf8") || "[]");
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
   } catch (err) {
     console.error(`❌ Error reading file: ${filePath}`, err);
     return [];
@@ -31,21 +31,22 @@ async function migrate() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected.");
 
-    // -------------------- Families --------------------
+    // ---------- Families + Members ----------
     const familiesPath = path.join(process.cwd(), "data", "families.json");
     const familiesData = loadJSON(familiesPath);
 
-    console.log(`📦 Found ${familiesData.length} families`);
+    console.log(`📦 Found ${familiesData.length} families in JSON`);
 
     for (let f of familiesData) {
+      // Prevent duplicates
       const existing = await Family.findOne({ name: f.name });
       if (existing) {
         console.log(`⚠️ Family already exists: ${f.name} — skipping`);
         continue;
       }
 
-      // Create family WITHOUT members first
-      const family = await Family.create({
+      // Create family with no members yet
+      const familyDoc = await Family.create({
         name: f.name,
         dad: f.dad,
         mom: f.mom,
@@ -53,29 +54,37 @@ async function migrate() {
         members: []
       });
 
-      // Create Member documents and push ObjectId into family.members
+      // Create member documents
       if (Array.isArray(f.members)) {
         for (let m of f.members) {
           const memberDoc = await Member.create({
             name: m.name,
-            role: m.role,
-            family: family._id
+            role: m.role || "kid",
+            family: familyDoc._id
           });
-          family.members.push(memberDoc._id);
+
+          // Link member ObjectId into family.members
+          familyDoc.members.push(memberDoc._id);
         }
-        await family.save();
+        await familyDoc.save();
       }
 
       console.log(`✅ Migrated family: ${f.name}`);
     }
 
-    // -------------------- Tasks (Efforts) --------------------
+    // ---------- Tasks / Efforts ----------
     const effortsPath = path.join(process.cwd(), "data", "efforts.json");
     const effortsData = loadJSON(effortsPath);
 
+    console.log(`📘 Migrating efforts (${effortsData.length})`);
+
     for (let e of effortsData) {
       const memberDoc = await Member.findOne({ name: e.name });
-      if (!memberDoc) continue;
+
+      if (!memberDoc) {
+        console.log(`❌ Effort skipped — Member not found: ${e.name}`);
+        continue;
+      }
 
       await Task.create({
         member: memberDoc._id,
@@ -87,13 +96,19 @@ async function migrate() {
 
     console.log("✅ Tasks migrated!");
 
-    // -------------------- Routines --------------------
+    // ---------- Routines ----------
     const routinesPath = path.join(process.cwd(), "data", "routines.json");
     const routinesData = loadJSON(routinesPath);
 
+    console.log(`🟣 Migrating routines (${routinesData.length})`);
+
     for (let r of routinesData) {
       const memberDoc = await Member.findOne({ name: r.name });
-      if (!memberDoc) continue;
+
+      if (!memberDoc) {
+        console.log(`❌ Routine skipped — Member not found: ${r.name}`);
+        continue;
+      }
 
       await Routine.create({
         member: memberDoc._id,
@@ -105,7 +120,7 @@ async function migrate() {
 
     console.log("✅ Routines migrated!");
 
-    console.log("🎉 FULL Migration Completed!");
+    console.log("🎉 FULL Migration Completed Successfully!");
     process.exit(0);
 
   } catch (err) {
