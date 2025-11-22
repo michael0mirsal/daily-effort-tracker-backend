@@ -1,3 +1,4 @@
+// migrateToMongo.js
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -10,11 +11,16 @@ import Routine from "./models/Routine.js";
 
 dotenv.config();
 
+// Helper to safely load JSON
 const loadJSON = (filePath) => {
   try {
+    if (!fs.existsSync(filePath)) {
+      console.log(`⚠️ File not found: ${filePath}`);
+      return [];
+    }
     return JSON.parse(fs.readFileSync(filePath, "utf8") || "[]");
   } catch (err) {
-    console.error("Error reading file:", filePath, err);
+    console.error(`❌ Error reading file: ${filePath}`, err);
     return [];
   }
 };
@@ -25,8 +31,8 @@ async function migrate() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected.");
 
-    // ----------------- Families + Members -----------------
-    const familiesPath = path.join("data", "families.json");
+    // -------------------- Families --------------------
+    const familiesPath = path.join(process.cwd(), "data", "families.json");
     const familiesData = loadJSON(familiesPath);
 
     console.log(`📦 Found ${familiesData.length} families`);
@@ -38,6 +44,7 @@ async function migrate() {
         continue;
       }
 
+      // Create family WITHOUT members first
       const family = await Family.create({
         name: f.name,
         dad: f.dad,
@@ -46,14 +53,14 @@ async function migrate() {
         members: []
       });
 
-      if (f.members && Array.isArray(f.members)) {
+      // Create Member documents and push ObjectId into family.members
+      if (Array.isArray(f.members)) {
         for (let m of f.members) {
           const memberDoc = await Member.create({
             name: m.name,
-            role: m.role || "kid",
+            role: m.role,
             family: family._id
           });
-
           family.members.push(memberDoc._id);
         }
         await family.save();
@@ -62,47 +69,41 @@ async function migrate() {
       console.log(`✅ Migrated family: ${f.name}`);
     }
 
-    // ----------------- Tasks (Efforts) -----------------
-    const EFFORT_FILE = path.join(process.cwd(), "efforts.json");
-const effortsData = loadJSON(EFFORT_FILE);
+    // -------------------- Tasks (Efforts) --------------------
+    const effortsPath = path.join(process.cwd(), "data", "efforts.json");
+    const effortsData = loadJSON(effortsPath);
 
-for (let e of effortsData) {
-  const memberDoc = await Member.findOne({ name: e.name });
-  if (!memberDoc) continue;
+    for (let e of effortsData) {
+      const memberDoc = await Member.findOne({ name: e.name });
+      if (!memberDoc) continue;
 
-  const taskDoc = new Task({
-    member: memberDoc._id,
-    date: e.date,
-    items: e.items,
-    checkedData: e.checkedData || 0
-  });
+      await Task.create({
+        member: memberDoc._id,
+        date: e.date,
+        items: e.items,
+        checkedData: e.checkedData || 0
+      });
+    }
 
-  await taskDoc.save();
-}
+    console.log("✅ Tasks migrated!");
 
-console.log("✅ Tasks migrated!");
+    // -------------------- Routines --------------------
+    const routinesPath = path.join(process.cwd(), "data", "routines.json");
+    const routinesData = loadJSON(routinesPath);
 
+    for (let r of routinesData) {
+      const memberDoc = await Member.findOne({ name: r.name });
+      if (!memberDoc) continue;
 
-const ROUTINE_FILE = path.join(process.cwd(), "routines.json");
-const routinesData = loadJSON(ROUTINE_FILE);
+      await Routine.create({
+        member: memberDoc._id,
+        date: r.date,
+        items: r.items,
+        checkedData: r.checkedData || 0
+      });
+    }
 
-for (let r of routinesData) {
-  const memberDoc = await Member.findOne({ name: r.name });
-  if (!memberDoc) continue;
-
-  const routineDoc = new Routine({
-    member: memberDoc._id,
-    date: r.date,
-    items: r.items,
-    checkedData: r.checkedData || 0
-  });
-
-  await routineDoc.save();
-}
-
-console.log("✅ Routines migrated!");
-
-
+    console.log("✅ Routines migrated!");
 
     console.log("🎉 FULL Migration Completed!");
     process.exit(0);
