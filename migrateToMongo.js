@@ -37,37 +37,49 @@ async function migrate() {
 
     for (let f of familiesData) {
       const familyName = f.name.trim();
-      const existing = await Family.findOne({ name: familyName });
-      if (existing) {
-        console.log(`⚠️ Family already exists: ${familyName} — skipping`);
-        continue;
+
+      // Check if family exists, if yes, use it
+      let familyDoc = await Family.findOne({ name: familyName });
+      if (!familyDoc) {
+        familyDoc = await Family.create({
+          name: familyName,
+          dad: f.dad.trim(),
+          mom: f.mom.trim(),
+          passhash: f.passhash,
+          members: []
+        });
+        console.log(`✅ Family created: ${familyName}`);
+      } else {
+        console.log(`⚠️ Family exists: ${familyName}`);
       }
 
-      // Create family WITHOUT members first
-      const familyDoc = await Family.create({
-        name: familyName,
-        dad: f.dad.trim(),
-        mom: f.mom.trim(),
-        passhash: f.passhash,
-        members: []
-      });
-
-      // Create Member documents and link to family
+      // Create members
       if (Array.isArray(f.members)) {
         for (let m of f.members) {
           const memberName = m.name.trim();
-          const memberDoc = await Member.create({
+
+          // Check if member exists in this family
+          let memberDoc = await Member.findOne({
             name: memberName,
-            role: m.role || "kid",
             family: familyDoc._id
           });
-          familyDoc.members.push(memberDoc._id);
-          console.log(`   🔹 Member created: ${memberName} -> Family: ${familyName}`);
+
+          if (!memberDoc) {
+            memberDoc = await Member.create({
+              name: memberName,
+              role: m.role || "kid",
+              family: familyDoc._id
+            });
+            console.log(`   🔹 Member created: ${memberName} -> Family: ${familyName}`);
+          }
+
+          // Ensure member ID is in family.members array
+          if (!familyDoc.members.includes(memberDoc._id)) {
+            familyDoc.members.push(memberDoc._id);
+          }
         }
         await familyDoc.save();
       }
-
-      console.log(`✅ Migrated family: ${familyName}`);
     }
 
     // ---------- Tasks / Efforts ----------
@@ -77,6 +89,8 @@ async function migrate() {
 
     for (let e of effortsData) {
       const memberName = e.name.trim();
+
+      // Optionally use case-insensitive search
       const memberDoc = await Member.findOne({ name: memberName });
       if (!memberDoc) {
         console.log(`❌ Effort skipped — Member not found: ${memberName}`);
@@ -111,8 +125,15 @@ async function migrate() {
       }
 
       const memberName = r.name.trim();
-      const memberDoc = await Member.findOne({ name: memberName, family: familyDoc._id });
+      const memberDoc = await Member.findOne({
+        name: memberName,
+        family: familyDoc._id
+      });
+
       if (!memberDoc) {
+        // Debug: list all members in the family
+        const membersInFamily = await Member.find({ family: familyDoc._id });
+        console.log("Members in this family:", membersInFamily.map(m => m.name));
         console.log(`❌ Routine skipped — Member not found: ${memberName} in family ${familyName}`);
         continue;
       }
