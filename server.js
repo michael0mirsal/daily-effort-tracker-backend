@@ -140,29 +140,57 @@ app.patch("/api/efforts/updateEvaluation", async (req, res) => {
 app.post("/api/routines/save", async (req, res) => {
   try {
     const { name, date, items, family, checkedData } = req.body;
-    if (!name || !date || !Array.isArray(items) || !family) return res.status(400).json({ error: "Invalid routine data" });
 
-    const familyDoc = await Family.findOne({ name: family });
-    if (!familyDoc) return res.status(404).json({ error: "Family not found" });
+    if (!name || !date || !Array.isArray(items) || !family)
+      return res.status(400).json({ error: "Invalid routine data" });
 
-    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
-    if (!memberDoc) return res.status(404).json({ error: "Member not found" });
+    let familyDoc;
 
-    let routineDoc = await Routine.findOne({ member: memberDoc._id, date });
+    // Allow name OR ID
+    if (mongoose.isValidObjectId(family)) {
+      familyDoc = await Family.findById(family);
+    } else {
+      familyDoc = await Family.findOne({ name: family });
+    }
+
+    if (!familyDoc)
+      return res.status(404).json({ error: "Family not found" });
+
+    const memberDoc = await Member.findOne({
+      name,
+      family: familyDoc._id,
+    });
+
+    if (!memberDoc)
+      return res.status(404).json({ error: "Member not found" });
+
+    let routineDoc = await Routine.findOne({
+      member: memberDoc._id,
+      date,
+    });
+
     if (routineDoc) {
       routineDoc.items = items;
       routineDoc.checkedData = checkedData || 0;
     } else {
-      routineDoc = new Routine({ member: memberDoc._id, date, items, checkedData: checkedData || 0 });
+      routineDoc = new Routine({
+        member: memberDoc._id,
+        date,
+        items,
+        checkedData: checkedData || 0,
+      });
     }
+
     await routineDoc.save();
 
     res.json({ message: "✅ Routine saved!" });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error saving routine" });
   }
 });
+
 
 // GET /api/routines/search
 app.get("/api/routines/search", async (req, res) => {
