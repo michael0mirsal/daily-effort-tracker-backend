@@ -10,7 +10,6 @@ const memberSchema = new mongoose.Schema(
   { _id: false }
 );
 
-import mongoose from "mongoose";
 
 const familySchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
