@@ -176,113 +176,159 @@
 
     let kids = [];
 
-    async function loadKids() {
-      try {
-        const res = await fetch(`/api/families/family/${familyData.family}`);
-        const data = await res.json();
-        if (data[0]?.members) {
-          kids = data[0].members.filter(m => m.role === 'kid');
-          renderKids();
-        }
-      } catch (err) {
-        console.error("Error loading kids:", err);
-      }
-    }
+    
 
-    function renderKids() {
-      kidsListDiv.innerHTML = '';
-      kids.forEach((k, index) => {
-        const div = document.createElement('div');
-        div.className = 'kidItem';
-        div.innerHTML = `
-          <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
-          <div class="kidActions">
-            <button onclick="editKid(${index})">✏️ Edit</button>
-            <button onclick="deleteKid(${index})">🗑️ Delete</button>
-          </div>
-        `;
-        kidsListDiv.appendChild(div);
+
+
+// ===============================
+// 1) Load Kids From API
+// ===============================
+async function loadKids() {
+  try {
+    const res = await fetch(`/api/families/family/${familyData.family}`);
+    const data = await res.json();
+
+    const family = data[0];
+    if (family?.members) {
+      // members are now full documents
+      kids = family.members.filter(m => m.role === 'kid');
+      renderKids();
+    }
+  } catch (err) {
+    console.error("Error loading kids:", err);
+  }
+}
+
+// ===============================
+// 2) Render Kids UI
+// ===============================
+function renderKids() {
+  kidsListDiv.innerHTML = '';
+  kids.forEach((k, index) => {
+    const div = document.createElement('div');
+    div.className = 'kidItem';
+    div.innerHTML = `
+      <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
+      <div class="kidActions">
+        <button onclick="editKid(${index})">✏️ Edit</button>
+        <button onclick="deleteKid(${index})">🗑️ Delete</button>
+      </div>
+    `;
+    kidsListDiv.appendChild(div);
+  });
+}
+
+// ===============================
+// 3) Add Kid (local only)
+// ===============================
+function addKid() {
+  const name = document.getElementById('kidName').value.trim();
+  const age = document.getElementById('kidAge').value.trim();
+  const role = document.getElementById('kidRole').value;
+
+  if (!name) {
+    msg.style.color = 'red';
+    msg.textContent = '❌ Please enter kid\'s name';
+    return;
+  }
+
+  kids.push({
+    name,
+    age: age || null,
+    role
+  });
+
+  renderKids();
+  document.getElementById('kidName').value = '';
+  document.getElementById('kidAge').value = '';
+  msg.textContent = '';
+}
+
+// ===============================
+// 4) Edit Kid (local only)
+// ===============================
+function editKid(index) {
+  const kid = kids[index];
+  const newName = prompt("Edit name:", kid.name);
+  if (!newName) return;
+
+  const newAge = prompt("Edit age (optional):", kid.age || '');
+
+  kids[index].name = newName.trim();
+  kids[index].age = newAge ? parseInt(newAge) : null;
+
+  renderKids();
+}
+
+// ===============================
+// 5) Delete Kid (backend + local)
+// ===============================
+async function deleteKid(index) {
+  const kid = kids[index];
+  if (!confirm(`Delete ${kid.name}?`)) return;
+
+  try {
+    const res = await fetch('/api/families/delete-member', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        family: familyData.family,
+        name: kid.name
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to delete on server");
+
+    kids.splice(index, 1);
+    renderKids();
+  } catch (err) {
+    console.error(err);
+    alert("Error deleting kid: " + err.message);
+  }
+}
+
+// ===============================
+// 6) Save All Kids To Server
+// ===============================
+async function finish() {
+  if (kids.length === 0) {
+    msg.style.color = 'red';
+    msg.textContent = '❌ Add at least one kid';
+    return;
+  }
+
+  try {
+    for (const kid of kids) {
+      const res = await fetch('/api/families/add-member', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          family: familyData.family,
+          name: kid.name,
+          role: kid.role,
+          age: kid.age || null   // only if you support age
+        })
       });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to add kid');
     }
 
-    function addKid() {
-      const name = document.getElementById('kidName').value.trim();
-      const age = document.getElementById('kidAge').value.trim();
-      const role = document.getElementById('kidRole').value;
+    msg.style.color = 'green';
+    msg.textContent = '🎉 All kids saved successfully! Redirecting...';
 
-      if (!name) {
-        msg.style.color = 'red';
-        msg.textContent = '❌ Please enter kid\'s name';
-        return;
-      }
+    setTimeout(() => {
+      window.location.href = 'signin.html';
+    }, 1500);
 
-      kids.push({ name, age: age || null, role });
-      renderKids();
-      document.getElementById('kidName').value = '';
-      document.getElementById('kidAge').value = '';
-      msg.textContent = '';
-    }
+  } catch (err) {
+    msg.style.color = 'red';
+    msg.textContent = '❌ Error: ' + err.message;
+    console.error(err);
+  }
+}
 
-    function editKid(index) {
-      const kid = kids[index];
-      const newName = prompt("Edit name:", kid.name);
-      if (!newName) return;
-      const newAge = prompt("Edit age (optional):", kid.age || '');
-      kids[index].name = newName.trim();
-      kids[index].age = newAge ? parseInt(newAge) : null;
-      renderKids();
-    }
-
-    async function deleteKid(index) {
-      const kid = kids[index];
-      if (!confirm(`Delete ${kid.name}?`)) return;
-      try {
-        const res = await fetch('/api/families/delete-member', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            family: familyData.family,
-            name: kid.name
-          })
-        });
-        if (!res.ok) throw new Error("Failed to delete on server");
-        kids.splice(index, 1);
-        renderKids();
-      } catch (err) {
-        console.error(err);
-        alert("Error deleting kid: " + err.message);
-      }
-    }
-
-    async function finish() {
-      if (kids.length === 0) {
-        msg.style.color = 'red';
-        msg.textContent = '❌ Add at least one kid';
-        return;
-      }
-      try {
-        for (const kid of kids) {
-          const res = await fetch('/api/families/add-member', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              family: familyData.family,
-              name: kid.name,
-              role: kid.role
-            })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || 'Failed to add kid');
-        }
-        msg.style.color = 'green';
-        msg.textContent = '🎉 All kids saved successfully! Redirecting...';
-        setTimeout(() => { window.location.href = 'signin.html'; }, 1500);
-      } catch (err) {
-        msg.style.color = 'red';
-        msg.textContent = '❌ Error: ' + err.message;
-        console.error(err);
-      }
-    }
 
     loadKids();
 
