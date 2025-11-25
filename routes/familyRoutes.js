@@ -80,34 +80,47 @@ router.post("/signup", async (req, res) => {
 // ======================================================
 // ✅ POST /signin
 // ======================================================
+// ✅ POST /signin
 router.post("/signin", async (req, res) => {
   const { family, name, passkey } = req.body;
   const limiterKey = req.ip || req.headers["x-forwarded-for"] || "unknown";
+
+  // Rate limiter
   const rl = checkRateLimit(limiterKey);
   if (!rl.allowed)
-    return res.status(429).json({ message: "Too many signin attempts. Try again later.", retryAfterSeconds: rl.retryAfter });
+    return res.status(429).json({ 
+      message: "Too many signin attempts. Try again later.", 
+      retryAfterSeconds: rl.retryAfter 
+    });
 
+  // Validate input
   if (!family || !name || !passkey)
     return res.status(400).json({ message: "Missing fields. 'family', 'name', 'passkey' required." });
 
   try {
-    const found = await Family.findOne({ name: family });
+    // Find family and populate members
+    const found = await Family.findOne({ name: family }).populate("members");
     if (!found) return res.status(404).json({ message: "Family not found" });
 
+    // Check passkey
     const match = await bcrypt.compare(passkey, found.passhash);
     if (!match) return res.status(401).json({ message: "Wrong passkey" });
 
-    const nameLower = name.toLowerCase();
+    // Determine role (dad, mom, or kid)
+    const nameLower = name.trim().toLowerCase();
     let detectedRole = null;
-    if ((found.dad || "").toLowerCase() === nameLower) detectedRole = "dad";
-    else if ((found.mom || "").toLowerCase() === nameLower) detectedRole = "mom";
-    else if ((found.members || []).some(m => (m.name || "").toLowerCase() === nameLower)) detectedRole = "kid";
+
+    if ((found.dad || "").trim().toLowerCase() === nameLower) detectedRole = "dad";
+    else if ((found.mom || "").trim().toLowerCase() === nameLower) detectedRole = "mom";
+    else if ((found.members || []).some(m => (m.name || "").trim().toLowerCase() === nameLower)) detectedRole = "kid";
 
     if (!detectedRole)
-      return res.status(403).json({ message: "This name is not registered in the family." });
+      return res.status(403).json({ message: "This name is not registered in this family." });
 
+    // Clear limiter on successful login
     if (signinAttempts.has(limiterKey)) signinAttempts.delete(limiterKey);
 
+    // Return family + detected role for frontend
     res.json({
       message: "Login successful (family mode)",
       family: {
@@ -115,15 +128,20 @@ router.post("/signin", async (req, res) => {
         name: found.name,
         dad: found.dad,
         mom: found.mom,
-        members: found.members
+        members: found.members // populated with actual Member objects
       },
-      user: { name, role: detectedRole }
+      user: {
+        name,
+        role: detectedRole
+      }
     });
+
   } catch (err) {
     console.error("Signin error:", err);
     res.status(500).json({ message: "Server error during signin" });
   }
 });
+
 
 // ======================================================
 // ✅ POST /add-member (embedded objects)
