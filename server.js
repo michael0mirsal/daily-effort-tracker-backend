@@ -156,10 +156,12 @@ app.post("/api/routines/save", async (req, res) => {
     if (!familyDoc)
       return res.status(404).json({ error: "Family not found" });
 
-    const memberDoc = await Member.findOne({
-      name,
-      family: familyDoc._id,
-    });
+    console.log("Looking for member:", name, "family:", familyDoc._id); // <-- debug log
+const memberDoc = await Member.findOne({
+  name,
+  family: mongoose.Types.ObjectId(familyDoc._id)  // ensure it's ObjectId
+});
+
 
     if (!memberDoc)
       return res.status(404).json({ error: "Member not found" });
