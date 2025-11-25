@@ -3,6 +3,8 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import Family from "../models/Family.js";
 import Member from "../models/Member.js";
+import mongoose from "mongoose";
+
 
 const router = express.Router();
 
@@ -143,7 +145,12 @@ router.post("/add-member", async (req, res) => {
       name: { $regex: `^${name.trim()}$`, $options: "i" },
       family: familyDoc._id
     });
-    if (existing) return res.status(400).json({ message: "Member already exists" });
+    if (existing) {
+  return res.json({
+    message: "Already exists",
+    member: existing
+  });
+}
 
     const memberDoc = await Member.create({
       name: name.trim(),
