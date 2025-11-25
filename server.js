@@ -14,6 +14,10 @@ import Family from "./models/Family.js";
 import Member from "./models/Member.js";
 import Task from "./models/Task.js";
 import Routine from "./models/Routine.js";
+import mongoose from "mongoose";
+
+mongoose.set("debug", true);
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
