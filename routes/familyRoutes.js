@@ -1,7 +1,8 @@
 // familyRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
-import Family from "../models/Family.js"; // MongoDB Family model
+import Family from "../models/Family.js";
+import Member from "../models/Member.js";
 
 const router = express.Router();
 
@@ -126,47 +127,112 @@ router.post("/signin", async (req, res) => {
 // ✅ POST /add-member (embedded objects)
 // ======================================================
 router.post("/add-member", async (req, res) => {
-  const { family, name, role } = req.body;
-  if (!family || !name || !role) return res.status(400).json({ message: "Missing data" });
-
   try {
-    const found = await Family.findOne({ name: family });
-    if (!found) return res.status(404).json({ message: "Family not found" });
+    const { family, name, role, age } = req.body;
+    if (!family || !name) return res.status(400).json({ message: "Missing data" });
 
-    if ((found.members || []).some(m => m.name.toLowerCase() === name.toLowerCase()))
-      return res.status(400).json({ message: "Member already exists" });
+    // Find family by name or id
+    let familyDoc = null;
+    if (mongoose.isValidObjectId(family)) familyDoc = await Family.findById(family);
+    else familyDoc = await Family.findOne({ name: family });
 
-    const newMember = {
-      id: Date.now(), // numeric ID like original
-      name,
-      role
-    };
+    if (!familyDoc) return res.status(404).json({ message: "Family not found" });
 
-    found.members.push(newMember);
-    await found.save();
+    // Prevent duplicates
+    const existing = await Member.findOne({
+      name: { $regex: `^${name.trim()}$`, $options: "i" },
+      family: familyDoc._id
+    });
+    if (existing) return res.status(400).json({ message: "Member already exists" });
 
-    res.json({ message: "Member added", family: found });
+    const memberDoc = await Member.create({
+      name: name.trim(),
+      role: role || "kid",
+      age: age ?? null,
+      family: familyDoc._id
+    });
+
+    familyDoc.members.push(memberDoc._id);
+    await familyDoc.save();
+
+    // return populated member
+    res.json({ message: "Member added", member: memberDoc });
   } catch (err) {
     console.error("Add member error:", err);
     res.status(500).json({ message: "Server error while adding member" });
   }
 });
 
-
-// ======================================================
-// ✅ GET /:familyName
-// ======================================================
-router.get("/:familyName", async (req, res) => {
+// Delete member by name (or id)
+router.delete("/delete-member", async (req, res) => {
   try {
-    const { familyName } = req.params;
-    const found = await Family.findOne({ name: familyName });
-    if (!found) return res.status(404).json({ message: "Family not found" });
-    res.json(found);
+    const { family, name, id } = req.body;
+    if (!family || (!name && !id)) return res.status(400).json({ message: "Missing data" });
+
+    // Resolve family
+    let familyDoc = null;
+    if (mongoose.isValidObjectId(family)) familyDoc = await Family.findById(family);
+    else familyDoc = await Family.findOne({ name: family });
+
+    if (!familyDoc) return res.status(404).json({ message: "Family not found" });
+
+    // Find member
+    const memberQuery = id ? { _id: id, family: familyDoc._id } : { name: { $regex: `^${name.trim()}$`, $options: "i" }, family: familyDoc._id };
+    const memberDoc = await Member.findOne(memberQuery);
+    if (!memberDoc) return res.status(404).json({ message: "Member not found" });
+
+    // Remove refs and document
+    await Member.deleteOne({ _id: memberDoc._id });
+    familyDoc.members = familyDoc.members.filter(m => m.toString() !== memberDoc._id.toString());
+    await familyDoc.save();
+
+    res.json({ message: "Member deleted", memberId: memberDoc._id });
+  } catch (err) {
+    console.error("Delete member error:", err);
+    res.status(500).json({ message: "Server error while deleting member" });
+  }
+});
+
+// Update member by id
+router.put("/update-member", async (req, res) => {
+  try {
+    const { id, name, role, age } = req.body;
+    if (!id) return res.status(400).json({ message: "Missing member id" });
+
+    const update = {};
+    if (name) update.name = name.trim();
+    if (role) update.role = role;
+    if (age !== undefined) update.age = age === "" ? null : Number(age);
+
+    const memberDoc = await Member.findByIdAndUpdate(id, update, { new: true });
+    if (!memberDoc) return res.status(404).json({ message: "Member not found" });
+
+    res.json({ message: "Member updated", member: memberDoc });
+  } catch (err) {
+    console.error("Update member error:", err);
+    res.status(500).json({ message: "Server error while updating member" });
+  }
+});
+
+// Get family with members populated
+router.get("/family/:familyName", async (req, res) => {
+  try {
+    const family = req.params.familyName;
+    let familyDoc;
+    if (mongoose.isValidObjectId(family)) {
+      familyDoc = await Family.findById(family).populate("members");
+    } else {
+      familyDoc = await Family.findOne({ name: family }).populate("members");
+    }
+    if (!familyDoc) return res.status(404).json({ message: "Family not found" });
+    res.json([familyDoc]); // keep same shape as your frontend expects
   } catch (err) {
     console.error("Get family error:", err);
     res.status(500).json({ message: "Server error while fetching family" });
   }
 });
+
+
 
 // ======================================================
 // 🔹 DEBUG - list all families
