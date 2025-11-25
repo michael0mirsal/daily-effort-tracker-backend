@@ -291,26 +291,39 @@ function attachCheckboxListeners() {
 // Save routine button handler
 document.getElementById("saveBtn").onclick = async () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  // ---------------------------
+  // Validate user info
+  // ---------------------------
   if (!user || !user.family || !user.name) { 
     alert("❌ Missing user info. Please login again."); 
+    console.error("❌ User info missing:", user);
     return; 
   }
 
-  const items = getAllTasks();               // your function to get tasks
-  const date = getLocalDate();               // your function to get today's date
+  // ---------------------------
+  // Prepare routine data
+  // ---------------------------
+  const items = getAllTasks();               // your function
+  const date = getLocalDate();               // your function
   const checkedData = items.filter(i => i.done).length;
 
-  // ✅ Use the family ID instead of name
+  // IMPORTANT: always prefer familyId if exists
+  const familyId = user.familyId || user.family;
+
   const payload = {
     name: user.name,
     date,
     items,
     checkedData,
-    family: user.familyId || user.family   // use ID if stored, fallback to name
+    family: familyId
   };
 
-  console.log("Saving routine payload:", payload);
+  console.log("📌 Saving routine — payload:", payload);
 
+  // ---------------------------
+  // Send to backend
+  // ---------------------------
   try {
     const res = await fetch(
       "https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save",
@@ -322,20 +335,25 @@ document.getElementById("saveBtn").onclick = async () => {
     );
 
     const data = await res.json();
-    console.log("Backend response:", data);
+    console.log("📥 Backend response:", data);
 
+    // ---------------------------
+    // Success or failure UI
+    // ---------------------------
     if (res.ok) {
       alert("✅ Routine saved successfully!");
       document.getElementById("routineStarsDisplay").textContent = `${checkedData}⭐`;
     } else {
+      console.error("❌ Routine save error:", data);
       alert("❌ Error saving routine: " + (data.error || JSON.stringify(data)));
     }
 
   } catch (err) { 
-    console.error("Error saving routine:", err); 
+    console.error("❌ Network error while saving routine:", err); 
     alert("❌ Failed to save routine"); 
   }
 };
+
 
 // --- LOAD all routines ---
 document.getElementById("loadBtn").onclick = async () => {
