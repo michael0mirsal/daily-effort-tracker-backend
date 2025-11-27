@@ -82,34 +82,35 @@ app.post("/api/efforts", async (req, res) => {
       )
     );
 
-    items.forEach(newItem => {
-      const key =
-        newItem.activity.trim().toLowerCase() + "_" + newItem.timeMin;
-
-      if (!existingKeys.has(key)) {
-        taskDoc.items.push({
-          activity: newItem.activity,
-          timeMin: Number(newItem.timeMin),
-          evaluation: Number(newItem.evaluation) || 0,
-          note: newItem.note || ""
-        });
-        existingKeys.add(key);
-      }
+    // Merge items
+items.forEach(newItem => {
+  const key = newItem.activity.trim().toLowerCase() + "_" + newItem.timeMin;
+  if (!existingKeys.has(key)) {
+    taskDoc.items.push({
+      activity: newItem.activity,
+      timeMin: Number(newItem.timeMin),
+      evaluation: Number(newItem.evaluation) || 0,
+      note: newItem.note || ""
     });
+    existingKeys.add(key);
+  }
+});
 
-    await taskDoc.save();
+// Update checkedData with sum of evaluations
+taskDoc.checkedData = taskDoc.items.reduce(
+  (sum, it) => sum + Number(it.evaluation || 0),
+  0
+);
 
-    // Calculate stars
-    const totalStars = taskDoc.items.reduce(
-      (sum, it) => sum + Number(it.evaluation || 0),
-      0
-    );
+// Save once
+await taskDoc.save();
 
-    res.json({
-      message: "✅ Effort saved successfully!",
-      itemsSaved: taskDoc.items.length,
-      starsToday: totalStars
-    });
+res.json({
+  message: "✅ Effort saved successfully!",
+  itemsSaved: taskDoc.items.length,
+  starsToday: taskDoc.checkedData
+});
+
 
   } catch (err) {
     console.error("❌ Server error saving effort:", err);
