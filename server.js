@@ -191,32 +191,26 @@ app.post("/api/routines/save", async (req, res) => {
     if (!name || !date || !Array.isArray(items) || !family)
       return res.status(400).json({ error: "Invalid routine data" });
 
+    // Prevent past dates
+    const todayStr = new Date().toISOString().split("T")[0]; // 'YYYY-MM-DD'
+    if (date < todayStr) {
+      return res.status(400).json({ error: "Cannot save routine for past dates." });
+    }
+
     let familyDoc;
 
-    // Allow name OR ID
     if (mongoose.isValidObjectId(family)) {
       familyDoc = await Family.findById(family);
     } else {
       familyDoc = await Family.findOne({ name: family });
     }
 
-    if (!familyDoc)
-      return res.status(404).json({ error: "Family not found" });
+    if (!familyDoc) return res.status(404).json({ error: "Family not found" });
 
-    const memberDoc = await Member.findOne({
-  name,
-  family: familyDoc._id   // let Mongoose cast automatically
-});
+    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
+    if (!memberDoc) return res.status(404).json({ error: "Member not found" });
 
-
-
-    if (!memberDoc)
-      return res.status(404).json({ error: "Member not found" });
-
-    let routineDoc = await Routine.findOne({
-      member: memberDoc._id,
-      date,
-    });
+    let routineDoc = await Routine.findOne({ member: memberDoc._id, date });
 
     if (routineDoc) {
       routineDoc.items = items;
@@ -233,7 +227,6 @@ app.post("/api/routines/save", async (req, res) => {
     await routineDoc.save();
 
     res.json({ message: "✅ Routine saved!" });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error saving routine" });
