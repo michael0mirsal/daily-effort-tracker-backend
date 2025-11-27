@@ -5,11 +5,10 @@ const taskSchema = new mongoose.Schema({
   date: { type: String, required: true },
   items: [
     {
-      section: String,
-      task: String,
-      done: Boolean,
+      activity: String,
+      timeMin: Number,
       evaluation: Number,
-      note: String,
+      note: String
     },
   ],
   checkedData: Number,
