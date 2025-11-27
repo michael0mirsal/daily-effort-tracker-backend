@@ -282,61 +282,64 @@ app.get("/api/routines/search", async (req, res) => {
 // ✅ Weekly stars summary (MongoDB version)
 // ======================================================
 app.get("/api/kidsStars/week", async (req, res) => {
-  try {
-    const families = await Family.find().populate("members");
-    const today = new Date();
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (6 - i));
-      return d.toISOString().split("T")[0];
-    });
+try {
+const families = await Family.find().populate("members");
+const today = new Date();
 
-    const result = [];
-
-    for (const family of families) {
-      const allMembers = [family.dad, family.mom, ...(family.members || [])].filter(Boolean);
-
-      for (const memberName of allMembers) {
-        const memberDoc = await Member.findOne({ name: memberName, family: family._id });
-        if (!memberDoc) continue;
-
-        const starsPerDay = [];
-        for (const date of days) {
-          const taskDoc = await Task.findOne({ member: memberDoc._id, date });
-          const routineDoc = await Routine.findOne({ member: memberDoc._id, date });
-
-          let totalStars = 0;
-          if (taskDoc?.items?.length) totalStars += taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-          if (routineDoc?.items?.length) totalStars += routineDoc.items.filter(i => i.done).length;
-
-          starsPerDay.push({ date, stars: totalStars });
-        }
-
-        result.push({ name: memberName, family: family.name, starsPerDay });
-      }
-    }
-
-    res.json(result);
-  } catch (err) {
-    console.error("❌ Error in /api/kidsStars/week:", err);
-    res.status(500).json({ error: "Server error" });
-  }
+// Last 7 days including today
+const days = Array.from({ length: 7 }, (_, i) => {
+  const d = new Date(today);
+  d.setDate(today.getDate() - (6 - i));
+  return d.toISOString().split("T")[0];
 });
 
-// ======================================================
-// ✅ Health check
-// ======================================================
-app.get("/api/test", (req, res) => res.json({ message: "✅ Server is alive!" }));
+const result = [];
 
-// ======================================================
-// ✅ Start server
-// ======================================================
-// Connect MongoDB and start server
-await connectDB();
+for (const family of families) {
+  // All member names: dad, mom, kids
+  const allMembers = [family.dad, family.mom, ...(family.members || [])].filter(Boolean);
 
-console.log("📡 Environment PORT =", process.env.PORT);
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
+  for (const memberName of allMembers) {
+    const memberDoc = await Member.findOne({ name: memberName, family: family._id });
+    if (!memberDoc) continue;
+
+    // Fetch all tasks and routines for this member in the last 7 days
+    const tasks = await Task.find({
+      member: memberDoc._id,
+      date: { $in: days }
+    });
+
+    const routines = await Routine.find({
+      member: memberDoc._id,
+      date: { $in: days }
+    });
+
+    const starsPerDay = days.map(date => {
+      // Use checkedData if present, fallback to sum for backward compatibility
+      const taskDoc = tasks.find(t => t.date === date);
+      const routineDoc = routines.find(r => r.date === date);
+
+      let totalStars = 0;
+      if (taskDoc) {
+        totalStars += taskDoc.checkedData ?? taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+      }
+      if (routineDoc) {
+        totalStars += routineDoc.checkedData ?? routineDoc.items.filter(i => i.done).length;
+      }
+
+      return { date, stars: totalStars };
+    });
+
+    result.push({ name: memberName, family: family.name, starsPerDay });
+  }
+}
+
+res.json(result);
+
+} catch (err) {
+console.error("❌ Error in /api/kidsStars/week:", err);
+res.status(500).json({ error: "Server error" });
+}
 });
 
 // ======================================================
