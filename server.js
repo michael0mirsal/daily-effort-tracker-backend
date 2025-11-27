@@ -282,71 +282,69 @@ app.get("/api/routines/search", async (req, res) => {
 // ✅ Weekly stars summary (MongoDB version)
 // ======================================================
 app.get("/api/kidsStars/week", async (req, res) => {
-try {
-const families = await Family.find().populate("members");
-const today = new Date();
+  try {
+    const families = await Family.find().populate("members");
+    const today = new Date();
 
-// Last 7 days including today
-const days = Array.from({ length: 7 }, (_, i) => {
-  const d = new Date(today);
-  d.setDate(today.getDate() - (6 - i));
-  return d.toISOString().split("T")[0];
-});
+    // Last 7 days including today
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (6 - i));
+      return d.toISOString().split("T")[0];
+    });
 
-// Get all member IDs in all families
-const allMemberIds = [];
-const memberMap = {}; // map memberName => { familyId, memberDoc }
-for (const family of families) {
-  const allMembers = [family.dad, family.mom, ...(family.members || [])].filter(Boolean);
-  for (const memberName of allMembers) {
-    allMemberIds.push(memberName); // we use names here to find docs in next query
-    memberMap[memberName] = { familyId: family._id, familyName: family.name };
+    // Gather all member IDs and map to family info
+    const allMemberIds = [];
+    const memberMap = {}; // memberId => { familyName }
+    families.forEach(family => {
+      (family.members || []).forEach(member => {
+        allMemberIds.push(member._id);
+        memberMap[member._id.toString()] = { familyName: family.name, memberName: member.name };
+      });
+    });
+
+    // Fetch all tasks and routines for last 7 days in bulk
+    const tasks = await Task.find({
+      member: { $in: allMemberIds },
+      date: { $in: days }
+    });
+
+    const routines = await Routine.find({
+      member: { $in: allMemberIds },
+      date: { $in: days }
+    });
+
+    const result = [];
+
+    // Loop through members
+    allMemberIds.forEach(memberId => {
+      const { familyName, memberName } = memberMap[memberId.toString()];
+
+      const memberTasks = tasks.filter(t => t.member.equals(memberId));
+      const memberRoutines = routines.filter(r => r.member.equals(memberId));
+
+      const starsPerDay = days.map(date => {
+        const taskDoc = memberTasks.find(t => t.date === date);
+        const routineDoc = memberRoutines.find(r => r.date === date);
+
+        let totalStars = 0;
+        if (taskDoc) totalStars += taskDoc.checkedData ?? taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+        if (routineDoc) totalStars += routineDoc.checkedData ?? routineDoc.items.filter(i => i.done).length;
+
+        return { date, stars: totalStars };
+      });
+
+      result.push({ name: memberName, family: familyName, starsPerDay });
+    });
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("❌ Error in /api/kidsStars/week:", err);
+    res.status(500).json({ error: "Server error" });
   }
-}
-
-// Fetch all member documents at once
-const memberDocs = await Member.find({ name: { $in: allMemberIds } });
-
-// Fetch all tasks and routines for last 7 days in bulk
-const tasks = await Task.find({
-  member: { $in: memberDocs.map(m => m._id) },
-  date: { $in: days }
 });
 
-const routines = await Routine.find({
-  member: { $in: memberDocs.map(m => m._id) },
-  date: { $in: days }
-});
-
-const result = [];
-
-for (const member of memberDocs) {
-  const { familyId, familyName } = memberMap[member.name];
-
-  const memberTasks = tasks.filter(t => t.member.equals(member._id));
-  const memberRoutines = routines.filter(r => r.member.equals(member._id));
-
-  const starsPerDay = days.map(date => {
-    const taskDoc = memberTasks.find(t => t.date === date);
-    const routineDoc = memberRoutines.find(r => r.date === date);
-
-    let totalStars = 0;
-    if (taskDoc) totalStars += taskDoc.checkedData ?? taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-    if (routineDoc) totalStars += routineDoc.checkedData ?? routineDoc.items.filter(i => i.done).length;
-
-    return { date, stars: totalStars };
-  });
-
-  result.push({ name: member.name, family: familyName, starsPerDay });
-}
-
-res.json(result);
-
-} catch (err) {
-console.error("❌ Error in /api/kidsStars/week:", err);
-res.status(500).json({ error: "Server error" });
-}
-});
 // ======================================================
 // ✅ Health check
 // ======================================================
