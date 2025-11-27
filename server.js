@@ -49,32 +49,74 @@ app.use("/api/families", familyRoutes);
 app.post("/api/efforts", async (req, res) => {
   try {
     const { name, date, items, checkedData, family } = req.body;
+
+    // Validation
     if (!name || !date || !Array.isArray(items) || !family) {
-      return res.status(400).json({ error: "Invalid data" });
+      return res.status(400).json({ error: "Invalid data sent to server" });
     }
 
+    // Find family
     const familyDoc = await Family.findOne({ name: family });
     if (!familyDoc) return res.status(404).json({ error: "Family not found" });
 
+    // Find member in family
     const memberDoc = await Member.findOne({ name, family: familyDoc._id });
     if (!memberDoc) return res.status(404).json({ error: "Member not found" });
 
+    // Find existing record
     let taskDoc = await Task.findOne({ member: memberDoc._id, date });
-    if (taskDoc) {
-      taskDoc.items = items;
-      taskDoc.checkedData = checkedData || 0;
-    } else {
-      taskDoc = new Task({ member: memberDoc._id, date, items, checkedData: checkedData || 0 });
+
+    if (!taskDoc) {
+      taskDoc = new Task({
+        member: memberDoc._id,
+        date,
+        items: [],
+        checkedData: checkedData || 0
+      });
     }
+
+    // Merge items without duplicates
+    const existingKeys = new Set(
+      taskDoc.items.map(
+        it => it.activity.trim().toLowerCase() + "_" + it.timeMin
+      )
+    );
+
+    items.forEach(newItem => {
+      const key =
+        newItem.activity.trim().toLowerCase() + "_" + newItem.timeMin;
+
+      if (!existingKeys.has(key)) {
+        taskDoc.items.push({
+          activity: newItem.activity,
+          timeMin: Number(newItem.timeMin),
+          evaluation: Number(newItem.evaluation) || 0,
+          note: newItem.note || ""
+        });
+        existingKeys.add(key);
+      }
+    });
+
     await taskDoc.save();
 
-    const totalStars = items.reduce((sum, it) => sum + Number(it.evaluation || 0), 0);
-    res.json({ message: "✅ Effort saved and stars updated!", starsToday: totalStars });
+    // Calculate stars
+    const totalStars = taskDoc.items.reduce(
+      (sum, it) => sum + Number(it.evaluation || 0),
+      0
+    );
+
+    res.json({
+      message: "✅ Effort saved successfully!",
+      itemsSaved: taskDoc.items.length,
+      starsToday: totalStars
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("❌ Server error saving effort:", err);
     res.status(500).json({ error: "Server error saving effort" });
   }
 });
+
 
 // GET /api/efforts/search
 app.get("/api/efforts/search", async (req, res) => {
