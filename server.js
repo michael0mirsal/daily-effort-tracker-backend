@@ -238,27 +238,25 @@ app.post("/api/routines/save", async (req, res) => {
 app.get("/api/routines/search", async (req, res) => {
   try {
     const { name, date, family } = req.query;
-    let query = {};
-    if (date) query.date = date;
 
-    let memberIds;
-    if (name || family) {
-      let memberQuery = {};
-      if (name) memberQuery.name = name;
-      if (family) {
-        const familyDoc = await Family.findOne({ name: family });
-        if (!familyDoc) return res.json([]);
-        memberQuery.family = familyDoc._id;
-      }
-      const members = await Member.find(memberQuery);
-      memberIds = members.map(m => m._id);
-      query.member = { $in: memberIds };
+    if (!name || !date || !family) {
+      return res.status(400).json({ error: "Missing required query parameters: name, date, family" });
     }
 
-    const routines = await Routine.find(query).populate("member", "name family");
+    // Find the family first
+    const familyDoc = await Family.findOne({ name: family });
+    if (!familyDoc) return res.json([]);
+
+    // Find the member inside that family
+    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
+    if (!memberDoc) return res.json([]);
+
+    // Search routines only for that member and date
+    const routines = await Routine.find({ member: memberDoc._id, date });
+
     const result = routines.map(r => ({
-      name: r.member.name,
-      family: r.member.family.name || family,
+      name: memberDoc.name,
+      family: familyDoc.name,
       date: r.date,
       items: r.items,
       checkedData: r.checkedData
