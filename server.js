@@ -293,45 +293,51 @@ const days = Array.from({ length: 7 }, (_, i) => {
   return d.toISOString().split("T")[0];
 });
 
+// Get all member IDs in all families
+const allMemberIds = [];
+const memberMap = {}; // map memberName => { familyId, memberDoc }
+for (const family of families) {
+  const allMembers = [family.dad, family.mom, ...(family.members || [])].filter(Boolean);
+  for (const memberName of allMembers) {
+    allMemberIds.push(memberName); // we use names here to find docs in next query
+    memberMap[memberName] = { familyId: family._id, familyName: family.name };
+  }
+}
+
+// Fetch all member documents at once
+const memberDocs = await Member.find({ name: { $in: allMemberIds } });
+
+// Fetch all tasks and routines for last 7 days in bulk
+const tasks = await Task.find({
+  member: { $in: memberDocs.map(m => m._id) },
+  date: { $in: days }
+});
+
+const routines = await Routine.find({
+  member: { $in: memberDocs.map(m => m._id) },
+  date: { $in: days }
+});
+
 const result = [];
 
-for (const family of families) {
-  // All member names: dad, mom, kids
-  const allMembers = [family.dad, family.mom, ...(family.members || [])].filter(Boolean);
+for (const member of memberDocs) {
+  const { familyId, familyName } = memberMap[member.name];
 
-  for (const memberName of allMembers) {
-    const memberDoc = await Member.findOne({ name: memberName, family: family._id });
-    if (!memberDoc) continue;
+  const memberTasks = tasks.filter(t => t.member.equals(member._id));
+  const memberRoutines = routines.filter(r => r.member.equals(member._id));
 
-    // Fetch all tasks and routines for this member in the last 7 days
-    const tasks = await Task.find({
-      member: memberDoc._id,
-      date: { $in: days }
-    });
+  const starsPerDay = days.map(date => {
+    const taskDoc = memberTasks.find(t => t.date === date);
+    const routineDoc = memberRoutines.find(r => r.date === date);
 
-    const routines = await Routine.find({
-      member: memberDoc._id,
-      date: { $in: days }
-    });
+    let totalStars = 0;
+    if (taskDoc) totalStars += taskDoc.checkedData ?? taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+    if (routineDoc) totalStars += routineDoc.checkedData ?? routineDoc.items.filter(i => i.done).length;
 
-    const starsPerDay = days.map(date => {
-      // Use checkedData if present, fallback to sum for backward compatibility
-      const taskDoc = tasks.find(t => t.date === date);
-      const routineDoc = routines.find(r => r.date === date);
+    return { date, stars: totalStars };
+  });
 
-      let totalStars = 0;
-      if (taskDoc) {
-        totalStars += taskDoc.checkedData ?? taskDoc.items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-      }
-      if (routineDoc) {
-        totalStars += routineDoc.checkedData ?? routineDoc.items.filter(i => i.done).length;
-      }
-
-      return { date, stars: totalStars };
-    });
-
-    result.push({ name: memberName, family: family.name, starsPerDay });
-  }
+  result.push({ name: member.name, family: familyName, starsPerDay });
 }
 
 res.json(result);
