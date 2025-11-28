@@ -114,6 +114,7 @@
   <div id="motivation">🌟 Family teamwork builds habits that last forever!</div>
 
   <script>
+     const API_URL = "http://localhost:3000";
     // 💫 rotating motivation
     const mot = document.getElementById("motivation");
     const messages = [
@@ -140,7 +141,7 @@
       }
 
       try {
-        const res = await fetch("https://daily-effort-tracker-backend-production.up.railway.app/api/families/signin", {
+        const res = await fetch(`${API_URL}/api/families/signin`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ family, name, passkey })
