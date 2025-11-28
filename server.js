@@ -192,14 +192,10 @@ app.post("/api/routines/save", async (req, res) => {
       return res.status(400).json({ error: "Invalid routine data" });
 
     // Prevent past dates
-const todayStr = new Date().toISOString().split("T")[0]; 
-const today = new Date(todayStr);
-const inputDate = new Date(date);
-
-if (inputDate < today) {
-  return res.status(400).json({ error: "Cannot save routine for past dates." });
-}
-
+    const todayStr = new Date().toISOString().split("T")[0]; // 'YYYY-MM-DD'
+    if (date < todayStr) {
+      return res.status(400).json({ error: "Cannot save routine for past dates." });
+    }
 
     let familyDoc;
 
