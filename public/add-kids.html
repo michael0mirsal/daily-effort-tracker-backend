@@ -166,6 +166,7 @@
   <div id="motivation">🌟 Encourage your kids and celebrate their daily efforts!</div>
 
   <script>
+    const API_URL = "http://localhost:3000";
     const msg = document.getElementById('msg');
     const kidsListDiv = document.getElementById('kidsList');
     const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
@@ -185,7 +186,7 @@
 // ===============================
 async function loadKids() {
   try {
-    const res = await fetch(`/api/families/family/${familyData.family}`);
+    const res = await fetch(`${API_URL}/api/families/family/${familyData.family}`);
     const data = await res.json();
 
     const family = data[0];
@@ -268,7 +269,7 @@ async function deleteKid(index) {
   if (!confirm(`Delete ${kid.name}?`)) return;
 
   try {
-    const res = await fetch('/api/families/delete-member', {
+    const res = await fetch('${API_URL}/api/families/delete-member', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -300,7 +301,7 @@ async function finish() {
 
   try {
     for (const kid of kids) {
-      const res = await fetch('/api/families/add-member', {
+      const res = await fetch('${API_URL}/api/families/add-member', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
