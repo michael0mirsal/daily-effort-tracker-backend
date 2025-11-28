@@ -89,27 +89,27 @@ app.post("/api/efforts", async (req, res) => {
     }
 
     // Prevent duplicate activities
-    const existingKeys = new Set(
-      taskDoc.items.map(
-        it => it.activity.trim().toLowerCase() + "_" + it.timeMin
-      )
-    );
+    // Prevent duplicate activities by name only
+const existingActivities = new Set(
+  taskDoc.items.map(it => it.activity.trim().toLowerCase())
+);
 
-    // Merge items
-    items.forEach(newItem => {
-      const key = newItem.activity.trim().toLowerCase() + "_" + newItem.timeMin;
+// Merge items
+items.forEach(newItem => {
+  const activityKey = newItem.activity.trim().toLowerCase();
 
-      if (!existingKeys.has(key)) {
-        taskDoc.items.push({
-          activity: newItem.activity,
-          timeMin: Number(newItem.timeMin),
-          evaluation: Number(newItem.evaluation) || 0,
-          note: newItem.note || ""
-        });
-
-        existingKeys.add(key);
-      }
+  if (!existingActivities.has(activityKey)) {
+    taskDoc.items.push({
+      activity: newItem.activity,
+      timeMin: Number(newItem.timeMin),
+      evaluation: Number(newItem.evaluation) || 0,
+      note: newItem.note || ""
     });
+
+    existingActivities.add(activityKey);
+  }
+});
+
 
 
 // Update checkedData with sum of evaluations
