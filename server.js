@@ -142,16 +142,18 @@ app.get("/api/efforts/search", async (req, res) => {
 
     let query = {};
 
-    // ✔ Fix date comparison
+    // Fix date matching
     if (date) {
       const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+
       const dayEnd = new Date(date);
       dayEnd.setHours(23, 59, 59, 999);
 
       query.date = { $gte: dayStart, $lte: dayEnd };
     }
 
-    // ✔ Build member filter
+    // Member filtering
     if (name || family) {
       let memberQuery = {};
 
@@ -169,24 +171,16 @@ app.get("/api/efforts/search", async (req, res) => {
       query.member = { $in: memberIds };
     }
 
-    // ✔ Execute query
-    const tasks = await Task.find(query).populate("member", "name family");
+    const tasks = await Task.find(query).populate("member");
 
-    const result = tasks.map(t => ({
-      name: t.member.name,
-      family: family,
-      date: t.date,
-      items: t.items,
-      checkedData: t.checkedData
-    }));
-
-    res.json(result);
+    res.json(tasks);
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error searching efforts" });
   }
 });
+
 
 // PATCH /api/efforts/updateEvaluation
 app.patch("/api/efforts/updateEvaluation", async (req, res) => {
