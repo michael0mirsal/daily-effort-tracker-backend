@@ -129,6 +129,8 @@
   <div id="motivation">💖 Building family teamwork starts with one click!</div>
 
   <script>
+    const API_URL = "http://localhost:3000"; // local backend
+
     // Floating elements animation
     const emojis = ['💖','⭐','✨','🌈','💫','💛'];
     function createFloat() {
@@ -172,7 +174,7 @@
       }
 
       try {
-        const res = await fetch('https://daily-effort-tracker-backend-production.up.railway.app/api/families/signup', {
+        const res = await fetch('${API_URL}/api/families/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ family, dad, mom, passkey })
