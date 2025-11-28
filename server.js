@@ -139,33 +139,49 @@ res.json({
 app.get("/api/efforts/search", async (req, res) => {
   try {
     const { name, date, family } = req.query;
-    let query = {};
-    if (date) query.date = date;
 
-    let memberIds;
+    let query = {};
+
+    // ✔ Fix date comparison
+    if (date) {
+      const dayStart = new Date(date);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      query.date = { $gte: dayStart, $lte: dayEnd };
+    }
+
+    // ✔ Build member filter
     if (name || family) {
       let memberQuery = {};
+
       if (name) memberQuery.name = name;
+
       if (family) {
         const familyDoc = await Family.findOne({ name: family });
         if (!familyDoc) return res.json([]);
         memberQuery.family = familyDoc._id;
       }
+
       const members = await Member.find(memberQuery);
-      memberIds = members.map(m => m._id);
+      const memberIds = members.map(m => m._id);
+
       query.member = { $in: memberIds };
     }
 
+    // ✔ Execute query
     const tasks = await Task.find(query).populate("member", "name family");
+
     const result = tasks.map(t => ({
       name: t.member.name,
-      family: t.member.family.name || family,
+      family: family,
       date: t.date,
       items: t.items,
       checkedData: t.checkedData
     }));
 
     res.json(result);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error searching efforts" });
