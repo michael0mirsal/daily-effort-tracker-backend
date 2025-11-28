@@ -141,18 +141,9 @@ app.get("/api/efforts/search", async (req, res) => {
     const { name, date, family } = req.query;
     let query = {};
 
-    // Fix date search to work with stored Date objects
-    if (date) {
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
+    // match string date exactly
+    if (date) query.date = date;
 
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
-
-      query.date = { $gte: dayStart, $lte: dayEnd };
-    }
-
-    // Member search
     if (name || family) {
       let memberQuery = {};
 
@@ -166,7 +157,6 @@ app.get("/api/efforts/search", async (req, res) => {
 
       const members = await Member.find(memberQuery);
       const memberIds = members.map(m => m._id);
-
       query.member = { $in: memberIds };
     }
 
