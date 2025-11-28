@@ -290,19 +290,19 @@ app.get("/api/routines/search", async (req, res) => {
 // ======================================================
 app.get("/api/kidsStars/week", async (req, res) => {
   try {
-    const { name, family } = req.query; // parent name + family
-
+    const { name, family } = req.query;
     if (!name || !family) return res.status(400).json({ error: "Name and family required" });
 
-    // Find the family by name
+    // Find family by name
     const familyDoc = await Family.findOne({ name: family }).populate("members");
     if (!familyDoc) return res.json([]);
 
-    // Optional: check that the parent exists in this family
-    const parentMember = await Member.findOne({ name, family: familyDoc._id });
-    if (!parentMember) return res.json([]); // parent not found in this family
+    // Check that parent name matches either dad or mom
+    if (name !== familyDoc.dad && name !== familyDoc.mom) {
+      return res.status(403).json({ error: "Parent not found in this family" });
+    }
 
-    const kids = familyDoc.members.filter(m => m._id.toString() !== parentMember._id.toString());
+    const kids = familyDoc.members; // all kids in this family
 
     const today = new Date();
     const days = Array.from({ length: 7 }, (_, i) => {
@@ -311,8 +311,9 @@ app.get("/api/kidsStars/week", async (req, res) => {
       return d.toISOString().split("T")[0];
     });
 
-    // Fetch all tasks and routines for all kids
     const memberIds = kids.map(k => k._id);
+
+    // Fetch all tasks and routines for kids
     const tasks = await Task.find({ member: { $in: memberIds }, date: { $in: days } });
     const routines = await Routine.find({ member: { $in: memberIds }, date: { $in: days } });
 
@@ -343,6 +344,7 @@ app.get("/api/kidsStars/week", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // ======================================================
 // ✅ Health check
