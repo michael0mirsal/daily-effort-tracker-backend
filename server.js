@@ -139,10 +139,9 @@ res.json({
 app.get("/api/efforts/search", async (req, res) => {
   try {
     const { name, date, family } = req.query;
-
     let query = {};
 
-    // Fix date matching
+    // Fix date search to work with stored Date objects
     if (date) {
       const dayStart = new Date(date);
       dayStart.setHours(0, 0, 0, 0);
@@ -153,7 +152,7 @@ app.get("/api/efforts/search", async (req, res) => {
       query.date = { $gte: dayStart, $lte: dayEnd };
     }
 
-    // Member filtering
+    // Member search
     if (name || family) {
       let memberQuery = {};
 
@@ -171,15 +170,16 @@ app.get("/api/efforts/search", async (req, res) => {
       query.member = { $in: memberIds };
     }
 
-    const tasks = await Task.find(query).populate("member");
-
-    res.json(tasks);
+    const results = await Task.find(query).populate("member");
+    res.json(results);
 
   } catch (err) {
-    console.error(err);
+    console.error("Search error:", err);
     res.status(500).json({ error: "Server error searching efforts" });
   }
 });
+
+
 
 
 // PATCH /api/efforts/updateEvaluation
