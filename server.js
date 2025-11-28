@@ -55,6 +55,19 @@ app.post("/api/efforts", async (req, res) => {
       return res.status(400).json({ error: "Invalid data sent to server" });
     }
 
+    // ---------------------------
+    // 🚫 Prevent past dates
+    // ---------------------------
+    const todayStr = new Date().toISOString().split("T")[0]; 
+    const today = new Date(todayStr);
+    const inputDate = new Date(date);
+
+    if (inputDate < today) {
+      return res.status(400).json({
+        error: "Cannot save effort for past dates."
+      });
+    }
+
     // Find family
     const familyDoc = await Family.findOne({ name: family });
     if (!familyDoc) return res.status(404).json({ error: "Family not found" });
@@ -75,7 +88,7 @@ app.post("/api/efforts", async (req, res) => {
       });
     }
 
-    // Merge items without duplicates
+    // Prevent duplicate activities
     const existingKeys = new Set(
       taskDoc.items.map(
         it => it.activity.trim().toLowerCase() + "_" + it.timeMin
@@ -83,18 +96,21 @@ app.post("/api/efforts", async (req, res) => {
     );
 
     // Merge items
-items.forEach(newItem => {
-  const key = newItem.activity.trim().toLowerCase() + "_" + newItem.timeMin;
-  if (!existingKeys.has(key)) {
-    taskDoc.items.push({
-      activity: newItem.activity,
-      timeMin: Number(newItem.timeMin),
-      evaluation: Number(newItem.evaluation) || 0,
-      note: newItem.note || ""
+    items.forEach(newItem => {
+      const key = newItem.activity.trim().toLowerCase() + "_" + newItem.timeMin;
+
+      if (!existingKeys.has(key)) {
+        taskDoc.items.push({
+          activity: newItem.activity,
+          timeMin: Number(newItem.timeMin),
+          evaluation: Number(newItem.evaluation) || 0,
+          note: newItem.note || ""
+        });
+
+        existingKeys.add(key);
+      }
     });
-    existingKeys.add(key);
-  }
-});
+
 
 // Update checkedData with sum of evaluations
 taskDoc.checkedData = taskDoc.items.reduce(
