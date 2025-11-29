@@ -141,7 +141,7 @@
       }
 
       try {
-        const res = await fetch(`${API_URL}/api/families/signin`, {
+        const res = await fetch(`${API_URL}/api/family/signin`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ family, name, passkey })
