@@ -255,8 +255,8 @@ app.get("/api/routines/search", async (req, res) => {
   try {
     const { name, date, family } = req.query;
 
-    if (!name || !date || !family) {
-      return res.status(400).json({ error: "Missing required query parameters: name, date, family" });
+    if (!name || !family) {
+      return res.status(400).json({ error: "Missing required query parameters: name, family" });
     }
 
     // Find the family first
@@ -267,8 +267,11 @@ app.get("/api/routines/search", async (req, res) => {
     const memberDoc = await Member.findOne({ name, family: familyDoc._id });
     if (!memberDoc) return res.json([]);
 
-    // Search routines only for that member and date
-    const routines = await Routine.find({ member: memberDoc._id, date });
+    // Search routines: if date is provided, filter by date; otherwise return all
+    const query = { member: memberDoc._id };
+    if (date && date !== "all") query.date = date;
+
+    const routines = await Routine.find(query);
 
     const result = routines.map(r => ({
       name: memberDoc.name,
@@ -284,6 +287,7 @@ app.get("/api/routines/search", async (req, res) => {
     res.status(500).json({ error: "Server error searching routines" });
   }
 });
+
 
 // ======================================================
 // ✅ Weekly stars summary (MongoDB version)
