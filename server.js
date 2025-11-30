@@ -294,17 +294,12 @@ app.get("/api/routines/search", async (req, res) => {
 // ======================================================
 app.get("/api/kidsStars/week", async (req, res) => {
   try {
-    const { name, family } = req.query;
-    if (!name || !family) return res.status(400).json({ error: "Name and family required" });
+    const { family } = req.query; // Only require family now
+    if (!family) return res.status(400).json({ error: "Family required" });
 
     // Find family by name
     const familyDoc = await Family.findOne({ name: family }).populate("members");
     if (!familyDoc) return res.json([]);
-
-    // Check that parent name matches either dad or mom
-    if (name !== familyDoc.dad && name !== familyDoc.mom) {
-      return res.status(403).json({ error: "Parent not found in this family" });
-    }
 
     const kids = familyDoc.members; // all kids in this family
 
@@ -348,6 +343,7 @@ app.get("/api/kidsStars/week", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 
 // ======================================================
