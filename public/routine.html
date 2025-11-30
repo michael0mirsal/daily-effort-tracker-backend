@@ -204,6 +204,7 @@
   </div>
 
 <script>
+  const API_BASE = "http://localhost:3000";
 const user = JSON.parse(localStorage.getItem("currentUser"));
 if (!user) window.location.href = "login.html";
 
@@ -326,7 +327,7 @@ document.getElementById("saveBtn").onclick = async () => {
   // ---------------------------
   try {
     const res = await fetch(
-      "https://daily-effort-tracker-backend-production.up.railway.app/api/routines/save",
+      `${API_BASE}/api/routines/save`,
       { 
         method: "POST", 
         headers: { "Content-Type": "application/json" }, 
@@ -358,7 +359,7 @@ document.getElementById("saveBtn").onclick = async () => {
 // --- LOAD all routines ---
 document.getElementById("loadBtn").onclick = async () => {
   try {
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/${encodeURIComponent(user.name)}`);
+    const res = await fetch(`${API_BASE}/api/routines/${encodeURIComponent(user.name)}`);
     const data = await res.json();
     if (!data.length) return alert("❌ No saved routine found.");
 
@@ -379,7 +380,7 @@ document.getElementById("loadBtn").onclick = async () => {
 // --- LOAD routine by date + family ---
 async function loadRoutineByDate(date, auto=false) {
   try {
-    const res = await fetch(`https://daily-effort-tracker-backend-production.up.railway.app/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`);
+    const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`);
     const data = await res.json();
     // --- FRONTEND FAMILY FILTER ---
     const routine = data.find(r => r.family?.trim().toLowerCase() === user.family?.trim().toLowerCase());
