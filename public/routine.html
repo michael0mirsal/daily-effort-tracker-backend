@@ -380,7 +380,7 @@ document.getElementById("loadBtn").onclick = async () => {
 // --- LOAD routine by date + family ---
 async function loadRoutineByDate(date, auto=false) {
   try {
-    const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`);
+    const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(user.name)}&family=${encodeURIComponent(user.family)}&date=all`);
     const data = await res.json();
     // --- FRONTEND FAMILY FILTER ---
     const routine = data.find(r => r.family?.trim().toLowerCase() === user.family?.trim().toLowerCase());
