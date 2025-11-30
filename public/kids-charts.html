@@ -186,7 +186,7 @@ async function createKidsCharts() {
     }
 
     // 2️⃣ Load all weekly stars
-    const weekRes = await fetch(`${API_BASE}/api/kidsStars/week`);
+    const weekRes = await fetch(`${API_BASE}/api/kidsStars/week?family=${encodeURIComponent(currentUser.family)}`);
     if (!weekRes.ok) throw new Error("Cannot load weekly stars");
     const weeklyStars = await weekRes.json();
 
