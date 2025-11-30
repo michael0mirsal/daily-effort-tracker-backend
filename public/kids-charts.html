@@ -173,14 +173,20 @@ async function createKidsCharts() {
     const res = await fetch(`${API_BASE}/api/families/${currentUser.family}`);
     if (!res.ok) throw new Error("Family not found");
 
-    const family = await res.json();
-    if (!family || !family.members) {
-      alert("⚠ Family data missing on the server.");
-      return;
-    }
+    const families = await res.json();       // <-- rename to plural
+if (!families || families.length === 0) {
+  alert("⚠ Family data missing on the server.");
+  return;
+}
 
-    const fam = family[0]; // if backend returns array
-const kids = fam.members.filter(m => m.role === "kid");
+const family = families[0];              // <-- first family object
+if (!family.members || family.members.length === 0) {
+  alert("⚠ No members found in this family.");
+  return;
+}
+
+const kids = family.members.filter(m => m.role === "kid");
+
 
     if (kids.length === 0) {
       container.innerHTML = "<p>No kids found in this family.</p>";
