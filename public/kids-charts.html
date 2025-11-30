@@ -115,6 +115,7 @@
 <div id="kidsChartsContainer"></div>
 
 <script>
+  
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem("currentUser");
   window.location.href = "login.html";
@@ -164,7 +165,7 @@ async function createKidsCharts() {
   container.innerHTML = "";
 
   const API_BASE = window.location.hostname.includes("localhost")
-    ? "http://localhost:4000"
+    ? "http://localhost:3000"
     : "https://daily-effort-tracker-backend-production.up.railway.app";
 
   try {
