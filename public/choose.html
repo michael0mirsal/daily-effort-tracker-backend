@@ -67,6 +67,15 @@ document.getElementById("welcomeText").innerHTML =
 
 const starsBox = document.getElementById("starsBox");
 
+function highlightUser() {
+  document.querySelectorAll('.member').forEach(m => {
+    if (m.textContent.includes(user.name)) {
+      m.classList.add('highlighted');
+    }
+  });
+}
+
+
 // ✅ Load family tree
 async function loadFamilyTree() {
   const treeDiv = document.getElementById("treeContainer");
