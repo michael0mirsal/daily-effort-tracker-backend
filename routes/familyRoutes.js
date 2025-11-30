@@ -240,18 +240,15 @@ router.put("/update-member", async (req, res) => {
 });
 
 // Get family with members populated
-router.get("/family/:familyName", async (req, res) => {
+router.get("/families/:familyName", async (req, res) => {
   try {
     const family = req.params.familyName;
 
     let familyDoc;
 
-    // If the parameter is a valid ObjectId → search by ID
     if (mongoose.isValidObjectId(family)) {
       familyDoc = await Family.findById(family).populate("members");
-    } 
-    // Otherwise → search by family name
-    else {
+    } else {
       familyDoc = await Family.findOne({ name: family }).populate("members");
     }
 
@@ -259,14 +256,13 @@ router.get("/family/:familyName", async (req, res) => {
       return res.status(404).json({ message: "Family not found" });
     }
 
-    // Keep the same array structure expected by your frontend
-    res.json([familyDoc]);
-    
+    res.json([familyDoc]); // same structure your frontend expects
   } catch (err) {
     console.error("Get family error:", err);
     res.status(500).json({ message: "Server error while fetching family" });
   }
 });
+
 
 
 
