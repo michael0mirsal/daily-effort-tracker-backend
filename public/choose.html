@@ -71,10 +71,14 @@ const starsBox = document.getElementById("starsBox");
 async function loadFamilyTree() {
   const treeDiv = document.getElementById("treeContainer");
   treeDiv.innerHTML = "Loading family tree...";
+
   try {
     const res = await fetch(`${API_BASE}/api/families/${encodeURIComponent(user.family)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const family = await res.json();
+
+    const data = await res.json();
+    const family = data[0]; // <-- IMPORTANT FIX
+
     treeDiv.innerHTML = `
       <div class="member">👨‍👩‍👧 ${family.name}</div>
       <div class="parents">
@@ -85,17 +89,12 @@ async function loadFamilyTree() {
         ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
       </div>
     `;
+
     highlightUser();
   } catch (err) {
     treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
     console.error("Error loading family tree:", err);
   }
-}
-
-function highlightUser() {
-  document.querySelectorAll('.member').forEach(m => {
-    if (m.textContent.includes(user.name)) m.classList.add('highlighted');
-  });
 }
 
 // ✅ Load today's stars
