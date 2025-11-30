@@ -240,7 +240,7 @@ router.put("/update-member", async (req, res) => {
 });
 
 // Get family with members populated
-router.get("/families/:familyName", async (req, res) => {
+router.get("/:familyName", async (req, res) => {
   try {
     const family = req.params.familyName;
 
