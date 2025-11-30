@@ -71,6 +71,7 @@ const starsBox = document.getElementById("starsBox");
 async function loadFamilyTree() {
   const treeDiv = document.getElementById("treeContainer");
   treeDiv.innerHTML = "Loading family tree...";
+console.log("Fetching:", `${API_BASE}/api/families/${encodeURIComponent(user.family)}`);
 
   try {
     const res = await fetch(`${API_BASE}/api/families/${encodeURIComponent(user.family)}`);
