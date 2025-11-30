@@ -179,7 +179,9 @@ async function createKidsCharts() {
       return;
     }
 
-    const kids = family.members.filter(m => m.role === "kid");
+    const fam = family[0]; // if backend returns array
+const kids = fam.members.filter(m => m.role === "kid");
+
     if (kids.length === 0) {
       container.innerHTML = "<p>No kids found in this family.</p>";
       return;
