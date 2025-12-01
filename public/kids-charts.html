@@ -107,7 +107,7 @@
   </style>
 </head>
 <body>
-
+<button id="backBtn">⬅️ Back</button>
 <button id="logoutBtn">Logout</button>
 <div id="familyName"></div>
 <div id="motivation">✨ Keep shining and earn your stars every day! ✨</div>
@@ -115,7 +115,7 @@
 <div id="kidsChartsContainer"></div>
 
 <script>
-  
+document.getElementById("backBtn").onclick = ()=>{window.location.href="choose.html";};
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem("currentUser");
   window.location.href = "login.html";
