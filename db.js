@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-dotenv.config();
+
+// Load correct .env file based on environment
+dotenv.config({
+  path: process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
+    ? ".env.staging"
+    : process.env.RAILWAY_ENVIRONMENT_NAME === "production"
+      ? ".env.production"
+      : ".env.local" // default for local development
+});
 
 const MONGO_URI =
   process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
@@ -14,7 +22,7 @@ export const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(MONGO_URI); // ✅ No deprecated options needed
+    await mongoose.connect(MONGO_URI); // no deprecated options needed
     console.log(`✅ Connected to MongoDB (${process.env.RAILWAY_ENVIRONMENT_NAME || "local"})`);
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);
