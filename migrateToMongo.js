@@ -8,12 +8,22 @@ import Member from "./models/Member.js";
 import Task from "./models/Task.js";
 import Routine from "./models/Routine.js";
 
-dotenv.config();
 
+dotenv.config({
+ path: process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
+    ? ".env.staging"
+    : process.env.RAILWAY_ENVIRONMENT_NAME === "production"
+      ? ".env.production"
+      : ".env.local"
+});
+
+// --- Choose MongoDB URI based on environment ---
 const MONGO_URI =
   process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
     ? process.env.MONGO_URI_STAGING
-    : process.env.MONGO_URI_PRODUCTION || process.env.MONGO_URI;
+    : process.env.RAILWAY_ENVIRONMENT_NAME === "production"
+      ? process.env.MONGO_URI_PRODUCTION
+      : process.env.MONGO_URI;
 
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is not defined! Check environment variables.");
