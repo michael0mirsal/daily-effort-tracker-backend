@@ -125,9 +125,9 @@ async function loadStars() {
       if (todayRecord) todayStars = todayRecord.stars;
     }
 
-    if (todayStars === 0 && role=== kid) {
+    if (todayStars === 0 && user.role === kid) {
       starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
-    } else if (todayStars < 10) {
+    } else if (todayStars < 10 && user.role === kid) {
       starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Keep going🔥`;
     } else {
       starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Amazing job!`;
