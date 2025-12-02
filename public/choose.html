@@ -69,11 +69,12 @@ const starsBox = document.getElementById("starsBox");
 
 function highlightUser() {
   document.querySelectorAll('.member').forEach(m => {
-    if (m.textContent.includes(user.name)) {
+    if (m.textContent.toLowerCase().includes(user.name.toLowerCase())) {
       m.classList.add('highlighted');
     }
   });
 }
+
 
 
 // ✅ Load family tree
