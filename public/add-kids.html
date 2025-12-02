@@ -268,6 +268,13 @@ async function deleteKid(index) {
   const kid = kids[index];
   if (!confirm(`Delete ${kid.name}?`)) return;
 
+  // Delete locally if kid not saved in DB
+  if (!kid._id) {
+    kids.splice(index, 1);
+    renderKids();
+    return;
+  }
+
   try {
     const res = await fetch(`${API_URL}/api/families/delete-member`, {
       method: 'DELETE',
@@ -281,13 +288,16 @@ async function deleteKid(index) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to delete on server");
 
+    // Remove from local list
     kids.splice(index, 1);
     renderKids();
+
   } catch (err) {
     console.error(err);
     alert("Error deleting kid: " + err.message);
   }
 }
+
 
 // ===============================
 // 6) Save All Kids To Server
