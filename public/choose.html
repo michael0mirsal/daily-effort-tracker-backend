@@ -37,6 +37,31 @@
     #logoutBtn { background:linear-gradient(45deg, #ffb3b3, #ff8080); color:white; margin-top:30px; }
     #logoutBtn:hover { background:linear-gradient(45deg, #ff9999, #ff6666); }
     footer { position:absolute; bottom:10px; font-size:0.9rem; color:rgba(80,50,20,0.6); }
+    @keyframes popIn {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.member img {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.member:hover img {
+  transform: scale(1.2);
+  box-shadow: 0 0 15px #ffd700;
+}
+
+.highlighted img {
+  animation: pulseGlow 1.5s infinite;
+  border-color: #ffcc00 !important;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 10px #ffcc00; }
+  50% { box-shadow: 0 0 20px #ffeb3b; }
+}
+
   </style>
 </head>
 <body>
