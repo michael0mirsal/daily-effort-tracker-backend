@@ -16,6 +16,10 @@ dotenv.config({
       ? ".env.production"
       : ".env.local"
 });
+// ✅ Debug: check if Mongo URI is loaded
+console.log("RAILWAY_ENVIRONMENT_NAME =", process.env.RAILWAY_ENVIRONMENT_NAME);
+console.log("MONGO_URI =", process.env.MONGO_URI);
+
 
 // --- Choose MongoDB URI based on environment ---
 const MONGO_URI =
@@ -27,6 +31,7 @@ const MONGO_URI =
 
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is not defined! Check environment variables.");
+
   process.exit(1);
 }
 
