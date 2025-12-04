@@ -97,8 +97,15 @@ console.log("Fetching:", `${API_BASE}/api/families/${encodeURIComponent(user.fam
         <div class="member">👨 ${family.dad}</div>
       </div>
       <div class="children">
-        ${family.members.map(k => `<div class="member">🧒 ${k.name}</div>`).join("")}
-      </div>
+  ${family.members.map(k => `
+    <div class="member">
+      <img src="${k.avatar || 'default-avatar.png'}" 
+           style="width:50px; height:50px; border-radius:50%; display:block; margin:auto;">
+      <div>🧒 ${k.name}</div>
+    </div>
+  `).join("")}
+</div>
+
     `;
 
     highlightUser();
