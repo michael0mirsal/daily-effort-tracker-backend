@@ -49,8 +49,10 @@ const loadJSON = (filePath) => {
 async function migrate() {
   try {
     console.log("🚀 Connecting to MongoDB...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     console.log("✅ MongoDB connected.");
+    console.log("🌐 Connecting to MongoDB:", MONGO_URI.split("@")[0] + "@*****");
+
 
     // ---------- Families + Members ----------
     const familiesPath = path.join(process.cwd(), "data", "families.json");
