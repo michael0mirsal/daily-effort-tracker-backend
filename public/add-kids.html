@@ -182,23 +182,20 @@
 let selectedKidIndex = null; // ✅ Add this line to track which kid's avatar is uploaded
 
     
-async function handleAvatarUpload() {
-  const fileInput = document.getElementById("avatarFile");
+async function handleAvatarUpload(index) {
+  const fileInput = document.getElementById(`avatarFile${index}`);
   if (!fileInput.files.length) return alert("Please select a file!");
 
-  if (selectedKidIndex === null) return alert("Please select a kid first by clicking their avatar!");
-
   const file = fileInput.files[0];
-  const memberId = kids[selectedKidIndex]?._id; // use selectedKidIndex instead of undefined selectedIndex
+  const memberId = kids[index]?._id;
   if (!memberId) return alert("Kid must be saved to server before uploading avatar.");
 
   try {
     await updateAvatar(memberId, file);
-    // optional: update local preview
-    kids[selectedKidIndex].avatar = URL.createObjectURL(file);
+    // Update local preview immediately
+    kids[index].avatar = URL.createObjectURL(file);
     renderKids();
-    fileInput.value = '';
-    alert("Avatar updated successfully!");
+    alert(`Avatar for ${kids[index].name} updated successfully!`);
   } catch (err) {
     console.error(err);
     alert("Failed to update avatar.");
@@ -264,18 +261,18 @@ function renderKids() {
     const div = document.createElement('div');
     div.className = 'kidItem';
     div.innerHTML = `
-    <img src="${k.avatar || 'default-avatar.png'}" width="40" height="40" style="border-radius:50%; margin-right:8px; cursor:pointer;"
-      onclick="selectedKidIndex=${index}; alert('Selected ${k.name} for avatar upload');" />
+      <img src="${k.avatar || 'default-avatar.png'}" width="40" height="40" style="border-radius:50%; margin-right:8px;" />
       <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
       <div class="kidActions">
         <button onclick="editKid(${index})">✏️ Edit</button>
         <button onclick="deleteKid(${index})">🗑️ Delete</button>
+        <input type="file" id="avatarFile${index}" style="display:none;" accept="image/*" onchange="handleAvatarUpload(${index})"/>
+        <button onclick="document.getElementById('avatarFile${index}').click();">📤 Upload Avatar</button>
       </div>
     `;
     kidsListDiv.appendChild(div);
   });
 }
-
 // ===============================
 // 3) Add Kid (local only)
 // ===============================
