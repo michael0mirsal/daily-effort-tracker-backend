@@ -165,7 +165,8 @@
   </div>
 
   <div id="kidsList"></div>
-  <button onclick="finish()" style="margin-top:20px;">✅ Finish & Save</button>
+  <button onclick="save()" style="margin-top:20px;">✅ Save </button>
+  <button onclick="finish()" style="margin-top:20px;">✅ Finish </button>
   <div id="motivation">🌟 Encourage your kids and celebrate their daily efforts!</div>
 
   <script>
@@ -352,11 +353,7 @@ async function deleteKid(index) {
   }
 }
 
-
-// ===============================
-// 6) Save All Kids To Server
-// ===============================
-async function finish() {
+async function save() {
   if (kids.length === 0) {
     msg.style.color = 'red';
     msg.textContent = '❌ Add at least one kid';
@@ -383,6 +380,26 @@ async function finish() {
     msg.style.color = 'green';
     msg.textContent = '🎉 All kids saved successfully! Redirecting...';
 
+  
+
+  } catch (err) {
+    msg.style.color = 'red';
+    msg.textContent = '❌ Error: ' + err.message;
+    console.error(err);
+  }
+}
+// ===============================
+// 6) Save All Kids To Server
+// ===============================
+async function finish() {
+  if (kids.length === 0) {
+    msg.style.color = 'red';
+    msg.textContent = '❌ Add at least one kid';
+    return;
+  }
+
+  try {
+    
     setTimeout(() => {
       window.location.href = 'signin.html';
     }, 1500);
