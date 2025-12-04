@@ -181,6 +181,21 @@
     let kids = [];
 
     
+async function handleAvatarUpload() {
+  const fileInput = document.getElementById("avatarFile");
+  if (!fileInput.files.length) return alert("Please select a file!");
+
+  const file = fileInput.files[0];
+  const memberId = "THE_MEMBER_ID"; // replace with actual member id
+
+  try {
+    await updateAvatar(memberId, file);
+    alert("Avatar updated successfully!");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update avatar.");
+  }
+}
 
 
 
