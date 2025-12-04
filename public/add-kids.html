@@ -107,7 +107,6 @@
       font-size: 1em;
     }
 
-    /* Floating emojis */
     .float {
       position: absolute;
       font-size: 22px;
@@ -154,9 +153,6 @@
   <div class="form-box">
     <input id="kidName" placeholder="Kid's name" /><br/>
     <input id="kidAge" placeholder="Age (optional)" type="number" /><br/>
-    <input type="file" id="avatarFile" accept="image/*" />
-    <button onclick="handleAvatarUpload()">Upload Avatar</button>
-
     <select id="kidRole">
       <option value="kid">Kid 👧/👦</option>
     </select><br/>
@@ -180,241 +176,190 @@
     }
 
     let kids = [];
-let selectedKidIndex = null; // ✅ Add this line to track which kid's avatar is uploaded
 
-    
-async function handleAvatarUpload(index) {
-  const fileInput = document.getElementById(`avatarFile${index}`);
-  if (!fileInput.files.length) return alert("Please select a file!");
+    async function handleAvatarUpload(index) {
+      const fileInput = document.getElementById(`avatarFile${index}`);
+      if (!fileInput.files.length) return alert("Please select a file!");
+      const file = fileInput.files[0];
+      const memberId = kids[index]?._id;
+      if (!memberId) return alert("Kid must be saved to server before uploading avatar.");
 
-  const file = fileInput.files[0];
-  const memberId = kids[index]?._id;
-  if (!memberId) return alert("Kid must be saved to server before uploading avatar.");
-
-  try {
-    await updateAvatar(memberId, file);
-    // Update local preview immediately
-    kids[index].avatar = URL.createObjectURL(file);
-    renderKids();
-    alert(`Avatar for ${kids[index].name} updated successfully!`);
-  } catch (err) {
-    console.error(err);
-    alert("Failed to update avatar.");
-  }
-}
-
-async function updateAvatar(memberId, file) {
-  // 1. Upload file to Cloudinary
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "YOUR_UPLOAD_PRESET"); // from Cloudinary
-
-  const cloudRes = await fetch(
-    "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
-    { method: "POST", body: formData }
-  );
-
-  if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
-
-  const cloudData = await cloudRes.json();
-  const avatarUrl = cloudData.secure_url;
-
-  // 2. Update avatar in your backend
-  const res = await fetch(`${API_URL}/api/families/family/update-avatar`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ memberId, avatarUrl })
-  });
-
-  if (!res.ok) throw new Error("Backend update failed");
-
-  const data = await res.json();
-  console.log(data);
-}
-
-
-
-// ===============================
-// 1) Load Kids From API
-// ===============================
-async function loadKids() {
-  try {
-    const res = await fetch(`${API_URL}/api/families/family/${familyData.family}`);
-    const data = await res.json();
-
-    const family = data[0];
-    if (family?.members) {
-      // members are now full documents
-      kids = family.members.filter(m => m.role === 'kid');
-      renderKids();
+      try {
+        await updateAvatar(memberId, file);
+        kids[index].avatar = URL.createObjectURL(file);
+        renderKids();
+        alert(`Avatar for ${kids[index].name} updated successfully!`);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to update avatar.");
+      }
     }
-  } catch (err) {
-    console.error("Error loading kids:", err);
-  }
-}
 
-// ===============================
-// 2) Render Kids UI
-// ===============================
-function renderKids() {
-  kidsListDiv.innerHTML = '';
-  kids.forEach((k, index) => {
-    const div = document.createElement('div');
-    div.className = 'kidItem';
-    div.innerHTML = `
-      <img src="${k.avatar || 'default-avatar.png'}" width="40" height="40" style="border-radius:50%; margin-right:8px;" />
-      <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
-      <div class="kidActions">
-        <button onclick="editKid(${index})">✏️ Edit</button>
-        <button onclick="deleteKid(${index})">🗑️ Delete</button>
-        <input type="file" id="avatarFile${index}" style="display:none;" accept="image/*" onchange="handleAvatarUpload(${index})"/>
-        <button onclick="document.getElementById('avatarFile${index}').click();">📤 Upload Avatar</button>
-      </div>
-    `;
-    kidsListDiv.appendChild(div);
-  });
-}
-// ===============================
-// 3) Add Kid (local only)
-// ===============================
-function addKid() {
-  const name = document.getElementById('kidName').value.trim();
-  const age = document.getElementById('kidAge').value.trim();
-  const role = document.getElementById('kidRole').value;
+    async function updateAvatar(memberId, file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "YOUR_UPLOAD_PRESET");
 
-  if (!name) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Please enter kid\'s name';
-    return;
-  }
+      const cloudRes = await fetch(
+        "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
+        { method: "POST", body: formData }
+      );
 
-  kids.push({
-    name,
-    age: age || null,
-    role
-  });
+      if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
 
-  renderKids();
-  document.getElementById('kidName').value = '';
-  document.getElementById('kidAge').value = '';
-  msg.textContent = '';
-}
+      const cloudData = await cloudRes.json();
+      const avatarUrl = cloudData.secure_url;
 
-// ===============================
-// 4) Edit Kid (local only)
-// ===============================
-function editKid(index) {
-  const kid = kids[index];
-  const newName = prompt("Edit name:", kid.name);
-  if (!newName) return;
-
-  const newAge = prompt("Edit age (optional):", kid.age || '');
-
-  kids[index].name = newName.trim();
-  kids[index].age = newAge ? parseInt(newAge) : null;
-
-  renderKids();
-}
-
-// ===============================
-// 5) Delete Kid (backend + local)
-// ===============================
-async function deleteKid(index) {
-  const kid = kids[index];
-  if (!confirm(`Delete ${kid.name}?`)) return;
-
-  // Delete locally if kid not saved in DB
-  if (!kid._id) {
-    kids.splice(index, 1);
-    renderKids();
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/api/families/delete-member`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        family: familyData.family,
-        name: kid.name
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to delete on server");
-
-    // Remove from local list
-    kids.splice(index, 1);
-    renderKids();
-
-  } catch (err) {
-    console.error(err);
-    alert("Error deleting kid: " + err.message);
-  }
-}
-
-async function save() {
-  if (kids.length === 0) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Add at least one kid';
-    return;
-  }
-
-  try {
-    for (const kid of kids) {
-      const res = await fetch(`${API_URL}/api/families/add-member`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          family: familyData.family,
-          name: kid.name,
-          role: kid.role,
-          age: kid.age || null   // only if you support age
-        })
+      const res = await fetch(`${API_URL}/api/families/family/update-avatar`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, avatarUrl })
       });
 
+      if (!res.ok) throw new Error("Backend update failed");
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to add kid');
+      console.log(data);
     }
 
-    msg.style.color = 'green';
-    msg.textContent = '🎉 All kids saved successfully! Redirecting...';
+    async function loadKids() {
+      try {
+        const res = await fetch(`${API_URL}/api/families/family/${familyData.family}`);
+        const data = await res.json();
+        const family = data[0];
+        if (family?.members) {
+          kids = family.members.filter(m => m.role === 'kid');
+          renderKids();
+        }
+      } catch (err) {
+        console.error("Error loading kids:", err);
+      }
+    }
 
-  
+    function renderKids() {
+      kidsListDiv.innerHTML = '';
+      kids.forEach((k, index) => {
+        const div = document.createElement('div');
+        div.className = 'kidItem';
+        div.innerHTML = `
+          <img src="${k.avatar || 'default-avatar.png'}" width="40" height="40" style="border-radius:50%; margin-right:8px;" />
+          <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
+          <div class="kidActions">
+            <button onclick="editKid(${index})">✏️ Edit</button>
+            <button onclick="deleteKid(${index})">🗑️ Delete</button>
+            <input type="file" id="avatarFile${index}" style="display:none;" accept="image/*" onchange="handleAvatarUpload(${index})"/>
+            <button onclick="document.getElementById('avatarFile${index}').click();">📤 Upload Avatar</button>
+          </div>
+        `;
+        kidsListDiv.appendChild(div);
+      });
+    }
 
-  } catch (err) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Error: ' + err.message;
-    console.error(err);
-  }
-}
-// ===============================
-// 6) Save All Kids To Server
-// ===============================
-async function finish() {
-  if (kids.length === 0) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Add at least one kid';
-    return;
-  }
+    function addKid() {
+      const name = document.getElementById('kidName').value.trim();
+      const age = document.getElementById('kidAge').value.trim();
+      const role = document.getElementById('kidRole').value;
 
-  try {
-    
-    setTimeout(() => {
-      window.location.href = 'signin.html';
-    }, 1500);
+      if (!name) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Please enter kid\'s name';
+        return;
+      }
 
-  } catch (err) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Error: ' + err.message;
-    console.error(err);
-  }
-}
+      kids.push({ name, age: age || null, role });
+      renderKids();
+      document.getElementById('kidName').value = '';
+      document.getElementById('kidAge').value = '';
+      msg.textContent = '';
+    }
 
+    function editKid(index) {
+      const kid = kids[index];
+      const newName = prompt("Edit name:", kid.name);
+      if (!newName) return;
+      const newAge = prompt("Edit age (optional):", kid.age || '');
+      kids[index].name = newName.trim();
+      kids[index].age = newAge ? parseInt(newAge) : null;
+      renderKids();
+    }
+
+    async function deleteKid(index) {
+      const kid = kids[index];
+      if (!confirm(`Delete ${kid.name}?`)) return;
+
+      if (!kid._id) {
+        kids.splice(index, 1);
+        renderKids();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/families/delete-member`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family: familyData.family, name: kid.name })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to delete on server");
+
+        kids.splice(index, 1);
+        renderKids();
+
+      } catch (err) {
+        console.error(err);
+        alert("Error deleting kid: " + err.message);
+      }
+    }
+
+    async function save() {
+      if (kids.length === 0) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Add at least one kid';
+        return;
+      }
+
+      try {
+        for (const kid of kids) {
+          const res = await fetch(`${API_URL}/api/families/add-member`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ family: familyData.family, name: kid.name, role: kid.role, age: kid.age || null })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Failed to add kid');
+        }
+
+        msg.style.color = 'green';
+        msg.textContent = '🎉 All kids saved successfully! Redirecting...';
+
+      } catch (err) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Error: ' + err.message;
+        console.error(err);
+      }
+    }
+
+    async function finish() {
+      if (kids.length === 0) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Add at least one kid';
+        return;
+      }
+
+      try {
+        setTimeout(() => {
+          window.location.href = 'signin.html';
+        }, 1500);
+      } catch (err) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Error: ' + err.message;
+        console.error(err);
+      }
+    }
 
     loadKids();
 
-    // Floating emojis
     const emojis = ['💖','⭐','✨','🌈','🎈','🍭'];
     function createFloat() {
       const el = document.createElement('div');
@@ -428,7 +373,6 @@ async function finish() {
     }
     setInterval(createFloat, 800);
 
-    // Motivational messages
     const messages = [
       "🌟 Encourage your kids daily!",
       "🎯 Celebrate their achievements!",
