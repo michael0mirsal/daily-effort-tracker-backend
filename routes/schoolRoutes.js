@@ -1,60 +1,86 @@
 import express from "express";
 import Nursery from "../models/Nursery.js";
-import Class from "../models/Class.js";
+import ClassModel from "../models/Class.js";
 import Teacher from "../models/Teacher.js";
-import Member from "../models/Member.js";
+import Member from "../models/Member.js"; // for linking kids
 
 const router = express.Router();
 
-// 🔹 Add a Nursery
-router.post("/nursery", async (req, res) => {
+//////////////////////////
+// 🏫 Nursery Routes
+//////////////////////////
+
+// GET all nurseries
+router.get("/nurseries", async (req, res) => {
   try {
-    const nursery = new Nursery(req.body);
-    await nursery.save();
+    const nurseries = await Nursery.find();
+    res.json(nurseries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create a new nursery
+router.post("/nurseries", async (req, res) => {
+  try {
+    const { name, address } = req.body;
+    const nursery = await Nursery.create({ name, address });
     res.status(201).json(nursery);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// 🔹 Add a Class to a Nursery
-router.post("/class", async (req, res) => {
+//////////////////////////
+// 🏫 Class Routes
+//////////////////////////
+
+// GET all classes
+router.get("/classes", async (req, res) => {
   try {
-    const newClass = new Class(req.body);
-    await newClass.save();
+    const classes = await ClassModel.find().populate("nursery").populate("teacher").populate("kids");
+    res.json(classes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    // Push class into nursery.classes
-    const nursery = await Nursery.findById(req.body.nursery);
-    nursery.classes.push(newClass._id);
-    await nursery.save();
-
-    res.status(201).json(newClass);
+// POST create a new class
+router.post("/classes", async (req, res) => {
+  try {
+    const { name, nurseryId, teacherId, kidIds } = req.body;
+    const classDoc = await ClassModel.create({
+      name,
+      nursery: nurseryId,
+      teacher: teacherId,
+      kids: kidIds // array of Member ObjectIds
+    });
+    res.status(201).json(classDoc);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// 🔹 Add a Teacher
-router.post("/teacher", async (req, res) => {
+//////////////////////////
+// 👩‍🏫 Teacher Routes
+//////////////////////////
+
+// GET all teachers
+router.get("/teachers", async (req, res) => {
   try {
-    const teacher = new Teacher(req.body);
-    await teacher.save();
+    const teachers = await Teacher.find();
+    res.json(teachers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create a new teacher
+router.post("/teachers", async (req, res) => {
+  try {
+    const { name, subject } = req.body;
+    const teacher = await Teacher.create({ name, subject });
     res.status(201).json(teacher);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// 🔹 Assign a Kid to a Class
-router.post("/class/:classId/kids", async (req, res) => {
-  try {
-    const classObj = await Class.findById(req.params.classId);
-    const kidId = req.body.kidId;
-
-    if (!classObj.kids.includes(kidId)) classObj.kids.push(kidId);
-    await classObj.save();
-
-    res.json(classObj);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
