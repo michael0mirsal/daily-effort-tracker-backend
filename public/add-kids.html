@@ -186,7 +186,8 @@ async function handleAvatarUpload() {
   if (!fileInput.files.length) return alert("Please select a file!");
 
   const file = fileInput.files[0];
-  const memberId = "THE_MEMBER_ID"; // replace with actual member id
+  const memberId = kids[selectedIndex]?._id;
+ // replace with actual member id
 
   try {
     await updateAvatar(memberId, file);
@@ -195,6 +196,36 @@ async function handleAvatarUpload() {
     console.error(err);
     alert("Failed to update avatar.");
   }
+}
+
+
+async function updateAvatar(memberId, file) {
+  // 1. Upload file to Cloudinary
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "YOUR_UPLOAD_PRESET"); // from Cloudinary
+
+  const cloudRes = await fetch(
+    "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
+    { method: "POST", body: formData }
+  );
+
+  if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
+
+  const cloudData = await cloudRes.json();
+  const avatarUrl = cloudData.secure_url;
+
+  // 2. Update avatar in your backend
+  const res = await fetch(`${API_URL}/api/families/family/update-avatar`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ memberId, avatarUrl })
+  });
+
+  if (!res.ok) throw new Error("Backend update failed");
+
+  const data = await res.json();
+  console.log(data);
 }
 
 
@@ -227,6 +258,7 @@ function renderKids() {
     const div = document.createElement('div');
     div.className = 'kidItem';
     div.innerHTML = `
+    <img src="${k.avatar || 'default-avatar.png'}" width="40" height="40" style="border-radius:50%; margin-right:8px;" />
       <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
       <div class="kidActions">
         <button onclick="editKid(${index})">✏️ Edit</button>
