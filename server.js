@@ -8,6 +8,10 @@ import cors from "cors";
 import { fileURLToPath } from "url";
 import { connectDB } from "./db.js"; // 🌐 MongoDB connection
 import familyRoutes from "./routes/familyRoutes.js"; // 🌳 Family System
+import schoolRoutes from "./routes/schoolRoutes.js";
+
+
+
 
 // Import MongoDB models
 import Family from "./models/Family.js";
@@ -30,7 +34,7 @@ const PORT = process.env.PORT || 8080; // Railway prefers 8080
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-
+app.use("/api/school", schoolRoutes);
 // Serve welcome page
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
