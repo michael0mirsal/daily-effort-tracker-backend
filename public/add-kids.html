@@ -210,7 +210,7 @@
       const cloudData = await cloudRes.json();
       const avatarUrl = cloudData.secure_url;
 
-      const res = await fetch(`${API_URL}/api/families/family/update-avatar`, {
+      const res = await fetch(`${API_URL}/api/families/update-avatar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, avatarUrl })
