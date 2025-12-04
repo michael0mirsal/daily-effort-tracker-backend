@@ -239,6 +239,30 @@ router.put("/update-member", async (req, res) => {
   }
 });
 
+// ======================================================
+// Update member avatar
+// ======================================================
+router.patch("/update-avatar", async (req, res) => {
+  const { memberId, avatarUrl } = req.body;
+  if (!memberId || !avatarUrl) 
+    return res.status(400).json({ message: "Missing fields" });
+
+  try {
+    const member = await Member.findByIdAndUpdate(
+      memberId,
+      { avatar: avatarUrl },
+      { new: true }
+    );
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    res.json({ message: "Avatar updated!", member });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // Get family with members populated
 router.get("/:familyName", async (req, res) => {
   try {
