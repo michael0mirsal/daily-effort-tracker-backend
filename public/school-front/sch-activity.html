@@ -4,6 +4,21 @@
   <meta charset="UTF-8" />
   <title>🌞 My Daily Activities Tracker</title>
   <style>
+    .form-row-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-row-horizontal input,
+.form-row-horizontal select,
+.form-row-horizontal button {
+  flex: 1 1 120px; /* grow/shrink, min-width 120px */
+  min-width: 100px;
+}
+
     body { font-family: Arial, sans-serif; padding: 20px; background: #fff8dc; }
     h1, h2 { text-align: center; color: #ff9800; }
     .header { text-align:center; margin-bottom:20px; }
@@ -49,20 +64,20 @@
     <button id="saveBtn">💾 Save Day</button>
   </div>
 
-  <table id="effortTable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>🎯 Activity</th>
-        <th>⏰ Time (min)</th>
-        <th>⭐ Evaluation (10)</th>
-        <th>📝 Note</th>
-        <th>👤 Member</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+  <div class="tracker-card">
+  <h2>📝 Add New Activity</h2>
+  <div class="form-row-horizontal">
+    <input type="date" id="date" />
+    <input type="text" id="activity" placeholder="Activity (e.g., Reading, Math)" />
+    <input type="number" id="timeMin" placeholder="Time (min)" />
+    <input type="number" id="evaluation" placeholder="Evaluation (1–10)" min="1" max="10" />
+    <input type="text" id="note" placeholder="Note (optional)" />
+    <select id="memberSelect"><option value="">Select Member</option></select>
+    <button id="addBtn">➕ Add</button>
+    <button id="saveBtn">💾 Save Day</button>
+  </div>
 </div>
+
 
 <div class="tracker-card">
   <h2>🔍 Show Activity</h2>
