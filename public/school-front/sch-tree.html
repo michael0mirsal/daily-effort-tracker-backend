@@ -16,11 +16,12 @@ body {
     flex: 0 0 40%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     background: rgba(255, 255, 255, 0.3);
     border-radius: 0 30px 30px 0;
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .tree {
@@ -33,13 +34,13 @@ body {
 /* Node styling */
 .node {
     background: #fff3cd;
-    padding: 5px 10px;
+    padding: 8px 16px;
     border-radius: 50%;
     text-align: center;
     box-shadow: 0 3px 8px rgba(0,0,0,0.2);
     font-size: 1rem;
     color: #5c4033;
-    margin: 5px;
+    margin: 10px;
     position: relative;
     transition: transform 0.3s ease, background 0.3s ease;
 }
@@ -49,33 +50,24 @@ body {
     background: #ffecb3;
 }
 
-/* Branch lines */
-.branch {
+/* Branch vertical line */
+.branch::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 2px;
+    height: 20px;
+    background: #5c4033;
+}
+
+/* Children container */
+.children {
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
-    width: 100%;
-}
-
-/* Vertical line from parent to children */
-.branch::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 2px;
-    height: 10px;
-    background: #5c4033;
-}
-
-/* Children container with horizontal line */
-.children {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
     margin-top: 10px;
-    position: relative;
     width: 100%;
 }
 
@@ -84,22 +76,12 @@ body {
     content: '';
     position: absolute;
     top: 0;
-    left: 5%;
-    right: 5%;
-    height: 2px;
-    background: #5c4033;
-    z-index: -1;
-}
-
-/* Vertical lines from each child to horizontal line */
-.branch > .children > .branch > .node::before {
-    content: '';
-    position: absolute;
-    top: -10px;
     left: 50%;
+    transform: translateX(-50%);
     width: 2px;
     height: 10px;
     background: #5c4033;
+    z-index: -1;
 }
 
 #mainContent {
@@ -125,6 +107,7 @@ h1 {
 
 <div id="nurseryTree">
     <div class="tree">
+        <!-- Nursery Name -->
         <div class="node">Happy Kids Nursery</div>
 
         <div class="children">
@@ -135,9 +118,9 @@ h1 {
                     <div class="branch">
                         <div class="node">Teacher A</div>
                         <div class="children">
-                            <div class="branch"><div class="node">Alice</div></div>
-                            <div class="branch"><div class="node">Bob</div></div>
-                            <div class="branch"><div class="node">Charlie</div></div>
+                            <div class="node">Alice</div>
+                            <div class="node">Bob</div>
+                            <div class="node">Charlie</div>
                         </div>
                     </div>
                 </div>
@@ -150,8 +133,8 @@ h1 {
                     <div class="branch">
                         <div class="node">Teacher B</div>
                         <div class="children">
-                            <div class="branch"><div class="node">Daisy</div></div>
-                            <div class="branch"><div class="node">Ethan</div></div>
+                            <div class="node">Daisy</div>
+                            <div class="node">Ethan</div>
                         </div>
                     </div>
                 </div>
@@ -164,20 +147,21 @@ h1 {
                     <div class="branch">
                         <div class="node">Teacher C</div>
                         <div class="children">
-                            <div class="branch"><div class="node">Fiona</div></div>
-                            <div class="branch"><div class="node">George</div></div>
-                            <div class="branch"><div class="node">Hannah</div></div>
+                            <div class="node">Fiona</div>
+                            <div class="node">George</div>
+                            <div class="node">Hannah</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
 <div id="mainContent">
     <h1>Welcome to Happy Kids Nursery</h1>
-    <p>Dynamic tree layout: nursery → classes → teachers → kids</p>
+    <p>Vertical nursery tree: classes below nursery, teachers below classes, kids below teachers</p>
 </div>
 
 </body>
