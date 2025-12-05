@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nursery Access – Login / Signup</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a8edea, #fed6e3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    p {
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      font-size: 17px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.2s, background 0.2s;
+      color: white;
+    }
+
+    .btn-login { background: #4caf50; }
+    .btn-login:hover { background: #45a049; transform: translateY(-2px); }
+
+    .btn-signup { background: #2196f3; }
+    .btn-signup:hover { background: #1976d2; transform: translateY(-2px); }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #ff4d4d;
+      margin-bottom: 20px;
+    }
+
+    button.continue-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      cursor: pointer;
+      background: #2196f3;
+      color: white;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    button.continue-btn:hover {
+      background: #1976d2;
+      transform: translateY(-2px);
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+  <div class="card" id="access-card">
+    <h1>Nursery Access 🏫</h1>
+    <p>Are you an existing nursery or do you want to sign up?</p>
+
+    <button class="btn btn-login" onclick="chooseOption('login')">Existing Nursery</button>
+    <button class="btn btn-signup" onclick="chooseOption('signup')">New Nursery</button>
+  </div>
+
+  <div class="card hidden" id="license-card">
+    <h1>Nursery Signup 🏫</h1>
+    <p>Please enter your valid license number to continue:</p>
+
+    <input type="text" id="license" placeholder="Enter your License Number" />
+    <p class="note">⚠ This license will be used <strong>only once</strong>.</p>
+    <button class="continue-btn" onclick="validateLicense()">Continue</button>
+  </div>
+
+  <script>
+    const accessCard = document.getElementById('access-card');
+    const licenseCard = document.getElementById('license-card');
+
+    function chooseOption(option) {
+      if(option === 'login') {
+        window.location.href = "/pages/nursery/nursery-login.html";
+      } else {
+        // Show license input for signup
+        accessCard.classList.add('hidden');
+        licenseCard.classList.remove('hidden');
+      }
+    }
+
+    function validateLicense() {
+      const license = document.getElementById('license').value.trim();
+
+      if (!license) {
+        alert('Please enter your license number.');
+        return;
+      }
+
+      // TODO: Call backend API to validate license
+      // Example:
+      // fetch('/api/nursery/validate-license', { method: 'POST', body: JSON.stringify({ license }) })
+
+      // Simulate validation
+      const validLicenses = ['12345', 'ABCDE']; // Example valid licenses
+      if(validLicenses.includes(license)) {
+        alert('License validated! Proceeding to signup form...');
+        window.location.href = "/pages/nursery/nursery-signup-form.html";
+      } else {
+        alert('Invalid license! Please check and try again.');
+      }
+    }
+  </script>
+</body>
+</html>
