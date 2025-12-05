@@ -76,14 +76,23 @@ router.get("/teachers", async (req, res) => {
 });
 
 // POST create a new teacher
+// POST create a new teacher
 router.post("/teachers", async (req, res) => {
   try {
-    const { name, subject } = req.body;
-    const teacher = await Teacher.create({ name, subject });
+    const { fullName, phone, nurseryId, classId } = req.body;
+
+    const teacher = await Teacher.create({
+      fullName,
+      phone,
+      nursery: nurseryId,
+      classes: classId ? [classId] : []
+    });
+
     res.status(201).json(teacher);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 export default router;
