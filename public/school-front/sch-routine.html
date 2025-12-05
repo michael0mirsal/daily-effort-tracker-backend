@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <title>Class Routines</title>
+
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #f5f6fa;
+    font-family: "Poppins", sans-serif;
+    background: #f0f2f5;
     margin: 0;
     padding: 20px;
   }
 
-  /* Top-right buttons */
+  /* Header Buttons */
   .top-buttons {
     position: fixed;
     top: 20px;
@@ -19,76 +20,114 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    z-index: 200;
   }
   .btn {
     padding: 8px 16px;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 8px;
     border: none;
-    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
   }
   .btn-logout { background: #e84118; }
-  .btn-back { background: #44bd32; }
+  .btn-back { background: #0097e6; }
 
-  h2 {
-    margin-top: 60px;
-  }
+  h2 { margin-top: 70px; }
+  h3 { color: #333; }
 
-  /* Routine table */
-  .routine-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  .routine-table th, .routine-table td {
-    padding: 12px;
-    border-bottom: 1px solid #ccc;
-  }
-  .routine-table th {
-    background: #dcdde1;
-    text-align: left;
+  /* Routine Card */
+  .routine-card {
+    background: white;
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
   }
 
-  /* Multi-select scroll */
+  .routine-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2f3640;
+  }
+
+  /* Toggle */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+    margin-left: 15px;
+  }
+  .switch input { display:none; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 24px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: #4cd137;
+  }
+  input:checked + .slider:before {
+    transform: translateX(24px);
+  }
+
+  /* Multi-select container */
+  .member-box {
+    margin-top: 10px;
+  }
   .member-select {
-    width: 180px;
-    height: 80px;
+    width: 240px;
+    height: 90px;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid #aaa;
+  }
+
+  /* Add Member Button */
+  .btn-add-member {
+    background: #00a8ff;
+    color: white;
+    border-radius: 8px;
+    padding: 6px 14px;
+    margin-top: 10px;
+    cursor: pointer;
+    border: none;
   }
 </style>
 </head>
 
 <body>
 
-<!-- Top Right Buttons -->
+<!-- Top Right Header Buttons -->
 <div class="top-buttons">
   <button class="btn btn-logout" onclick="logout()">Logout</button>
   <button class="btn btn-back" onclick="goBack()">Back</button>
 </div>
 
-<h2>👋 Welcome, <span id="username"></span></h2>
+<h2>👋 Welcome, <span id="username">User</span></h2>
 <h3>Class Routines</h3>
-<p>Select completed routines and the members who performed them.</p>
+<p>Select completed routines and add members who performed them:</p>
 
-<table class="routine-table">
-  <thead>
-    <tr>
-      <th>Routine</th>
-      <th>Done?</th>
-      <th>Members</th>
-    </tr>
-  </thead>
-  <tbody id="routineBody"></tbody>
-</table>
+<div id="routineContainer"></div>
 
 <script>
-  // Demo: loaded members from class
-  const classMembers = [
-    "Omar", "Laila", "Sara", "Malek", "Adam"
-  ];
+  // demo class members
+  const classMembers = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
 
-  // Create routines
+  // routines list
   const routines = [
     "Morning Circle",
     "Snack Time",
@@ -99,27 +138,51 @@
     "Cleanup Time"
   ];
 
-  // Render routines
-  const routineBody = document.getElementById("routineBody");
+  const container = document.getElementById("routineContainer");
 
-  routines.forEach(routine => {
-    const row = document.createElement("tr");
+  routines.forEach((routine, index) => {
+    const card = document.createElement("div");
+    card.className = "routine-card";
 
-    row.innerHTML = `
-      <td>${routine}</td>
-      <td><input type="checkbox"></td>
-      <td>
-        <select multiple class="member-select">
-          ${classMembers.map(m => `<option>${m}</option>`).join("")}
+    card.innerHTML = `
+      <div class="routine-title">${routine}
+        <label class="switch">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="member-box">
+        <label style="font-weight: 600;">Members involved:</label><br>
+        <select multiple class="member-select" id="members-${index}">
+          ${classMembers.map(m => `<option value="${m}">${m}</option>`).join("")}
         </select>
-      </td>
+      </div>
+
+      <button class="btn-add-member" onclick="addMember(${index})">+ Add Member</button>
     `;
-    routineBody.appendChild(row);
+
+    container.appendChild(card);
   });
 
+  // Add a new member dynamically
+  function addMember(index) {
+    const name = prompt("Enter new member name:");
+    if (!name) return;
+
+    classMembers.push(name);
+
+    const select = document.getElementById(`members-${index}`);
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+
+    alert("Member added successfully!");
+  }
+
   function logout() {
-    alert("Logged out!");
-    window.location.href = "/choose-user.html";
+    window.location.href = "index.html";
   }
 
   function goBack() {
