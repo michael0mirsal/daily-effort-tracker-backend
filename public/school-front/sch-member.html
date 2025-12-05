@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Members</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: #f0f4f8;
+    padding: 20px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  h1 { color: #333; }
+
+  button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #ff7a2a;
+    color: white;
+    cursor: pointer;
+  }
+
+  button:hover { background: #ff6000; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-top: 15px;
+  }
+
+  th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th { background: #ffecb3; color: #8b5e00; }
+
+  tr:hover { background: #fff3cd; }
+
+  .action-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background: #2196f3;
+    color: white;
+    cursor: pointer;
+  }
+
+  .action-btn:hover { background: #1976d2; }
+
+  .add-member-form {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  .add-member-form input {
+    padding: 8px 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  .add-member-form button {
+    margin-top: 5px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Class Members</h1>
+  <div>
+    <button id="backBtn">⬅️ Back</button>
+    <button id="logoutBtn">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- Add Member Form -->
+<div class="add-member-form">
+  <h2>➕ Add New Member</h2>
+  <input type="text" id="memberName" placeholder="Full Name" required>
+  <input type="number" id="memberAge" placeholder="Age" required>
+  <input type="text" id="memberClass" placeholder="Class Name" required>
+  <button id="addMemberBtn">Add Member</button>
+</div>
+
+<!-- Members Table -->
+<table id="membersTable">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>👦 Name</th>
+      <th>🎂 Age</th>
+      <th>🏫 Class</th>
+      <th>📋 Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const API_BASE = "https://your-backend-api.com"; // replace with your backend
+const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
+// Load class members linked to current user
+async function loadClassMembers() {
+  try {
+    const res = await fetch(`${API_BASE}/api/classMembers?user=${currentUser.name}`);
+    const data = await res.json();
+    const tbody = document.querySelector("#membersTable tbody");
+    tbody.innerHTML = "";
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No members found</td></tr>`;
+      return;
+    }
+
+    data.forEach((member, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${member.name}</td>
+        <td>${member.age || "-"}</td>
+        <td>${member.className || "-"}</td>
+        <td><button class="action-btn" onclick="viewActivities('${member.id}')">View Activities</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch(err) {
+    console.error("Failed to load members:", err);
+    alert("Could not load class members.");
+  }
+}
+
+// Add new member
+document.getElementById("addMemberBtn").onclick = async () => {
+  const name = document.getElementById("memberName").value.trim();
+  const age = document.getElementById("memberAge").value;
+  const className = document.getElementById("memberClass").value.trim();
+
+  if (!name || !age || !className) return alert("Please fill all fields.");
+
+  const payload = {
+    name,
+    age: Number(age),
+    className,
+    linkedUser: currentUser.name
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/classMembers`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to add member");
+
+    alert("Member added successfully!");
+    document.getElementById("memberName").value = "";
+    document.getElementById("memberAge").value = "";
+    document.getElementById("memberClass").value = "";
+
+    loadClassMembers();
+  } catch(err) {
+    console.error("Add member failed:", err);
+    alert("Could not add member.");
+  }
+};
+
+// Example action button function
+function viewActivities(memberId) {
+  alert(`Open activities for member ID: ${memberId}`);
+  // TODO: redirect to activities page
+}
+
+// Buttons
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem("currentUser");
+  window.location.href = "/pages/signin.html";
+};
+document.getElementById("backBtn").onclick = () => window.history.back();
+
+// Load members on page load
+loadClassMembers();
+</script>
+
+</body>
+</html>
