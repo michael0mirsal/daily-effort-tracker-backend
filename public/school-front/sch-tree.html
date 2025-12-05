@@ -1,257 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Nursery Tree 🌻</title>
-
-  <style>
+<meta charset="UTF-8">
+<title>Nursery Tree</title>
+<style>
     body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      background: linear-gradient(135deg, #fceabb, #f8b500);
-      font-family: "Comic Sans MS", cursive;
-      color: #333;
-      display: flex;
-      flex-direction: row;
-      overflow: hidden;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #fceabb, #f8b500);
     }
 
-    /* LEFT TREE */
-    #familyTree {
-      flex: 0 0 35%;
-      height: 100%;
-      display: flex;
-      justify-content: flex-start;
-      align-items: flex-start;
-      border-right: 4px dashed rgba(255, 255, 255, 0.7);
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 0 30px 30px 0;
-      box-shadow: inset -5px 0 10px rgba(0,0,0,0.1);
-      padding: 20px;
-      overflow-y: auto;
+    /* MAIN LAYOUT */
+    #container {
+        display: flex;
+        height: 100%;
+        width: 100%;
     }
 
-    .node {
-      background: #fff3cd;
-      padding: 10px 20px;
-      border-radius: 30px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      font-size: 1.1rem;
-      color: #5c4033;
-      margin: 8px;
-      transition: transform 0.3s ease, background 0.3s ease;
-      cursor: pointer;
-      width: fit-content;
+    /* LEFT TREE PANEL */
+    #treePanel {
+        width: 35%;
+        height: 100%;
+        background: rgba(255,255,255,0.3);
+        padding: 20px;
+        box-sizing: border-box;
+        border-right: 4px dashed rgba(255,255,255,0.7);
+        overflow-y: auto; /* scroll INSIDE only */
+        border-radius: 0 30px 30px 0;
+        box-shadow: inset -5px 0 10px rgba(0,0,0,0.1);
     }
 
-    .node:hover { transform: scale(1.06); background: #ffecb3; }
-
-    .children {
-      margin-left: 20px;
-      display: none;
-      width: 100%;
+    #nurseryTitle {
+        text-align: center;
+        color: #5c4033;
+        font-size: 2rem;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px #fff;
     }
 
-    .node.open + .children { display: block; }
+    /* CLASS BRANCHES */
+    .class-branch {
+        background: #fff3cd;
+        padding: 12px 25px;
+        border-radius: 20px;
+        margin: 12px auto;
+        cursor: pointer;
+        font-size: 1.2rem;
+        width: fit-content;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: 0.3s;
+        color: #5c4033;
+        font-weight: bold;
+    }
+
+    .class-branch:hover {
+        transform: scale(1.05);
+        background: #ffecb3;
+    }
 
     /* RIGHT PANEL */
-    #mainContent {
-      flex: 0 0 65%;
-      height: 100%;
-      padding: 20px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    #rightPanel {
+        width: 65%;
+        height: 100%;
+        position: relative;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        text-align: center;
     }
 
-    /* FLOATING BUTTONS */
+    /* TOP RIGHT BUTTONS */
     #topButtons {
-      position: absolute;
-      top: 15px;
-      right: 20px;
-      display: flex;
-      gap: 10px;
-      z-index: 200;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        display: flex;
+        gap: 10px;
     }
 
-    .topBtn {
-      padding: 10px 18px;
-      background: #ff8080;
-      border: none;
-      border-radius: 15px;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    button {
+        padding: 10px 20px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
     }
 
-    .topBtn:hover { background: #ff6666; }
+    #logoutBtn {
+        background: #e57373;
+        color: white;
+    }
 
-    /* CLASS REPORT BOX (NOW SCALING) */
+    #backBtn {
+        background: #81c784;
+        color: white;
+    }
+
+    /* REPORT AREA */
     #classReport {
-      flex: 1;
-      width: 100%;
-      overflow-y: auto;
-      margin-top: 70px;
-      padding: 20px;
-      background: rgba(255,255,255,0.75);
-      border-radius: 20px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-      display: none;
+        margin-top: 70px;
     }
 
-    .report-date {
-      background:#ffecb3;
-      padding:10px;
-      border-radius:12px;
-      margin:10px 0;
-      text-align:left;
-      font-weight:bold;
+    #reportContent {
+        margin-top: 20px;
+        padding: 25px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        font-size: 1.2rem;
     }
 
-    .report-item {
-      margin-left:20px;
-      text-align:left;
-      padding:5px 0;
-    }
-  </style>
+</style>
 </head>
-
 <body>
 
-  <!-- LEFT TREE -->
-  <div id="familyTree">
-    <div id="treeContainer">Loading...</div>
-  </div>
+<div id="container">
 
-  <!-- RIGHT PANEL -->
-  <div id="mainContent">
-
-    <!-- FLOATING BUTTONS -->
-    <div id="topButtons">
-      <button class="topBtn" id="backBtn">⬅ Back</button>
-      <button class="topBtn" id="logoutBtn">🔒 Logout</button>
+    <!-- LEFT TREE -->
+    <div id="treePanel">
+        <h2 id="nurseryTitle">Happy Kids Nursery</h2>
+        <div id="classTree"></div>
     </div>
 
-    <h1 id="welcomeText">🌞 Welcome!</h1>
+    <!-- RIGHT REPORT -->
+    <div id="rightPanel">
 
-    <!-- CLASS REPORT -->
-    <div id="classReport"></div>
-  </div>
+        <!-- BUTTONS -->
+        <div id="topButtons">
+            <button id="backBtn">⬅ Back</button>
+            <button id="logoutBtn">Logout</button>
+        </div>
 
+        <!-- REPORT -->
+        <div id="classReport">
+            <h2>Select a class to view its report</h2>
+            <div id="reportContent"></div>
+        </div>
+
+    </div>
+</div>
 
 <script>
-/* SAMPLE DATA */
-const data = {
-  nursery: "Happy Kids Nursery",
-  classes: [
+/* SAMPLE DATA (you can replace with API later) */
+const classes = [
     {
-      name: "Class 1",
-      teacher: "Teacher A",
-      kids: ["Alice", "Bob", "Charlie"],
-      report: {
-        "2025-12-01": {
-          activities: ["Drawing", "Math practice"],
-          routines: ["Morning circle", "Snack time"]
-        },
-        "2025-12-02": {
-          activities: ["Story telling"],
-          routines: ["Outdoor play"]
-        }
-      }
+        name: "Class A",
+        report: [
+            "Routine saved on 2 Dec",
+            "Activity: Drawing",
+            "Activity: Numbers practice"
+        ]
     },
     {
-      name: "Class 2",
-      teacher: "Teacher B",
-      kids: ["Daisy", "Ethan"],
-      report: {
-        "2025-12-01": {
-          activities: ["Painting"],
-          routines: ["Clean-up time"]
-        }
-      }
+        name: "Class B",
+        report: [
+            "Routine saved on 3 Dec",
+            "Activity: Singing",
+            "Activity: Coloring"
+        ]
     },
     {
-      name: "Class 3",
-      teacher: "Teacher C",
-      kids: ["Fiona", "George", "Hannah"],
-      report: {}
+        name: "Class C",
+        report: [
+            "Routine saved on 4 Dec",
+            "Activity: Math Games",
+            "Activity: Story Time"
+        ]
     }
-  ]
-};
+];
 
 /* BUILD TREE */
-function buildTree() {
-  const tree = document.getElementById("treeContainer");
-  tree.innerHTML = "";
+function loadTree() {
+    const tree = document.getElementById("classTree");
+    tree.innerHTML = "";
 
-  const nurseryNode = document.createElement("div");
-  nurseryNode.className = "node";
-  nurseryNode.textContent = data.nursery;
-  tree.appendChild(nurseryNode);
+    classes.forEach(cls => {
+        const div = document.createElement("div");
+        div.className = "class-branch";
+        div.textContent = cls.name;
 
-  data.classes.forEach(cls => {
-    const classNode = document.createElement("div");
-    classNode.className = "node";
-    classNode.textContent = cls.name;
+        div.onclick = () => showReport(cls);
 
-    const container = document.createElement("div");
-    container.className = "children";
-
-    const teacher = document.createElement("div");
-    teacher.className = "node";
-    teacher.style.background = "#ffe8a1";
-    teacher.textContent = "👩‍🏫 " + cls.teacher;
-    container.appendChild(teacher);
-
-    cls.kids.forEach(k => {
-      const kid = document.createElement("div");
-      kid.className = "node";
-      kid.style.background = "#fff";
-      kid.textContent = "👦 " + k;
-      container.appendChild(kid);
+        tree.appendChild(div);
     });
-
-    classNode.addEventListener("click", () => {
-      classNode.classList.toggle("open");
-      showClassReport(cls);
-    });
-
-    tree.appendChild(classNode);
-    tree.appendChild(container);
-  });
 }
 
-buildTree();
+/* SHOW REPORT ON RIGHT PANEL */
+function showReport(cls) {
+    const reportArea = document.getElementById("reportContent");
 
-/* SHOW CLASS REPORT ON RIGHT SIDE */
-function showClassReport(cls) {
-  const box = document.getElementById("classReport");
-  box.style.display = "block";
-
-  let html = `
-    <h2>📘 Class Report: ${cls.name}</h2>
-    <h3>Teacher: ${cls.teacher}</h3>
-  `;
-
-  if (!cls.report || Object.keys(cls.report).length === 0) {
-    html += `<p>No activity or routine saved yet.</p>`;
-    box.innerHTML = html;
-    return;
-  }
-
-  Object.keys(cls.report).forEach(date => {
-    html += `<div class="report-date">${date}</div>`;
-    const day = cls.report[date];
-
-    day.activities.forEach(a => html += `<div class="report-item">🎨 ${a}</div>`);
-    day.routines.forEach(r => html += `<div class="report-item">🔁 ${r}</div>`);
-  });
-
-  box.innerHTML = html;
+    reportArea.innerHTML = `
+        <h2>${cls.name} Report</h2>
+        <ul style="text-align:left; font-size:1.1rem;">
+            ${cls.report.map(r => `<li>${r}</li>`).join("")}
+        </ul>
+    `;
 }
+
+loadTree();
 </script>
 
 </body>
