@@ -1,102 +1,214 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<style>
-  body {
-    font-family: Arial;
-    padding: 20px;
-  }
+  <meta charset="UTF-8" />
+  <title>Choose Activity 🌻</title>
 
-  .tree {
-    padding-left: 20px;
-    line-height: 24px;
-  }
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #fceabb, #f8b500);
+      font-family: "Comic Sans MS", cursive;
+      color: #333;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      overflow: hidden;
+    }
 
-  .node {
-    cursor: pointer;
-    margin: 4px 0;
-  }
+    /* LEFT SIDE TREE BOX */
+    #familyTree {
+      flex: 0 0 35%;
+      height: 90%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      border-right: 4px dashed rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0 30px 30px 0;
+      box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      overflow-y: auto;
+    }
 
-  .children {
-    margin-left: 20px;
-    display: none;
-  }
+    .tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      width: 100%;
+    }
 
-  .node.open + .children {
-    display: block;
-  }
-</style>
+    .node {
+      background: #fff3cd;
+      padding: 10px 20px;
+      border-radius: 30px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      font-size: 1.1rem;
+      color: #5c4033;
+      margin: 8px;
+      transition: transform 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+      width: fit-content;
+    }
+
+    .node:hover {
+      transform: scale(1.07);
+      background: #ffecb3;
+    }
+
+    .children {
+      margin-left: 20px;
+      display: none;
+      width: 100%;
+    }
+
+    .node.open + .children {
+      display: block;
+    }
+
+    /* RIGHT SIDE UI */
+    #mainContent {
+      flex: 0 0 65%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 5px;
+      color: #ff6f00;
+      text-shadow: 2px 2px #fff;
+    }
+
+    button {
+      margin: 15px;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, #fff3cd, #ffe082);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      color: #5c4033;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    button:hover {
+      transform: translateY(-4px) scale(1.05);
+      background: linear-gradient(45deg, #fff9c4, #ffecb3);
+    }
+
+    #logoutBtn {
+      background: linear-gradient(45deg, #ffb3b3, #ff8080);
+      color: white;
+      margin-top: 30px;
+    }
+
+    #logoutBtn:hover {
+      background: linear-gradient(45deg, #ff9999, #ff6666);
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Nursery Tree</h2>
+  <!-- LEFT SIDE: NURSERY TREE -->
+  <div id="familyTree">
+    <div class="tree" id="treeContainer">Loading...</div>
+  </div>
 
-<div id="tree" class="tree"></div>
+  <!-- RIGHT SIDE: ACTIVITY UI -->
+  <div id="mainContent">
+    <h1 id="welcomeText">🌞 Welcome!</h1>
+    <div id="options"></div>
+    <button id="logoutBtn">🔒 Logout</button>
+    <footer>Made with 🌻 Love and Joy</footer>
+  </div>
 
-<script>
-const data = {
-  nursery: "Happy Kids Nursery",
-  classes: [
-    {
-      name: "Class 1",
-      teacher: "Teacher A",
-      kids: ["Alice", "Bob", "Charlie"]
-    },
-    {
-      name: "Class 2",
-      teacher: "Teacher B",
-      kids: ["Daisy", "Ethan"]
-    },
-    {
-      name: "Class 3",
-      teacher: "Teacher C",
-      kids: ["Fiona", "George", "Hannah"]
+  <script>
+    /* ---------- NURSERY TREE DATA ---------- */
+    const data = {
+      nursery: "Happy Kids Nursery",
+      classes: [
+        {
+          name: "Class 1",
+          teacher: "Teacher A",
+          kids: ["Alice", "Bob", "Charlie"]
+        },
+        {
+          name: "Class 2",
+          teacher: "Teacher B",
+          kids: ["Daisy", "Ethan"]
+        },
+        {
+          name: "Class 3",
+          teacher: "Teacher C",
+          kids: ["Fiona", "George", "Hannah"]
+        }
+      ]
+    };
+
+    /* ---------- BUILD TREE ---------- */
+    function buildTree() {
+      const tree = document.getElementById("treeContainer");
+      tree.innerHTML = "";
+
+      // Nursery root
+      const nurseryNode = document.createElement("div");
+      nurseryNode.className = "node";
+      nurseryNode.textContent = data.nursery;
+      tree.appendChild(nurseryNode);
+
+      // Classes
+      data.classes.forEach(cls => {
+        const classNode = document.createElement("div");
+        classNode.className = "node";
+        classNode.textContent = cls.name;
+
+        const container = document.createElement("div");
+        container.className = "children";
+
+        // Add teacher
+        const teacher = document.createElement("div");
+        teacher.className = "node";
+        teacher.style.background = "#ffe8a1";
+        teacher.textContent = "👩‍🏫 " + cls.teacher;
+        container.appendChild(teacher);
+
+        // Kids
+        cls.kids.forEach(k => {
+          const kid = document.createElement("div");
+          kid.className = "node";
+          kid.style.background = "#fff";
+          kid.textContent = "👦 " + k;
+          container.appendChild(kid);
+        });
+
+        // Toggle expand
+        classNode.addEventListener("click", () => {
+          classNode.classList.toggle("open");
+        });
+
+        tree.appendChild(classNode);
+        tree.appendChild(container);
+      });
     }
-  ]
-};
 
-function buildTree() {
-  const root = document.getElementById("tree");
-
-  // Nursery root
-  const nurseryNode = document.createElement("div");
-  nurseryNode.className = "node";
-  nurseryNode.textContent = data.nursery;
-  root.appendChild(nurseryNode);
-
-  // Classes under nursery (same branch level)
-  data.classes.forEach(cls => {
-    const classNode = document.createElement("div");
-    classNode.className = "node";
-    classNode.textContent = cls.name;
-
-    const container = document.createElement("div");
-    container.className = "children";
-
-    // Add teacher
-    const teacher = document.createElement("div");
-    teacher.textContent = "👩‍🏫 " + cls.teacher;
-    container.appendChild(teacher);
-
-    // Add kids
-    cls.kids.forEach(k => {
-      const kid = document.createElement("div");
-      kid.textContent = "👦 " + k;
-      container.appendChild(kid);
-    });
-
-    // Toggle show/hide teacher & kids
-    classNode.addEventListener("click", () => {
-      classNode.classList.toggle("open");
-    });
-
-    root.appendChild(classNode);
-    root.appendChild(container);
-  });
-}
-
-buildTree();
-</script>
+    buildTree();
+  </script>
 
 </body>
 </html>
