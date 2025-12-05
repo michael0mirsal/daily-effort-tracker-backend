@@ -77,10 +77,12 @@ router.get("/teachers", async (req, res) => {
 
 // POST create a new teacher
 // POST create a new teacher
+// POST create a new teacher (AUTO-LINK)
 router.post("/teachers", async (req, res) => {
   try {
     const { fullName, phone, nurseryId, classId } = req.body;
 
+    // 1️⃣ Create the teacher
     const teacher = await Teacher.create({
       fullName,
       phone,
@@ -88,11 +90,30 @@ router.post("/teachers", async (req, res) => {
       classes: classId ? [classId] : []
     });
 
-    res.status(201).json(teacher);
+    // 2️⃣ Link teacher → class
+    if (classId) {
+      await ClassModel.findByIdAndUpdate(classId, {
+        teacher: teacher._id
+      });
+    }
+
+    // 3️⃣ Link teacher → nursery
+    if (nurseryId) {
+      await Nursery.findByIdAndUpdate(nurseryId, {
+        $addToSet: { teachers: teacher._id }   // prevents duplicates
+      });
+    }
+
+    res.status(201).json({
+      message: "Teacher created and linked successfully",
+      teacher
+    });
+
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 
 export default router;
