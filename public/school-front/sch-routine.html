@@ -1,260 +1,715 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Class Routines with Members</title>
-<style>
-  body {
-    font-family: "Poppins", sans-serif;
-    background: #f4f7fb;
-    padding: 20px;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌞 Daily Routine</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff8dc;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { color: #ff9800; }
 
-  h2 {
-    margin-top: 40px;
-    color: #444;
-  }
+    table {
+      width: 90%;
+      margin: 10px auto;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 5px #ccc;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th { background: #ffecb3; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    overflow: hidden;
-  }
+    button {
+      margin: 8px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      background: #ffb74d;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background: #ffa726; }
 
-  th, td {
-    padding: 14px;
-    border-bottom: 1px solid #eee;
-  }
+    input[type="text"], input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin: 5px;
+    }
 
-  th {
-    background: #e8efff;
-    font-weight: 600;
-  }
+    .routine-section {
+      margin-top: 30px;
+      background: #fffbea;
+      padding: 15px;
+      border-radius: 8px;
+    }
 
-  .member-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+    .report-table {
+      margin-top: 30px;
+      border: 2px solid #ffb74d;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fffdf4;
+    }
 
-  .member-tag {
-    background: #d1e7ff;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 13px;
-    cursor: pointer;
-  }
+    .stars {
+      color: #ffcc00;
+      font-size: 1.2em;
+      white-space: nowrap;
+    }
 
-  .dropdown {
-    margin-top: 6px;
-  }
+    .load-section {
+      margin-top: 15px;
+      background: #fff9e6;
+      padding: 10px;
+      border-radius: 6px;
+    }
 
-  select {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #fff;
-  }
+    .prayer {
+      background: #fff3cd;
+      border-left: 6px solid #ffb74d;
+      padding: 15px;
+      margin: 25px auto;
+      border-radius: 8px;
+      width: 85%;
+      font-style: italic;
+    }
 
-  input[type="text"] {
-    width: 60%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 10px;
-    border: 1px solid #bbb;
-  }
+    /* Members UI */
+    .member-box {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      min-height: 32px;
+    }
 
-  button {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 10px;
-    background: #4c8dff;
-    color: white;
-    cursor: pointer;
-    margin-left: 10px;
-  }
+    .tag {
+      background: #4daf7c;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tag .remove {
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      padding: 0 6px;
+      cursor: pointer;
+      font-weight: 700;
+      line-height: 1;
+    }
 
-  button:hover {
-    background: #2f6cff;
-  }
+    .member-select {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 6px;
+      width: 160px;
+    }
 
-</style>
+    .small-btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      background: #4c8dff;
+      color: white;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .small-btn:hover { background: #2f6cff; }
+
+    .btn-add {
+      padding: 10px 18px;
+      background: #2ecc71;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+  </style>
 </head>
 <body>
+  <h1 id="pageTitle">🌞 Daily Routine</h1>
+  <div style="font-weight:bold; margin-bottom:10px;">Family: <span id="familyName"></span></div>
 
-<h1>🏫 Class Routine with Members</h1>
+  <button id="logoutBtn">Logout</button>
+  <button id="saveBtn">💾 Save Routine</button>
+  <button id="loadBtn">📂 View All Reports</button>
+  <button id="backBtn">⬅️ Back</button>
 
+  <div id="routineStarsBox" style="
+    text-align:center;
+    margin: 15px auto;
+    font-size:1.3em;
+    font-weight:bold;
+    background:linear-gradient(135deg, #fff5a8, #ffd54f);
+    color:#8b5e00;
+    border:2px solid #f3c623;
+    border-radius:15px;
+    padding:10px 20px;
+    width:fit-content;
+    box-shadow:0 0 15px rgba(255,215,0,0.4);
+  ">
+    🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
+  </div>
 
-<!-- ----------------------------------- -->
-<!-- MORNING ROUTINE -->
-<!-- ----------------------------------- -->
+  <div class="load-section">
+    <h3>📅 Load Routine by Date</h3>
+    <input type="date" id="loadDate" />
+    <button id="loadByDateBtn">🔍 Load Routine</button>
+  </div>
 
-<div class="routine-section">
-  <h2>☀️ Morning Routine</h2>
+  <!-- 🌅 Morning Prayer -->
+  <div class="prayer">
+    <h3>🌅 “Hello, Jesus!”</h3>
+    <p> it’s a brand new day, 🌞<br>
+    Thank You for helping me in every way.<br>
+    I’ll smile, be kind, and do my best,<br>
+    With You beside me, I feel so blessed! 🙏</p>
+  </div>
 
-  <table id="morningTable">
-    <thead>
-      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
-    </thead>
-    <tbody id="morningBody">
+  <!-- -------------------------
+       MORNING (now with Members)
+  -------------------------- -->
+  <div class="routine-section">
+    <h2>☀️ Morning Routine</h2>
+    <table id="morningTable">
+      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
+      <tbody id="morningBody">
+        <!-- initial rows -->
+        <tr>
+          <td>Wake up early ⏰</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
 
-      <tr>
-        <td>Wake up early ⏰</td>
-        <td><input type="checkbox"></td>
-        <td>
-          <div class="member-container"></div>
-          <div class="dropdown">
-            <select onchange="addMember(this)">
-              <option value="">Assign member…</option>
-            </select>
-          </div>
-        </td>
-      </tr>
+        <tr>
+          <td>Talk to Jesus</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
 
-      <tr>
-        <td>Talk to Jesus</td>
-        <td><input type="checkbox"></td>
-        <td>
-          <div class="member-container"></div>
-          <div class="dropdown">
-            <select onchange="addMember(this)">
-              <option value="">Assign member…</option>
-            </select>
-          </div>
-        </td>
-      </tr>
+        <tr>
+          <td>Brush teeth 🪥</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
 
-      <tr>
-        <td>Brush teeth 🪥</td>
-        <td><input type="checkbox"></td>
-        <td>
-          <div class="member-container"></div>
-          <div class="dropdown">
-            <select onchange="addMember(this)">
-              <option value="">Assign member…</option>
-            </select>
-          </div>
-        </td>
-      </tr>
+        <!-- other initial rows omitted for brevity but same structure -->
+      </tbody>
+    </table>
 
-    </tbody>
-  </table>
+    <input type="text" id="morningInput" placeholder="Add morning task" />
+    <button onclick="addTask('morning')">➕ Add</button>
+  </div>
 
-  <input type="text" id="morningInput" placeholder="Add new morning routine task">
-  <button onclick="addTask('morning')">➕ Add</button>
-</div>
+  <!-- -------------------------
+       AFTER (with Members)
+  -------------------------- -->
+  <div class="routine-section">
+    <h2>🎒 After School Routine</h2>
+    <table id="afterTable">
+      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
+      <tbody id="afterBody">
+        <tr>
+          <td>Wash hands and change clothes 🧼</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Eat a healthy snack 🍎</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
+    <input type="text" id="afterInput" placeholder="Add after-school task" />
+    <button onclick="addTask('after')">➕ Add</button>
+  </div>
 
+  <!-- -------------------------
+       NIGHT (with Members)
+  -------------------------- -->
+  <div class="routine-section">
+    <h2>🌙 Sleeping Routine</h2>
+    <table id="nightTable">
+      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
+      <tbody id="nightBody">
+        <tr>
+          <td>Take a shower 🚿</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Limit daytime naps</td>
+          <td><input type="checkbox" /></td>
+          <td>
+            <div class="member-box"></div>
+            <div>
+              <select class="member-select"><option value="">Add member...</option></select>
+              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-<!-- ----------------------------------- -->
-<!-- AFTERNOON ROUTINE -->
-<!-- ----------------------------------- -->
+    <input type="text" id="nightInput" placeholder="Add night task" />
+    <button onclick="addTask('night')">➕ Add</button>
+  </div>
 
-<div class="routine-section">
-  <h2>🌤 Afternoon Routine</h2>
+  <!-- -------------------------
+       (Optional) CLASS Routine Section
+       (kept if you used it before)
+  -------------------------- -->
+  <div class="routine-section" id="classRoutineSection" style="display:none;">
+    <h2>🏫 Class Routine (optional)</h2>
+    <table id="classRoutineTable">
+      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
+      <tbody id="classRoutineBody"></tbody>
+    </table>
+    <input type="text" id="classRoutineInput" placeholder="Add class routine task" />
+    <button onclick="addTask('classRoutine')">➕ Add</button>
+  </div>
 
-  <table id="afternoonTable">
-    <thead>
-      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
-    </thead>
-    <tbody id="afternoonBody"></tbody>
-  </table>
-
-  <input type="text" id="afternoonInput" placeholder="Add new afternoon routine task">
-  <button onclick="addTask('afternoon')">➕ Add</button>
-</div>
-
-
-
-<!-- ----------------------------------- -->
-<!-- EVENING ROUTINE -->
-<!-- ----------------------------------- -->
-
-<div class="routine-section">
-  <h2>🌙 Evening Routine</h2>
-
-  <table id="eveningTable">
-    <thead>
-      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
-    </thead>
-    <tbody id="eveningBody"></tbody>
-  </table>
-
-  <input type="text" id="eveningInput" placeholder="Add new evening routine task">
-  <button onclick="addTask('evening')">➕ Add</button>
-</div>
-
-
+  <!-- 📅 Report -->
+  <div class="report-table" id="reportSection" style="display:none;">
+    <h2>📅 Routine Report</h2>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Completed Tasks</th><th>⭐ Star Rating</th></tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+  </div>
 
 <script>
-/* Example members coming from backend */
-const members = ["Adam", "Mira", "John", "Lina", "Sara", "Oliver"];
+  /* ----------------------------
+     CONFIG / MEMBERS LIST
+     Replace membersList with real backend data if available
+  ---------------------------- */
+  const membersList = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
 
-/* Populate all dropdowns */
-function loadMembers() {
-  document.querySelectorAll("select").forEach(select => {
-    members.forEach(m => {
-      let opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      select.appendChild(opt);
-    });
-  });
-}
-
-setTimeout(loadMembers, 100);
-
-
-/* Add member tag to routine row */
-function addMember(select) {
-  if (!select.value) return;
-
-  let container = select.parentElement.previousElementSibling;
-
-  let tag = document.createElement("span");
-  tag.className = "member-tag";
-  tag.textContent = select.value;
-
-  tag.onclick = () => tag.remove();  // remove on click
-
-  container.appendChild(tag);
-
-  select.value = ""; // reset dropdown
-}
-
-
-/* Add new routine row */
-function addTask(type) {
-  const input = document.getElementById(type + "Input");
-  const tableBody = document.getElementById(type + "Body");
-
-  if (!input.value.trim()) {
-    alert("Please write a task name");
-    return;
+  // Utility: create option list HTML
+  function optionsHTML() {
+    return membersList.map(m => `<option value="${m}">${m}</option>`).join("");
   }
 
-  let tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td>${input.value}</td>
-    <td><input type="checkbox"></td>
-    <td>
-      <div class="member-container"></div>
-      <div class="dropdown">
-        <select onchange="addMember(this)">
-          <option value="">Assign member…</option>
-          ${members.map(m => `<option value="${m}">${m}</option>`).join("")}
-        </select>
-      </div>
-    </td>
-  `;
+  /* ----------------------------
+     Member selector setup
+     - setupMemberSelector(row): wires select & Add button for that row
+     - addMemberFromBtn(button): uses the select in same cell to add tag
+  ---------------------------- */
+  function setupMemberSelector(row) {
+    const select = row.querySelector(".member-select");
+    const box = row.querySelector(".member-box");
 
-  tableBody.appendChild(tr);
+    if (!select || !box) return;
 
-  input.value = "";
-}
+    // populate select options (preserve existing custom options)
+    if (select.querySelectorAll("option").length <= 1) {
+      select.insertAdjacentHTML("beforeend", optionsHTML());
+    }
+
+    // when user presses Enter on select (some browsers) or change, do not auto-add
+    // we use explicit "Add" button to add the selected name (Option 1 behavior)
+    // But also support double-click on option via change event: we will not auto-add on change to match option 1; add via button.
+  }
+
+  // Called by the small "Add" button next to select
+  function addMemberFromBtn(btn) {
+    const cell = btn.closest("td");
+    if (!cell) return;
+    const select = cell.querySelector(".member-select");
+    const box = cell.querySelector(".member-box");
+    const name = select.value;
+    if (!name) return;
+
+    // prevent duplicates
+    const exists = Array.from(box.querySelectorAll(".tag")).some(t => t.dataset.name === name);
+    if (exists) { select.value = ""; return; }
+
+    const tag = document.createElement("div");
+    tag.className = "tag";
+    tag.dataset.name = name;
+    tag.innerHTML = `<span>${name}</span><span class="remove">×</span>`;
+
+    // remove handler
+    tag.querySelector(".remove").onclick = () => tag.remove();
+
+    box.appendChild(tag);
+    select.value = "";
+  }
+
+  /* ----------------------------
+     Initialize existing rows (populate selects)
+  ---------------------------- */
+  function initAllMemberSelects() {
+    document.querySelectorAll("tbody tr").forEach(row => {
+      setupMemberSelector(row);
+    });
+  }
+
+  // run at start
+  initAllMemberSelects();
+
+  /* ----------------------------
+     TASK CRUD + Add Row creation (with Members UI)
+  ---------------------------- */
+  function createRowHTML(task) {
+    return `
+      <td>${escapeHtml(task)}</td>
+      <td><input type="checkbox"></td>
+      <td>
+        <div class="member-box"></div>
+        <div>
+          <select class="member-select"><option value="">Add member...</option>${optionsHTML()}</select>
+          <button class="small-btn" type="button" onclick="addMemberFromBtn(this)">Add</button>
+        </div>
+      </td>
+    `;
+  }
+
+  function addTask(type) {
+    const input = document.getElementById(type + "Input");
+    if (!input) return;
+    const task = input.value.trim();
+    if (!task) return;
+
+    // pick body id
+    const mapping = {
+      morning: "morningBody",
+      after: "afterBody",
+      night: "nightBody",
+      classRoutine: "classRoutineBody"
+    };
+    const bodyId = mapping[type];
+    if (!bodyId) return;
+
+    const body = document.getElementById(bodyId);
+
+    // prevent duplicates (case-insensitive)
+    const existing = Array.from(body.querySelectorAll("tr")).some(r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase());
+    if (existing) { alert("Task already exists!"); return; }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = createRowHTML(task);
+    body.appendChild(tr);
+    setupMemberSelector(tr);
+    attachCheckboxListeners();
+    input.value = "";
+  }
+
+  // simple escape to avoid HTML injection for task text
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+  /* ----------------------------
+     COLLECT ALL TASKS (with members)
+  ---------------------------- */
+  const sections = ["morning", "after", "night"];
+  function getAllTasks() {
+    const routines = [];
+
+    // morning/after/night
+    sections.forEach(section => {
+      const body = document.getElementById(section + "Body");
+      if (!body) return;
+      Array.from(body.querySelectorAll("tr")).forEach(row => {
+        const task = row.children[0].textContent;
+        const done = !!row.querySelector("input[type='checkbox']").checked;
+        const members = Array.from(row.querySelectorAll(".member-box .tag")).map(t => t.dataset.name);
+        routines.push({ section, task, done, members });
+      });
+    });
+
+    // classRoutine (if used)
+    const classBody = document.getElementById("classRoutineBody");
+    if (classBody) {
+      Array.from(classBody.querySelectorAll("tr")).forEach(row => {
+        const task = row.children[0].textContent;
+        const done = !!row.querySelector("input[type='checkbox']").checked;
+        const members = Array.from(row.querySelectorAll(".member-box .tag")).map(t => t.dataset.name);
+        routines.push({ section: "class", task, done, members });
+      });
+    }
+
+    return routines;
+  }
+
+  function clearAllCheckboxes() {
+    document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
+  }
+
+  function getStars(count) { return "⭐".repeat(count) || "⚪"; }
+
+  function updateRoutineStars() {
+    const items = getAllTasks();
+    const checkedCount = items.filter(i => i.done).length;
+    document.getElementById("routineStarsDisplay").textContent = `${checkedCount}⭐`;
+
+    // update report lines if loaded
+    if (window.currentLoadedDate) {
+      document.querySelectorAll("#reportBody tr").forEach(row => {
+        if (row.children[0].textContent === window.currentLoadedDate) {
+          const total = items.length;
+          row.children[1].textContent = `${checkedCount}/${total} ✅`;
+          row.children[2].textContent = getStars(checkedCount);
+        }
+      });
+    }
+  }
+
+  function attachCheckboxListeners() {
+    document.querySelectorAll("input[type='checkbox']").forEach(cb => {
+      cb.onchange = updateRoutineStars;
+    });
+  }
+
+  // set up initial checkbox listeners
+  attachCheckboxListeners();
+
+  /* ----------------------------
+     SAVE / LOAD (integrated with members)
+  ---------------------------- */
+  const API_BASE = "https://daily-effort-tracker-backend-production-2184.up.railway.app";
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user) {
+    // graceful redirect if no user
+    // window.location.href = "login.html"; // commented to allow local testing if needed
+  } else {
+    document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
+    const fEl = document.getElementById("familyName");
+    if (fEl) fEl.textContent = user.family || "Unknown";
+  }
+
+  document.getElementById("saveBtn").onclick = async () => {
+    const u = JSON.parse(localStorage.getItem("currentUser"));
+    if (!u || !u.family || !u.name) return alert("Missing user info");
+
+    const items = getAllTasks();
+    const date = (new Date()).toISOString().split("T")[0];
+    const checkedData = items.filter(i => i.done).length;
+
+    const payload = { name: u.name, date, items, checkedData, family: u.family };
+
+    try {
+      const res = await fetch(`${API_BASE}/api/routines/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) { alert("Routine saved!"); updateRoutineStars(); }
+      else { console.error(data); alert("Save error"); }
+    } catch (err) {
+      console.error(err); alert("Network error while saving routine.");
+    }
+  };
+
+  document.getElementById("loadBtn").onclick = async () => {
+    try {
+      const u = JSON.parse(localStorage.getItem("currentUser")) || {};
+      const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(u.name||"")}&family=${encodeURIComponent(u.family||"")}&date=all`);
+      const data = await res.json();
+      if (!data || !data.length) return alert("No saved routine found.");
+
+      const reportBody = document.getElementById("reportBody");
+      reportBody.innerHTML = "";
+      document.getElementById("reportSection").style.display = "block";
+
+      data.forEach(r => {
+        const doneCount = r.items.filter(i => i.done).length;
+        const total = r.items.length;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${r.date}</td><td>${doneCount}/${total} ✅</td><td class="stars">${getStars(doneCount)}</td>`;
+        reportBody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load routines.");
+    }
+  };
+
+  document.getElementById("loadByDateBtn").onclick = async () => {
+    const selectedDate = document.getElementById("loadDate").value;
+    if (!selectedDate) return alert("Please select a date.");
+    await loadRoutineByDate(selectedDate);
+  };
+
+  async function loadRoutineByDate(date, auto=false) {
+    try {
+      const u = JSON.parse(localStorage.getItem("currentUser")) || {};
+      const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(u.name||"")}&date=${date}&family=${encodeURIComponent(u.family||"")}`);
+      const data = await res.json();
+      // pick routine that matches family if multiple
+      const routine = Array.isArray(data) ? data.find(r => (r.family||"").trim().toLowerCase() === (u.family||"").trim().toLowerCase()) || data[0] : data;
+      if (!routine) {
+        if (!auto) alert(`No routine found for ${date}`);
+        return;
+      }
+
+      // clear existing checkboxes & members
+      clearAllCheckboxes();
+      document.querySelectorAll(".member-box").forEach(b => b.innerHTML = "");
+
+      // iterate items and assign into proper tables (create rows if missing)
+      routine.items.forEach(item => {
+        const body = document.getElementById((item.section === "class" ? "classRoutineBody" : item.section + "Body"));
+        if (!body) return;
+
+        const rows = Array.from(body.querySelectorAll("tr"));
+        let targetRow = rows.find(r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase());
+
+        if (!targetRow) {
+          // create new row (with members UI)
+          const tr = document.createElement("tr");
+          tr.innerHTML = createRowHTML(item.task);
+          body.appendChild(tr);
+          setupMemberSelector(tr);
+          attachCheckboxListeners();
+          targetRow = tr;
+        }
+
+        // set checkbox
+        const cb = targetRow.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = !!item.done;
+
+        // rebuild members tags
+        const box = targetRow.querySelector(".member-box");
+        box.innerHTML = ""; // clear
+        if (Array.isArray(item.members)) {
+          item.members.forEach(name => {
+            if (!name) return;
+            const tag = document.createElement("div");
+            tag.className = "tag";
+            tag.dataset.name = name;
+            tag.innerHTML = `<span>${escapeHtml(name)}</span><span class="remove">×</span>`;
+            tag.querySelector(".remove").onclick = () => tag.remove();
+            box.appendChild(tag);
+          });
+        }
+      });
+
+      // attach listeners and stars
+      attachCheckboxListeners();
+      updateRoutineStars();
+
+      // lock past dates if necessary
+      const today = new Date((new Date()).toISOString().split("T")[0]);
+      const selected = new Date(date);
+      const isPast = selected < today;
+      document.querySelectorAll("input[type='checkbox'], input[type='text'], button, select").forEach(el => {
+        if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
+          el.disabled = isPast; el.style.opacity = isPast ? 0.5 : 1; el.style.cursor = isPast ? "not-allowed" : "pointer";
+        } else if (el.type === "checkbox" || el.type === "text" || el.tagName === "SELECT") {
+          el.disabled = isPast;
+        }
+      });
+
+      window.currentLoadedDate = date;
+      if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
+
+    } catch (err) {
+      console.error(err);
+      if (!auto) alert("Failed to load routine by date.");
+    }
+  }
+
+  // auto-load today's date on page ready
+  window.addEventListener("DOMContentLoaded", async () => {
+    // initialize any existing rows selects
+    initAllMemberSelects();
+    attachCheckboxListeners();
+
+    const today = (new Date()).toISOString().split("T")[0];
+    const loadDateEl = document.getElementById("loadDate");
+    if (loadDateEl) loadDateEl.value = today;
+    await loadRoutineByDate(today, true);
+  });
+
+  // navigation / logout
+  document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
+  document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("currentUser"); window.location.href = "login.html"; };
+
+  /* Helper: createRowHTML used when loading unknown tasks */
+  function createRowHTML(task) {
+    return `
+      <td>${escapeHtml(task)}</td>
+      <td><input type="checkbox"></td>
+      <td>
+        <div class="member-box"></div>
+        <div>
+          <select class="member-select"><option value="">Add member...</option>${optionsHTML()}</select>
+          <button class="small-btn" type="button" onclick="addMemberFromBtn(this)">Add</button>
+        </div>
+      </td>
+    `;
+  }
+
+  // small utility used by load/create
+  function optionsHTML() {
+    return membersList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+  }
+
+  // escape helper reused
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
 </script>
 
 </body>
