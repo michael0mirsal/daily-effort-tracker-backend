@@ -22,21 +22,22 @@ router.get("/nurseries", async (req, res) => {
 
 // POST create a new nursery
 // POST create a new nursery
+// POST create a new nursery
 router.post("/nurseries", async (req, res) => {
   try {
-    const { name, address, contactEmail, contactPhone, passKey } = req.body;
+    const { name, address, email, phone, passKey } = req.body;
 
-    // Optional: validate that all required fields exist
-    if (!name || !contactEmail || !contactPhone || !passKey) {
+    if (!name || !email || !phone || !passKey) {
       return res.status(400).json({ error: "All required fields must be provided" });
     }
 
-    const nursery = await Nursery.create({ name, address, contactEmail, contactPhone, passKey });
+    const nursery = await Nursery.create({ name, address, email, phone, passKey });
     res.status(201).json(nursery);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 
 //////////////////////////
@@ -54,15 +55,34 @@ router.get("/classes", async (req, res) => {
 });
 
 // POST create a new class
+// POST create a new class
 router.post("/classes", async (req, res) => {
   try {
-    const { name, nurseryId, teacherId, kidIds } = req.body;
+    const { name, passKey, nurseryId, teacherIds, memberIds } = req.body;
+
     const classDoc = await ClassModel.create({
       name,
+      passKey,
       nursery: nurseryId,
-      teacher: teacherId,
-      kids: kidIds // array of Member ObjectIds
+      teachers: teacherIds || [],   // array of Teacher ObjectIds
+      members: memberIds || []      // array of Member ObjectIds
     });
+
+    // Link class → nursery
+    if (nurseryId) {
+      await Nursery.findByIdAndUpdate(nurseryId, {
+        $addToSet: { classes: classDoc._id }
+      });
+    }
+
+    // Link class → teachers
+    if (teacherIds && teacherIds.length > 0) {
+      await Teacher.updateMany(
+        { _id: { $in: teacherIds } },
+        { $addToSet: { classes: classDoc._id } }
+      );
+    }
+
     res.status(201).json(classDoc);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -86,29 +106,32 @@ router.get("/teachers", async (req, res) => {
 // POST create a new teacher
 // POST create a new teacher
 // POST create a new teacher (AUTO-LINK)
+// POST create a new teacher
 router.post("/teachers", async (req, res) => {
   try {
-    const { fullName, phone, nurseryId, classId } = req.body;
+    const { name, role, email, phone, nurseryId, classIds } = req.body;
 
-    // 1️⃣ Create the teacher
     const teacher = await Teacher.create({
-      fullName,
+      name,
+      role,
+      email,
       phone,
       nursery: nurseryId,
-      classes: classId ? [classId] : []
+      classes: classIds || []
     });
 
-    // 2️⃣ Link teacher → class
-    if (classId) {
-      await ClassModel.findByIdAndUpdate(classId, {
-        teacher: teacher._id
-      });
+    // Link teacher → classes
+    if (classIds && classIds.length > 0) {
+      await ClassModel.updateMany(
+        { _id: { $in: classIds } },
+        { $addToSet: { teachers: teacher._id } }
+      );
     }
 
-    // 3️⃣ Link teacher → nursery
+    // Link teacher → nursery
     if (nurseryId) {
       await Nursery.findByIdAndUpdate(nurseryId, {
-        $addToSet: { teachers: teacher._id }   // prevents duplicates
+        $addToSet: { workers: teacher._id }
       });
     }
 
