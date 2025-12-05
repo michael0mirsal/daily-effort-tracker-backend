@@ -1,106 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Nursery Tree 🌼</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            display: flex;
-            height: 100vh;
-            background: linear-gradient(135deg, #fceabb, #f8b500);
-        }
+<meta charset="UTF-8">
+<title>Nursery Tree 🌼</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        display: flex;
+        height: 100vh;
+        background: linear-gradient(135deg, #fceabb, #f8b500);
+    }
 
-        #nurseryTree {
-            flex: 0 0 35%;
-            height: 90%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-right: 4px dashed rgba(255, 255, 255, 0.7);
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 0 30px 30px 0;
-            box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
+    #nurseryTree {
+        flex: 0 0 40%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        border-right: 4px dashed rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 0 30px 30px 0;
+        box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        overflow-y: auto;
+    }
 
-        .tree {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
+    .tree {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
 
-        .child {
-            background: #fff3cd;
-            padding: 10px 20px;
-            border-radius: 50%;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            font-size: 1.1rem;
-            color: #5c4033;
-            margin: 5px;
-            transition: transform 0.3s ease, background 0.3s ease;
-        }
+    .node {
+        background: #fff3cd;
+        padding: 10px 20px;
+        border-radius: 50%;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        font-size: 1.1rem;
+        color: #5c4033;
+        margin: 5px;
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
 
-        .child:hover {
-            transform: scale(1.1);
-            background: #ffecb3;
-        }
+    .node:hover {
+        transform: scale(1.1);
+        background: #ffecb3;
+    }
 
-        .highlighted {
-            background: #ffeb3b !important;
-            box-shadow: 0 0 20px #ffcc00;
-        }
+    .highlighted {
+        background: #ffeb3b !important;
+        box-shadow: 0 0 20px #ffcc00;
+    }
 
-        .parents, .children {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
+    .branch {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 10px;
+    }
 
-        #mainContent {
-            flex: 0 0 65%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-        }
+    .branch > .children {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
 
-        h1 {
-            font-size: 2.5rem;
-            color: #ff6f00;
-            text-shadow: 2px 2px #fff;
-        }
-    </style>
+    #mainContent {
+        flex: 0 0 60%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        color: #ff6f00;
+        text-shadow: 2px 2px #fff;
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+        color: #8b4513;
+        text-shadow: 1px 1px #fff;
+        margin: 15px 0 5px 0;
+    }
+
+</style>
 </head>
 <body>
-    <div id="nurseryTree">
-        <div class="tree">
-            <!-- Parents Level -->
-            <div class="parents">
-                <div class="child">Teacher A</div>
-                <div class="child">Teacher B</div>
-            </div>
+<div id="nurseryTree">
+    <div class="tree">
+        <!-- Nursery Name -->
+        <div class="node">Happy Kids Nursery</div>
 
-            <!-- Children Level -->
+        <!-- Classes -->
+        <div class="branch">
+            <div class="node">Class 1</div>
             <div class="children">
-                <div class="child">Alice</div>
-                <div class="child">Bob</div>
-                <div class="child">Charlie</div>
-                <div class="child">Daisy</div>
+                <!-- Teachers -->
+                <div class="branch">
+                    <div class="node">Teacher A</div>
+                </div>
+                <!-- Kids -->
+                <div class="branch">
+                    <div class="node">Alice</div>
+                    <div class="node">Bob</div>
+                    <div class="node">Charlie</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="branch">
+            <div class="node">Class 2</div>
+            <div class="children">
+                <div class="branch">
+                    <div class="node">Teacher B</div>
+                </div>
+                <div class="branch">
+                    <div class="node">Daisy</div>
+                    <div class="node">Ethan</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="branch">
+            <div class="node">Class 3</div>
+            <div class="children">
+                <div class="branch">
+                    <div class="node">Teacher C</div>
+                </div>
+                <div class="branch">
+                    <div class="node">Fiona</div>
+                    <div class="node">George</div>
+                    <div class="node">Hannah</div>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="mainContent">
-        <h1>Happy Kids Nursery</h1>
-        <p>Welcome to our nursery family tree 🌼</p>
-    </div>
+<div id="mainContent">
+    <h1>Welcome to Happy Kids Nursery</h1>
+    <p>Explore our nursery tree: classes, teachers, and children 🌼</p>
+</div>
 </body>
 </html>
