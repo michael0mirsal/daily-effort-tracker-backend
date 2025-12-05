@@ -4,173 +4,193 @@
 <meta charset="UTF-8">
 <title>Nursery Tree</title>
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-        background: linear-gradient(135deg, #fceabb, #f8b500);
-    }
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #fceabb, #f8b500);
+    overflow: hidden;
+}
 
-    /* MAIN LAYOUT */
-    #container {
-        display: flex;
-        height: 100%;
-        width: 100%;
-    }
+/* MAIN LAYOUT */
+#container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
 
-    /* LEFT TREE PANEL */
-    #treePanel {
-        width: 35%;
-        height: 100%;
-        background: rgba(255,255,255,0.3);
-        padding: 20px;
-        box-sizing: border-box;
-        border-right: 4px dashed rgba(255,255,255,0.7);
-        overflow-y: auto; /* scroll INSIDE only */
-        border-radius: 0 30px 30px 0;
-        box-shadow: inset -5px 0 10px rgba(0,0,0,0.1);
-    }
+/* LEFT TREE PANEL */
+#treePanel {
+    width: 35%;
+    height: 100%;
+    background: rgba(255,255,255,0.3);
+    padding: 20px;
+    box-sizing: border-box;
+    border-right: 4px dashed rgba(255,255,255,0.7);
+    overflow-y: auto;
+    border-radius: 0 30px 30px 0;
+    box-shadow: inset -5px 0 10px rgba(0,0,0,0.1);
+}
 
-    #nurseryTitle {
-        text-align: center;
-        color: #5c4033;
-        font-size: 2rem;
-        margin-bottom: 20px;
-        text-shadow: 1px 1px #fff;
-    }
+#nurseryTitle {
+    text-align: center;
+    color: #5c4033;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px #fff;
+}
 
-    /* CLASS BRANCHES */
-    .class-branch {
-        background: #fff3cd;
-        padding: 12px 25px;
-        border-radius: 20px;
-        margin: 12px auto;
-        cursor: pointer;
-        font-size: 1.2rem;
-        width: fit-content;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        transition: 0.3s;
-        color: #5c4033;
-        font-weight: bold;
-    }
+/* CLASS BRANCHES */
+.class-branch {
+    background: #fff3cd;
+    padding: 12px 25px;
+    border-radius: 20px;
+    margin: 12px auto;
+    cursor: pointer;
+    font-size: 1.2rem;
+    width: fit-content;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: 0.3s;
+    color: #5c4033;
+    font-weight: bold;
+}
+.class-branch:hover {
+    transform: scale(1.05);
+    background: #ffecb3;
+}
 
-    .class-branch:hover {
-        transform: scale(1.05);
-        background: #ffecb3;
-    }
+/* RIGHT PANEL */
+#rightPanel {
+    width: 65%;
+    height: 100%;
+    position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    text-align: center;
+}
 
-    /* RIGHT PANEL */
-    #rightPanel {
-        width: 65%;
-        height: 100%;
-        position: relative;
-        padding: 20px;
-        box-sizing: border-box;
-        overflow-y: auto;
-        text-align: center;
-    }
+/* TOP RIGHT BUTTONS */
+#topButtons {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 10px;
+}
+button {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+#logoutBtn { background: #e57373; color: white; }
+#backBtn { background: #81c784; color: white; }
 
-    /* TOP RIGHT BUTTONS */
-    #topButtons {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        display: flex;
-        gap: 10px;
-    }
+/* REPORT AREA */
+#classReport {
+    margin-top: 70px;
+}
+#reportContent {
+    margin-top: 20px;
+    padding: 25px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    font-size: 1.2rem;
+    text-align: left;
+}
+.report-section {
+    margin-bottom: 15px;
+}
+.report-section h3 {
+    margin-bottom: 5px;
+    color: #5c4033;
+}
+.report-section ul {
+    margin-left: 20px;
+    padding-left: 0;
+}
+.report-section ul li {
+    margin-bottom: 5px;
+}
 
-    button {
-        padding: 10px 20px;
-        border-radius: 12px;
-        border: none;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: bold;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-    }
-
-    #logoutBtn {
-        background: #e57373;
-        color: white;
-    }
-
-    #backBtn {
-        background: #81c784;
-        color: white;
-    }
-
-    /* REPORT AREA */
-    #classReport {
-        margin-top: 70px;
-    }
-
-    #reportContent {
-        margin-top: 20px;
-        padding: 25px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        font-size: 1.2rem;
-    }
-
+/* TEACHER & KIDS BOX */
+.teacher-box {
+    background: #ffe8a1;
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+}
+.kid-box {
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin: 3px 0;
+}
 </style>
 </head>
 <body>
 
 <div id="container">
-
     <!-- LEFT TREE -->
     <div id="treePanel">
         <h2 id="nurseryTitle">Happy Kids Nursery</h2>
         <div id="classTree"></div>
     </div>
 
-    <!-- RIGHT REPORT -->
+    <!-- RIGHT PANEL -->
     <div id="rightPanel">
-
-        <!-- BUTTONS -->
         <div id="topButtons">
             <button id="backBtn">⬅ Back</button>
             <button id="logoutBtn">Logout</button>
         </div>
 
-        <!-- REPORT -->
         <div id="classReport">
-            <h2>Select a class to view its report</h2>
+            <h2>Select a class to view details</h2>
             <div id="reportContent"></div>
         </div>
-
     </div>
 </div>
 
 <script>
-/* SAMPLE DATA (you can replace with API later) */
+/* STATIC DATA */
 const classes = [
     {
-        name: "Class A",
-        report: [
-            "Routine saved on 2 Dec",
-            "Activity: Drawing",
-            "Activity: Numbers practice"
-        ]
+        name: "Class 1",
+        teacher: "Teacher A",
+        kids: ["Alice", "Bob", "Charlie"],
+        report: {
+            "2025-12-01": {
+                activities: ["Drawing", "Math practice"],
+                routines: ["Morning circle", "Snack time"]
+            },
+            "2025-12-02": {
+                activities: ["Story telling"],
+                routines: ["Outdoor play"]
+            }
+        }
     },
     {
-        name: "Class B",
-        report: [
-            "Routine saved on 3 Dec",
-            "Activity: Singing",
-            "Activity: Coloring"
-        ]
+        name: "Class 2",
+        teacher: "Teacher B",
+        kids: ["Daisy", "Ethan"],
+        report: {
+            "2025-12-01": {
+                activities: ["Painting"],
+                routines: ["Clean-up time"]
+            }
+        }
     },
     {
-        name: "Class C",
-        report: [
-            "Routine saved on 4 Dec",
-            "Activity: Math Games",
-            "Activity: Story Time"
-        ]
+        name: "Class 3",
+        teacher: "Teacher C",
+        kids: ["Fiona", "George", "Hannah"],
+        report: {}
     }
 ];
 
@@ -184,23 +204,52 @@ function loadTree() {
         div.className = "class-branch";
         div.textContent = cls.name;
 
-        div.onclick = () => showReport(cls);
+        div.onclick = () => showClassDetails(cls);
 
         tree.appendChild(div);
     });
 }
 
-/* SHOW REPORT ON RIGHT PANEL */
-function showReport(cls) {
+/* SHOW CLASS DETAILS & REPORT */
+function showClassDetails(cls) {
     const reportArea = document.getElementById("reportContent");
-
-    reportArea.innerHTML = `
-        <h2>${cls.name} Report</h2>
-        <ul style="text-align:left; font-size:1.1rem;">
-            ${cls.report.map(r => `<li>${r}</li>`).join("")}
-        </ul>
+    let html = `
+        <div class="report-section">
+            <h3>👩‍🏫 Teacher</h3>
+            <div class="teacher-box">${cls.teacher}</div>
+        </div>
+        <div class="report-section">
+            <h3>🧒 Kids</h3>
+            ${cls.kids.map(k => `<div class="kid-box">${k}</div>`).join("")}
+        </div>
+        <div class="report-section">
+            <h3>📅 Report</h3>
     `;
+
+    if(!cls.report || Object.keys(cls.report).length===0){
+        html += "<p>No activity or routine saved yet.</p></div>";
+    } else {
+        html += "<ul>";
+        Object.keys(cls.report).forEach(date=>{
+            html += `<li><strong>${date}</strong>`;
+            html += "<ul>";
+            cls.report[date].activities.forEach(a => html += `<li>🎨 ${a}</li>`);
+            cls.report[date].routines.forEach(r => html += `<li>🔁 ${r}</li>`);
+            html += "</ul></li>";
+        });
+        html += "</ul></div>";
+    }
+
+    reportArea.innerHTML = html;
 }
+
+/* BACK BUTTON */
+document.getElementById("backBtn").onclick = () => {
+    document.getElementById("reportContent").innerHTML = "<p>Select a class to view details</p>";
+};
+
+/* LOGOUT BUTTON (dummy) */
+document.getElementById("logoutBtn").onclick = () => alert("Logging out...");
 
 loadTree();
 </script>
