@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nursery Signup – Multi-Step</title>
+  <title>Nursery Signup</title>
+
+  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 
   <style>
@@ -24,8 +26,9 @@
       border-radius: 24px;
       box-shadow: 0 12px 30px rgba(0,0,0,0.15);
       width: 90%;
-      max-width: 600px;
+      max-width: 450px;
       animation: fadeIn 0.8s ease-out;
+      text-align: center;
     }
 
     @keyframes fadeIn {
@@ -34,7 +37,6 @@
     }
 
     h1 {
-      text-align: center;
       margin-bottom: 25px;
       font-weight: 600;
       color: #333;
@@ -45,22 +47,29 @@
       margin-bottom: 5px;
       font-weight: 500;
       color: #555;
+      text-align: left;
     }
 
-    input, textarea, select {
+    input {
       width: 100%;
       padding: 12px 14px;
       margin-bottom: 20px;
       border-radius: 12px;
       border: 1px solid #ccc;
       font-size: 16px;
+      font-family: "Poppins", sans-serif;
     }
 
-    textarea { resize: vertical; min-height: 80px; }
-
-    .note { font-size: 13px; color: #ff4d4d; margin-top: -15px; margin-bottom: 15px; }
+    .note {
+      font-size: 13px;
+      color: #ff4d4d;
+      margin-top: -15px;
+      margin-bottom: 15px;
+      text-align: left;
+    }
 
     button {
+      width: 100%;
       padding: 14px;
       border: none;
       border-radius: 14px;
@@ -70,37 +79,19 @@
       color: white;
       font-weight: 500;
       transition: background 0.2s, transform 0.2s;
-      margin-top: 10px;
     }
 
     button:hover { background: #1976d2; transform: translateY(-2px); }
-
-    .hidden { display: none; }
-
-    .class-item {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .class-item input {
-      flex: 1;
-    }
   </style>
 </head>
 
 <body>
   <div class="card">
-
     <h1>Nursery Signup 🏫</h1>
 
-    <!-- Step 1: General Info -->
-    <div id="step-general">
+    <form id="signupForm">
       <label for="nurseryName">Nursery Name</label>
       <input type="text" id="nurseryName" placeholder="Enter Nursery Name" required />
-
-      <label for="address">Address</label>
-      <textarea id="address" placeholder="Enter Address" required></textarea>
 
       <label for="contactEmail">Contact Email</label>
       <input type="email" id="contactEmail" placeholder="Enter Email" required />
@@ -108,162 +99,59 @@
       <label for="contactPhone">Contact Phone</label>
       <input type="tel" id="contactPhone" placeholder="Enter Phone Number" required />
 
-      <label for="nurseryKey">Nursery Access Key</label>
-      <input type="text" id="nurseryKey" placeholder="Unique Nursery Access Key" required />
-      <p class="note">This key identifies your nursery and will be required for teachers to join.</p>
+      <label for="nurseryKey">Nursery Pass Key</label>
+      <input type="text" id="nurseryKey" placeholder="Enter Nursery Pass Key" required />
+      <p class="note">This key will be used for the nursery to access the system and for teachers to join.</p>
 
-      <button onclick="nextStep('general')">Next: Class Info</button>
-    </div>
-
-    <!-- Step 2: Class Info -->
-    <div id="step-class" class="hidden">
-      <h3>Create Classes</h3>
-      <div id="classesContainer"></div>
-      <button type="button" onclick="addClass()">Add Class</button>
-      <button onclick="nextStep('class')">Next: Teacher Info</button>
-    </div>
-
-    <!-- Step 3: Teacher Info -->
-    <div id="step-teacher" class="hidden">
-      <h3>Teacher Info</h3>
-      <div id="teachersContainer"></div>
-      <button type="button" onclick="addTeacher()">Add Teacher</button>
-      <button onclick="submitSignup()">Complete Signup</button>
-    </div>
-
+      <button type="submit">Complete Signup</button>
+    </form>
   </div>
 
   <script>
-    let classes = [];
-    let teachers = [];
+    const signupForm = document.getElementById('signupForm');
 
-    function nextStep(currentStep) {
-      if(currentStep === 'general') {
-        // Validate general info
-        const nurseryName = document.getElementById('nurseryName').value.trim();
-        const address = document.getElementById('address').value.trim();
-        const email = document.getElementById('contactEmail').value.trim();
-        const phone = document.getElementById('contactPhone').value.trim();
-        const nurseryKey = document.getElementById('nurseryKey').value.trim();
+    signupForm.addEventListener('submit', function(e){
+      e.preventDefault();
 
-        if(!nurseryName || !address || !email || !phone || !nurseryKey){
-          alert('Please fill all general info fields.');
-          return;
-        }
-
-        document.getElementById('step-general').classList.add('hidden');
-        document.getElementById('step-class').classList.remove('hidden');
-      }
-
-      if(currentStep === 'class') {
-        if(classes.length === 0){
-          alert('Please add at least one class.');
-          return;
-        }
-        document.getElementById('step-class').classList.add('hidden');
-        document.getElementById('step-teacher').classList.remove('hidden');
-        populateClassSelect();
-      }
-    }
-
-    // --- Class Management ---
-    function addClass() {
-      const container = document.getElementById('classesContainer');
-
-      const classIndex = classes.length;
-      const div = document.createElement('div');
-      div.classList.add('class-item');
-
-      div.innerHTML = `
-        <input type="text" placeholder="Class Name" id="className-${classIndex}" required />
-        <input type="text" placeholder="Class Access Key" id="classKey-${classIndex}" required />
-        <button type="button" onclick="removeClass(${classIndex})">Remove</button>
-      `;
-
-      container.appendChild(div);
-      classes.push({name:'', key:''});
-    }
-
-    function removeClass(index){
-      classes.splice(index, 1);
-      renderClasses();
-    }
-
-    function renderClasses(){
-      const container = document.getElementById('classesContainer');
-      container.innerHTML = '';
-      classes.forEach((cls,i)=>{
-        const div = document.createElement('div');
-        div.classList.add('class-item');
-        div.innerHTML = `
-          <input type="text" placeholder="Class Name" id="className-${i}" value="${cls.name}" required />
-          <input type="text" placeholder="Class Access Key" id="classKey-${i}" value="${cls.key}" required />
-          <button type="button" onclick="removeClass(${i})">Remove</button>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function populateClassSelect(){
-      const container = document.getElementById('teachersContainer');
-      container.innerHTML = '';
-
-      classes.forEach((cls, i) => {
-        const div = document.createElement('div');
-        div.classList.add('class-item');
-        div.innerHTML = `
-          <label>Teacher Name for Class: ${document.getElementById('className-'+i).value}</label>
-          <input type="text" placeholder="Teacher Name" class="teacherName" data-class-index="${i}" required />
-          <input type="email" placeholder="Teacher Email" class="teacherEmail" data-class-index="${i}" required />
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function addTeacher() {
-      alert('Teachers are linked to classes above, no need to add extra manually.');
-    }
-
-    function submitSignup() {
-      // Gather classes
-      classes = classes.map((cls,i)=>{
-        return {
-          name: document.getElementById('className-'+i).value.trim(),
-          key: document.getElementById('classKey-'+i).value.trim()
-        }
-      });
-
-      // Gather teachers
-      teachers = [];
-      const teacherNames = document.querySelectorAll('.teacherName');
-      const teacherEmails = document.querySelectorAll('.teacherEmail');
-
-      teacherNames.forEach((input,i)=>{
-        teachers.push({
-          name: input.value.trim(),
-          email: teacherEmails[i].value.trim(),
-          classIndex: parseInt(input.dataset.classIndex)
-        })
-      });
-
-      // Gather general info
       const data = {
         nurseryName: document.getElementById('nurseryName').value.trim(),
-        address: document.getElementById('address').value.trim(),
         contactEmail: document.getElementById('contactEmail').value.trim(),
         contactPhone: document.getElementById('contactPhone').value.trim(),
-        nurseryKey: document.getElementById('nurseryKey').value.trim(),
-        classes,
-        teachers
+        nurseryKey: document.getElementById('nurseryKey').value.trim()
       };
 
-      // TODO: send to backend API
-      console.log('Signup Data:', data);
-      alert('Nursery signup completed! Check console for data.');
+      // Basic validation
+      for(let key in data){
+        if(!data[key]){
+          alert('Please fill all fields.');
+          return;
+        }
+      }
 
-      // Redirect to login
+      // TODO: Send data to backend API
+      /*
+      fetch('/api/nursery/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if(resData.success){
+          alert('Nursery registered successfully!');
+          window.location.href = "/pages/nursery/nursery-login.html";
+        } else {
+          alert(resData.message);
+        }
+      })
+      .catch(err => alert('Error: ' + err));
+      */
+
+      // For demo:
+      console.log('Nursery Signup Data:', data);
+      alert('Nursery signup completed! Check console for details.');
       window.location.href = "/pages/nursery/nursery-login.html";
-    }
+    });
   </script>
 </body>
 </html>
