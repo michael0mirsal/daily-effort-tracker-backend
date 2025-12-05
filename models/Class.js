@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 
 const classSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true },                        // Class Name
+  passKey: { type: String, required: true },                     // Class Pass Key
   nursery: { type: mongoose.Schema.Types.ObjectId, ref: "Nursery" },
-  teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
-  kids: [{ type: mongoose.Schema.Types.ObjectId, ref: "Member" }]
-});
+  teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Teacher" }],
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "Member" }]
+}, { timestamps: true });
 
 export default mongoose.model("Class", classSchema);
