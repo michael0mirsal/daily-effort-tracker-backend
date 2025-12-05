@@ -2,60 +2,64 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Nursery Tree — Add Classes</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Nursery Tree — Classes A/B/C</title>
 <style>
   :root{
     --node-bg: #fff3cd;
     --node-color: #5c4033;
     --line-color: #5c4033;
-    --container-bg: linear-gradient(135deg, #fceabb, #f8b500);
+    --pane-bg: rgba(255,255,255,0.28);
+    --app-bg: linear-gradient(135deg,#fceabb,#f8b500);
   }
-  html,body{height:100%;margin:0;font-family:Arial, Helvetica, sans-serif;background:var(--container-bg);}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter, Arial, Helvetica, sans-serif;background:var(--app-bg);}
 
   .app {
     display:flex;
     height:100vh;
     align-items:stretch;
-    box-sizing:border-box;
   }
 
-  /* Left: tree area */
+  /* LEFT: tree pane */
   #nurseryPane {
     flex:0 0 42%;
-    padding:24px;
-    box-sizing:border-box;
+    padding:22px;
     display:flex;
     justify-content:center;
     align-items:flex-start;
-    background: rgba(255,255,255,0.28);
+    background:var(--pane-bg);
     border-right:4px dashed rgba(255,255,255,0.7);
   }
 
+  /* Tree root container */
   .tree {
     width:100%;
-    max-width:420px;
+    max-width:520px;
     display:flex;
     flex-direction:column;
     align-items:center;
     position:relative;
+    transform-origin: top center;
   }
 
-  /* Node */
+  /* Node style */
   .node {
     background:var(--node-bg);
     color:var(--node-color);
     padding:10px 18px;
     border-radius:999px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.18);
+    box-shadow:0 6px 14px rgba(0,0,0,0.15);
     text-align:center;
-    margin:8px 0;
+    margin:10px 0;
     position:relative;
     white-space:nowrap;
-    transition:transform .18s ease;
+    font-weight:600;
+    transition: transform .18s ease;
   }
-  .node:hover{ transform:scale(1.03); }
+  .node:hover { transform: translateY(-3px) scale(1.02); }
 
-  /* Vertical connector from parent to children */
+  /* Children container (vertical stacking) */
   .children {
     width:100%;
     display:flex;
@@ -64,22 +68,22 @@
     position:relative;
   }
 
-  /* vertical line between a parent and the block of its children */
+  /* Short vertical connector from parent node down into its children block */
   .children::before {
     content:"";
     position:absolute;
-    top:-10px;             /* connects to parent node's bottom */
+    top:-12px;             /* attaches to bottom of parent node */
     left:50%;
     transform:translateX(-50%);
     width:2px;
-    height:10px;
+    height:12px;
     background:var(--line-color);
     z-index:0;
   }
 
-  /* each class branch is a small container so we can style per-class later */
+  /* Each class branch: centered, with optional internal spacing */
   .class-branch {
-    width:85%;
+    width:86%;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -87,9 +91,8 @@
     margin-top:6px;
   }
 
-  /* a thin vertical line left of class node to emphasize branch (optional) */
+  /* Small connector above each class node to visually continue the vertical line */
   .class-branch::before{
-    /* no extra lines now - leave minimal */
     content:"";
     position:absolute;
     top:-8px;
@@ -97,190 +100,106 @@
     transform:translateX(-50%);
     width:2px;
     height:8px;
-    background:transparent;
+    background:var(--line-color);
+    z-index:0;
   }
 
-  /* right pane: controls/preview */
-  #controls {
+  /* Make sure deep page doesn't scroll horizontally; vertical handled by scaling */
+  #mainContent {
     flex:1;
-    padding:28px;
-    box-sizing:border-box;
+    padding:22px;
     display:flex;
     flex-direction:column;
-    gap:18px;
-    justify-content:flex-start;
+    gap:12px;
     align-items:flex-start;
+    justify-content:flex-start;
   }
 
-  h1{ margin:0 0 6px 0; color:#5c4033; font-size:20px; }
-  label{ font-weight:600; color:#5c4033; }
-  input[type="text"]{
-    padding:10px 12px;
-    border-radius:8px;
-    border:1px solid rgba(0,0,0,0.12);
-    font-size:15px;
-    width:320px;
-    box-sizing:border-box;
-  }
-  button{
-    padding:10px 16px;
-    border-radius:10px;
-    border:none;
-    background: linear-gradient(45deg,#ffe082,#fff3cd);
-    color:var(--node-color);
-    font-weight:700;
-    cursor:pointer;
-    box-shadow:0 4px 10px rgba(0,0,0,0.12);
-  }
-  small{ color:rgba(0,0,0,0.55); }
+  h1{ margin:0; color:#5c4033; font-size:18px; }
+  p{ margin:0; color:rgba(0,0,0,0.55) }
 
-  /* responsive: shrink node text when there are many classes (basic) */
-  .tree.compact .node { padding:6px 10px; font-size:0.92rem; }
+  /* Slightly compact nodes when scaling */
+  .compact .node { padding:8px 14px; font-size:0.95rem; }
 
-  /* subtle animation when a class is added */
-  .fade-in {
-    animation: fadeInUp .28s ease forwards;
-    opacity:0;
-    transform: translateY(6px);
-  }
-  @keyframes fadeInUp {
-    to { opacity:1; transform: translateY(0); }
-  }
-
-  /* keep everything visible: use scale if many classes (simple auto-fit) */
-  .auto-scale {
-    transform-origin: top center;
-    transition: transform .18s ease;
-  }
+  /* subtle appear animation */
+  .fade-in { animation: fadeInUp .28s ease both; }
+  @keyframes fadeInUp { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
 </style>
 </head>
 <body>
+  <div class="app">
 
-<div class="app">
-  <!-- TREE PANE -->
-  <div id="nurseryPane">
-    <div class="tree" id="treeRoot">
-      <!-- Root: Nursery name -->
-      <div class="node" id="nurseryNode">Happy Kids Nursery</div>
+    <!-- LEFT: tree pane -->
+    <div id="nurseryPane" aria-label="Nursery tree pane">
+      <div class="tree" id="treeRoot">
+        <!-- Root -->
+        <div class="node" id="nurseryNode">Happy Kids Nursery</div>
 
-      <!-- Classes container: classes will be appended here vertically -->
-      <div class="children" id="classesContainer" aria-live="polite"></div>
+        <!-- Classes container (vertical) -->
+        <div class="children" id="classesContainer" aria-live="polite">
+          <!-- Pre-populated branches -->
+          <div class="class-branch fade-in">
+            <div class="node">Class A</div>
+          </div>
+
+          <div class="class-branch fade-in">
+            <div class="node">Class B</div>
+          </div>
+
+          <div class="class-branch fade-in">
+            <div class="node">Class C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: simple info -->
+    <div id="mainContent" role="region" aria-label="Controls and info">
+      <h1>Nursery — classes</h1>
+      <p>Root: <strong>Happy Kids Nursery</strong></p>
+      <p>Branches: <strong>Class A, Class B, Class C</strong></p>
+      <p>Next steps: add teachers &amp; children under each class, make branches expandable, or allow adding classes dynamically.</p>
     </div>
   </div>
-
-  <!-- CONTROLS -->
-  <div id="controls">
-    <h1>Nursery — add classes</h1>
-
-    <div>
-      <label for="className">Class name</label><br>
-      <input id="className" type="text" placeholder="e.g. Class 1" />
-    </div>
-
-    <div style="display:flex; gap:12px; align-items:center;">
-      <button id="addClassBtn">➕ Add class</button>
-      <button id="resetBtn" style="background:linear-gradient(45deg,#ffb3b3,#ff8080); color:white;">Reset</button>
-    </div>
-
-    <div>
-      <small>Added classes appear below the nursery as vertical branches. Next step we'll add teachers and children under each class.</small>
-    </div>
-  </div>
-</div>
 
 <script>
-/* Minimal JS: add class branches under the nursery.
-   Each class gets its own branch container so we can later attach teachers & kids.
+/* Auto-fit: scale the tree vertically if its rendered height exceeds available pane height.
+   Called on load and on window resize. Keeps layout visible without vertical scrollbar.
 */
+(function(){
+  const treeRoot = document.getElementById('treeRoot');
+  const nurseryPane = document.getElementById('nurseryPane');
 
-const addBtn = document.getElementById('addClassBtn');
-const resetBtn = document.getElementById('resetBtn');
-const classInput = document.getElementById('className');
-const classesContainer = document.getElementById('classesContainer');
-const treeRoot = document.getElementById('treeRoot');
+  function adjustScale() {
+    // small timeout to let layout settle if called right after DOM changes
+    requestAnimationFrame(()=> {
+      const paneRect = nurseryPane.getBoundingClientRect();
+      const treeRect = treeRoot.getBoundingClientRect();
 
-function createClassBranch(name){
-  const branch = document.createElement('div');
-  branch.className = 'class-branch fade-in';
+      // available space to occupy (leave small margin)
+      const avail = Math.max(60, paneRect.height * 0.94);
+      const current = treeRect.height;
 
-  // class node
-  const node = document.createElement('div');
-  node.className = 'node class-node';
-  node.textContent = name || 'Unnamed Class';
-
-  // container for future teachers/kids under this class
-  const subchildren = document.createElement('div');
-  subchildren.className = 'children subchildren';
-  // initially empty; teachers/kids will be appended here later
-
-  branch.appendChild(node);
-  branch.appendChild(subchildren);
-
-  return branch;
-}
-
-function addClass(){
-  const name = classInput.value.trim();
-  if(!name){
-    classInput.focus();
-    return;
+      if (current > avail && current > 0) {
+        // clamp scale to not be too small
+        const scale = Math.max(0.5, avail / current);
+        treeRoot.style.transform = `scale(${scale})`;
+        treeRoot.classList.add('compact');
+      } else {
+        treeRoot.style.transform = '';
+        treeRoot.classList.remove('compact');
+      }
+    });
   }
 
-  const branch = createClassBranch(name);
-  classesContainer.appendChild(branch);
+  // initial adjustment
+  window.addEventListener('load', adjustScale);
+  window.addEventListener('resize', adjustScale);
 
-  classInput.value = '';
-  classInput.focus();
-
-  // keep tree visible: if many classes, scale the tree down slightly to fit
-  adjustTreeScale();
-}
-
-function resetTree(){
-  // remove all classes
-  classesContainer.innerHTML = '';
-  // reset scale
-  treeRoot.style.transform = '';
-}
-
-function adjustTreeScale(){
-  // very simple auto-fit: if classes exceed some count, scale the tree down.
-  // (We keep this simple for step 1; later we can compute exact heights.)
-  const count = classesContainer.children.length;
-  const rootRect = document.getElementById('nurseryPane').getBoundingClientRect();
-  const treeRect = treeRoot.getBoundingClientRect();
-
-  // target: keep treeRoot height within 92% of pane height
-  const avail = rootRect.height * 0.92;
-  const currentHeight = treeRect.height;
-
-  if(currentHeight > avail && currentHeight > 0){
-    const scale = Math.max(0.5, avail / currentHeight);
-    treeRoot.style.transform = 'scale(' + scale + ')';
-    treeRoot.classList.add('auto-scale');
-  } else {
-    treeRoot.style.transform = '';
-    treeRoot.classList.remove('auto-scale');
-  }
-
-  // also compact nodes slightly if many classes
-  if(count > 7) treeRoot.classList.add('compact');
-  else treeRoot.classList.remove('compact');
-}
-
-// events
-addBtn.addEventListener('click', addClass);
-classInput.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter') addClass();
-});
-resetBtn.addEventListener('click', resetTree);
-
-// expose for convenience during debugging
-window._nursery = {
-  addClass: (name)=> {
-    classInput.value = name; addClass();
-  }
-};
+  // expose function if needed for later steps
+  window._nursery = window._nursery || {};
+  window._nursery.adjustScale = adjustScale;
+})();
 </script>
 </body>
 </html>
