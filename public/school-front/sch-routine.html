@@ -2,38 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Class Routine</title>
+<title>Improved Class Routine</title>
 
 <style>
   body {
     font-family: "Poppins", sans-serif;
     background: #f8f9fa;
-    margin: 0;
     padding: 20px;
-  }
-
-  /* Buttons */
-  .top-buttons {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .btn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: none;
-    color: white;
-    cursor: pointer;
-  }
-  .btn-back { background: #3498db; }
-  .btn-logout { background: #e74c3c; }
-
-  h2 {
-    color: #2c3e50;
-    margin-top: 70px;
   }
 
   .routine-section {
@@ -41,7 +16,6 @@
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    margin-top: 20px;
   }
 
   table {
@@ -49,23 +23,41 @@
     border-collapse: collapse;
     margin-bottom: 12px;
   }
-
   th, td {
     border-bottom: 1px solid #ddd;
     padding: 12px;
-    text-align: left;
-    font-size: 15px;
   }
-
   th {
     background: #f1f2f6;
     font-weight: 600;
   }
 
-  .select-member {
-    width: 180px;
+  .member-box {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    background: #4daf7c;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tag span {
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .member-select {
     padding: 6px;
     border-radius: 6px;
+    border: 1px solid #ccc;
   }
 
   #routineInput {
@@ -82,21 +74,13 @@
     border: none;
     color: white;
     cursor: pointer;
-    margin-left: 8px;
   }
 
 </style>
 </head>
-
 <body>
 
-<!-- Top Buttons -->
-<div class="top-buttons">
-  <button class="btn btn-logout" onclick="logout()">Logout</button>
-  <button class="btn btn-back" onclick="goBack()">Back</button>
-</div>
-
-<h2>☀️ Class Routine</h2>
+<h2>☀️ Class Routine with Active Members</h2>
 
 <div class="routine-section">
 
@@ -109,71 +93,73 @@
       </tr>
     </thead>
 
-    <tbody id="routineBody">
-      <!-- Pre-filled examples -->
-      <tr>
-        <td>Morning Circle</td>
-        <td><input type="checkbox"></td>
-        <td>
-          <select class="select-member" multiple>
-            <option>Omar</option>
-            <option>Laila</option>
-            <option>Sara</option>
-            <option>Adam</option>
-            <option>Mariam</option>
-          </select>
-        </td>
-      </tr>
-
-      <tr>
-        <td>Snack Time</td>
-        <td><input type="checkbox"></td>
-        <td>
-          <select class="select-member" multiple>
-            <option>Omar</option>
-            <option>Laila</option>
-            <option>Sara</option>
-            <option>Adam</option>
-            <option>Mariam</option>
-          </select>
-        </td>
-      </tr>
-
-    </tbody>
+    <tbody id="routineBody"></tbody>
   </table>
 
-  <input type="text" id="routineInput" placeholder="Add new routine task">
+  <input type="text" id="routineInput" placeholder="Add new routine task" />
   <button class="btn-add" onclick="addRoutine()">➕ Add</button>
 
 </div>
 
 <script>
-  const members = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
+  const membersList = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
 
   function addRoutine() {
-    const input = document.getElementById("routineInput");
-    const value = input.value.trim();
-    if (!value) return alert("Enter a task name!");
+    const task = document.getElementById("routineInput").value.trim();
+    if (!task) return alert("Enter task!");
 
     const tbody = document.getElementById("routineBody");
 
+    // Build member dropdown dynamically
+    const memberOptions = membersList.map(m => `<option value="${m}">${m}</option>`).join("");
+
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
-      <td>${value}</td>
+      <td>${task}</td>
       <td><input type="checkbox"></td>
       <td>
-        <select class="select-member" multiple>
-          ${members.map(m => `<option>${m}</option>`).join("")}
+        <div class="member-box"></div>
+        <select class="member-select">
+          <option value="">Add member...</option>
+          ${memberOptions}
         </select>
       </td>
     `;
 
     tbody.appendChild(tr);
-    input.value = "";
+
+    const select = tr.querySelector(".member-select");
+    const memberBox = tr.querySelector(".member-box");
+
+    // Handle adding members
+    select.addEventListener("change", () => {
+      const name = select.value;
+      if (!name) return;
+
+      // Prevent duplicates
+      if ([...memberBox.children].some(tag => tag.dataset.name === name)) {
+        select.value = "";
+        return;
+      }
+
+      // Create tag
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.dataset.name = name;
+      tag.innerHTML = `${name} <span>x</span>`;
+
+      // Remove member when clicking "x"
+      tag.querySelector("span").onclick = () => tag.remove();
+
+      memberBox.appendChild(tag);
+
+      select.value = "";
+    });
+
+    document.getElementById("routineInput").value = "";
   }
 
-  function logout() { window.location.href = "index.html"; }
-  function goBack() { window.history.back(); }
 </script>
 
 </body>
