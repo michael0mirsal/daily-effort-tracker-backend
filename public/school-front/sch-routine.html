@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Class Routines</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f6fa;
+    margin: 0;
+    padding: 20px;
+  }
+
+  /* Top-right buttons */
+  .top-buttons {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 200;
+  }
+  .btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    color: #fff;
+  }
+  .btn-logout { background: #e84118; }
+  .btn-back { background: #44bd32; }
+
+  h2 {
+    margin-top: 60px;
+  }
+
+  /* Routine table */
+  .routine-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  .routine-table th, .routine-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ccc;
+  }
+  .routine-table th {
+    background: #dcdde1;
+    text-align: left;
+  }
+
+  /* Multi-select scroll */
+  .member-select {
+    width: 180px;
+    height: 80px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Top Right Buttons -->
+<div class="top-buttons">
+  <button class="btn btn-logout" onclick="logout()">Logout</button>
+  <button class="btn btn-back" onclick="goBack()">Back</button>
+</div>
+
+<h2>👋 Welcome, <span id="username"></span></h2>
+<h3>Class Routines</h3>
+<p>Select completed routines and the members who performed them.</p>
+
+<table class="routine-table">
+  <thead>
+    <tr>
+      <th>Routine</th>
+      <th>Done?</th>
+      <th>Members</th>
+    </tr>
+  </thead>
+  <tbody id="routineBody"></tbody>
+</table>
+
+<script>
+  // Demo: loaded members from class
+  const classMembers = [
+    "Omar", "Laila", "Sara", "Malek", "Adam"
+  ];
+
+  // Create routines
+  const routines = [
+    "Morning Circle",
+    "Snack Time",
+    "Outdoor Play",
+    "Story Reading",
+    "Nap Time",
+    "Activity Sheet",
+    "Cleanup Time"
+  ];
+
+  // Render routines
+  const routineBody = document.getElementById("routineBody");
+
+  routines.forEach(routine => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${routine}</td>
+      <td><input type="checkbox"></td>
+      <td>
+        <select multiple class="member-select">
+          ${classMembers.map(m => `<option>${m}</option>`).join("")}
+        </select>
+      </td>
+    `;
+    routineBody.appendChild(row);
+  });
+
+  function logout() {
+    alert("Logged out!");
+    window.location.href = "/choose-user.html";
+  }
+
+  function goBack() {
+    window.history.back();
+  }
+</script>
+
+</body>
+</html>
