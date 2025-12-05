@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Choose User Type</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
   <style>
     body {
       margin: 0;
@@ -11,48 +16,88 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: linear-gradient(135deg, #fceabb, #f8b500);
+      background: linear-gradient(135deg, #ffecd2, #fcb69f);
       font-family: "Poppins", sans-serif;
     }
 
-    .container {
-      text-align: center;
-      background: white;
+    .card {
+      background: #ffffff;
+      width: 90%;
+      max-width: 420px;
       padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 28px;
+      color: #333;
     }
 
-    button {
-      display: block;
-      width: 250px;
-      margin: 15px auto;
-      padding: 15px;
-      font-size: 18px;
+    p {
+      margin-top: 0;
+      margin-bottom: 25px;
+      color: #555;
+      font-size: 16px;
+    }
+
+    .btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      font-size: 17px;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       cursor: pointer;
-      background: #ff9153;
+      background: #ff8c42;
       color: white;
-      transition: 0.2s;
+      font-weight: 500;
+      transition: transform 0.2s, background 0.2s;
     }
 
-    button:hover {
+    .btn:hover {
       background: #ff7a2a;
+      transform: translateY(-3px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .icon {
+      font-size: 22px;
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>Welcome 👋</h1>
-    <p>Please choose your user type:</p>
 
-    <button onclick="chooseType('family')">I am a Family</button>
-    <button onclick="chooseType('nursery')">I am a Nursery</button>
+<body>
+
+  <div class="card">
+    <h1>Welcome 👋</h1>
+    <p>Please choose your Login type:</p>
+
+    <button class="btn" onclick="chooseType('family')">
+      <span class="icon">👨‍👩‍👧</span>
+      I am a Family
+    </button>
+
+    <button class="btn" onclick="chooseType('nursery')">
+      <span class="icon">🏫</span>
+      I am a Nursery
+    </button>
   </div>
 
   <script>
@@ -60,7 +105,7 @@
       localStorage.setItem("userType", type);
 
       if (type === "family") {
-        window.location.href = "/family-login.html";
+        window.location.href = "/signup.html";
       } else {
         window.location.href = "/nursery-login.html";
       }
