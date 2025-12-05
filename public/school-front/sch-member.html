@@ -3,93 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Class Members</title>
+<title>Class Members Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  body {
-    margin: 0;
-    font-family: "Poppins", sans-serif;
-    background: #f0f4f8;
-    padding: 20px;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  h1 { color: #333; }
-
-  button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    background: #ff7a2a;
-    color: white;
-    cursor: pointer;
-  }
-
-  button:hover { background: #ff6000; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    margin-top: 15px;
-  }
-
-  th, td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
-  }
-
-  th { background: #ffecb3; color: #8b5e00; }
-
-  tr:hover { background: #fff3cd; }
-
-  .action-btn {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    background: #2196f3;
-    color: white;
-    cursor: pointer;
-  }
-
-  .action-btn:hover { background: #1976d2; }
-
-  .add-member-form {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-  }
-
-  .add-member-form input {
-    padding: 8px 10px;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
-
-  .add-member-form button {
-    margin-top: 5px;
-  }
-
+  body { margin:0; font-family:"Poppins", sans-serif; background:#f0f4f8; padding:20px; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  h1 { color:#333; }
+  button { padding:8px 12px; border-radius:8px; border:none; background:#ff7a2a; color:white; cursor:pointer; }
+  button:hover { background:#ff6000; }
+  table { width:100%; border-collapse: collapse; background:white; border-radius:8px; overflow:hidden; box-shadow:0 5px 15px rgba(0,0,0,0.1); margin-top:15px; }
+  th, td { padding:12px 15px; border-bottom:1px solid #ddd; text-align:left; }
+  th { background:#ffecb3; color:#8b5e00; }
+  tr:hover { background:#fff3cd; }
+  .action-btn { padding:5px 10px; border:none; border-radius:5px; background:#2196f3; color:white; cursor:pointer; }
+  .action-btn:hover { background:#1976d2; }
+  .add-member-form, .filter-form { background:white; padding:15px; border-radius:10px; box-shadow:0 3px 10px rgba(0,0,0,0.1); margin-bottom:20px; }
+  input, select { padding:8px 10px; margin-right:10px; margin-bottom:10px; border-radius:6px; border:1px solid #ccc; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>Class Members</h1>
+  <h1>Class Members Report</h1>
   <div>
     <button id="backBtn">⬅️ Back</button>
     <button id="logoutBtn">🚪 Logout</button>
@@ -101,8 +36,19 @@
   <h2>➕ Add New Member</h2>
   <input type="text" id="memberName" placeholder="Full Name" required>
   <input type="number" id="memberAge" placeholder="Age" required>
-  <input type="text" id="memberClass" placeholder="Class Name" required>
+  <select id="memberClassSelect">
+    <option value="">Select Class</option>
+  </select>
   <button id="addMemberBtn">Add Member</button>
+</div>
+
+<!-- Filter Members by Class -->
+<div class="filter-form">
+  <h2>📋 Show Class Members</h2>
+  <select id="filterClassSelect">
+    <option value="">Select Class</option>
+  </select>
+  <button id="showClassBtn">Show Members</button>
 </div>
 
 <!-- Members Table -->
@@ -123,20 +69,47 @@
 const API_BASE = "https://your-backend-api.com"; // replace with your backend
 const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
-// Load class members linked to current user
-async function loadClassMembers() {
+// Load available classes into dropdowns
+async function loadClasses() {
+  try {
+    const res = await fetch(`${API_BASE}/api/classes`);
+    const classes = await res.json();
+    const memberClassSelect = document.getElementById("memberClassSelect");
+    const filterClassSelect = document.getElementById("filterClassSelect");
+
+    classes.forEach(c => {
+      const option1 = document.createElement("option");
+      option1.value = c.name;
+      option1.textContent = c.name;
+      memberClassSelect.appendChild(option1);
+
+      const option2 = document.createElement("option");
+      option2.value = c.name;
+      option2.textContent = c.name;
+      filterClassSelect.appendChild(option2);
+    });
+  } catch(err) {
+    console.error("Failed to load classes:", err);
+    alert("Could not load classes.");
+  }
+}
+
+// Load class members linked to user
+async function loadClassMembers(filterClass="") {
   try {
     const res = await fetch(`${API_BASE}/api/classMembers?user=${currentUser.name}`);
     const data = await res.json();
     const tbody = document.querySelector("#membersTable tbody");
     tbody.innerHTML = "";
 
-    if (!data.length) {
+    const filtered = filterClass ? data.filter(m => m.className === filterClass) : data;
+
+    if (!filtered.length) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No members found</td></tr>`;
       return;
     }
 
-    data.forEach((member, index) => {
+    filtered.forEach((member, index) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td>
@@ -158,16 +131,11 @@ async function loadClassMembers() {
 document.getElementById("addMemberBtn").onclick = async () => {
   const name = document.getElementById("memberName").value.trim();
   const age = document.getElementById("memberAge").value;
-  const className = document.getElementById("memberClass").value.trim();
+  const className = document.getElementById("memberClassSelect").value;
 
   if (!name || !age || !className) return alert("Please fill all fields.");
 
-  const payload = {
-    name,
-    age: Number(age),
-    className,
-    linkedUser: currentUser.name
-  };
+  const payload = { name, age: Number(age), className, linkedUser: currentUser.name };
 
   try {
     const res = await fetch(`${API_BASE}/api/classMembers`, {
@@ -181,13 +149,20 @@ document.getElementById("addMemberBtn").onclick = async () => {
     alert("Member added successfully!");
     document.getElementById("memberName").value = "";
     document.getElementById("memberAge").value = "";
-    document.getElementById("memberClass").value = "";
+    document.getElementById("memberClassSelect").value = "";
 
     loadClassMembers();
   } catch(err) {
     console.error("Add member failed:", err);
     alert("Could not add member.");
   }
+};
+
+// Show members of selected class
+document.getElementById("showClassBtn").onclick = () => {
+  const className = document.getElementById("filterClassSelect").value;
+  if (!className) return alert("Select a class first.");
+  loadClassMembers(className);
 };
 
 // Example action button function
@@ -203,9 +178,10 @@ document.getElementById("logoutBtn").onclick = () => {
 };
 document.getElementById("backBtn").onclick = () => window.history.back();
 
-// Load members on page load
+// Load on page load
+loadClasses();
 loadClassMembers();
-</script>
 
+</script>
 </body>
 </html>
