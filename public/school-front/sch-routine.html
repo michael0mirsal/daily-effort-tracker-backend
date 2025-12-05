@@ -2,192 +2,178 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Class Routines</title>
+<title>Class Routine</title>
 
 <style>
   body {
     font-family: "Poppins", sans-serif;
-    background: #f0f2f5;
+    background: #f8f9fa;
     margin: 0;
     padding: 20px;
   }
 
-  /* Header Buttons */
+  /* Buttons */
   .top-buttons {
     position: fixed;
     top: 20px;
     right: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   .btn {
-    padding: 8px 16px;
-    border: none;
+    padding: 8px 14px;
     border-radius: 10px;
-    cursor: pointer;
+    border: none;
     color: white;
-    font-size: 14px;
+    cursor: pointer;
   }
-  .btn-logout { background: #e84118; }
-  .btn-back { background: #0097e6; }
+  .btn-back { background: #3498db; }
+  .btn-logout { background: #e74c3c; }
 
-  h2 { margin-top: 70px; }
-  h3 { color: #333; }
+  h2 {
+    color: #2c3e50;
+    margin-top: 70px;
+  }
 
-  /* Routine Card */
-  .routine-card {
+  .routine-section {
     background: white;
     padding: 20px;
-    margin-top: 15px;
-    border-radius: 15px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
   }
 
-  .routine-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #2f3640;
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
   }
 
-  /* Toggle */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 24px;
-    margin-left: 15px;
-  }
-  .switch input { display:none; }
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0;
-    right: 0; bottom: 0;
-    background-color: #ccc;
-    transition: .3s;
-    border-radius: 24px;
-  }
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 18px; width: 18px;
-    left: 3px; bottom: 3px;
-    background-color: white;
-    transition: .3s;
-    border-radius: 50%;
-  }
-  input:checked + .slider {
-    background-color: #4cd137;
-  }
-  input:checked + .slider:before {
-    transform: translateX(24px);
+  th, td {
+    border-bottom: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    font-size: 15px;
   }
 
-  /* Multi-select container */
-  .member-box {
-    margin-top: 10px;
-  }
-  .member-select {
-    width: 240px;
-    height: 90px;
-    padding: 8px;
-    border-radius: 10px;
-    border: 1px solid #aaa;
+  th {
+    background: #f1f2f6;
+    font-weight: 600;
   }
 
-  /* Add Member Button */
-  .btn-add-member {
-    background: #00a8ff;
-    color: white;
+  .select-member {
+    width: 180px;
+    padding: 6px;
+    border-radius: 6px;
+  }
+
+  #routineInput {
+    width: 70%;
+    padding: 10px;
     border-radius: 8px;
-    padding: 6px 14px;
-    margin-top: 10px;
-    cursor: pointer;
-    border: none;
+    border: 1px solid #ccc;
   }
+
+  .btn-add {
+    padding: 10px 18px;
+    background: #2ecc71;
+    border-radius: 8px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+
 </style>
 </head>
 
 <body>
 
-<!-- Top Right Header Buttons -->
+<!-- Top Buttons -->
 <div class="top-buttons">
   <button class="btn btn-logout" onclick="logout()">Logout</button>
   <button class="btn btn-back" onclick="goBack()">Back</button>
 </div>
 
-<h2>👋 Welcome, <span id="username">User</span></h2>
-<h3>Class Routines</h3>
-<p>Select completed routines and add members who performed them:</p>
+<h2>☀️ Class Routine</h2>
 
-<div id="routineContainer"></div>
+<div class="routine-section">
+
+  <table id="routineTable">
+    <thead>
+      <tr>
+        <th>Task</th>
+        <th>Status</th>
+        <th>Members</th>
+      </tr>
+    </thead>
+
+    <tbody id="routineBody">
+      <!-- Pre-filled examples -->
+      <tr>
+        <td>Morning Circle</td>
+        <td><input type="checkbox"></td>
+        <td>
+          <select class="select-member" multiple>
+            <option>Omar</option>
+            <option>Laila</option>
+            <option>Sara</option>
+            <option>Adam</option>
+            <option>Mariam</option>
+          </select>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Snack Time</td>
+        <td><input type="checkbox"></td>
+        <td>
+          <select class="select-member" multiple>
+            <option>Omar</option>
+            <option>Laila</option>
+            <option>Sara</option>
+            <option>Adam</option>
+            <option>Mariam</option>
+          </select>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <input type="text" id="routineInput" placeholder="Add new routine task">
+  <button class="btn-add" onclick="addRoutine()">➕ Add</button>
+
+</div>
 
 <script>
-  // demo class members
-  const classMembers = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
+  const members = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
 
-  // routines list
-  const routines = [
-    "Morning Circle",
-    "Snack Time",
-    "Outdoor Play",
-    "Story Reading",
-    "Nap Time",
-    "Activity Sheet",
-    "Cleanup Time"
-  ];
+  function addRoutine() {
+    const input = document.getElementById("routineInput");
+    const value = input.value.trim();
+    if (!value) return alert("Enter a task name!");
 
-  const container = document.getElementById("routineContainer");
+    const tbody = document.getElementById("routineBody");
 
-  routines.forEach((routine, index) => {
-    const card = document.createElement("div");
-    card.className = "routine-card";
-
-    card.innerHTML = `
-      <div class="routine-title">${routine}
-        <label class="switch">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="member-box">
-        <label style="font-weight: 600;">Members involved:</label><br>
-        <select multiple class="member-select" id="members-${index}">
-          ${classMembers.map(m => `<option value="${m}">${m}</option>`).join("")}
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${value}</td>
+      <td><input type="checkbox"></td>
+      <td>
+        <select class="select-member" multiple>
+          ${members.map(m => `<option>${m}</option>`).join("")}
         </select>
-      </div>
-
-      <button class="btn-add-member" onclick="addMember(${index})">+ Add Member</button>
+      </td>
     `;
 
-    container.appendChild(card);
-  });
-
-  // Add a new member dynamically
-  function addMember(index) {
-    const name = prompt("Enter new member name:");
-    if (!name) return;
-
-    classMembers.push(name);
-
-    const select = document.getElementById(`members-${index}`);
-    const option = document.createElement("option");
-    option.value = name;
-    option.textContent = name;
-    select.appendChild(option);
-
-    alert("Member added successfully!");
+    tbody.appendChild(tr);
+    input.value = "";
   }
 
-  function logout() {
-    window.location.href = "index.html";
-  }
-
-  function goBack() {
-    window.history.back();
-  }
+  function logout() { window.location.href = "index.html"; }
+  function goBack() { window.history.back(); }
 </script>
 
 </body>
