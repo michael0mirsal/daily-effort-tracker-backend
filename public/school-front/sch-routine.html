@@ -1,303 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌞 Daily Routine</title>
+<meta charset="UTF-8">
+<title>Class Routines with Members</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: #f4f7fb;
+    padding: 20px;
+  }
 
-  <style>
-    /* ----------------------------------- */
-    /* MAIN DAILY ROUTINE STYLES           */
-    /* ----------------------------------- */
-    body {
-      font-family: Arial, sans-serif;
-      background: #fff8dc;
-      padding: 20px;
-      text-align: center;
-    }
-    h1 { color: #ff9800; }
+  h2 {
+    margin-top: 40px;
+    color: #444;
+  }
 
-    table {
-      width: 90%;
-      margin: 10px auto;
-      border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 0 5px #ccc;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th { background: #ffecb3; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
 
-    button {
-      margin: 8px;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 5px;
-      background: #ffb74d;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover { background: #ffa726; }
+  th, td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+  }
 
-    input[type="text"], input[type="date"] {
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin: 5px;
-    }
+  th {
+    background: #e8efff;
+    font-weight: 600;
+  }
 
-    .routine-section {
-      margin-top: 30px;
-      background: #fffbea;
-      padding: 15px;
-      border-radius: 8px;
-    }
+  .member-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 
-    .report-table {
-      margin-top: 30px;
-      border: 2px solid #ffb74d;
-      border-radius: 6px;
-      padding: 10px;
-      background: #fffdf4;
-    }
+  .member-tag {
+    background: #d1e7ff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
 
-    .stars {
-      color: #ffcc00;
-      font-size: 1.2em;
-      white-space: nowrap;
-    }
+  .dropdown {
+    margin-top: 6px;
+  }
 
-    .load-section {
-      margin-top: 15px;
-      background: #fff9e6;
-      padding: 10px;
-      border-radius: 6px;
-    }
+  select {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+  }
 
-    .prayer {
-      background: #fff3cd;
-      border-left: 6px solid #ffb74d;
-      padding: 15px;
-      margin: 25px auto;
-      border-radius: 8px;
-      width: 85%;
-      font-style: italic;
-    }
+  input[type="text"] {
+    width: 60%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1px solid #bbb;
+  }
 
+  button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #4c8dff;
+    color: white;
+    cursor: pointer;
+    margin-left: 10px;
+  }
 
-    /* ----------------------------------- */
-    /* MERGED CLASS ROUTINE SECTION         */
-    /* ----------------------------------- */
+  button:hover {
+    background: #2f6cff;
+  }
 
-    .routine-section-merged {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      width: 90%;
-      margin: 20px auto;
-    }
-
-    .member-box {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .tag {
-      background: #4daf7c;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .tag span {
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .member-select {
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    #routineInput {
-      width: 70%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    .btn-add {
-      padding: 10px 18px;
-      background: #2ecc71;
-      border-radius: 8px;
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+</style>
 </head>
-
 <body>
-  <h1 id="pageTitle">🌞 Daily Routine</h1>
-  <div style="font-weight:bold; margin-bottom:10px;">Family: <span id="familyName"></span></div>
 
-  <button id="logoutBtn">Logout</button>
-  <button id="saveBtn">💾 Save Routine</button>
-  <button id="loadBtn">📂 View All Reports</button>
-  <button id="backBtn">⬅️ Back</button>
-
-  <div id="routineStarsBox" style="
-    text-align:center;
-    margin: 15px auto;
-    font-size:1.3em;
-    font-weight:bold;
-    background:linear-gradient(135deg, #fff5a8, #ffd54f);
-    color:#8b5e00;
-    border:2px solid #f3c623;
-    border-radius:15px;
-    padding:10px 20px;
-    width:fit-content;
-    box-shadow:0 0 15px rgba(255,215,0,0.4);
-  ">
-    🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
-  </div>
-
-  <div class="load-section">
-    <h3>📅 Load Routine by Date</h3>
-    <input type="date" id="loadDate" />
-    <button id="loadByDateBtn">🔍 Load Routine</button>
-  </div>
-
-  <!-- 🌅 Morning Prayer -->
-  <div class="prayer">
-    <h3>🌅 “Hello, Jesus!”</h3>
-    <p>it’s a brand new day, 🌞<br>
-    Thank You for helping me.<br>
-    I’ll smile, be kind, and do my best.<br>
-    With You beside me, I feel blessed! 🙏</p>
-  </div>
+<h1>🏫 Class Routine with Members</h1>
 
 
-  <!-- **************************** -->
-  <!-- ☀️ Morning Routine           -->
-  <!-- **************************** -->
-  <div class="routine-section">
-    <h2>☀️ Morning Routine</h2>
-    <table id="morningTable">
-      <thead><tr><th>Task</th><th>Status</th></tr></thead>
-      <tbody id="morningBody">
-        <tr><td>Wake up early ⏰</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Talk to Jesus</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Brush teeth 🪥</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Eat breakfast 🥣</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Get dressed 👕</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Say goodbye and go to school 👋</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Make a to-do list</td><td><input type="checkbox" /></td></tr>
-      </tbody>
-    </table>
-    <input type="text" id="morningInput" placeholder="Add morning task" />
-    <button onclick="addTask('morning')">➕ Add</button>
-  </div>
+<!-- ----------------------------------- -->
+<!-- MORNING ROUTINE -->
+<!-- ----------------------------------- -->
+
+<div class="routine-section">
+  <h2>☀️ Morning Routine</h2>
+
+  <table id="morningTable">
+    <thead>
+      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
+    </thead>
+    <tbody id="morningBody">
+
+      <tr>
+        <td>Wake up early ⏰</td>
+        <td><input type="checkbox"></td>
+        <td>
+          <div class="member-container"></div>
+          <div class="dropdown">
+            <select onchange="addMember(this)">
+              <option value="">Assign member…</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Talk to Jesus</td>
+        <td><input type="checkbox"></td>
+        <td>
+          <div class="member-container"></div>
+          <div class="dropdown">
+            <select onchange="addMember(this)">
+              <option value="">Assign member…</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Brush teeth 🪥</td>
+        <td><input type="checkbox"></td>
+        <td>
+          <div class="member-container"></div>
+          <div class="dropdown">
+            <select onchange="addMember(this)">
+              <option value="">Assign member…</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <input type="text" id="morningInput" placeholder="Add new morning routine task">
+  <button onclick="addTask('morning')">➕ Add</button>
+</div>
 
 
-  <!-- **************************** -->
-  <!-- 🎒 After School Routine      -->
-  <!-- **************************** -->
-  <div class="routine-section">
-    <h2>🎒 After School Routine</h2>
-    <table id="afterTable">
-      <thead><tr><th>Task</th><th>Status</th></tr></thead>
-      <tbody id="afterBody">
-        <tr><td>Wash hands and change clothes 🧼</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Eat a healthy snack 🍎</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Do homework 📚</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Help with chores 🧹🏠</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Physical Play</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Family bonding time 🏠</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Important task</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Balance screen time</td><td><input type="checkbox" /></td></tr>
-      </tbody>
-    </table>
-    <input type="text" id="afterInput" placeholder="Add after-school task" />
-    <button onclick="addTask('after')">➕ Add</button>
-  </div>
 
-  <!-- 🌙 Night Routine -->
-  <div class="routine-section">
-    <h2>🌙 Sleeping Routine</h2>
-    <table id="nightTable">
-      <thead><tr><th>Task</th><th>Status</th></tr></thead>
-      <tbody id="nightBody">
-        <tr><td>Take a shower 🚿</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Limit daytime naps</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Don’t go to bed hungry</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Pack school bag 🎒</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Brush teeth</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Regular bedtime</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Hugs & kisses 🛌</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Quiet time / story</td><td><input type="checkbox" /></td></tr>
-        <tr><td>Sleep 😴</td><td><input type="checkbox" /></td></tr>
-      </tbody>
-    </table>
-    <input type="text" id="nightInput" placeholder="Add night task" />
-    <button onclick="addTask('night')">➕ Add</button>
-  </div>
+<!-- ----------------------------------- -->
+<!-- AFTERNOON ROUTINE -->
+<!-- ----------------------------------- -->
+
+<div class="routine-section">
+  <h2>🌤 Afternoon Routine</h2>
+
+  <table id="afternoonTable">
+    <thead>
+      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
+    </thead>
+    <tbody id="afternoonBody"></tbody>
+  </table>
+
+  <input type="text" id="afternoonInput" placeholder="Add new afternoon routine task">
+  <button onclick="addTask('afternoon')">➕ Add</button>
+</div>
 
 
-  <!-- **************************** -->
-  <!-- 📚 MERGED CLASS ROUTINE      -->
-  <!-- **************************** -->
-  <div class="routine-section-merged">
-    <h2>🏫 Class Routine with Members</h2>
 
-    <table id="routineTable">
-      <thead>
-        <tr>
-          <th>Task</th>
-          <th>Status</th>
-          <th>Members</th>
-        </tr>
-      </thead>
-      <tbody id="routineBody"></tbody>
-    </table>
+<!-- ----------------------------------- -->
+<!-- EVENING ROUTINE -->
+<!-- ----------------------------------- -->
 
-    <input type="text" id="routineInput" placeholder="Add new class routine task" />
-    <button class="btn-add" onclick="addRoutine()">➕ Add</button>
-  </div>
+<div class="routine-section">
+  <h2>🌙 Evening Routine</h2>
 
+  <table id="eveningTable">
+    <thead>
+      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
+    </thead>
+    <tbody id="eveningBody"></tbody>
+  </table>
 
-  <!-- REPORT SECTION -->
-  <div class="report-table" id="reportSection" style="display:none;">
-    <h2>📅 Routine Report</h2>
-    <table>
-      <thead>
-        <tr><th>Date</th><th>Completed Tasks</th><th>⭐ Star Rating</th></tr>
-      </thead>
-      <tbody id="reportBody"></tbody>
-    </table>
-  </div>
+  <input type="text" id="eveningInput" placeholder="Add new evening routine task">
+  <button onclick="addTask('evening')">➕ Add</button>
+</div>
 
 
 
 <script>
-/* ======================================== */
-/* MEMBERS FOR CLASS ROUTINE                */
-/* ======================================== */
-const membersList = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
+/* Example members coming from backend */
+const members = ["Adam", "Mira", "John", "Lina", "Sara", "Oliver"];
 
-/* Add new class routine */
+/* Populate all dropdowns */
+function loadMembers() {
+  document.querySelectorAll("select").forEach(select => {
+    members.forEach(m => {
+      let opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      select.appendChild(opt);
+    });
+  });
+}
+
+setTimeout(loadMembers, 100);
 
 
+/* Add member tag to routine row */
+function addMember(select) {
+  if (!select.value) return;
+
+  let container = select.parentElement.previousElementSibling;
+
+  let tag = document.createElement("span");
+  tag.className = "member-tag";
+  tag.textContent = select.value;
+
+  tag.onclick = () => tag.remove();  // remove on click
+
+  container.appendChild(tag);
+
+  select.value = ""; // reset dropdown
+}
+
+
+/* Add new routine row */
+function addTask(type) {
+  const input = document.getElementById(type + "Input");
+  const tableBody = document.getElementById(type + "Body");
+
+  if (!input.value.trim()) {
+    alert("Please write a task name");
+    return;
+  }
+
+  let tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${input.value}</td>
+    <td><input type="checkbox"></td>
+    <td>
+      <div class="member-container"></div>
+      <div class="dropdown">
+        <select onchange="addMember(this)">
+          <option value="">Assign member…</option>
+          ${members.map(m => `<option value="${m}">${m}</option>`).join("")}
+        </select>
+      </div>
+    </td>
+  `;
+
+  tableBody.appendChild(tr);
+
+  input.value = "";
+}
 </script>
+
 </body>
 </html>
