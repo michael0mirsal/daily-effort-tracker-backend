@@ -11,14 +11,22 @@ const router = express.Router();
 //////////////////////////
 
 // GET all nurseries
+// GET all nurseries with related classes and workers
 router.get("/nurseries", async (req, res) => {
   try {
-    const nurseries = await Nursery.find();
+    const nurseries = await Nursery.find()
+      .populate({
+        path: "classes",
+        populate: { path: "teachers members", select: "name role email phone" } // populate teachers & members
+      })
+      .populate("workers", "name role email phone classes"); // populate nursery workers
+
     res.json(nurseries);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // POST create a new nursery
 // POST create a new nursery
@@ -45,14 +53,20 @@ router.post("/nurseries", async (req, res) => {
 //////////////////////////
 
 // GET all classes
+// GET all classes with related data
 router.get("/classes", async (req, res) => {
   try {
-    const classes = await ClassModel.find().populate("nursery").populate("teacher").populate("kids");
+    const classes = await ClassModel.find()
+      .populate("nursery", "name email phone passKey") // nursery info
+      .populate("teachers", "name role email phone")   // class teachers
+      .populate("members", "name age");               // members/kids (adjust fields as needed)
+
     res.json(classes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // POST create a new class
 // POST create a new class
@@ -94,14 +108,19 @@ router.post("/classes", async (req, res) => {
 //////////////////////////
 
 // GET all teachers
+// GET all teachers with classes and nursery
 router.get("/teachers", async (req, res) => {
   try {
-    const teachers = await Teacher.find();
+    const teachers = await Teacher.find()
+      .populate("classes", "name passKey")           // classes assigned to teacher
+      .populate("nursery", "name email phone");      // nursery info
+
     res.json(teachers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // POST create a new teacher
 // POST create a new teacher
