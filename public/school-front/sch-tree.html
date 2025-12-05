@@ -1,120 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Nursery Tree</title>
 <style>
-body {
-    margin: 0;
-    height: 100vh;
-    background: linear-gradient(135deg, #fceabb, #f8b500);
-    font-family: Arial, sans-serif;
-    display: flex;
-}
-
-#nurseryPane {
-    flex: 0 0 40%;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+  body {
+    font-family: Arial;
     padding: 20px;
-    background: rgba(255,255,255,0.3);
-    border-right: 4px dashed rgba(255,255,255,0.7);
-}
+  }
 
-.tree {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-}
+  .tree {
+    padding-left: 20px;
+    line-height: 24px;
+  }
 
-/* ROOT NODE */
-.node {
-    background: #fff3cd;
-    padding: 12px 20px;
-    border-radius: 50px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    color: #5c4033;
-    font-weight: bold;
-    margin: 10px;
-}
+  .node {
+    cursor: pointer;
+    margin: 4px 0;
+  }
 
-/* VERTICAL LINE FROM ROOT DOWN */
-#rootBranch::after {
-    content: "";
-    width: 2px;
-    height: 40px;
-    background: #5c4033;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-}
+  .children {
+    margin-left: 20px;
+    display: none;
+  }
 
-/* HORIZONTAL LINE THAT CONNECTS ALL CLASSES */
-#classesRow {
-    display: flex;
-    gap: 30px;
-    margin-top: 40px;
-    position: relative;
-}
-
-#classesRow::before {
-    content: "";
-    position: absolute;
-    top: -20px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #5c4033;
-}
-
-/* SMALL VERTICAL LINES FROM MAIN HORIZONTAL LINE TO EACH CLASS */
-.classItem {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-}
-
-.classItem::before {
-    content: "";
-    width: 2px;
-    height: 20px;
-    background: #5c4033;
-    position: absolute;
-    top: -20px;
-}
+  .node.open + .children {
+    display: block;
+  }
 </style>
 </head>
 <body>
 
-<div id="nurseryPane">
-    <div class="tree">
+<h2>Nursery Tree</h2>
 
-        <!-- NURSERY ROOT -->
-        <div class="node" id="rootBranch">Happy Kids Nursery</div>
+<div id="tree" class="tree"></div>
 
-        <!-- CLASSES ON SAME BRANCH -->
-        <div id="classesRow">
+<script>
+const data = {
+  nursery: "Happy Kids Nursery",
+  classes: [
+    {
+      name: "Class 1",
+      teacher: "Teacher A",
+      kids: ["Alice", "Bob", "Charlie"]
+    },
+    {
+      name: "Class 2",
+      teacher: "Teacher B",
+      kids: ["Daisy", "Ethan"]
+    },
+    {
+      name: "Class 3",
+      teacher: "Teacher C",
+      kids: ["Fiona", "George", "Hannah"]
+    }
+  ]
+};
 
-            <div class="classItem">
-                <div class="node">Class A</div>
-            </div>
+function buildTree() {
+  const root = document.getElementById("tree");
 
-            <div class="classItem">
-                <div class="node">Class B</div>
-            </div>
+  // Nursery root
+  const nurseryNode = document.createElement("div");
+  nurseryNode.className = "node";
+  nurseryNode.textContent = data.nursery;
+  root.appendChild(nurseryNode);
 
-            <div class="classItem">
-                <div class="node">Class C</div>
-            </div>
+  // Classes under nursery (same branch level)
+  data.classes.forEach(cls => {
+    const classNode = document.createElement("div");
+    classNode.className = "node";
+    classNode.textContent = cls.name;
 
-        </div>
+    const container = document.createElement("div");
+    container.className = "children";
 
-    </div>
-</div>
+    // Add teacher
+    const teacher = document.createElement("div");
+    teacher.textContent = "👩‍🏫 " + cls.teacher;
+    container.appendChild(teacher);
+
+    // Add kids
+    cls.kids.forEach(k => {
+      const kid = document.createElement("div");
+      kid.textContent = "👦 " + k;
+      container.appendChild(kid);
+    });
+
+    // Toggle show/hide teacher & kids
+    classNode.addEventListener("click", () => {
+      classNode.classList.toggle("open");
+    });
+
+    root.appendChild(classNode);
+    root.appendChild(container);
+  });
+}
+
+buildTree();
+</script>
 
 </body>
 </html>
