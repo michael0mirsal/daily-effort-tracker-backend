@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Choose Activity 🌻</title>
+  <title>Nursery Tree 🌻</title>
 
   <style>
     body {
@@ -14,22 +14,20 @@
       color: #333;
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
       overflow: hidden;
     }
 
     /* LEFT TREE */
     #familyTree {
       flex: 0 0 35%;
-      height: 90%;
+      height: 100%;
       display: flex;
       justify-content: flex-start;
       align-items: flex-start;
       border-right: 4px dashed rgba(255, 255, 255, 0.7);
       background: rgba(255, 255, 255, 0.3);
       border-radius: 0 30px 30px 0;
-      box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: inset -5px 0 10px rgba(0,0,0,0.1);
       padding: 20px;
       overflow-y: auto;
     }
@@ -38,8 +36,7 @@
       background: #fff3cd;
       padding: 10px 20px;
       border-radius: 30px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       font-size: 1.1rem;
       color: #5c4033;
       margin: 8px;
@@ -48,10 +45,7 @@
       width: fit-content;
     }
 
-    .node:hover {
-      transform: scale(1.06);
-      background: #ffecb3;
-    }
+    .node:hover { transform: scale(1.06); background: #ffecb3; }
 
     .children {
       margin-left: 20px;
@@ -59,28 +53,50 @@
       width: 100%;
     }
 
-    .node.open + .children {
-      display: block;
-    }
+    .node.open + .children { display: block; }
 
-    /* RIGHT SIDE CONTENT */
+    /* RIGHT PANEL */
     #mainContent {
       flex: 0 0 65%;
+      height: 100%;
+      padding: 20px;
+      position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      text-align: center;
-      padding: 20px;
-      height: 100%;
-      overflow-y: auto;
+      overflow: hidden;
     }
 
+    /* FLOATING BUTTONS */
+    #topButtons {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 200;
+    }
+
+    .topBtn {
+      padding: 10px 18px;
+      background: #ff8080;
+      border: none;
+      border-radius: 15px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .topBtn:hover { background: #ff6666; }
+
+    /* CLASS REPORT BOX (NOW SCALING) */
     #classReport {
-      width: 90%;
+      flex: 1;
+      width: 100%;
+      overflow-y: auto;
+      margin-top: 70px;
       padding: 20px;
-      margin-top: 20px;
-      background: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.75);
       border-radius: 20px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.2);
       display: none;
@@ -100,17 +116,6 @@
       text-align:left;
       padding:5px 0;
     }
-
-    #logoutBtn {
-      background: linear-gradient(45deg, #ffb3b3, #ff8080);
-      color: white;
-      margin-top: 30px;
-      padding: 10px 30px;
-      border-radius: 20px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
   </style>
 </head>
 
@@ -118,22 +123,27 @@
 
   <!-- LEFT TREE -->
   <div id="familyTree">
-    <div class="tree" id="treeContainer">Loading...</div>
+    <div id="treeContainer">Loading...</div>
   </div>
 
-  <!-- RIGHT CONTENT -->
+  <!-- RIGHT PANEL -->
   <div id="mainContent">
+
+    <!-- FLOATING BUTTONS -->
+    <div id="topButtons">
+      <button class="topBtn" id="backBtn">⬅ Back</button>
+      <button class="topBtn" id="logoutBtn">🔒 Logout</button>
+    </div>
+
     <h1 id="welcomeText">🌞 Welcome!</h1>
 
-    <!-- REPORT BOX -->
+    <!-- CLASS REPORT -->
     <div id="classReport"></div>
-
-    <button id="logoutBtn">🔒 Logout</button>
-    <footer>Made with 🌻 Love and Joy</footer>
   </div>
 
+
 <script>
-/* DATA (Later replace with API) */
+/* SAMPLE DATA */
 const data = {
   nursery: "Happy Kids Nursery",
   classes: [
@@ -177,13 +187,11 @@ function buildTree() {
   const tree = document.getElementById("treeContainer");
   tree.innerHTML = "";
 
-  // Nursery root
   const nurseryNode = document.createElement("div");
   nurseryNode.className = "node";
   nurseryNode.textContent = data.nursery;
   tree.appendChild(nurseryNode);
 
-  // Classes
   data.classes.forEach(cls => {
     const classNode = document.createElement("div");
     classNode.className = "node";
@@ -192,14 +200,12 @@ function buildTree() {
     const container = document.createElement("div");
     container.className = "children";
 
-    // Add teacher
     const teacher = document.createElement("div");
     teacher.className = "node";
     teacher.style.background = "#ffe8a1";
     teacher.textContent = "👩‍🏫 " + cls.teacher;
     container.appendChild(teacher);
 
-    // Kids
     cls.kids.forEach(k => {
       const kid = document.createElement("div");
       kid.className = "node";
@@ -208,10 +214,9 @@ function buildTree() {
       container.appendChild(kid);
     });
 
-    // Expand & Show Report
     classNode.addEventListener("click", () => {
       classNode.classList.toggle("open");
-      showClassReport(cls);   // <<< NEW FUNCTION
+      showClassReport(cls);
     });
 
     tree.appendChild(classNode);
@@ -221,11 +226,10 @@ function buildTree() {
 
 buildTree();
 
-
-/* -------------- SHOW CLASS REPORT ON RIGHT SIDE -------------- */
+/* SHOW CLASS REPORT ON RIGHT SIDE */
 function showClassReport(cls) {
-  const reportBox = document.getElementById("classReport");
-  reportBox.style.display = "block";
+  const box = document.getElementById("classReport");
+  box.style.display = "block";
 
   let html = `
     <h2>📘 Class Report: ${cls.name}</h2>
@@ -234,28 +238,19 @@ function showClassReport(cls) {
 
   if (!cls.report || Object.keys(cls.report).length === 0) {
     html += `<p>No activity or routine saved yet.</p>`;
-    reportBox.innerHTML = html;
+    box.innerHTML = html;
     return;
   }
 
-  // Loop dates
   Object.keys(cls.report).forEach(date => {
     html += `<div class="report-date">${date}</div>`;
-
     const day = cls.report[date];
 
-    // Activities
-    day.activities.forEach(a => {
-      html += `<div class="report-item">🎨 Activity: ${a}</div>`;
-    });
-
-    // Routines
-    day.routines.forEach(r => {
-      html += `<div class="report-item">🔄 Routine: ${r}</div>`;
-    });
+    day.activities.forEach(a => html += `<div class="report-item">🎨 ${a}</div>`);
+    day.routines.forEach(r => html += `<div class="report-item">🔁 ${r}</div>`);
   });
 
-  reportBox.innerHTML = html;
+  box.innerHTML = html;
 }
 </script>
 
