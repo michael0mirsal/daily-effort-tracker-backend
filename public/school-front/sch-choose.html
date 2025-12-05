@@ -17,6 +17,7 @@
     justify-content: center;
     align-items: flex-start;
     padding-top: 50px;
+    position: relative;
   }
 
   .card {
@@ -27,6 +28,7 @@
     width: 90%;
     max-width: 600px;
     animation: fadeIn 0.8s ease-out;
+    text-align: center;
   }
 
   @keyframes fadeIn {
@@ -35,7 +37,6 @@
   }
 
   h1 {
-    text-align: center;
     margin-bottom: 10px;
     font-weight: 600;
     color: #333;
@@ -69,14 +70,17 @@
     transform: translateY(-2px);
   }
 
-  .btn-container {
+  /* Buttons in top-right corner */
+  .top-buttons {
+    position: absolute;
+    top: 20px;
+    right: 20px;
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
+    gap: 10px;
   }
 
   .btn {
-    padding: 10px 20px;
+    padding: 10px 18px;
     border-radius: 12px;
     border: none;
     font-size: 14px;
@@ -92,20 +96,21 @@
 </head>
 
 <body>
-<div class="card">
-  <div class="btn-container">
+  <!-- Top-right buttons -->
+  <div class="top-buttons">
     <button class="btn" id="backBtn">Back</button>
     <button class="btn" id="logoutBtn">Logout</button>
   </div>
 
-  <h1>Nursery Dashboard</h1>
-  <h2 id="welcomeText">Welcome, User</h2>
+  <div class="card">
+    <h1>Nursery Dashboard</h1>
+    <h2 id="welcomeText">Welcome, User</h2>
 
-  <ul id="menuList"></ul>
-</div>
+    <ul id="menuList"></ul>
+  </div>
 
 <script>
-  // Example user info (replace with dynamic login info)
+  // Example user info
   const userName = 'John Doe';
   const userRole = 'supervisor'; // member, teacher, supervisor, manager
 
@@ -136,9 +141,8 @@
 
   // Logout button
   document.getElementById('logoutBtn').onclick = () => {
-    // TODO: Clear session/local storage and redirect to login
     alert('Logging out...');
-    window.location.href = "/pages/signin.html"; // replace with your login page
+    window.location.href = "/pages/signin.html";
   };
 
   // Back button
