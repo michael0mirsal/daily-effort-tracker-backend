@@ -36,9 +36,16 @@
 
   h1 {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     font-weight: 600;
     color: #333;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 400;
+    color: #555;
   }
 
   ul {
@@ -61,19 +68,49 @@
     background: #1976d2;
     transform: translateY(-2px);
   }
+
+  .btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+    color: white;
+    background: #ff7a2a;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .btn:hover { background: #ff6000; transform: translateY(-2px); }
 </style>
 </head>
 
 <body>
 <div class="card">
+  <div class="btn-container">
+    <button class="btn" id="backBtn">Back</button>
+    <button class="btn" id="logoutBtn">Logout</button>
+  </div>
+
   <h1>Nursery Dashboard</h1>
+  <h2 id="welcomeText">Welcome, User</h2>
+
   <ul id="menuList"></ul>
 </div>
 
 <script>
-  // Example user role (replace with real login info)
-  // Options: member, teacher, supervisor, manager
-  const userRole = 'manager'; // For demo, change role to see different menus
+  // Example user info (replace with dynamic login info)
+  const userName = 'John Doe';
+  const userRole = 'supervisor'; // member, teacher, supervisor, manager
+
+  // Display welcome text
+  document.getElementById('welcomeText').textContent = `Welcome, ${userName}`;
 
   const menuList = document.getElementById('menuList');
 
@@ -96,6 +133,18 @@
     };
     menuList.appendChild(li);
   });
+
+  // Logout button
+  document.getElementById('logoutBtn').onclick = () => {
+    // TODO: Clear session/local storage and redirect to login
+    alert('Logging out...');
+    window.location.href = "/pages/signin.html"; // replace with your login page
+  };
+
+  // Back button
+  document.getElementById('backBtn').onclick = () => {
+    window.history.back();
+  };
 </script>
 </body>
 </html>
