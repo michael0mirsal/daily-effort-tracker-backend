@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In – Family / Nursery</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a8edea, #fed6e3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      cursor: pointer;
+      margin: 10px 0;
+      font-weight: 500;
+      color: white;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .btn-family { background: #4caf50; }
+    .btn-family:hover { background: #45a049; transform: translateY(-2px); }
+
+    .btn-nursery { background: #2196f3; }
+    .btn-nursery:hover { background: #1976d2; transform: translateY(-2px); }
+
+    .hidden { display: none; }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    .submit-btn {
+      background: #ff7a2a;
+    }
+
+    .submit-btn:hover { background: #ff6000; transform: translateY(-2px); }
+  </style>
+</head>
+
+<body>
+  <div class="card" id="selection-card">
+    <h1>Sign In 👋</h1>
+    <p>Select your user type:</p>
+    <button class="btn-family" onclick="chooseUser('family')">Family</button>
+    <button class="btn-nursery" onclick="chooseUser('nursery')">Nursery</button>
+  </div>
+
+  <!-- Nursery Login Form -->
+  <div class="card hidden" id="nursery-form-card">
+    <h1>Nursery Login 🏫</h1>
+    <form id="nurseryForm">
+      <label for="nurseryName">Name</label>
+      <input type="text" id="nurseryName" placeholder="Enter your name" required />
+
+      <label for="role">Role</label>
+      <select id="role" required>
+        <option value="">Select role</option>
+        <option value="member">Member</option>
+        <option value="teacher">Teacher</option>
+        <option value="supervisor">Supervisor</option>
+        <option value="manager">Manager</option>
+      </select>
+
+      <label for="passKey">Pass Key</label>
+      <input type="text" id="passKey" placeholder="Enter Nursery Pass Key" required />
+
+      <button type="submit" class="submit-btn">Sign In</button>
+    </form>
+  </div>
+
+  <script>
+    const selectionCard = document.getElementById('selection-card');
+    const nurseryFormCard = document.getElementById('nursery-form-card');
+
+    function chooseUser(type){
+      if(type === 'family'){
+        // Redirect to family login
+        window.location.href = "/pages/family/family-login.html";
+      } else {
+        // Show nursery login form
+        selectionCard.classList.add('hidden');
+        nurseryFormCard.classList.remove('hidden');
+      }
+    }
+
+    const nurseryForm = document.getElementById('nurseryForm');
+    nurseryForm.addEventListener('submit', function(e){
+      e.preventDefault();
+
+      const data = {
+        name: document.getElementById('nurseryName').value.trim(),
+        role: document.getElementById('role').value,
+        passKey: document.getElementById('passKey').value.trim()
+      };
+
+      if(!data.name || !data.role || !data.passKey){
+        alert('Please fill all fields.');
+        return;
+      }
+
+      // TODO: call backend API to validate nursery login
+      /*
+      fetch('/api/nursery/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if(resData.success){
+          alert('Login successful!');
+          // Redirect to nursery dashboard
+          window.location.href = "/pages/nursery/dashboard.html";
+        } else {
+          alert(resData.message);
+        }
+      })
+      .catch(err => alert('Error: '+err));
+      */
+
+      // For demo
+      console.log('Nursery Login Data:', data);
+      alert('Nursery login submitted! Check console.');
+    });
+  </script>
+</body>
+</html>
