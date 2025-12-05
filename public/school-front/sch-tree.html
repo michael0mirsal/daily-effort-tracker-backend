@@ -1,205 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nursery Tree — Classes A/B/C</title>
+<meta charset="UTF-8">
+<title>Nursery Tree</title>
 <style>
-  :root{
-    --node-bg: #fff3cd;
-    --node-color: #5c4033;
-    --line-color: #5c4033;
-    --pane-bg: rgba(255,255,255,0.28);
-    --app-bg: linear-gradient(135deg,#fceabb,#f8b500);
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter, Arial, Helvetica, sans-serif;background:var(--app-bg);}
+body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #fceabb, #f8b500);
+    font-family: Arial, sans-serif;
+    display: flex;
+}
 
-  .app {
-    display:flex;
-    height:100vh;
-    align-items:stretch;
-  }
+#nurseryPane {
+    flex: 0 0 40%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    background: rgba(255,255,255,0.3);
+    border-right: 4px dashed rgba(255,255,255,0.7);
+}
 
-  /* LEFT: tree pane */
-  #nurseryPane {
-    flex:0 0 42%;
-    padding:22px;
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    background:var(--pane-bg);
-    border-right:4px dashed rgba(255,255,255,0.7);
-  }
+.tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
 
-  /* Tree root container */
-  .tree {
-    width:100%;
-    max-width:520px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    position:relative;
-    transform-origin: top center;
-  }
+/* ROOT NODE */
+.node {
+    background: #fff3cd;
+    padding: 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    color: #5c4033;
+    font-weight: bold;
+    margin: 10px;
+}
 
-  /* Node style */
-  .node {
-    background:var(--node-bg);
-    color:var(--node-color);
-    padding:10px 18px;
-    border-radius:999px;
-    box-shadow:0 6px 14px rgba(0,0,0,0.15);
-    text-align:center;
-    margin:10px 0;
-    position:relative;
-    white-space:nowrap;
-    font-weight:600;
-    transition: transform .18s ease;
-  }
-  .node:hover { transform: translateY(-3px) scale(1.02); }
+/* VERTICAL LINE FROM ROOT DOWN */
+#rootBranch::after {
+    content: "";
+    width: 2px;
+    height: 40px;
+    background: #5c4033;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+}
 
-  /* Children container (vertical stacking) */
-  .children {
-    width:100%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    position:relative;
-  }
+/* HORIZONTAL LINE THAT CONNECTS ALL CLASSES */
+#classesRow {
+    display: flex;
+    gap: 30px;
+    margin-top: 40px;
+    position: relative;
+}
 
-  /* Short vertical connector from parent node down into its children block */
-  .children::before {
-    content:"";
-    position:absolute;
-    top:-12px;             /* attaches to bottom of parent node */
-    left:50%;
-    transform:translateX(-50%);
-    width:2px;
-    height:12px;
-    background:var(--line-color);
-    z-index:0;
-  }
+#classesRow::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #5c4033;
+}
 
-  /* Each class branch: centered, with optional internal spacing */
-  .class-branch {
-    width:86%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    position:relative;
-    margin-top:6px;
-  }
+/* SMALL VERTICAL LINES FROM MAIN HORIZONTAL LINE TO EACH CLASS */
+.classItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
 
-  /* Small connector above each class node to visually continue the vertical line */
-  .class-branch::before{
-    content:"";
-    position:absolute;
-    top:-8px;
-    left:50%;
-    transform:translateX(-50%);
-    width:2px;
-    height:8px;
-    background:var(--line-color);
-    z-index:0;
-  }
-
-  /* Make sure deep page doesn't scroll horizontally; vertical handled by scaling */
-  #mainContent {
-    flex:1;
-    padding:22px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    align-items:flex-start;
-    justify-content:flex-start;
-  }
-
-  h1{ margin:0; color:#5c4033; font-size:18px; }
-  p{ margin:0; color:rgba(0,0,0,0.55) }
-
-  /* Slightly compact nodes when scaling */
-  .compact .node { padding:8px 14px; font-size:0.95rem; }
-
-  /* subtle appear animation */
-  .fade-in { animation: fadeInUp .28s ease both; }
-  @keyframes fadeInUp { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+.classItem::before {
+    content: "";
+    width: 2px;
+    height: 20px;
+    background: #5c4033;
+    position: absolute;
+    top: -20px;
+}
 </style>
 </head>
 <body>
-  <div class="app">
 
-    <!-- LEFT: tree pane -->
-    <div id="nurseryPane" aria-label="Nursery tree pane">
-      <div class="tree" id="treeRoot">
-        <!-- Root -->
-        <div class="node" id="nurseryNode">Happy Kids Nursery</div>
+<div id="nurseryPane">
+    <div class="tree">
 
-        <!-- Classes container (vertical) -->
-        <div class="children" id="classesContainer" aria-live="polite">
-          <!-- Pre-populated branches -->
-          <div class="class-branch fade-in">
-            <div class="node">Class A</div>
-          </div>
+        <!-- NURSERY ROOT -->
+        <div class="node" id="rootBranch">Happy Kids Nursery</div>
 
-          <div class="class-branch fade-in">
-            <div class="node">Class B</div>
-          </div>
+        <!-- CLASSES ON SAME BRANCH -->
+        <div id="classesRow">
 
-          <div class="class-branch fade-in">
-            <div class="node">Class C</div>
-          </div>
+            <div class="classItem">
+                <div class="node">Class A</div>
+            </div>
+
+            <div class="classItem">
+                <div class="node">Class B</div>
+            </div>
+
+            <div class="classItem">
+                <div class="node">Class C</div>
+            </div>
+
         </div>
-      </div>
+
     </div>
+</div>
 
-    <!-- RIGHT: simple info -->
-    <div id="mainContent" role="region" aria-label="Controls and info">
-      <h1>Nursery — classes</h1>
-      <p>Root: <strong>Happy Kids Nursery</strong></p>
-      <p>Branches: <strong>Class A, Class B, Class C</strong></p>
-      <p>Next steps: add teachers &amp; children under each class, make branches expandable, or allow adding classes dynamically.</p>
-    </div>
-  </div>
-
-<script>
-/* Auto-fit: scale the tree vertically if its rendered height exceeds available pane height.
-   Called on load and on window resize. Keeps layout visible without vertical scrollbar.
-*/
-(function(){
-  const treeRoot = document.getElementById('treeRoot');
-  const nurseryPane = document.getElementById('nurseryPane');
-
-  function adjustScale() {
-    // small timeout to let layout settle if called right after DOM changes
-    requestAnimationFrame(()=> {
-      const paneRect = nurseryPane.getBoundingClientRect();
-      const treeRect = treeRoot.getBoundingClientRect();
-
-      // available space to occupy (leave small margin)
-      const avail = Math.max(60, paneRect.height * 0.94);
-      const current = treeRect.height;
-
-      if (current > avail && current > 0) {
-        // clamp scale to not be too small
-        const scale = Math.max(0.5, avail / current);
-        treeRoot.style.transform = `scale(${scale})`;
-        treeRoot.classList.add('compact');
-      } else {
-        treeRoot.style.transform = '';
-        treeRoot.classList.remove('compact');
-      }
-    });
-  }
-
-  // initial adjustment
-  window.addEventListener('load', adjustScale);
-  window.addEventListener('resize', adjustScale);
-
-  // expose function if needed for later steps
-  window._nursery = window._nursery || {};
-  window._nursery.adjustScale = adjustScale;
-})();
-</script>
 </body>
 </html>
