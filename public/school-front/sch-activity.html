@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <title>🌞 My Daily Activities Tracker</title>
   <style>
+    .header {
+  position: relative;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ccc;
+}
+
+.header-buttons {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+}
+
     body { font-family: Arial, sans-serif; padding: 20px; background: #fff8dc; }
     h1, h2 { text-align: center; color: #ff9800; }
     .header { text-align:center; margin-bottom:20px; }
@@ -24,8 +38,8 @@
 <div class="header">
   <h1>🌈 My Daily Activities Tracker</h1>
   <h2>Welcome, <span id="userName"></span>!</h2>
-  <button id="backBtn">⬅️ Back</button>
-  <button onclick="logout()">🚪 Logout</button>
+   <button id="backBtn">⬅️ Back</button>
+   <button onclick="logout()">🚪 Logout</button>
 </div>
 
 <div id="checkedStarsBox" style="text-align:center; margin-bottom:15px; font-size:1.3em; font-weight:bold; background:linear-gradient(135deg, #fff5a8, #ffd54f); color:#8b5e00; border:2px solid #f3c623; border-radius:15px; padding:10px 20px; box-shadow:0 0 15px rgba(255,215,0,0.4); width:fit-content; margin:auto;">
