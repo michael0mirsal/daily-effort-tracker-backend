@@ -13,11 +13,9 @@ body {
     overflow: hidden;
 }
 
-/* MAIN LAYOUT */
 #container {
     display: flex;
     height: 100%;
-    width: 100%;
 }
 
 /* LEFT TREE PANEL */
@@ -55,9 +53,30 @@ body {
     color: #5c4033;
     font-weight: bold;
 }
+
 .class-branch:hover {
     transform: scale(1.05);
     background: #ffecb3;
+}
+
+/* CHILD ITEMS UNDER CLASS */
+.child-items {
+    margin-left: 30px;
+    margin-top: 10px;
+    display: none; /* hidden by default */
+}
+
+.child-items .teacher-box {
+    background: #ffe8a1;
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin-bottom: 5px;
+}
+.child-items .kid-box {
+    background: #fff;
+    padding: 6px 10px;
+    border-radius: 12px;
+    margin-bottom: 3px;
 }
 
 /* RIGHT PANEL */
@@ -104,34 +123,6 @@ button {
     font-size: 1.2rem;
     text-align: left;
 }
-.report-section {
-    margin-bottom: 15px;
-}
-.report-section h3 {
-    margin-bottom: 5px;
-    color: #5c4033;
-}
-.report-section ul {
-    margin-left: 20px;
-    padding-left: 0;
-}
-.report-section ul li {
-    margin-bottom: 5px;
-}
-
-/* TEACHER & KIDS BOX */
-.teacher-box {
-    background: #ffe8a1;
-    padding: 10px 15px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-}
-.kid-box {
-    background: #fff;
-    padding: 8px 12px;
-    border-radius: 12px;
-    margin: 3px 0;
-}
 </style>
 </head>
 <body>
@@ -151,7 +142,7 @@ button {
         </div>
 
         <div id="classReport">
-            <h2>Select a class to view details</h2>
+            <h2>Select a class to view full report</h2>
             <div id="reportContent"></div>
         </div>
     </div>
@@ -194,50 +185,58 @@ const classes = [
     }
 ];
 
-/* BUILD TREE */
+/* BUILD TREE WITH COLLAPSIBLE CHILD ITEMS */
 function loadTree() {
     const tree = document.getElementById("classTree");
     tree.innerHTML = "";
 
     classes.forEach(cls => {
-        const div = document.createElement("div");
-        div.className = "class-branch";
-        div.textContent = cls.name;
+        const classDiv = document.createElement("div");
+        classDiv.className = "class-branch";
+        classDiv.textContent = cls.name;
 
-        div.onclick = () => showClassDetails(cls);
+        const childContainer = document.createElement("div");
+        childContainer.className = "child-items";
 
-        tree.appendChild(div);
+        const teacherDiv = document.createElement("div");
+        teacherDiv.className = "teacher-box";
+        teacherDiv.textContent = "👩‍🏫 " + cls.teacher;
+        childContainer.appendChild(teacherDiv);
+
+        cls.kids.forEach(k => {
+            const kidDiv = document.createElement("div");
+            kidDiv.className = "kid-box";
+            kidDiv.textContent = "🧒 " + k;
+            childContainer.appendChild(kidDiv);
+        });
+
+        // Toggle child items on click
+        classDiv.onclick = () => {
+            childContainer.style.display = childContainer.style.display === "block" ? "none" : "block";
+            showReport(cls); // optional: also update right panel
+        };
+
+        tree.appendChild(classDiv);
+        tree.appendChild(childContainer);
     });
 }
 
-/* SHOW CLASS DETAILS & REPORT */
-function showClassDetails(cls) {
+/* SHOW REPORT ON RIGHT PANEL */
+function showReport(cls) {
     const reportArea = document.getElementById("reportContent");
-    let html = `
-        <div class="report-section">
-            <h3>👩‍🏫 Teacher</h3>
-            <div class="teacher-box">${cls.teacher}</div>
-        </div>
-        <div class="report-section">
-            <h3>🧒 Kids</h3>
-            ${cls.kids.map(k => `<div class="kid-box">${k}</div>`).join("")}
-        </div>
-        <div class="report-section">
-            <h3>📅 Report</h3>
-    `;
+    let html = `<h2>${cls.name} Full Report</h2>`;
 
     if(!cls.report || Object.keys(cls.report).length===0){
-        html += "<p>No activity or routine saved yet.</p></div>";
+        html += "<p>No activities or routines saved yet.</p>";
     } else {
         html += "<ul>";
         Object.keys(cls.report).forEach(date=>{
-            html += `<li><strong>${date}</strong>`;
-            html += "<ul>";
+            html += `<li><strong>${date}</strong><ul>`;
             cls.report[date].activities.forEach(a => html += `<li>🎨 ${a}</li>`);
             cls.report[date].routines.forEach(r => html += `<li>🔁 ${r}</li>`);
             html += "</ul></li>";
         });
-        html += "</ul></div>";
+        html += "</ul>";
     }
 
     reportArea.innerHTML = html;
@@ -245,10 +244,10 @@ function showClassDetails(cls) {
 
 /* BACK BUTTON */
 document.getElementById("backBtn").onclick = () => {
-    document.getElementById("reportContent").innerHTML = "<p>Select a class to view details</p>";
+    document.getElementById("reportContent").innerHTML = "<p>Select a class to view full report</p>";
 };
 
-/* LOGOUT BUTTON (dummy) */
+/* LOGOUT BUTTON */
 document.getElementById("logoutBtn").onclick = () => alert("Logging out...");
 
 loadTree();
