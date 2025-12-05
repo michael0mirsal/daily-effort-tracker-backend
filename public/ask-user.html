@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Choose User Type</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #fceabb, #f8b500);
+      font-family: "Poppins", sans-serif;
+    }
+
+    .container {
+      text-align: center;
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    button {
+      display: block;
+      width: 250px;
+      margin: 15px auto;
+      padding: 15px;
+      font-size: 18px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: #ff9153;
+      color: white;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #ff7a2a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome 👋</h1>
+    <p>Please choose your user type:</p>
+
+    <button onclick="chooseType('family')">I am a Family</button>
+    <button onclick="chooseType('nursery')">I am a Nursery</button>
+  </div>
+
+  <script>
+    function chooseType(type) {
+      localStorage.setItem("userType", type);
+
+      if (type === "family") {
+        window.location.href = "/family-login.html";
+      } else {
+        window.location.href = "/nursery-login.html";
+      }
+    }
+  </script>
+
+</body>
+</html>
