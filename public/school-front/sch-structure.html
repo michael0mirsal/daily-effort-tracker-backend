@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nursery Structure</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
-
 <style>
   body { margin:0; font-family:"Poppins",sans-serif; background:linear-gradient(135deg, #fceabb, #f8b500); padding:20px; }
   .card { background:white; padding:25px; border-radius:20px; box-shadow:0 8px 20px rgba(0,0,0,0.15); margin-bottom:30px; max-width:1000px; margin:auto; }
@@ -19,14 +17,42 @@
   .btn-edit { background:#4caf50; } .btn-edit:hover { background:#45a049; }
   .btn-delete { background:#f44336; } .btn-delete:hover { background:#d32f2f; }
   .btn-add { background:#2196f3; } .btn-add:hover { background:#1976d2; }
-  select, input { padding:6px 8px; margin:4px 0; width:95%; border-radius:6px; border:1px solid #ccc; }
+  input, select { padding:6px 8px; margin:4px 0; width:95%; border-radius:6px; border:1px solid #ccc; }
   .modal { display:none; position:fixed; z-index:200; left:0; top:0; width:100%; height:100%; overflow:auto; background:rgba(0,0,0,0.5); }
   .modal-content { background:white; margin:5% auto; padding:20px; border-radius:20px; width:90%; max-width:400px; position:relative; text-align:center; }
   .close { position:absolute; top:10px; right:15px; font-size:22px; cursor:pointer; }
+  .tooltip { position:absolute; background:white; padding:10px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.2); display:none; z-index:100; font-size:14px; }
 </style>
 </head>
 <body>
 
+<!-- Nursery Info -->
+<div class="card">
+  <h1>Nursery Info</h1>
+  <p><strong>Name:</strong> <input type="text" id="nurseryName" value="Happy Kids Nursery" /></p>
+  <p><strong>Email:</strong> <input type="text" id="nurseryEmail" value="contact@happykids.com" /></p>
+  <p><strong>Phone:</strong> <input type="text" id="nurseryPhone" value="+201234567890" /></p>
+  <p><strong>Pass Key:</strong> <input type="text" id="nurseryPassKey" value="ABC123XYZ" /></p>
+  <button class="btn btn-add" onclick="saveNursery()">Save Nursery Info</button>
+</div>
+
+<!-- Classes Table -->
+<div class="card">
+  <h1>Classes</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Class Name</th>
+        <th>Class Pass Key</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="classesTableBody"></tbody>
+  </table>
+  <button class="btn btn-add" onclick="openClassModal()">Add Class</button>
+</div>
+
+<!-- Teachers Table -->
 <div class="card">
   <h1>Workers</h1>
   <table>
@@ -45,11 +71,24 @@
   <button class="btn btn-add" onclick="openAddTeacherModal()">Add Teacher</button>
 </div>
 
-<!-- Teacher Profile Modal -->
+<!-- Class Modal -->
+<div id="classModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeClassModal()">&times;</span>
+    <h2 id="classModalTitle">Add Class</h2>
+    <form id="classForm">
+      <input type="text" id="classNameInput" placeholder="Class Name" required /><br>
+      <input type="text" id="classPassKeyInput" placeholder="Class Pass Key" required /><br>
+      <button type="submit" class="btn btn-add">Save Class</button>
+    </form>
+  </div>
+</div>
+
+<!-- Teacher Modal -->
 <div id="teacherModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <h2 id="modalTitle">Add Teacher</h2>
+    <span class="close" onclick="closeTeacherModal()">&times;</span>
+    <h2 id="teacherModalTitle">Add Teacher</h2>
     <form id="teacherForm">
       <input type="text" id="teacherNameInput" placeholder="Full Name" required /><br>
       <select id="teacherRoleInput" required>
@@ -64,43 +103,54 @@
       <select id="teacherClassInput">
         <option value="">Assign Class</option>
       </select><br>
-      <button type="submit" class="btn btn-add">Save</button>
+      <button type="submit" class="btn btn-add">Save Teacher</button>
     </form>
   </div>
 </div>
 
-<script>
-  // Example data
-  let classes = [
-    { name: "Class A", passKey: "A123" },
-    { name: "Class B", passKey: "B456" }
-  ];
+<!-- Tooltip for class members/teachers -->
+<div class="tooltip" id="classTooltip"></div>
 
+<script>
+  // Data
+  let classes = [
+    { name: "Class A", passKey: "A123", members: [], teachers: [] },
+    { name: "Class B", passKey: "B456", members: [], teachers: [] }
+  ];
   let workers = [
     { name: "Alice", role: "Teacher", assignedClass: "Class A", email:"alice@mail.com", phone:"1234" },
     { name: "Bob", role: "Supervisor", assignedClass: "Class B", email:"bob@mail.com", phone:"5678" }
   ];
 
+  // ---------- Render Tables ----------
+  const classesTableBody = document.getElementById('classesTableBody');
   const workersTableBody = document.getElementById('workersTableBody');
-  const modal = document.getElementById('teacherModal');
-  const form = document.getElementById('teacherForm');
-  const title = document.getElementById('modalTitle');
-  const nameInput = document.getElementById('teacherNameInput');
-  const roleInput = document.getElementById('teacherRoleInput');
-  const emailInput = document.getElementById('teacherEmailInput');
-  const phoneInput = document.getElementById('teacherPhoneInput');
-  const classInput = document.getElementById('teacherClassInput');
 
-  let editingIndex = null;
+  function renderClasses() {
+    classesTableBody.innerHTML = '';
+    classes.forEach((cls,index)=>{
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td onmouseover="showClassTooltip(event, ${index})" onmouseout="hideTooltip()">${cls.name}</td>
+        <td>${cls.passKey}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editClass(${index})">Edit</button>
+          <button class="btn btn-delete" onclick="deleteClass(${index})">Delete</button>
+        </td>
+      `;
+      classesTableBody.appendChild(row);
+    });
+  }
 
   function renderWorkers() {
     workersTableBody.innerHTML = '';
-    workers.forEach((worker, index) => {
+    workers.forEach((worker,index)=>{
+      const classOptions = classes.map(c=>`<option value="${c.name}" ${c.name===worker.assignedClass?'selected':''}>${c.name}</option>`).join('');
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${worker.name}</td>
         <td>${worker.role}</td>
-        <td>${worker.assignedClass}</td>
+        <td><select onchange="updateAssignedClass(${index}, this.value)">${classOptions}</select></td>
         <td>${worker.email}</td>
         <td>${worker.phone}</td>
         <td>
@@ -112,68 +162,126 @@
     });
   }
 
-  function openAddTeacherModal() {
-    editingIndex = null;
-    title.textContent = "Add Teacher";
-    form.reset();
-    populateClassOptions();
-    modal.style.display = 'block';
+  // ---------- Nursery Info ----------
+  function saveNursery() {
+    alert('Nursery info saved! Connect to backend for real saving.');
   }
 
-  function populateClassOptions() {
-    classInput.innerHTML = '<option value="">Assign Class</option>';
-    classes.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.name;
-      opt.textContent = c.name;
-      classInput.appendChild(opt);
-    });
-  }
+  // ---------- Class Modal ----------
+  const classModal = document.getElementById('classModal');
+  const classForm = document.getElementById('classForm');
+  const classModalTitle = document.getElementById('classModalTitle');
+  const classNameInput = document.getElementById('classNameInput');
+  const classPassKeyInput = document.getElementById('classPassKeyInput');
+  let editingClassIndex = null;
 
-  function closeModal() {
-    modal.style.display = 'none';
+  function openClassModal() {
+    editingClassIndex = null;
+    classModalTitle.textContent = 'Add Class';
+    classForm.reset();
+    classModal.style.display = 'block';
   }
+  function closeClassModal(){ classModal.style.display='none'; }
 
-  function editWorker(index) {
-    editingIndex = index;
-    title.textContent = "Edit Teacher";
-    const worker = workers[index];
-    nameInput.value = worker.name;
-    roleInput.value = worker.role;
-    emailInput.value = worker.email;
-    phoneInput.value = worker.phone;
-    populateClassOptions();
-    classInput.value = worker.assignedClass;
-    modal.style.display = 'block';
-  }
-
-  function deleteWorker(index) {
-    if(confirm('Delete this worker?')) {
-      workers.splice(index,1);
-      renderWorkers();
-    }
-  }
-
-  form.onsubmit = function(e) {
+  classForm.onsubmit = function(e){
     e.preventDefault();
-    const workerData = {
-      name: nameInput.value,
-      role: roleInput.value,
-      email: emailInput.value,
-      phone: phoneInput.value,
-      assignedClass: classInput.value
-    };
-
-    if(editingIndex !== null) {
-      workers[editingIndex] = workerData;
-    } else {
-      workers.push(workerData);
-    }
-
+    const cls = { name:classNameInput.value, passKey:classPassKeyInput.value, members:[], teachers:[] };
+    if(editingClassIndex !== null){
+      classes[editingClassIndex] = cls;
+    }else classes.push(cls);
+    renderClasses();
     renderWorkers();
-    closeModal();
+    closeClassModal();
   }
 
+  function editClass(index){
+    editingClassIndex=index;
+    classModalTitle.textContent='Edit Class';
+    const cls=classes[index];
+    classNameInput.value=cls.name;
+    classPassKeyInput.value=cls.passKey;
+    classModal.style.display='block';
+  }
+
+  function deleteClass(index){
+    if(confirm('Delete this class?')){
+      const removed=classes.splice(index,1)[0];
+      workers.forEach(w=>{ if(w.assignedClass===removed.name) w.assignedClass=''; });
+      renderClasses(); renderWorkers();
+    }
+  }
+
+  // ---------- Teacher Modal ----------
+  const teacherModal = document.getElementById('teacherModal');
+  const teacherForm = document.getElementById('teacherForm');
+  const teacherModalTitle = document.getElementById('teacherModalTitle');
+  const teacherNameInput = document.getElementById('teacherNameInput');
+  const teacherRoleInput = document.getElementById('teacherRoleInput');
+  const teacherEmailInput = document.getElementById('teacherEmailInput');
+  const teacherPhoneInput = document.getElementById('teacherPhoneInput');
+  const teacherClassInput = document.getElementById('teacherClassInput');
+  let editingWorkerIndex = null;
+
+  function openAddTeacherModal(){
+    editingWorkerIndex=null;
+    teacherModalTitle.textContent='Add Teacher';
+    teacherForm.reset();
+    populateClassOptions();
+    teacherModal.style.display='block';
+  }
+
+  function closeTeacherModal(){ teacherModal.style.display='none'; }
+
+  function populateClassOptions(){
+    teacherClassInput.innerHTML='<option value="">Assign Class</option>';
+    classes.forEach(c=>{ const opt=document.createElement('option'); opt.value=c.name; opt.textContent=c.name; teacherClassInput.appendChild(opt); });
+  }
+
+  function editWorker(index){
+    editingWorkerIndex=index;
+    teacherModalTitle.textContent='Edit Teacher';
+    const w=workers[index];
+    teacherNameInput.value=w.name;
+    teacherRoleInput.value=w.role;
+    teacherEmailInput.value=w.email;
+    teacherPhoneInput.value=w.phone;
+    populateClassOptions();
+    teacherClassInput.value=w.assignedClass;
+    teacherModal.style.display='block';
+  }
+
+  function deleteWorker(index){
+    if(confirm('Delete this worker?')){ workers.splice(index,1); renderWorkers(); }
+  }
+
+  function updateAssignedClass(index,value){ workers[index].assignedClass=value; }
+
+  teacherForm.onsubmit=function(e){
+    e.preventDefault();
+    const w={ 
+      name:teacherNameInput.value,
+      role:teacherRoleInput.value,
+      email:teacherEmailInput.value,
+      phone:teacherPhoneInput.value,
+      assignedClass:teacherClassInput.value
+    };
+    if(editingWorkerIndex!==null) workers[editingWorkerIndex]=w; else workers.push(w);
+    renderWorkers(); closeTeacherModal();
+  }
+
+  // ---------- Class Tooltip ----------
+  const tooltip = document.getElementById('classTooltip');
+  function showClassTooltip(e,index){
+    const cls=classes[index];
+    tooltip.innerHTML=`<strong>Members:</strong> ${cls.members.join(', ')}<br><strong>Teachers:</strong> ${cls.teachers.join(', ')}`;
+    tooltip.style.display='block';
+    tooltip.style.top=e.pageY+10+'px';
+    tooltip.style.left=e.pageX+10+'px';
+  }
+  function hideTooltip(){ tooltip.style.display='none'; }
+
+  // Initial render
+  renderClasses();
   renderWorkers();
 </script>
 
