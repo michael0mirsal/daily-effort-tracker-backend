@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nursery Structure</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #fceabb, #f8b500);
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .card {
+    background: white;
+    padding: 25px;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    max-width: 900px;
+    margin: auto;
+    margin-bottom: 30px;
+    animation: fadeIn 0.8s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1, h2 {
+    margin: 0 0 15px 0;
+    font-weight: 600;
+    color: #333;
+  }
+
+  h2 {
+    font-size: 18px;
+    margin-top: 25px;
+  }
+
+  p {
+    margin: 5px 0;
+    color: #555;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  th, td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th {
+    background-color: #2196f3;
+    color: white;
+    border-radius: 6px;
+  }
+
+  td {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+  }
+
+  .btn-container {
+    text-align: right;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+    color: white;
+    background: #ff7a2a;
+    transition: background 0.2s, transform 0.2s;
+    margin-left: 10px;
+  }
+
+  .btn:hover { background: #ff6000; transform: translateY(-2px); }
+
+</style>
+</head>
+<body>
+
+<div class="btn-container">
+  <button class="btn" onclick="window.history.back()">Back</button>
+  <button class="btn" onclick="logout()">Logout</button>
+</div>
+
+<div class="card" id="profileInfo">
+  <h1>Nursery Profile Info</h1>
+  <p><strong>Name:</strong> Happy Kids Nursery</p>
+  <p><strong>Email:</strong> contact@happykids.com</p>
+  <p><strong>Phone:</strong> +201234567890</p>
+  <p><strong>Pass Key:</strong> ABC123XYZ</p>
+</div>
+
+<div class="card" id="classesInfo">
+  <h1>Classes Info</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Class Name</th>
+        <th>Class Pass Key</th>
+      </tr>
+    </thead>
+    <tbody id="classTableBody">
+      <!-- Classes will be populated here -->
+    </tbody>
+  </table>
+</div>
+
+<div class="card" id="workersInfo">
+  <h1>Workers</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Assigned Class</th>
+      </tr>
+    </thead>
+    <tbody id="workersTableBody">
+      <!-- Workers will be populated here -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Example data – replace with backend API data
+  const classes = [
+    { name: "Class A", passKey: "A123" },
+    { name: "Class B", passKey: "B456" },
+    { name: "Class C", passKey: "C789" }
+  ];
+
+  const workers = [
+    { name: "Alice", role: "Teacher", assignedClass: "Class A" },
+    { name: "Bob", role: "Supervisor", assignedClass: "Class B" },
+    { name: "Carol", role: "Manager", assignedClass: "All" },
+    { name: "Dave", role: "Teacher", assignedClass: "Class C" }
+  ];
+
+  // Populate Classes table
+  const classTableBody = document.getElementById('classTableBody');
+  classes.forEach(cls => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${cls.name}</td><td>${cls.passKey}</td>`;
+    classTableBody.appendChild(row);
+  });
+
+  // Populate Workers table
+  const workersTableBody = document.getElementById('workersTableBody');
+  workers.forEach(worker => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${worker.name}</td><td>${worker.role}</td><td>${worker.assignedClass}</td>`;
+    workersTableBody.appendChild(row);
+  });
+
+  // Logout function
+  function logout() {
+    // TODO: clear session/localStorage and redirect
+    alert('Logging out...');
+    window.location.href = "/pages/signin.html"; // replace with actual login page
+  }
+</script>
+</body>
+</html>
