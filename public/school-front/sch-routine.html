@@ -1,166 +1,550 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Improved Class Routine</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌞 Daily Routine</title>
 
-<style>
-  body {
-    font-family: "Poppins", sans-serif;
-    background: #f8f9fa;
-    padding: 20px;
-  }
+  <style>
+    /* ----------------------------------- */
+    /* MAIN DAILY ROUTINE STYLES           */
+    /* ----------------------------------- */
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff8dc;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { color: #ff9800; }
 
-  .routine-section {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  }
+    table {
+      width: 90%;
+      margin: 10px auto;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 5px #ccc;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th { background: #ffecb3; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 12px;
-  }
-  th, td {
-    border-bottom: 1px solid #ddd;
-    padding: 12px;
-  }
-  th {
-    background: #f1f2f6;
-    font-weight: 600;
-  }
+    button {
+      margin: 8px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      background: #ffb74d;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background: #ffa726; }
 
-  .member-box {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
+    input[type="text"], input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin: 5px;
+    }
 
-  .tag {
-    background: #4daf7c;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+    .routine-section {
+      margin-top: 30px;
+      background: #fffbea;
+      padding: 15px;
+      border-radius: 8px;
+    }
 
-  .tag span {
-    cursor: pointer;
-    font-weight: bold;
-  }
+    .report-table {
+      margin-top: 30px;
+      border: 2px solid #ffb74d;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fffdf4;
+    }
 
-  .member-select {
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
+    .stars {
+      color: #ffcc00;
+      font-size: 1.2em;
+      white-space: nowrap;
+    }
 
-  #routineInput {
-    width: 70%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-  }
+    .load-section {
+      margin-top: 15px;
+      background: #fff9e6;
+      padding: 10px;
+      border-radius: 6px;
+    }
 
-  .btn-add {
-    padding: 10px 18px;
-    background: #2ecc71;
-    border-radius: 8px;
-    border: none;
-    color: white;
-    cursor: pointer;
-  }
+    .prayer {
+      background: #fff3cd;
+      border-left: 6px solid #ffb74d;
+      padding: 15px;
+      margin: 25px auto;
+      border-radius: 8px;
+      width: 85%;
+      font-style: italic;
+    }
 
-</style>
+
+    /* ----------------------------------- */
+    /* MERGED CLASS ROUTINE SECTION         */
+    /* ----------------------------------- */
+
+    .routine-section-merged {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      margin: 20px auto;
+    }
+
+    .member-box {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: #4daf7c;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tag span {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .member-select {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    #routineInput {
+      width: 70%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .btn-add {
+      padding: 10px 18px;
+      background: #2ecc71;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
+  <h1 id="pageTitle">🌞 Daily Routine</h1>
+  <div style="font-weight:bold; margin-bottom:10px;">Family: <span id="familyName"></span></div>
 
-<h2>☀️ Class Routine with Active Members</h2>
+  <button id="logoutBtn">Logout</button>
+  <button id="saveBtn">💾 Save Routine</button>
+  <button id="loadBtn">📂 View All Reports</button>
+  <button id="backBtn">⬅️ Back</button>
 
-<div class="routine-section">
+  <div id="routineStarsBox" style="
+    text-align:center;
+    margin: 15px auto;
+    font-size:1.3em;
+    font-weight:bold;
+    background:linear-gradient(135deg, #fff5a8, #ffd54f);
+    color:#8b5e00;
+    border:2px solid #f3c623;
+    border-radius:15px;
+    padding:10px 20px;
+    width:fit-content;
+    box-shadow:0 0 15px rgba(255,215,0,0.4);
+  ">
+    🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
+  </div>
 
-  <table id="routineTable">
-    <thead>
-      <tr>
-        <th>Task</th>
-        <th>Status</th>
-        <th>Members</th>
-      </tr>
-    </thead>
+  <div class="load-section">
+    <h3>📅 Load Routine by Date</h3>
+    <input type="date" id="loadDate" />
+    <button id="loadByDateBtn">🔍 Load Routine</button>
+  </div>
 
-    <tbody id="routineBody"></tbody>
-  </table>
+  <!-- 🌅 Morning Prayer -->
+  <div class="prayer">
+    <h3>🌅 “Hello, Jesus!”</h3>
+    <p>it’s a brand new day, 🌞<br>
+    Thank You for helping me.<br>
+    I’ll smile, be kind, and do my best.<br>
+    With You beside me, I feel blessed! 🙏</p>
+  </div>
 
-  <input type="text" id="routineInput" placeholder="Add new routine task" />
-  <button class="btn-add" onclick="addRoutine()">➕ Add</button>
 
-</div>
+  <!-- **************************** -->
+  <!-- ☀️ Morning Routine           -->
+  <!-- **************************** -->
+  <div class="routine-section">
+    <h2>☀️ Morning Routine</h2>
+    <table id="morningTable">
+      <thead><tr><th>Task</th><th>Status</th></tr></thead>
+      <tbody id="morningBody">
+        <tr><td>Wake up early ⏰</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Talk to Jesus</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Brush teeth 🪥</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Eat breakfast 🥣</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Get dressed 👕</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Say goodbye and go to school 👋</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Make a to-do list</td><td><input type="checkbox" /></td></tr>
+      </tbody>
+    </table>
+    <input type="text" id="morningInput" placeholder="Add morning task" />
+    <button onclick="addTask('morning')">➕ Add</button>
+  </div>
+
+
+  <!-- **************************** -->
+  <!-- 🎒 After School Routine      -->
+  <!-- **************************** -->
+  <div class="routine-section">
+    <h2>🎒 After School Routine</h2>
+    <table id="afterTable">
+      <thead><tr><th>Task</th><th>Status</th></tr></thead>
+      <tbody id="afterBody">
+        <tr><td>Wash hands and change clothes 🧼</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Eat a healthy snack 🍎</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Do homework 📚</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Help with chores 🧹🏠</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Physical Play</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Family bonding time 🏠</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Important task</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Balance screen time</td><td><input type="checkbox" /></td></tr>
+      </tbody>
+    </table>
+    <input type="text" id="afterInput" placeholder="Add after-school task" />
+    <button onclick="addTask('after')">➕ Add</button>
+  </div>
+
+  <!-- 🌙 Night Routine -->
+  <div class="routine-section">
+    <h2>🌙 Sleeping Routine</h2>
+    <table id="nightTable">
+      <thead><tr><th>Task</th><th>Status</th></tr></thead>
+      <tbody id="nightBody">
+        <tr><td>Take a shower 🚿</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Limit daytime naps</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Don’t go to bed hungry</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Pack school bag 🎒</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Brush teeth</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Regular bedtime</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Hugs & kisses 🛌</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Quiet time / story</td><td><input type="checkbox" /></td></tr>
+        <tr><td>Sleep 😴</td><td><input type="checkbox" /></td></tr>
+      </tbody>
+    </table>
+    <input type="text" id="nightInput" placeholder="Add night task" />
+    <button onclick="addTask('night')">➕ Add</button>
+  </div>
+
+
+  <!-- **************************** -->
+  <!-- 📚 MERGED CLASS ROUTINE      -->
+  <!-- **************************** -->
+  <div class="routine-section-merged">
+    <h2>🏫 Class Routine with Members</h2>
+
+    <table id="routineTable">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Status</th>
+          <th>Members</th>
+        </tr>
+      </thead>
+      <tbody id="routineBody"></tbody>
+    </table>
+
+    <input type="text" id="routineInput" placeholder="Add new class routine task" />
+    <button class="btn-add" onclick="addRoutine()">➕ Add</button>
+  </div>
+
+
+  <!-- REPORT SECTION -->
+  <div class="report-table" id="reportSection" style="display:none;">
+    <h2>📅 Routine Report</h2>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Completed Tasks</th><th>⭐ Star Rating</th></tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+  </div>
+
+
 
 <script>
-  const membersList = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
+/* ======================================== */
+/* MEMBERS FOR CLASS ROUTINE                */
+/* ======================================== */
+const membersList = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
 
-  function addRoutine() {
-    const task = document.getElementById("routineInput").value.trim();
-    if (!task) return alert("Enter task!");
+/* Add new class routine */
+function addRoutine() {
+  const task = document.getElementById("routineInput").value.trim();
+  if (!task) return alert("Enter task!");
 
-    const tbody = document.getElementById("routineBody");
+  const tbody = document.getElementById("routineBody");
+  const memberOptions = membersList.map(m => `<option value="${m}">${m}</option>`).join("");
 
-    // Build member dropdown dynamically
-    const memberOptions = membersList.map(m => `<option value="${m}">${m}</option>`).join("");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${task}</td>
+    <td><input type="checkbox"></td>
+    <td>
+      <div class="member-box"></div>
+      <select class="member-select">
+        <option value="">Add member...</option>
+        ${memberOptions}
+      </select>
+    </td>
+  `;
 
-    const tr = document.createElement("tr");
+  tbody.appendChild(tr);
 
-    tr.innerHTML = `
-      <td>${task}</td>
-      <td><input type="checkbox"></td>
-      <td>
-        <div class="member-box"></div>
-        <select class="member-select">
-          <option value="">Add member...</option>
-          ${memberOptions}
-        </select>
-      </td>
-    `;
+  const select = tr.querySelector(".member-select");
+  const memberBox = tr.querySelector(".member-box");
 
-    tbody.appendChild(tr);
+  select.addEventListener("change", () => {
+    const name = select.value;
+    if (!name) return;
 
-    const select = tr.querySelector(".member-select");
-    const memberBox = tr.querySelector(".member-box");
-
-    // Handle adding members
-    select.addEventListener("change", () => {
-      const name = select.value;
-      if (!name) return;
-
-      // Prevent duplicates
-      if ([...memberBox.children].some(tag => tag.dataset.name === name)) {
-        select.value = "";
-        return;
-      }
-
-      // Create tag
-      const tag = document.createElement("div");
-      tag.className = "tag";
-      tag.dataset.name = name;
-      tag.innerHTML = `${name} <span>x</span>`;
-
-      // Remove member when clicking "x"
-      tag.querySelector("span").onclick = () => tag.remove();
-
-      memberBox.appendChild(tag);
-
+    if ([...memberBox.children].some(tag => tag.dataset.name === name)) {
       select.value = "";
+      return;
+    }
+
+    const tag = document.createElement("div");
+    tag.className = "tag";
+    tag.dataset.name = name;
+    tag.innerHTML = `${name} <span>x</span>`;
+
+    tag.querySelector("span").onclick = () => tag.remove();
+
+    memberBox.appendChild(tag);
+    select.value = "";
+  });
+
+  document.getElementById("routineInput").value = "";
+}
+
+
+
+/* ======================================== */
+/* EXISTING DAILY ROUTINE SCRIPT (FULL)     */
+/* ======================================== */
+
+const API_BASE = "https://daily-effort-tracker-backend-production-2184.up.railway.app";
+const user = JSON.parse(localStorage.getItem("currentUser"));
+if (!user) window.location.href = "login.html";
+
+document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
+document.getElementById("familyName").textContent = user.family || "Unknown";
+
+const sections = ["morning", "after", "night"];
+let currentLoadedDate = null;
+
+function getLocalDate() {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+}
+
+function addTask(type) {
+  const input = document.getElementById(type + "Input");
+  const task = input.value.trim();
+  if (!task) return;
+
+  const body = document.getElementById(type + "Body");
+  const exists = Array.from(body.querySelectorAll("tr"))
+        .some(r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase());
+  if (exists) { alert("Task already exists!"); return; }
+
+  const row = document.createElement("tr");
+  row.innerHTML = `<td>${task}</td><td><input type="checkbox" /></td>`;
+  body.appendChild(row);
+  input.value = "";
+  attachCheckboxListeners();
+}
+
+function getAllTasks() {
+  const routines = [];
+  sections.forEach(section => {
+    document.querySelectorAll(`#${section}Body tr`).forEach(row => {
+      routines.push({
+        section,
+        task: row.children[0].textContent,
+        done: row.querySelector("input").checked
+      });
+    });
+  });
+
+  // MERGE CLASS ROUTINE TASKS ALSO
+  document.querySelectorAll("#routineBody tr").forEach(row => {
+    routines.push({
+      section: "class",
+      task: row.children[0].textContent,
+      done: row.querySelector("input").checked
+    });
+  });
+
+  return routines;
+}
+
+function clearAllCheckboxes() {
+  document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
+}
+
+function getStars(count) { return "⭐".repeat(count) || "⚪"; }
+
+function updateRoutineStars() {
+  const items = getAllTasks();
+  const checkedCount = items.filter(i => i.done).length;
+  document.getElementById("routineStarsDisplay").textContent = `${checkedCount}⭐`;
+}
+
+function attachCheckboxListeners() {
+  document.querySelectorAll("input[type='checkbox']").forEach(cb => {
+    cb.onchange = updateRoutineStars;
+  });
+}
+
+attachCheckboxListeners();
+
+
+// ------------------------------------------
+// SAVE ROUTINE
+// ------------------------------------------
+document.getElementById("saveBtn").onclick = async () => {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user || !user.family || !user.name) return alert("Missing user info");
+
+  const items = getAllTasks();
+  const date = getLocalDate();
+  const checkedData = items.filter(i => i.done).length;
+
+  const payload = {
+    name: user.name,
+    date,
+    items,
+    checkedData,
+    family: user.family
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/routines/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
-    document.getElementById("routineInput").value = "";
+    const data = await res.json();
+    if (res.ok) alert("Routine saved!");
+    else alert("Save error: " + data.error);
+
+  } catch (err) {
+    alert("Network error saving routine");
+    console.error(err);
   }
+};
+
+
+// ------------------------------------------
+// LOAD ALL REPORTS
+// ------------------------------------------
+document.getElementById("loadBtn").onclick = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(user.name)}&family=${encodeURIComponent(user.family)}&date=all`);
+    const data = await res.json();
+    if (!data.length) return alert("No data found.");
+
+    const reportBody = document.getElementById("reportBody");
+    reportBody.innerHTML = "";
+    document.getElementById("reportSection").style.display = "block";
+
+    data.forEach(r => {
+      const doneCount = r.items.filter(i => i.done).length;
+      const total = r.items.length;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${doneCount}/${total} ✅</td>
+        <td class="stars">${getStars(doneCount)}</td>
+      `;
+      reportBody.appendChild(tr);
+    });
+  } catch (err) {
+    alert("Error loading reports");
+  }
+};
+
+
+// ------------------------------------------
+// LOAD BY DATE
+// ------------------------------------------
+document.getElementById("loadByDateBtn").onclick = async () => {
+  const selectedDate = document.getElementById("loadDate").value;
+  if (!selectedDate) return alert("Select a date!");
+
+  loadRoutineByDate(selectedDate);
+};
+
+
+async function loadRoutineByDate(date) {
+  try {
+    const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(user.name)}&date=${date}&family=${encodeURIComponent(user.family)}`);
+    const data = await res.json();
+    const routine = data[0];
+    if (!routine) return alert("No routine found for this date.");
+
+    clearAllCheckboxes();
+    currentLoadedDate = date;
+
+    routine.items.forEach(t => {
+      const body = document.getElementById(t.section + "Body");
+      if (!body) return;
+
+      const rows = Array.from(body.querySelectorAll("tr"));
+      let found = rows.some(row => {
+        if (row.children[0].textContent.trim().toLowerCase() === t.task.trim().toLowerCase()) {
+          row.querySelector("input").checked = t.done;
+          return true;
+        }
+      });
+
+      if (!found) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${t.task}</td><td><input type="checkbox" ${t.done?"checked":""}></td>`;
+        body.appendChild(row);
+      }
+    });
+
+    attachCheckboxListeners();
+    updateRoutineStars();
+
+    alert("Routine loaded for " + date);
+
+  } catch (err) {
+    alert("Failed to load routine.");
+  }
+}
 
 </script>
-
 </body>
 </html>
