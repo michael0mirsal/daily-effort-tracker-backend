@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nursery Signup Form</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      width: 90%;
+      max-width: 500px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      font-family: "Poppins", sans-serif;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #ff4d4d;
+      margin-top: -15px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      cursor: pointer;
+      background: #2196f3;
+      color: white;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    button:hover {
+      background: #1976d2;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Nursery Signup Form 🏫</h1>
+
+    <form id="signupForm">
+      <!-- Nursery Info -->
+      <label for="nurseryName">Nursery Name</label>
+      <input type="text" id="nurseryName" placeholder="Enter Nursery Name" required />
+
+      <label for="address">Address</label>
+      <textarea id="address" placeholder="Enter Address" required></textarea>
+
+      <label for="contactEmail">Contact Email</label>
+      <input type="email" id="contactEmail" placeholder="Enter Email" required />
+
+      <label for="contactPhone">Contact Phone</label>
+      <input type="tel" id="contactPhone" placeholder="Enter Phone Number" required />
+
+      <!-- Nursery Access Key -->
+      <label for="nurseryKey">Nursery Access Key</label>
+      <input type="text" id="nurseryKey" placeholder="Unique Nursery Access Key" required />
+      <p class="note">This key identifies your nursery and will be required for teachers to join.</p>
+
+      <!-- Teacher Access Key -->
+      <label for="teacherKey">Teacher Access Key</label>
+      <input type="text" id="teacherKey" placeholder="Unique Access Key for Teachers" required />
+      <p class="note">Each teacher must use this key to access the nursery.</p>
+
+      <button type="submit">Complete Signup</button>
+    </form>
+  </div>
+
+  <script>
+    const signupForm = document.getElementById('signupForm');
+
+    signupForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const data = {
+        nurseryName: document.getElementById('nurseryName').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        contactEmail: document.getElementById('contactEmail').value.trim(),
+        contactPhone: document.getElementById('contactPhone').value.trim(),
+        nurseryKey: document.getElementById('nurseryKey').value.trim(),
+        teacherKey: document.getElementById('teacherKey').value.trim(),
+      };
+
+      // Basic validation
+      for (let key in data) {
+        if (!data[key]) {
+          alert('Please fill all fields.');
+          return;
+        }
+      }
+
+      // TODO: Send data to backend API
+      // Example:
+      /*
+      fetch('/api/nursery/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if(resData.success){
+          alert('Nursery registered successfully!');
+          window.location.href = "/pages/nursery/nursery-login.html";
+        } else {
+          alert(resData.message);
+        }
+      })
+      .catch(err => alert('Error: ' + err));
+      */
+
+      // For demo purposes:
+      alert('Nursery signup completed!\nNursery Key: ' + data.nurseryKey + '\nTeacher Key: ' + data.teacherKey);
+      window.location.href = "/pages/nursery/nursery-login.html";
+    });
+  </script>
+</body>
+</html>
