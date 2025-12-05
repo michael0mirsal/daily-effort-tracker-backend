@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🌞 My Daily Activities Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #fff8dc; }
+    h1, h2 { text-align: center; color: #ff9800; }
+    .header { text-align:center; margin-bottom:20px; }
+    button { padding: 8px 12px; margin: 5px; border-radius:5px; border:none; background:#ffb74d; color:#fff; cursor:pointer; }
+    button:hover { background:#ffa726; }
+    input[type="text"], input[type="number"], input[type="date"], select { padding:6px 10px; border-radius:5px; border:1px solid #ccc; margin:5px; }
+    table { width:100%; border-collapse: collapse; margin-top:15px; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+    th { background:#ffecb3; }
+    .tracker-card { background:#fffdf4; padding:15px; margin:20px auto; border-radius:8px; box-shadow:0 0 5px #ccc; }
+    #toast { visibility: hidden; min-width: 160px; background-color: #333; color: #fff; text-align: center; border-radius: 20px; padding: 10px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1.1em; box-shadow: 0 0 10px rgba(0,0,0,0.3); transition: visibility 0s, opacity 0.5s ease-in-out; opacity: 0; }
+    #toast.show { visibility: visible; opacity: 1; }
+    .member-tag { display:inline-block; background:#ffd54f; color:#8b5e00; padding:2px 6px; border-radius:5px; margin:2px; font-size:0.9em; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌈 My Daily Activities Tracker</h1>
+  <h2>Welcome, <span id="userName"></span>!</h2>
+  <button id="backBtn">⬅️ Back</button>
+  <button onclick="logout()">🚪 Logout</button>
+</div>
+
+<div id="checkedStarsBox" style="text-align:center; margin-bottom:15px; font-size:1.3em; font-weight:bold; background:linear-gradient(135deg, #fff5a8, #ffd54f); color:#8b5e00; border:2px solid #f3c623; border-radius:15px; padding:10px 20px; box-shadow:0 0 15px rgba(255,215,0,0.4); width:fit-content; margin:auto;">
+  🏦 Stars Box: <span id="checkedStarsDisplay">0⭐</span>
+</div>
+
+<div class="tracker-card">
+  <h2>📝 Add New Activity</h2>
+  <div class="form-row">
+    <input type="date" id="date" />
+    <input type="text" id="activity" placeholder="Activity (e.g., Reading, Math)" />
+    <input type="number" id="timeMin" placeholder="Time (min)" />
+  </div>
+  <div class="form-row">
+    <input type="number" id="evaluation" placeholder="Evaluation (1–10)" min="1" max="10" />
+    <input type="text" id="note" placeholder="Note (optional)" />
+    <select id="memberSelect"><option value="">Select Member</option></select>
+  </div>
+  <div class="buttons">
+    <button id="addBtn">➕ Add</button>
+    <button id="saveBtn">💾 Save Day</button>
+  </div>
+
+  <table id="effortTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>🎯 Activity</th>
+        <th>⏰ Time (min)</th>
+        <th>⭐ Evaluation (10)</th>
+        <th>📝 Note</th>
+        <th>👤 Member</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="tracker-card">
+  <h2>🔍 Show Activity</h2>
+  <div class="form-row">
+    <h3>👧 User: <span id="filterUserName"></span></h3>
+    <input type="date" id="filterDate" />
+    <button id="showBtn">👀 Show Activity</button>
+  </div>
+
+  <table id="showTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>🎯 Activity</th>
+        <th>⏰ Time</th>
+        <th>⭐ Evaluation</th>
+        <th>📝 Note</th>
+        <th>📅 Date</th>
+        <th>👤 Name</th>
+      </tr>
+    </thead>
+    <tbody id="effortList"></tbody>
+  </table>
+</div>
+
+<div id="toast">✨ Saved!</div>
+
+<script>
+const API_BASE = "https://daily-effort-tracker-backend-production-2184.up.railway.app";
+
+// ----------------------
+// Load current user
+// ----------------------
+const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+let currentUser = storedUser.name;
+const currentRole = storedUser.role;
+const currentFamily = storedUser.family;
+
+// ----------------------
+// Members list from localStorage
+// ----------------------
+let members = JSON.parse(localStorage.getItem("members") || '[]');
+const memberSelect = document.getElementById("memberSelect");
+members.forEach(m=>{
+  const opt = document.createElement("option");
+  opt.value = m; opt.textContent = m;
+  memberSelect.appendChild(opt);
+});
+
+if(!currentUser){ window.location.href="login.html"; }
+else { document.getElementById("userName").textContent = `${currentUser} (${currentFamily}'s Family)`; }
+
+// ----------------------
+// Default date = today
+// ----------------------
+const today = new Date().toISOString().split("T")[0];
+document.getElementById("date").value = today;
+document.getElementById("filterDate").value = today;
+
+// ----------------------
+// Logout
+// ----------------------
+function logout(){ localStorage.removeItem("currentUser"); window.location.href="welcome.html"; }
+
+// ----------------------
+// Prevent past dates
+// ----------------------
+function isPastDate(selectedDate){
+  const now = new Date(); now.setHours(0,0,0,0);
+  return new Date(selectedDate) < now;
+}
+
+// ----------------------
+// Add new effort (local only)
+// ----------------------
+const tableBody = document.getElementById("tableBody");
+const addedItems = [];
+
+document.getElementById("addBtn").addEventListener("click",()=>{
+  const date = document.getElementById("date").value;
+  const activity = document.getElementById("activity").value.trim();
+  const timeMin = document.getElementById("timeMin").value;
+  const evaluation = document.getElementById("evaluation").value;
+  const note = document.getElementById("note").value;
+  const member = memberSelect.value;
+
+  if(!date || !activity) return alert("Please fill date and activity.");
+  if(isPastDate(date)) return alert("❌ Cannot add efforts for past dates!");
+  if(!member) return alert("⚠️ Please select a member!");
+
+  const duplicate = addedItems.some(it=>it.activity.trim().toLowerCase()===activity.toLowerCase() && it.timeMin==timeMin && it.member===member);
+  if(duplicate) return alert("⚠️ This activity for this member is already added today.");
+
+  addedItems.push({date,activity,timeMin,evaluation,note,member});
+  renderLocalItems();
+});
+
+function renderLocalItems(){
+  tableBody.innerHTML = addedItems.map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${it.activity}</td>
+      <td>${it.timeMin}</td>
+      <td>${it.evaluation}</td>
+      <td>${it.note||""}</td>
+      <td>${it.member}</td>
+    </tr>
+  `).join("");
+}
+
+// ----------------------
+// Save all efforts
+// ----------------------
+document.getElementById("saveBtn").addEventListener("click", async ()=>{
+  if(addedItems.length===0) return alert("Please add at least one effort.");
+  const date = addedItems[0].date;
+  if(isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
+
+  try{
+    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
+    const existing = await res.json();
+    let finalItems = [], newItemsAdded=false;
+
+    if(existing.length && existing[0].items){
+      const existingKeys = existing[0].items.map(it=>it.activity.trim().toLowerCase()+"_"+it.timeMin+"_"+it.member);
+      finalItems = [...existing[0].items];
+      addedItems.forEach(it=>{
+        const key = it.activity.trim().toLowerCase()+"_"+it.timeMin+"_"+it.member;
+        if(!existingKeys.includes(key)){ finalItems.push(it); newItemsAdded=true; }
+      });
+    } else { finalItems=[...addedItems]; newItemsAdded=true; }
+
+    if(!newItemsAdded){ alert("⚠️ No new activities to save."); return; }
+
+    finalItems = finalItems.map(it=>({activity:it.activity,timeMin:it.timeMin,evaluation:Number(it.evaluation)||0,note:it.note||"",member:it.member}));
+
+    const saveRes = await fetch(`${API_BASE}/api/efforts`,{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name:currentUser,family:currentFamily,date,items:finalItems})
+    });
+    const saveData = await saveRes.json();
+    if(!saveRes.ok) throw new Error(saveData.error||"Failed to save");
+
+    addedItems.length=0;
+    renderLocalItems();
+    updateStarsFromItems(finalItems);
+    loadEfforts();
+    showToast("✨ Saved!");
+    alert("✅ Effort saved successfully!");
+  } catch(err){ console.error("❌ Save failed:",err); alert("⚠️ Could not save to server."); }
+});
+
+// ----------------------
+// Show saved efforts
+// ----------------------
+document.getElementById("showBtn").addEventListener("click", loadEfforts);
+async function loadEfforts(){
+  const date = document.getElementById("filterDate").value;
+  try{
+    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
+    const data = await res.json();
+    const effortList = document.getElementById("effortList");
+    if(!data.length || !data[0].items){
+      effortList.innerHTML=`<tr><td colspan="7" style="text-align:center;">No records found 💬</td></tr>`;
+      document.getElementById("checkedStarsDisplay").textContent="0⭐";
+      return;
+    }
+    const allItems = data[0].items.map((it,i)=>({...it,date:data[0].date,name:data[0].name,index:i}));
+    effortList.innerHTML = allItems.map((it,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${it.activity||""}</td>
+        <td>${it.timeMin||""}</td>
+        <td>${currentRole==="parent"?`<input type="number" class="starInput" min="0" max="10" value="${it.evaluation}" data-index="${i}" data-date="${it.date}" data-name="${it.name}" data-family="${currentFamily}">`:it.evaluation||""}</td>
+        <td>${it.note||""}</td>
+        <td>${it.date||""}</td>
+        <td>${it.member||currentUser}</td>
+      </tr>
+    `).join("");
+    attachStarListeners();
+    updateStarsFromItems(allItems);
+  } catch(err){ console.error("❌ Load failed:",err); alert("⚠️ Could not load efforts."); }
+}
+
+// ----------------------
+// Update stars dynamically
+// ----------------------
+function updateStarsFromItems(items){
+  const total = items.reduce((s,it)=>s + (Number(it.evaluation)||0),0);
+  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
+}
+
+function attachStarListeners(){
+  document.querySelectorAll(".starInput").forEach(input=>{
+    input.addEventListener("change", async e=>{
+      if(currentRole!=="parent") return;
+      const box = e.target;
+      const newEval = Number(box.value);
+      const saveData = {
+        name: box.dataset.name,
+        family: box.dataset.family,
+        date: box.dataset.date,
+        index: box.dataset.index,
+        evaluation: newEval
+      };
+      try{
+        await fetch(`${API_BASE}/api/efforts/updateEvaluation`,{
+          method:"PATCH",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(saveData)
+        });
+        loadEfforts();
+        showToast("✨ Stars updated!");
+      } catch(err){ console.error("❌ Star update failed:",err); alert("⚠️ Could not update stars!"); }
+    });
+  });
+}
+
+// ----------------------
+function showToast(msg="✨ Saved!"){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+document.getElementById("backBtn").onclick=()=>{window.location.href="choose.html";};
+
+// ----------------------
+// Auto-load today's saved efforts
+// ----------------------
+loadEfforts();
+</script>
+</body>
+</html>
