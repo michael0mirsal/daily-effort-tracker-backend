@@ -25,6 +25,11 @@
 </style>
 </head>
 <body>
+  <!-- Top-right buttons -->
+<div style="position:fixed; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:300;">
+  <button class="btn btn-delete" onclick="logout()">Logout</button>
+  <button class="btn btn-edit" onclick="goBack()">Back</button>
+</div>
 
 <!-- Nursery Info -->
 <div class="card">
@@ -280,7 +285,21 @@
   }
   function hideTooltip(){ tooltip.style.display='none'; }
 
-  // Initial render
+
+
+  function logout() {
+    // Clear session/local storage if needed
+    alert('Logged out!');
+    // Redirect to login page
+    window.location.href = '/choose-user.html';
+  }
+
+  function goBack() {
+    // Go back to previous page
+    window.history.back();
+  }
+
+    // Initial render
   renderClasses();
   renderWorkers();
 </script>
