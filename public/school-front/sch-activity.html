@@ -17,6 +17,34 @@
   display: flex;
   gap: 10px;
 }
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .form-row input,
+  .form-row select {
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+  }
+
+  /* Set widths to match table columns proportionally */
+  #activity { flex: 2 1 200px; }
+  #timeMin { flex: 1 1 80px; }
+  #evaluation { flex: 1 1 80px; }
+  #note { flex: 2 1 150px; }
+  #memberSelect { flex: 1 1 150px; }
+
+  table th, table td {
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: middle;
+  }
 
     body { font-family: Arial, sans-serif; padding: 20px; background: #fff8dc; }
     h1, h2 { text-align: center; color: #ff9800; }
