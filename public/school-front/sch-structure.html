@@ -12,118 +12,147 @@
     margin: 0;
     font-family: "Poppins", sans-serif;
     background: linear-gradient(135deg, #fceabb, #f8b500);
-    min-height: 100vh;
-    padding: 40px 20px;
+    padding: 20px;
   }
 
   .card {
     background: white;
     padding: 25px;
-    border-radius: 24px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    max-width: 900px;
-    margin: auto;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     margin-bottom: 30px;
-    animation: fadeIn 0.8s ease-out;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  h1, h2 {
-    margin: 0 0 15px 0;
+  h1 {
+    margin-bottom: 15px;
     font-weight: 600;
     color: #333;
-  }
-
-  h2 {
-    font-size: 18px;
-    margin-top: 25px;
-  }
-
-  p {
-    margin: 5px 0;
-    color: #555;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 15px;
   }
 
   th, td {
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    border: 1px solid #ddd;
     text-align: left;
+    border-radius: 6px;
   }
 
   th {
-    background-color: #2196f3;
+    background: #2196f3;
     color: white;
-    border-radius: 6px;
   }
 
   td {
-    background-color: #f9f9f9;
-    border-radius: 6px;
-  }
-
-  .btn-container {
-    text-align: right;
-    margin-bottom: 20px;
+    background: #f9f9f9;
   }
 
   .btn {
-    padding: 10px 18px;
-    border-radius: 12px;
+    padding: 8px 14px;
+    margin: 5px;
+    border-radius: 8px;
     border: none;
-    font-size: 14px;
     cursor: pointer;
-    font-weight: 500;
     color: white;
-    background: #ff7a2a;
-    transition: background 0.2s, transform 0.2s;
-    margin-left: 10px;
+    font-weight: 500;
+    transition: 0.2s;
   }
 
-  .btn:hover { background: #ff6000; transform: translateY(-2px); }
+  .btn-edit { background: #4caf50; }
+  .btn-edit:hover { background: #45a049; }
+  .btn-delete { background: #f44336; }
+  .btn-delete:hover { background: #d32f2f; }
+  .btn-add { background: #2196f3; }
+  .btn-add:hover { background: #1976d2; }
+
+  /* Popup tooltip for classes */
+  .tooltip {
+    position: absolute;
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 100;
+    font-size: 14px;
+  }
+
+  /* Teacher profile modal */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 200;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0,0,0,0.5);
+  }
+
+  .modal-content {
+    background: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+  }
+
+  .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  select, input {
+    padding: 6px 8px;
+    margin: 2px 0;
+    width: 90%;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
 
 </style>
 </head>
 <body>
 
-<div class="btn-container">
-  <button class="btn" onclick="window.history.back()">Back</button>
-  <button class="btn" onclick="logout()">Logout</button>
-</div>
-
-<div class="card" id="profileInfo">
+<div class="card">
   <h1>Nursery Profile Info</h1>
-  <p><strong>Name:</strong> Happy Kids Nursery</p>
-  <p><strong>Email:</strong> contact@happykids.com</p>
-  <p><strong>Phone:</strong> +201234567890</p>
-  <p><strong>Pass Key:</strong> ABC123XYZ</p>
+  <p><strong>Name:</strong> <input type="text" id="nurseryName" value="Happy Kids Nursery" /></p>
+  <p><strong>Email:</strong> <input type="text" id="nurseryEmail" value="contact@happykids.com" /></p>
+  <p><strong>Phone:</strong> <input type="text" id="nurseryPhone" value="+201234567890" /></p>
+  <p><strong>Pass Key:</strong> <input type="text" id="nurseryPassKey" value="ABC123XYZ" /></p>
+  <button class="btn btn-add" onclick="saveProfile()">Save Profile</button>
 </div>
 
-<div class="card" id="classesInfo">
+<div class="card">
   <h1>Classes Info</h1>
   <table>
     <thead>
       <tr>
         <th>Class Name</th>
         <th>Class Pass Key</th>
+        <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="classTableBody">
-      <!-- Classes will be populated here -->
-    </tbody>
+    <tbody id="classTableBody"></tbody>
   </table>
+  <button class="btn btn-add" onclick="addClass()">Add Class</button>
 </div>
 
-<div class="card" id="workersInfo">
+<div class="card">
   <h1>Workers</h1>
   <table>
     <thead>
@@ -131,51 +160,176 @@
         <th>Name</th>
         <th>Role</th>
         <th>Assigned Class</th>
+        <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="workersTableBody">
-      <!-- Workers will be populated here -->
-    </tbody>
+    <tbody id="workersTableBody"></tbody>
   </table>
+  <button class="btn btn-add" onclick="addWorker()">Add Worker</button>
+</div>
+
+<!-- Tooltip for classes -->
+<div class="tooltip" id="classTooltip"></div>
+
+<!-- Teacher Profile Modal -->
+<div id="teacherModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2 id="teacherName"></h2>
+    <p><strong>Role:</strong> <span id="teacherRole"></span></p>
+    <p><strong>Assigned Class:</strong> <span id="teacherClass"></span></p>
+  </div>
 </div>
 
 <script>
-  // Example data – replace with backend API data
-  const classes = [
-    { name: "Class A", passKey: "A123" },
-    { name: "Class B", passKey: "B456" },
-    { name: "Class C", passKey: "C789" }
+  // Example data
+  let classes = [
+    { name: "Class A", passKey: "A123", members: ["John", "Mary"], teachers: ["Alice"] },
+    { name: "Class B", passKey: "B456", members: ["Tom", "Lucy"], teachers: ["Bob"] }
   ];
 
-  const workers = [
+  let workers = [
     { name: "Alice", role: "Teacher", assignedClass: "Class A" },
-    { name: "Bob", role: "Supervisor", assignedClass: "Class B" },
-    { name: "Carol", role: "Manager", assignedClass: "All" },
-    { name: "Dave", role: "Teacher", assignedClass: "Class C" }
+    { name: "Bob", role: "Teacher", assignedClass: "Class B" },
+    { name: "Carol", role: "Manager", assignedClass: "All" }
   ];
 
-  // Populate Classes table
   const classTableBody = document.getElementById('classTableBody');
-  classes.forEach(cls => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${cls.name}</td><td>${cls.passKey}</td>`;
-    classTableBody.appendChild(row);
-  });
-
-  // Populate Workers table
   const workersTableBody = document.getElementById('workersTableBody');
-  workers.forEach(worker => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${worker.name}</td><td>${worker.role}</td><td>${worker.assignedClass}</td>`;
-    workersTableBody.appendChild(row);
-  });
+  const tooltip = document.getElementById('classTooltip');
+  const modal = document.getElementById('teacherModal');
 
-  // Logout function
-  function logout() {
-    // TODO: clear session/localStorage and redirect
-    alert('Logging out...');
-    window.location.href = "/pages/signin.html"; // replace with actual login page
+  function renderClasses() {
+    classTableBody.innerHTML = '';
+    classes.forEach((cls, index) => {
+      const row = document.createElement('tr');
+
+      row.innerHTML = `
+        <td onmouseover="showTooltip(event, ${index})" onmouseout="hideTooltip()">${cls.name}</td>
+        <td>${cls.passKey}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editClass(${index})">Edit</button>
+          <button class="btn btn-delete" onclick="deleteClass(${index})">Delete</button>
+        </td>
+      `;
+      classTableBody.appendChild(row);
+    });
   }
+
+  function renderWorkers() {
+    workersTableBody.innerHTML = '';
+    workers.forEach((worker, index) => {
+      const row = document.createElement('tr');
+
+      const classOptions = classes.map(c => `<option value="${c.name}" ${c.name===worker.assignedClass?'selected':''}>${c.name}</option>`).join('');
+
+      row.innerHTML = `
+        <td><span style="color:#2196f3;cursor:pointer" onclick="openTeacherModal(${index})">${worker.name}</span></td>
+        <td>${worker.role}</td>
+        <td>
+          <select onchange="updateAssignedClass(${index}, this.value)">
+            <option value="">--Select Class--</option>
+            ${classOptions}
+          </select>
+        </td>
+        <td>
+          <button class="btn btn-edit" onclick="editWorker(${index})">Edit</button>
+          <button class="btn btn-delete" onclick="deleteWorker(${index})">Delete</button>
+        </td>
+      `;
+      workersTableBody.appendChild(row);
+    });
+  }
+
+  function saveProfile() {
+    alert('Profile saved! (Connect to backend API)');
+  }
+
+  function addClass() {
+    const name = prompt('Enter Class Name');
+    if(!name) return;
+    const passKey = prompt('Enter Class Pass Key');
+    classes.push({ name, passKey, members: [], teachers: [] });
+    renderClasses();
+  }
+
+  function editClass(index) {
+    const name = prompt('Edit Class Name', classes[index].name);
+    if(name) classes[index].name = name;
+    const passKey = prompt('Edit Class Pass Key', classes[index].passKey);
+    if(passKey) classes[index].passKey = passKey;
+    renderClasses();
+    renderWorkers();
+  }
+
+  function deleteClass(index) {
+    if(confirm('Delete this class?')) {
+      const removedClass = classes.splice(index,1)[0];
+      // remove from workers
+      workers.forEach(w => { if(w.assignedClass === removedClass.name) w.assignedClass = ''; });
+      renderClasses();
+      renderWorkers();
+    }
+  }
+
+  function addWorker() {
+    const name = prompt('Enter Worker Name');
+    if(!name) return;
+    const role = prompt('Enter Role (Teacher / Supervisor / Manager / Member)');
+    if(!role) return;
+    const assignedClass = prompt('Assign Class (optional)');
+    workers.push({ name, role, assignedClass: assignedClass||'' });
+    renderWorkers();
+  }
+
+  function editWorker(index) {
+    const name = prompt('Edit Worker Name', workers[index].name);
+    if(name) workers[index].name = name;
+    const role = prompt('Edit Role', workers[index].role);
+    if(role) workers[index].role = role;
+    renderWorkers();
+  }
+
+  function deleteWorker(index) {
+    if(confirm('Delete this worker?')) {
+      workers.splice(index,1);
+      renderWorkers();
+    }
+  }
+
+  function showTooltip(e, index) {
+    const cls = classes[index];
+    tooltip.innerHTML = `<strong>Members:</strong> ${cls.members.join(', ')}<br><strong>Teachers:</strong> ${cls.teachers.join(', ')}`;
+    tooltip.style.display = 'block';
+    tooltip.style.top = e.pageY + 10 + 'px';
+    tooltip.style.left = e.pageX + 10 + 'px';
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = 'none';
+  }
+
+  function openTeacherModal(index) {
+    const teacher = workers[index];
+    document.getElementById('teacherName').textContent = teacher.name;
+    document.getElementById('teacherRole').textContent = teacher.role;
+    document.getElementById('teacherClass').textContent = teacher.assignedClass;
+    modal.style.display = 'block';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  function updateAssignedClass(index, value) {
+    workers[index].assignedClass = value;
+    alert(`${workers[index].name} assigned to class ${value}`);
+  }
+
+  // Initial render
+  renderClasses();
+  renderWorkers();
+
 </script>
 </body>
 </html>
