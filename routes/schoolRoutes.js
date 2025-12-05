@@ -21,15 +21,23 @@ router.get("/nurseries", async (req, res) => {
 });
 
 // POST create a new nursery
+// POST create a new nursery
 router.post("/nurseries", async (req, res) => {
   try {
-    const { name, address } = req.body;
-    const nursery = await Nursery.create({ name, address });
+    const { name, address, contactEmail, contactPhone, passKey } = req.body;
+
+    // Optional: validate that all required fields exist
+    if (!name || !contactEmail || !contactPhone || !passKey) {
+      return res.status(400).json({ error: "All required fields must be provided" });
+    }
+
+    const nursery = await Nursery.create({ name, address, contactEmail, contactPhone, passKey });
     res.status(201).json(nursery);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 //////////////////////////
 // 🏫 Class Routes
