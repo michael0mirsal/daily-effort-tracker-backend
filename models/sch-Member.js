@@ -7,63 +7,35 @@ const memberSchema = new mongoose.Schema({
   age: { type: Number, required: true },
   dateOfBirth: { type: String, default: "" },
 
-  // 🔹 Avatar (Photo URL)
-  avatar: { type: String, default: "" },
+  // 🔹 Dad Info
+  dadName: { type: String, default: "" },
+  dadPhone: { type: String, default: "" },
+  dadEmail: { type: String, default: "" },
 
-  // 🔹 Address (Optional)
-  address: {
-    street: { type: String, default: "" },
-    city: { type: String, default: "" },
-    area: { type: String, default: "" }
-  },
-
-  // 🔹 Parent 1
-  parent1Name: { type: String, default: "" },
-  parent1Phone: { type: String, default: "" },
-  parent1Email: { type: String, default: "" },
-
-  // 🔹 Parent 2
-  parent2Name: { type: String, default: "" },
-  parent2Phone: { type: String, default: "" },
-  parent2Email: { type: String, default: "" },
+  // 🔹 Mom Info
+  momName: { type: String, default: "" },
+  momPhone: { type: String, default: "" },
+  momEmail: { type: String, default: "" },
 
   // 🔹 Emergency Contact
   emergencyContactName: { type: String, default: "" },
   emergencyContactPhone: { type: String, default: "" },
   emergencyRelation: { type: String, default: "" },
 
-  // 🔹 Medical Info
+  // 🔹 Avatar / Profile
+  avatar: { type: String, default: "" },
   allergies: { type: String, default: "" },
   medications: { type: String, default: "" },
   medicalNotes: { type: String, default: "" },
-
-  // 🔹 Links (Relations)
-  class: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Class",
-    required: true
-  },
-
-  nursery: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Nursery",
-    required: true
-  },
-
-  family: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Family",
-    required: true
-  },
-
-  // 🔹 System Role
-  role: { type: String, default: "kid" },
-
-  // 🔹 Status (Active / Left / Graduated)
+  notes: { type: String, default: "" },
   status: { type: String, default: "active" },
 
-  // 🔹 Free Notes
-  notes: { type: String, default: "" }
+  // 🔹 Links
+  class: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
+  nursery: { type: mongoose.Schema.Types.ObjectId, ref: "Nursery", required: true },
+  family: { type: mongoose.Schema.Types.ObjectId, ref: "Family", required: true },
+
+  role: { type: String, default: "kid" }
 
 }, { timestamps: true });
 
