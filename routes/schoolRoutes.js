@@ -9,24 +9,29 @@ const router = express.Router();
 
 //////////////////////////
 // 🏫 Nursery Routes
-//////////////////////////
+// Validate License (before showing signup form)
 router.post('/validate-license', async (req, res) => {
-  const { license } = req.body;
+  try {
+    const { license } = req.body;
 
-  if (!license) return res.status(400).json({ message: 'License is required' });
+    if (!license) return res.status(400).json({ message: 'License is required' });
 
-  const licenseDoc = await License.findOne({ key: license });
+    // Normalize license
+    const licenseKey = license.toUpperCase();
 
-  if (!licenseDoc) return res.status(400).json({ message: 'Invalid license' });
-  if (licenseDoc.used) return res.status(400).json({ message: 'License already used' });
+    const licenseDoc = await License.findOne({ key: licenseKey });
 
-  // Mark as used if you want
-  licenseDoc.used = true;
-  await licenseDoc.save();
+    if (!licenseDoc) return res.status(400).json({ message: 'Invalid license' });
+    if (licenseDoc.used) return res.status(400).json({ message: 'License already used' });
 
-  res.json({ message: 'License valid' });
+    // ✅ Do NOT mark as used yet; mark after nursery signs up
+    res.json({ message: 'License valid' });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
 });
-
 
 // GET all nurseries
 router.get("/nurseries", async (req, res) => {
