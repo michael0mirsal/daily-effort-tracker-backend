@@ -3,7 +3,6 @@ import Nursery from "../models/Nursery.js";
 import ClassModel from "../models/Class.js";
 import Teacher from "../models/Teacher.js";
 import SchoolMember from "../models/sch-Member.js";
-import express from 'express';
 import License from '../models/License.js';
 
 const router = express.Router();
