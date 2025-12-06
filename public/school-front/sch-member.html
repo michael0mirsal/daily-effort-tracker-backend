@@ -259,15 +259,16 @@ loadClasses();
 
 // Save member
 async function saveMember() {
-  const familyMemberId = localStorage.getItem("selectedKidId"); // from FamilyMember form
-  if(!familyMemberId) return alert("Select or create a kid first");
+  const kidId = localStorage.getItem("selectedKidId"); // 🔹 must exist
+  if(!kidId) return alert("Please select a kid first!");
 
   const body = {
-    familyMember: familyMemberId,
-    class: classSelect.value,
+    kid: kidId,  // link to FamilyMember
+    family: document.getElementById("familySelect").value,
+    class: document.getElementById("classSelect").value,
     nursery: localStorage.getItem("nurseryId"),
     role: "kid",
-    notes: "", // optional
+    notes: ""
   };
 
   const res = await fetch(`${API}/schoolMembers`, {
@@ -275,8 +276,12 @@ async function saveMember() {
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify(body)
   });
+
   if(res.ok) alert("School member saved successfully!");
-  else alert("Failed to save school member");
+  else {
+    const data = await res.json();
+    alert("Failed to save school member: " + (data.message || res.status));
+  }
 }
 
 
