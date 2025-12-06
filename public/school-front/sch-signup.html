@@ -114,43 +114,42 @@
       e.preventDefault();
 
       const data = {
-        nurseryName: document.getElementById('nurseryName').value.trim(),
-        contactEmail: document.getElementById('contactEmail').value.trim(),
-        contactPhone: document.getElementById('contactPhone').value.trim(),
-        nurseryKey: document.getElementById('nurseryKey').value.trim()
+        name: document.getElementById('nurseryName').value.trim(),
+        email: document.getElementById('contactEmail').value.trim(),
+        phone: document.getElementById('contactPhone').value.trim(),
+        passKey: document.getElementById('nurseryKey').value.trim(),
+        license: localStorage.getItem("selectedLicense"),
+        address: "Not provided"
       };
 
-      // Basic validation
-      for(let key in data){
-        if(!data[key]){
-          alert('Please fill all fields.');
+      // Basic empty check
+      for (let k in data) {
+        if (!data[k]) {
+          alert("Please fill all fields and ensure license is validated.");
           return;
         }
       }
 
-      // TODO: Send data to backend API
-      /*
-      fetch('/api/nursery/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Send to backend
+      fetch("http://localhost:3000/api/nurseries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       })
       .then(res => res.json())
       .then(resData => {
-        if(resData.success){
-          alert('Nursery registered successfully!');
-          window.location.href = "/pages/nursery/nursery-login.html";
-        } else {
-          alert(resData.message);
+        if (resData.error) {
+          alert(resData.error);
+          return;
         }
-      })
-      .catch(err => alert('Error: ' + err));
-      */
 
-      // For demo:
-      console.log('Nursery Signup Data:', data);
-      alert('Nursery signup completed! Check console for details.');
-      window.location.href = "/sch-login.html";
+        alert("Nursery registered successfully!");
+        window.location.href = "/sch-login.html";
+      })
+      .catch(err => {
+        alert("Error connecting to server.");
+        console.error(err);
+      });
     });
   </script>
 </body>
