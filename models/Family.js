@@ -7,7 +7,7 @@ const familySchema = new mongoose.Schema({
   dad: { type: String, required: true },
   mom: { type: String, required: true },
   passhash: { type: String, required: true },
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "Member" }] // <-- ObjectId refs
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "FamilyMember" }] // <-- ObjectId refs
 });
 
 

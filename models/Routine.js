@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const routineSchema = new mongoose.Schema({
-  member: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
+  member: { type: mongoose.Schema.Types.ObjectId, ref: "FamilyMember" },
   date: { type: String, required: true },
   items: [
     {
