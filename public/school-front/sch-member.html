@@ -2,112 +2,182 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Class Members Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  body {
-    font-family: Poppins, sans-serif;
-    background: #faf3d4;
-    padding: 20px;
-  }
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 30px 10px;
+}
 
-  h1, h2 {
-    text-align: center;
-    color: #d17b00;
-  }
+h1 {
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  margin-bottom: 5px;
+}
 
-  .card {
-    background: white;
-    padding: 20px;
-    border-radius: 18px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    max-width: 900px;
-    margin: auto;
-  }
+h2 {
+  text-align: center;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
 
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
+.card {
+  background: #fff;
+  border-radius: 25px;
+  padding: 30px;
+  max-width: 900px;
+  width: 100%;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+  animation: fadeIn 0.8s ease-out;
+}
 
-  input, select {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 100%;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
-  }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
 
-  button {
-    padding: 12px 18px;
-    background: #ff9800;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 10px;
-  }
+.form-group {
+  position: relative;
+  margin-bottom: 20px;
+}
 
-  button:hover {
-    background: #fb8c00;
-  }
+label {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  background: #fff;
+  padding: 0 5px;
+  font-size: 0.85em;
+  color: #555;
+  font-weight: 500;
+}
 
-  .popup {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: none;
-    justify-content: center;
-    align-items: center;
-  }
+input, select {
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  width: 100%;
+  font-size: 0.95em;
+  transition: all 0.2s;
+}
 
-  .popup-content {
-    background: white;
-    width: 80%;
-    max-width: 700px;
-    padding: 20px;
-    border-radius: 15px;
-  }
+input:focus, select:focus {
+  outline: none;
+  border-color: #ff9800;
+  box-shadow: 0 0 8px rgba(255,152,0,0.4);
+}
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-  }
+.button-primary {
+  background: #ff9800;
+  color: #fff;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  width: 100%;
+  margin-top: 10px;
+}
 
-  th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
-  }
+.button-primary:hover {
+  background: #fb8c00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
 
-  th {
-    background: #ffe6b3;
-  }
+.section-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.popup {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 25px;
+  width: 90%;
+  max-width: 700px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.5s ease-out;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 0.95em;
+}
+
+th {
+  background: #ffe6b3;
+  color: #333;
+}
+
+tr:hover {
+  background: #fff3e0;
+}
+
+.close-btn {
+  background: #ff3d00;
+  margin-top: 15px;
+}
+
+.close-btn:hover {
+  background: #e63900;
+}
 
 </style>
 </head>
 <body>
 
-<h1>Class Members</h1>
-
 <div class="card">
-
-  <h2>Add Member</h2>
+  <h1>Class Members Management</h1>
+  <h2>Add New Member</h2>
 
   <div class="form-grid">
-
-    <div>
+    <div class="form-group">
       <label>Full Name</label>
       <input id="fullName" type="text">
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Gender</label>
       <select id="gender">
         <option value="male">Male</option>
@@ -115,84 +185,85 @@
       </select>
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Age</label>
       <input id="age" type="number">
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Date of Birth</label>
       <input id="dob" type="date">
     </div>
 
-    <!-- Dad Info -->
-    <div>
+    <div class="section-title">Dad Info</div>
+
+    <div class="form-group">
       <label>Dad Name</label>
       <input id="dadName" type="text">
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Dad Phone</label>
       <input id="dadPhone" type="text">
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Dad Email</label>
       <input id="dadEmail" type="email">
     </div>
 
-    <!-- Mom Info -->
-    <div>
+    <div class="section-title">Mom Info</div>
+
+    <div class="form-group">
       <label>Mom Name</label>
       <input id="momName" type="text">
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Mom Phone</label>
       <input id="momPhone" type="text">
     </div>
 
-    <div>
+    <div class="form-group">
       <label>Mom Email</label>
       <input id="momEmail" type="email">
     </div>
 
-    <!-- Emergency -->
-    <div>
-      <label>Emergency Name</label>
+    <div class="section-title">Emergency Contact</div>
+
+    <div class="form-group">
+      <label>Name</label>
       <input id="emgName" type="text">
     </div>
 
-    <div>
-      <label>Emergency Phone</label>
+    <div class="form-group">
+      <label>Phone</label>
       <input id="emgPhone" type="text">
     </div>
 
-    <div>
-      <label>Emergency Relation</label>
+    <div class="form-group">
+      <label>Relation</label>
       <input id="emgRelation" type="text">
     </div>
 
-    <!-- Class Selection -->
-    <div>
+    <div class="form-group">
       <label>Select Class</label>
       <select id="classSelect"></select>
     </div>
 
   </div>
 
-  <button onclick="saveMember()">Save Member</button>
+  <button class="button-primary" onclick="saveMember()">Save Member</button>
 
   <hr style="margin: 25px 0">
 
   <h2>Show Class Members</h2>
-
   <select id="classShow"></select>
-  <button onclick="openPopup()">Show</button>
+  <button class="button-primary" onclick="openPopup()">Show Members</button>
 
 </div>
 
-<!-- POPUP -->
+<!-- Popup -->
 <div id="popup" class="popup">
   <div class="popup-content">
     <h2>Class Members</h2>
@@ -204,90 +275,62 @@
       </thead>
       <tbody id="membersTable"></tbody>
     </table>
-
-    <br>
-    <button onclick="closePopup()">Close</button>
+    <button class="button-primary close-btn" onclick="closePopup()">Close</button>
   </div>
 </div>
 
 <script>
 const API = "http://localhost:3000/api";
 
-// Load class dropdowns
+// Load classes
 async function loadClasses() {
   const res = await fetch(`${API}/classes`);
   const classes = await res.json();
-
-  const classSelect = document.getElementById("classSelect");
-  const classShow = document.getElementById("classShow");
-
+  const select1 = document.getElementById("classSelect");
+  const select2 = document.getElementById("classShow");
   classes.forEach(c => {
-    const opt = new Option(c.name, c._id);
-    classSelect.appendChild(opt);
-    classShow.appendChild(opt.cloneNode(true));
+    select1.appendChild(new Option(c.name, c._id));
+    select2.appendChild(new Option(c.name, c._id));
   });
 }
 loadClasses();
 
-// Save Member
+// Save member
 async function saveMember() {
   const body = {
     fullName: fullName.value,
     gender: gender.value,
     age: age.value,
     dateOfBirth: dob.value,
-
     dadName: dadName.value,
     dadPhone: dadPhone.value,
     dadEmail: dadEmail.value,
-
     momName: momName.value,
     momPhone: momPhone.value,
     momEmail: momEmail.value,
-
     emergencyContactName: emgName.value,
     emergencyContactPhone: emgPhone.value,
     emergencyRelation: emgRelation.value,
-
     class: classSelect.value,
     nursery: localStorage.getItem("nurseryId"),
-    family: localStorage.getItem("familyId"),
+    family: localStorage.getItem("familyId")
   };
-
-  await fetch(`${API}/members`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-
-  alert("Member Saved!");
+  await fetch(`${API}/members`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  alert("Member saved!");
 }
 
-// Popup Show
+// Popup
 async function openPopup() {
   const classId = classShow.value;
-
   const res = await fetch(`${API}/members/class/${classId}`);
   const members = await res.json();
-
   const table = document.getElementById("membersTable");
   table.innerHTML = "";
-
   members.forEach(m => {
-    const row = `
-      <tr>
-        <td>${m.fullName}</td>
-        <td>${m.age}</td>
-        <td>${m.dadName}</td>
-        <td>${m.momName}</td>
-      </tr>
-    `;
-    table.innerHTML += row;
+    table.innerHTML += `<tr><td>${m.fullName}</td><td>${m.age}</td><td>${m.dadName}</td><td>${m.momName}</td></tr>`;
   });
-
   document.getElementById("popup").style.display = "flex";
 }
-
 function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
