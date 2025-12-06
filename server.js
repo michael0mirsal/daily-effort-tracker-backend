@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/school", schoolRoutes);
 // Serve welcome page
 app.get("/", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "school-front", "ask-user.html"));
+  res.sendFile(path.resolve(__dirname, "public/school-front", "ask-user.html"));
 });
 
 // ======================================================
