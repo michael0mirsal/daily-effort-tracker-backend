@@ -14,7 +14,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 30px 10px;
+  padding: 20px 10px;
 }
 
 h1 {
@@ -28,39 +28,39 @@ h2 {
   text-align: center;
   color: #fff;
   font-weight: 500;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .card {
   background: #fff;
   border-radius: 25px;
-  padding: 30px;
+  padding: 25px 30px;
   max-width: 900px;
   width: 100%;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
   animation: fadeIn 0.8s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(30px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 15px;
 }
 
 .form-group {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 label {
   position: absolute;
   top: -8px;
-  left: 12px;
+  left: 10px;
   background: #fff;
   padding: 0 5px;
   font-size: 0.85em;
@@ -69,8 +69,8 @@ label {
 }
 
 input, select {
-  padding: 12px 15px;
-  border-radius: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid #ccc;
   width: 100%;
   font-size: 0.95em;
@@ -80,15 +80,15 @@ input, select {
 input:focus, select:focus {
   outline: none;
   border-color: #ff9800;
-  box-shadow: 0 0 8px rgba(255,152,0,0.4);
+  box-shadow: 0 0 6px rgba(255,152,0,0.4);
 }
 
 .button-primary {
   background: #ff9800;
   color: #fff;
   border: none;
-  padding: 14px 20px;
-  border-radius: 12px;
+  padding: 12px 20px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s;
@@ -98,51 +98,51 @@ input:focus, select:focus {
 
 .button-primary:hover {
   background: #fb8c00;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .section-title {
-  font-size: 1.1em;
+  font-size: 1.05em;
   font-weight: 600;
-  margin-top: 20px;
-  margin-bottom: 10px;
+  margin: 15px 0 5px;
   color: #333;
+  grid-column: 1/-1;
 }
 
 .popup {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.5);
   display: none;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 15px;
   z-index: 1000;
 }
 
 .popup-content {
-  background: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.97);
   border-radius: 20px;
-  padding: 25px;
+  padding: 20px;
   width: 90%;
   max-width: 700px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
   animation: fadeIn 0.5s ease-out;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 15px;
+  margin-top: 10px;
 }
 
 th, td {
-  padding: 12px;
+  padding: 10px;
   border-bottom: 1px solid #ddd;
   text-align: left;
-  font-size: 0.95em;
+  font-size: 0.9em;
 }
 
 th {
@@ -156,13 +156,17 @@ tr:hover {
 
 .close-btn {
   background: #ff3d00;
-  margin-top: 15px;
+  margin-top: 10px;
+  width: 100%;
 }
 
 .close-btn:hover {
   background: #e63900;
 }
 
+@media(max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -172,90 +176,32 @@ tr:hover {
   <h2>Add New Member</h2>
 
   <div class="form-grid">
-    <div class="form-group">
-      <label>Full Name</label>
-      <input id="fullName" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Gender</label>
-      <select id="gender">
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Age</label>
-      <input id="age" type="number">
-    </div>
-
-    <div class="form-group">
-      <label>Date of Birth</label>
-      <input id="dob" type="date">
-    </div>
+    <div class="form-group"><label>Full Name</label><input id="fullName" type="text"></div>
+    <div class="form-group"><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+    <div class="form-group"><label>Age</label><input id="age" type="number"></div>
+    <div class="form-group"><label>Date of Birth</label><input id="dob" type="date"></div>
 
     <div class="section-title">Dad Info</div>
-
-    <div class="form-group">
-      <label>Dad Name</label>
-      <input id="dadName" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Dad Phone</label>
-      <input id="dadPhone" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Dad Email</label>
-      <input id="dadEmail" type="email">
-    </div>
+    <div class="form-group"><label>Dad Name</label><input id="dadName" type="text"></div>
+    <div class="form-group"><label>Dad Phone</label><input id="dadPhone" type="text"></div>
+    <div class="form-group"><label>Dad Email</label><input id="dadEmail" type="email"></div>
 
     <div class="section-title">Mom Info</div>
-
-    <div class="form-group">
-      <label>Mom Name</label>
-      <input id="momName" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Mom Phone</label>
-      <input id="momPhone" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Mom Email</label>
-      <input id="momEmail" type="email">
-    </div>
+    <div class="form-group"><label>Mom Name</label><input id="momName" type="text"></div>
+    <div class="form-group"><label>Mom Phone</label><input id="momPhone" type="text"></div>
+    <div class="form-group"><label>Mom Email</label><input id="momEmail" type="email"></div>
 
     <div class="section-title">Emergency Contact</div>
+    <div class="form-group"><label>Name</label><input id="emgName" type="text"></div>
+    <div class="form-group"><label>Phone</label><input id="emgPhone" type="text"></div>
+    <div class="form-group"><label>Relation</label><input id="emgRelation" type="text"></div>
 
-    <div class="form-group">
-      <label>Name</label>
-      <input id="emgName" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Phone</label>
-      <input id="emgPhone" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Relation</label>
-      <input id="emgRelation" type="text">
-    </div>
-
-    <div class="form-group">
-      <label>Select Class</label>
-      <select id="classSelect"></select>
-    </div>
-
+    <div class="form-group"><label>Select Class</label><select id="classSelect"></select></div>
   </div>
 
   <button class="button-primary" onclick="saveMember()">Save Member</button>
 
-  <hr style="margin: 25px 0">
+  <hr style="margin: 20px 0">
 
   <h2>Show Class Members</h2>
   <select id="classShow"></select>
@@ -263,16 +209,11 @@ tr:hover {
 
 </div>
 
-<!-- Popup -->
 <div id="popup" class="popup">
   <div class="popup-content">
     <h2>Class Members</h2>
     <table>
-      <thead>
-        <tr>
-          <th>Name</th><th>Age</th><th>Dad</th><th>Mom</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Name</th><th>Age</th><th>Dad</th><th>Mom</th></tr></thead>
       <tbody id="membersTable"></tbody>
     </table>
     <button class="button-primary close-btn" onclick="closePopup()">Close</button>
