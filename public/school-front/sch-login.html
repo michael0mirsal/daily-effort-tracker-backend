@@ -158,7 +158,7 @@ async function validateLicense() {
   licenseError.textContent = ''; // reset error
 
   try {
-    const res = await fetch('/api/nursery/validate-license', {
+    const res = await fetch('/api/school/nursery/validate-license', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ license: licenseInput.trim() }) // normalize case
