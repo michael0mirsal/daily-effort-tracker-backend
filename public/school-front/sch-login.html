@@ -161,7 +161,7 @@ async function validateLicense() {
     const res = await fetch('/api/nursery/validate-license', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ license: licenseInput.toUpperCase() }) // normalize case
+      body: JSON.stringify({ license: licenseInput.trim() }) // normalize case
     });
 
     const data = await res.json();
