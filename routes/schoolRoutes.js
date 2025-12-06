@@ -55,15 +55,26 @@ router.get("/nurseries", async (req, res) => {
 // POST create nursery
 router.post("/nurseries", async (req, res) => {
   try {
-    const { name, address, email, phone, passKey } = req.body;
+    const { name, address, email, phone, passKey, license } = req.body;
 
-    if (!name || !email || !phone || !passKey) {
-      return res
-        .status(400)
-        .json({ error: "Missing required fields" });
+    // 1️⃣ Check required fields
+    if (!name || !email || !phone || !passKey || !license) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const nursery = await Nursery.create({
+    // 2️⃣ Validate license
+    const licenseKey = license.toUpperCase();
+    const licenseDoc = await License.findOne({ key: licenseKey });
+
+    if (!licenseDoc) {
+      return res.status(400).json({ error: "Invalid license" });
+    }
+    if (licenseDoc.used) {
+      return res.status(400).json({ error: "License already used" });
+    }
+
+    // 3️⃣ Create the nursery
+    const newNursery = await Nursery.create({
       name,
       address,
       email,
@@ -71,9 +82,16 @@ router.post("/nurseries", async (req, res) => {
       passKey
     });
 
-    res.status(201).json(nursery);
+    // 4️⃣ Mark license as used
+    licenseDoc.used = true;
+    licenseDoc.assignedTo = newNursery._id;
+    await licenseDoc.save();
+
+    res.status(201).json({ nursery: newNursery, message: "Nursery registered successfully!" });
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Server error. Please try again later." });
   }
 });
 
