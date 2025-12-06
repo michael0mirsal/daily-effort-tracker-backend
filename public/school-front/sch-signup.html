@@ -108,13 +108,16 @@
   </div>
 
   <script>
-    const licenseStep = document.getElementById("licenseStep");
-    const licenseInput = document.getElementById("licenseInput");
-    const validateLicenseBtn = document.getElementById("validateLicenseBtn");
-    const licenseError = document.getElementById("licenseError");
-    const signupForm = document.getElementById("signupForm");
+document.addEventListener("DOMContentLoaded", () => {
+  const licenseInput = document.getElementById("licenseInput");
+  const validateLicenseBtn = document.getElementById("validateLicenseBtn");
+  const licenseError = document.getElementById("licenseError");
+  const signupForm = document.getElementById("signupForm");
 
-    // 1️⃣ Validate license
+  let selectedLicense = null; // store valid license
+
+  // ✅ License validation
+  if (validateLicenseBtn) {
     validateLicenseBtn.addEventListener("click", async () => {
       const license = licenseInput.value.trim().toUpperCase();
       if (!license) {
@@ -122,7 +125,7 @@
         return;
       }
 
-      licenseError.textContent = "";
+      licenseError.textContent = ""; // reset error
 
       try {
         const res = await fetch("/api/nursery/validate-license", {
@@ -134,36 +137,42 @@
         const data = await res.json();
 
         if (res.ok) {
-          // License is valid → save to localStorage & show signup form
-          localStorage.setItem("selectedLicense", license);
-          licenseStep.style.display = "none";
-          signupForm.style.display = "block";
+          selectedLicense = license;
+          localStorage.setItem("selectedLicense", selectedLicense);
+          alert("License validated! You can now complete signup.");
         } else {
-          licenseError.textContent = data.message;
+          licenseError.textContent = data.message || "Invalid license.";
         }
       } catch (err) {
         console.error(err);
         licenseError.textContent = "Server error. Please try again later.";
       }
     });
+  }
 
-    // 2️⃣ Submit signup
+  // ✅ Signup form submission
+  if (signupForm) {
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      if (!selectedLicense) {
+        alert("Please validate your license before signing up.");
+        return;
+      }
 
       const data = {
         name: document.getElementById("nurseryName").value.trim(),
         email: document.getElementById("contactEmail").value.trim(),
         phone: document.getElementById("contactPhone").value.trim(),
         passKey: document.getElementById("nurseryKey").value.trim(),
-        license: localStorage.getItem("selectedLicense"),
-        address: "Not provided"
+        license: selectedLicense,
+        address: "Not provided" // optional, you can add input
       };
 
-      // Check for missing fields
+      // Basic empty check
       for (let k in data) {
         if (!data[k]) {
-          alert(k === "license" ? "Please validate your license first!" : `Field "${k}" is required.`);
+          alert("Please fill all fields and ensure license is validated.");
           return;
         }
       }
@@ -177,18 +186,22 @@
 
         const resData = await res.json();
 
-        if (res.ok) {
-          localStorage.removeItem("selectedLicense");
-          alert("Nursery registered successfully!");
-          window.location.href = "/sch-login.html";
-        } else {
-          alert(resData.error || resData.message);
+        if (resData.error) {
+          alert(resData.error);
+          return;
         }
+
+        alert("Nursery registered successfully!");
+        window.location.href = "/sch-login.html";
+
       } catch (err) {
         console.error(err);
         alert("Error connecting to server.");
       }
     });
-  </script>
+  }
+});
+</script>
+
 </body>
 </html>
