@@ -205,11 +205,16 @@ tr:hover {
   <div class="form-group" style="grid-column: 1/-1;">
     <select id="classSelect" style="padding:12px 15px; border-radius:12px; width:100%; border:1px solid #ccc; font-size:0.95em;">
       <option value="">Select Class</option>
-      <select id="familySelect"></select>
     </select>
   </div>
 </div>
-
+<!-- Family Selection -->
+    <div class="section-title">Select Family & Kid</div>
+    <div class="form-group" style="grid-column:1/-1;">
+      <select id="familySelect" style="padding:12px 15px; border-radius:12px; width:100%; border:1px solid #ccc; font-size:0.95em;"><option value="">Select Family</option></select>
+      <select id="kidSelect" style="padding:12px 15px; border-radius:12px; width:100%; border:1px solid #ccc; font-size:0.95em;"><option value="">Select Kid</option></select>
+      <button type="button" onclick="selectKid()">✅ Select Kid</button>
+    </div>
 
   <button class="button-primary" onclick="saveMember()">Save Member</button>
 
@@ -256,6 +261,16 @@ async function loadClasses() {
   });
 }
 loadClasses();
+
+
+function selectKid(index) {
+  const kid = kids[index];
+  if(!kid._id) return alert("Save the kid first to server!");
+  localStorage.setItem("selectedKidId", kid._id);
+  localStorage.setItem("selectedKidName", kid.name);
+  alert(`${kid.name} selected!`);
+}
+
 
 // Save member
 async function saveMember() {
