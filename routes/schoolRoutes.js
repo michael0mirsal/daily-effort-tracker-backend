@@ -6,8 +6,10 @@ import SchoolMember from "../models/sch-Member.js";
 import License from '../models/License.js';
 import crypto from "crypto";
 
-export function generateLicenseKey() {
-  return crypto.randomBytes(16).toString("hex");
+export async function generateLicenseKey() {
+  const key = crypto.randomBytes(16).toString("hex").toUpperCase();
+  await License.create({ key });
+  return key;
 }
 
 
@@ -32,7 +34,7 @@ router.post('/nursery/validate-license', async (req, res) => {
     if (!license) return res.status(400).json({ message: 'License is required' });
 
     // Normalize license
-    const licenseKey = license.trim();
+    const licenseKey = license.trim().toUpperCase();
     const licenseDoc = await License.findOne({ key: licenseKey });
 
 
