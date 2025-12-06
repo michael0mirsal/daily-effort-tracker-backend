@@ -108,97 +108,88 @@
   </div>
 
   <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const licenseInput = document.getElementById("licenseInput");
-  const validateLicenseBtn = document.getElementById("validateLicenseBtn");
-  const licenseError = document.getElementById("licenseError");
-  const signupForm = document.getElementById("signupForm");
+const licenseInput = document.getElementById('licenseInput');
+const validateBtn = document.getElementById('validateLicenseBtn');
+const licenseError = document.getElementById('licenseError');
+const signupForm = document.getElementById('signupForm');
+const signupBtn = signupForm.querySelector('button');
 
-  let selectedLicense = null; // store valid license
+let selectedLicense = null;
 
-  // ✅ License validation
-  if (validateLicenseBtn) {
-    validateLicenseBtn.addEventListener("click", async () => {
-      const license = licenseInput.value.trim().toUpperCase();
-      if (!license) {
-        licenseError.textContent = "Please enter your license number.";
-        return;
-      }
-
-      licenseError.textContent = ""; // reset error
-
-      try {
-        const res = await fetch("/api/nursery/validate-license", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ license })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          selectedLicense = license;
-          localStorage.setItem("selectedLicense", selectedLicense);
-          alert("License validated! You can now complete signup.");
-        } else {
-          licenseError.textContent = data.message || "Invalid license.";
-        }
-      } catch (err) {
-        console.error(err);
-        licenseError.textContent = "Server error. Please try again later.";
-      }
-    });
+// License validation
+validateBtn.addEventListener('click', async () => {
+  const license = licenseInput.value.trim();
+  if (!license) {
+    licenseError.textContent = "Please enter your license number.";
+    return;
   }
 
-  // ✅ Signup form submission
-  if (signupForm) {
-    signupForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      if (!selectedLicense) {
-        alert("Please validate your license before signing up.");
-        return;
-      }
-
-      const data = {
-        name: document.getElementById("nurseryName").value.trim(),
-        email: document.getElementById("contactEmail").value.trim(),
-        phone: document.getElementById("contactPhone").value.trim(),
-        passKey: document.getElementById("nurseryKey").value.trim(),
-        license: selectedLicense,
-        address: "Not provided" // optional, you can add input
-      };
-
-      // Basic empty check
-      for (let k in data) {
-        if (!data[k]) {
-          alert("Please fill all fields and ensure license is validated.");
-          return;
-        }
-      }
-
-      try {
-        const res = await fetch("/api/nurseries", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-
-        const resData = await res.json();
-
-        if (resData.error) {
-          alert(resData.error);
-          return;
-        }
-
-        alert("Nursery registered successfully!");
-        window.location.href = "/sch-login.html";
-
-      } catch (err) {
-        console.error(err);
-        alert("Error connecting to server.");
-      }
+  try {
+    const res = await fetch("/api/nursery/validate-license", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ license })
     });
+    const data = await res.json();
+
+    if (res.ok) {
+      selectedLicense = license;
+      licenseError.textContent = "License validated ✅";
+      signupBtn.disabled = false; // Enable signup
+    } else {
+      selectedLicense = null;
+      licenseError.textContent = data.message || "Invalid license";
+      signupBtn.disabled = true;
+    }
+  } catch (err) {
+    console.error(err);
+    licenseError.textContent = "Server error. Try again later.";
+    signupBtn.disabled = true;
+  }
+});
+
+// Signup form submission
+signupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!selectedLicense) {
+    alert("Please validate your license before signing up.");
+    return;
+  }
+
+  const data = {
+    name: document.getElementById('nurseryName').value.trim(),
+    email: document.getElementById('contactEmail').value.trim(),
+    phone: document.getElementById('contactPhone').value.trim(),
+    passKey: document.getElementById('nurseryKey').value.trim(),
+    license: selectedLicense,
+    address: "Not provided"
+  };
+
+  for (let k in data) {
+    if (!data[k]) {
+      alert("Please fill all fields.");
+      return;
+    }
+  }
+
+  try {
+    const res = await fetch("/api/nurseries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const resData = await res.json();
+
+    if (res.ok) {
+      alert("Nursery registered successfully!");
+      window.location.href = "/sch-login.html";
+    } else {
+      alert(resData.error || "Signup failed");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error connecting to server.");
   }
 });
 </script>
