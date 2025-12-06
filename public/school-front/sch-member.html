@@ -205,6 +205,7 @@ tr:hover {
   <div class="form-group" style="grid-column: 1/-1;">
     <select id="classSelect" style="padding:12px 15px; border-radius:12px; width:100%; border:1px solid #ccc; font-size:0.95em;">
       <option value="">Select Class</option>
+      <select id="familySelect"></select>
     </select>
   </div>
 </div>
@@ -233,6 +234,15 @@ tr:hover {
 
 <script>
 const API = "http://localhost:3000/api";
+
+async function loadFamilies() {
+  const res = await fetch(`${API}/families`);
+  const families = await res.json();
+  const select = document.getElementById("familySelect");
+  families.forEach(f => select.appendChild(new Option(f.name, f._id)));
+}
+
+loadFamilies();
 
 // Load classes
 async function loadClasses() {
