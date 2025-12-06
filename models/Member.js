@@ -8,4 +8,4 @@ const memberSchema = new mongoose.Schema({
   avatar: { type: String, default: '' }, // <-- new field
 }, { timestamps: true });
 
-export default mongoose.model("Member", memberSchema);
+export default mongoose.model("FamilyMember", memberSchema);
