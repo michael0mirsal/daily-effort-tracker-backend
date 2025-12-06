@@ -32,9 +32,9 @@ router.post('/validate-license', async (req, res) => {
     if (!license) return res.status(400).json({ message: 'License is required' });
 
     // Normalize license
-    const licenseKey = license.toUpperCase();
-
+    const licenseKey = license.trim();
     const licenseDoc = await License.findOne({ key: licenseKey });
+
 
     if (!licenseDoc) return res.status(400).json({ message: 'Invalid license' });
     if (licenseDoc.used) return res.status(400).json({ message: 'License already used' });
