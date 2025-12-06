@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Class Members Management</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Add Member</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 
@@ -11,66 +11,133 @@
   body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background: #faf7e8;
+    background: #f6f7fb;
     padding: 20px;
+    display: flex;
+    justify-content: center;
   }
-
-  h1, h2 { text-align: center; color: #333; }
-  h3 { color: #444; margin-top: 20px; }
 
   .container {
-    max-width: 900px;
-    margin: auto;
     background: white;
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    padding: 30px;
+    border-radius: 18px;
+    width: 95%;
+    max-width: 800px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   }
 
-  input, select {
-    width: 100%;
-    margin: 6px 0;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 15px;
+  h1 {
+    text-align: center;
+    margin-bottom: 25px;
   }
 
-  button {
-    padding: 12px 20px;
-    background: #ff8c2a;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 15px;
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
   }
-  button:hover { background: #ff6a00; }
 
-  .section-title {
-    background: #ffefc7;
-    padding: 10px;
-    border-radius: 10px;
-    margin: 30px 0 10px;
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  label {
+    font-size: 14px;
+    margin-bottom: 6px;
     font-weight: 600;
   }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-  }
-
-  th, td {
-    border: 1px solid #ddd;
+  input, select, textarea {
     padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
   }
 
-  th {
-    background: #ffe9bb;
+  textarea {
+    resize: none;
   }
 
+  .btn {
+    padding: 12px 20px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 20px;
+  }
+
+  .btn:hover {
+    background: #0b7dda;
+  }
+
+  .class-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    margin-top: 30px;
+  }
+
+  .btn-show {
+    background: #ff9800;
+  }
+
+  .btn-show:hover {
+    background: #e68900;
+  }
+
+  /* Popup Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .close {
+    float: right;
+    font-size: 20px;
+    cursor: pointer;
+    color: #444;
+  }
+
+  ul.member-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  ul.member-list li {
+    background: #2196f3;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
 </style>
 </head>
 
@@ -78,213 +145,218 @@
 
 <div class="container">
 
-  <h1>Class Members</h1>
+  <h1>Add New Member</h1>
 
-  <!-- CLASS DROPDOWN -->
-  <h2>Select Class</h2>
-  <select id="classSelect">
-    <option value="">Select Class</option>
-  </select>
+  <!-- Class selection -->
+  <div class="class-header">
+    <div style="flex: 1; margin-right: 10px;">
+      <label>Select Class</label>
+      <select id="classSelect">
+        <option value="">Loading...</option>
+      </select>
+    </div>
 
-  <button onclick="loadClassMembers()">Show Class Members</button>
+    <button class="btn btn-show" onclick="showClassMembers()">Show Members</button>
+  </div>
 
-  <table id="membersTable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Full Name</th>
-        <th>Age</th>
-        <th>Gender</th>
-        <th>Parent 1 Phone</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="membersBody"></tbody>
-  </table>
+  <!-- Add Member Form -->
+  <div class="form-grid">
 
-  <!-- ADD MEMBER FORM -->
-  <h2 class="section-title">Add New Member</h2>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="fullName" required>
+    </div>
 
-  <h3>Basic Info</h3>
-  <input id="fullName" placeholder="Full Name">
-  <select id="gender">
-    <option value="male">Male</option>
-    <option value="female">Female</option>
-  </select>
-  <input id="age" type="number" placeholder="Age">
-  <input id="dateOfBirth" type="date">
+    <div class="form-group">
+      <label>Gender</label>
+      <select id="gender">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </div>
 
-  <h3>Avatar</h3>
-  <input id="avatar" placeholder="Photo URL">
+    <div class="form-group">
+      <label>Age</label>
+      <input type="number" id="age">
+    </div>
 
-  <h3>Address</h3>
-  <input id="street" placeholder="Street">
-  <input id="city" placeholder="City">
-  <input id="area" placeholder="Area">
+    <div class="form-group">
+      <label>Date of Birth</label>
+      <input type="date" id="dob">
+    </div>
 
-  <h3>Parent 1</h3>
-  <input id="parent1Name" placeholder="Parent 1 Name">
-  <input id="parent1Phone" placeholder="Parent 1 Phone">
-  <input id="parent1Email" placeholder="Parent 1 Email">
+    <div class="form-group">
+      <label>Street</label>
+      <input type="text" id="street">
+    </div>
 
-  <h3>Parent 2</h3>
-  <input id="parent2Name" placeholder="Parent 2 Name">
-  <input id="parent2Phone" placeholder="Parent 2 Phone">
-  <input id="parent2Email" placeholder="Parent 2 Email">
+    <div class="form-group">
+      <label>City</label>
+      <input type="text" id="city">
+    </div>
 
-  <h3>Emergency Contact</h3>
-  <input id="emergencyContactName" placeholder="Contact Name">
-  <input id="emergencyContactPhone" placeholder="Contact Phone">
-  <input id="emergencyRelation" placeholder="Relation">
+    <div class="form-group">
+      <label>Area</label>
+      <input type="text" id="area">
+    </div>
 
-  <h3>Medical Info</h3>
-  <input id="allergies" placeholder="Allergies">
-  <input id="medications" placeholder="Medications">
-  <input id="medicalNotes" placeholder="Medical Notes">
+    <div class="form-group">
+      <label>Avatar Link</label>
+      <input type="text" id="avatar">
+    </div>
 
-  <h3>Status</h3>
-  <select id="status">
-    <option value="active">Active</option>
-    <option value="left">Left</option>
-    <option value="graduated">Graduated</option>
-  </select>
+    <div class="form-group">
+      <label>Parent 1 Name</label>
+      <input type="text" id="parent1Name">
+    </div>
 
-  <h3>Notes</h3>
-  <input id="notes" placeholder="Notes (Optional)">
+    <div class="form-group">
+      <label>Parent 1 Phone</label>
+      <input type="text" id="parent1Phone">
+    </div>
 
-  <button onclick="addMember()">Add Member</button>
+    <div class="form-group">
+      <label>Parent 1 Email</label>
+      <input type="email" id="parent1Email">
+    </div>
+
+    <div class="form-group">
+      <label>Parent 2 Name</label>
+      <input type="text" id="parent2Name">
+    </div>
+
+    <div class="form-group">
+      <label>Parent 2 Phone</label>
+      <input type="text" id="parent2Phone">
+    </div>
+
+    <div class="form-group">
+      <label>Parent 2 Email</label>
+      <input type="email" id="parent2Email">
+    </div>
+
+    <div class="form-group">
+      <label>Emergency Contact Name</label>
+      <input type="text" id="emergencyName">
+    </div>
+
+    <div class="form-group">
+      <label>Emergency Contact Phone</label>
+      <input type="text" id="emergencyPhone">
+    </div>
+
+    <div class="form-group">
+      <label>Emergency Relation</label>
+      <input type="text" id="emergencyRelation">
+    </div>
+
+    <div class="form-group" style="grid-column: span 2;">
+      <label>Medical Notes</label>
+      <textarea id="medicalNotes" rows="3"></textarea>
+    </div>
+
+  </div>
+
+  <button class="btn" onclick="submitMember()">Save Member</button>
 
 </div>
 
+<!-- POPUP -->
+<div id="memberModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2>Class Members</h2>
+    <ul class="member-list" id="memberList"></ul>
+  </div>
+</div>
+
 <script>
-const API = "http://localhost:3000";
+  const API = "http://localhost:3000/api";
 
-// =========================
-// LOAD CLASSES INTO DROPDOWN
-// =========================
-async function loadClasses() {
-  try {
-    const res = await fetch(`${API}/api/classes`);
-    const classes = await res.json();
-
-    const sel = document.getElementById("classSelect");
-
-    classes.forEach(c => {
-      let opt = document.createElement("option");
-      opt.value = c._id;
-      opt.textContent = c.name;
-      sel.appendChild(opt);
-    });
-
-  } catch (err) {
-    console.error("Error loading classes:", err);
-  }
-}
-loadClasses();
-
-
-// =========================
-// SHOW CLASS MEMBERS
-// =========================
-async function loadClassMembers() {
-  const classId = classSelect.value;
-  if (!classId) return alert("Select a class first!");
-
-  try {
-    const res = await fetch(`${API}/api/classMembers/${classId}`);
-    const members = await res.json();
-
-    const tbody = document.getElementById("membersBody");
-    tbody.innerHTML = "";
-
-    members.forEach((m, i) => {
-      const row = `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${m.fullName}</td>
-          <td>${m.age}</td>
-          <td>${m.gender}</td>
-          <td>${m.parent1Phone}</td>
-          <td>${m.status}</td>
-        </tr>
-      `;
-      tbody.innerHTML += row;
-    });
-
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-
-// =========================
-// ADD MEMBER (FULL SCHEMA)
-// =========================
-async function addMember() {
-
-  const payload = {
-    fullName: fullName.value,
-    gender: gender.value,
-    age: Number(age.value),
-    dateOfBirth: dateOfBirth.value,
-
-    avatar: avatar.value,
-
-    address: {
-      street: street.value,
-      city: city.value,
-      area: area.value
-    },
-
-    parent1Name: parent1Name.value,
-    parent1Phone: parent1Phone.value,
-    parent1Email: parent1Email.value,
-
-    parent2Name: parent2Name.value,
-    parent2Phone: parent2Phone.value,
-    parent2Email: parent2Email.value,
-
-    emergencyContactName: emergencyContactName.value,
-    emergencyContactPhone: emergencyContactPhone.value,
-    emergencyRelation: emergencyRelation.value,
-
-    allergies: allergies.value,
-    medications: medications.value,
-    medicalNotes: medicalNotes.value,
-
-    class: classSelect.value,
-    nursery: "NurseryID-from-login",
-    family: "FamilyID-from-login",
-
-    role: "kid",
-    status: status.value,
-    notes: notes.value
-  };
-
-  if (!payload.fullName || !payload.age || !payload.class) {
-    return alert("⚠ Full name, age, and class are required!");
-  }
-
-  try {
-    const res = await fetch(`${API}/api/classMembers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
+  async function loadClasses() {
+    const res = await fetch(`${API}/classes`);
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || "Failed to add member");
+    const select = document.getElementById("classSelect");
+    select.innerHTML = "";
 
-    alert("Member added successfully!");
-
-    loadClassMembers();
-
-  } catch (err) {
-    console.error(err);
-    alert("Error adding member.");
+    data.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c._id;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
   }
-}
+
+  loadClasses();
+
+  async function showClassMembers() {
+    const classId = document.getElementById("classSelect").value;
+    if (!classId) return alert("Please select a class.");
+
+    const res = await fetch(`${API}/members/class/${classId}`);
+    const members = await res.json();
+
+    const list = document.getElementById("memberList");
+    list.innerHTML = "";
+
+    members.forEach(m => {
+      const li = document.createElement("li");
+      li.textContent = m.fullName;
+      list.appendChild(li);
+    });
+
+    document.getElementById("memberModal").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("memberModal").style.display = "none";
+  }
+
+  async function submitMember() {
+    const body = {
+      fullName: fullName.value,
+      gender: gender.value,
+      age: age.value,
+      dateOfBirth: dob.value,
+      avatar: avatar.value,
+
+      address: {
+        street: street.value,
+        city: city.value,
+        area: area.value
+      },
+
+      parent1Name: parent1Name.value,
+      parent1Phone: parent1Phone.value,
+      parent1Email: parent1Email.value,
+
+      parent2Name: parent2Name.value,
+      parent2Phone: parent2Phone.value,
+      parent2Email: parent2Email.value,
+
+      emergencyContactName: emergencyName.value,
+      emergencyContactPhone: emergencyPhone.value,
+      emergencyRelation: emergencyRelation.value,
+
+      medicalNotes: medicalNotes.value,
+
+      class: classSelect.value,
+      nursery: "YOUR_NURSERY_ID",
+      family: "YOUR_FAMILY_ID",
+      role: "kid",
+      status: "active"
+    };
+
+    const res = await fetch(`${API}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    if (res.ok) alert("Member added successfully!");
+    else alert("Error adding member");
+  }
 </script>
 
 </body>
