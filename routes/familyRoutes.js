@@ -2,7 +2,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import Family from "../models/Family.js";
-import Member from "../models/Member.js";
+import FamilyMember from "../models/Member.js";
 import mongoose from "mongoose";
 
 
@@ -159,7 +159,7 @@ router.post("/add-member", async (req, res) => {
     if (!familyDoc) return res.status(404).json({ message: "Family not found" });
 
     // Prevent duplicates
-    const existing = await Member.findOne({
+    const existing = await FamilyMember.findOne({
       name: { $regex: `^${name.trim()}$`, $options: "i" },
       family: familyDoc._id
     });
@@ -170,7 +170,7 @@ router.post("/add-member", async (req, res) => {
   });
 }
 
-    const memberDoc = await Member.create({
+    const memberDoc = await FamilyMember.create({
       name: name.trim(),
       role: role || "kid",
       age: age ?? null,
@@ -181,7 +181,7 @@ router.post("/add-member", async (req, res) => {
     await familyDoc.save();
 
     // return populated member
-    res.json({ message: "Member added", member: memberDoc });
+    res.json({ message: "Member added", FamilyMember: memberDoc });
   } catch (err) {
     console.error("Add member error:", err);
     res.status(500).json({ message: "Server error while adding member" });
@@ -207,7 +207,7 @@ router.delete("/delete-member", async (req, res) => {
     if (!memberDoc) return res.status(404).json({ message: "Member not found" });
 
     // Remove refs and document
-    await Member.deleteOne({ _id: memberDoc._id });
+    await FamilyMember.deleteOne({ _id: memberDoc._id });
     familyDoc.members = familyDoc.members.filter(m => m.toString() !== memberDoc._id.toString());
     await familyDoc.save();
 
@@ -229,7 +229,7 @@ router.put("/update-member", async (req, res) => {
     if (role) update.role = role;
     if (age !== undefined) update.age = age === "" ? null : Number(age);
 
-    const memberDoc = await Member.findByIdAndUpdate(id, update, { new: true });
+    const memberDoc = await FamilyMember.findByIdAndUpdate(id, update, { new: true });
     if (!memberDoc) return res.status(404).json({ message: "Member not found" });
 
     res.json({ message: "Member updated", member: memberDoc });
@@ -248,7 +248,7 @@ router.patch("/update-avatar", async (req, res) => {
     return res.status(400).json({ message: "Missing fields" });
 
   try {
-    const member = await Member.findByIdAndUpdate(
+    const member = await FamilyMember.findByIdAndUpdate(
       memberId,
       { avatar: avatarUrl },
       { new: true }
