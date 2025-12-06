@@ -173,8 +173,13 @@ tr:hover {
 
 <div class="card">
   <h1>Class Members Management</h1>
-  <h2>Add New Member</h2>
-
+<!-- Add / Create Kid Section -->
+  <h2>Create or Select Kid</h2>
+  <div class="form-grid">
+    <div class="section-title">Select Family</div>
+    <div class="form-group" style="grid-column:1/-1;">
+      <select id="familySelect"><option value="">Select Family</option></select>
+    </div>
   <div class="form-grid">
   <!-- Basic Info -->
   <div class="form-group"><label>Full Name</label><input id="fullName" type="text"></div>
@@ -240,12 +245,15 @@ tr:hover {
 <script>
 const API = "http://localhost:3000/api";
 
-async function loadFamilies() {
-  const res = await fetch(`${API}/families`);
-  const families = await res.json();
-  const select = document.getElementById("familySelect");
-  families.forEach(f => select.appendChild(new Option(f.name, f._id)));
-}
+document.getElementById("familySelect").addEventListener("change", async () => {
+  const familyId = document.getElementById("familySelect").value;
+  const kidSelect = document.getElementById("kidSelect");
+  kidSelect.innerHTML = '<option value="">Select Kid</option>';
+  if (!familyId) return;
+  const res = await fetch(`${API}/families/${familyId}/members`);
+  const kids = await res.json();
+  kids.forEach(k => kidSelect.appendChild(new Option(k.name, k._id)));
+});
 
 loadFamilies();
 
@@ -271,6 +279,37 @@ function selectKid(index) {
   alert(`${kid.name} selected!`);
 }
 
+// Create new kid
+async function createKid() {
+  const familyId = document.getElementById("familySelect").value;
+  if(!familyId) return alert("Select a family first!");
+  const name = document.getElementById("newKidName").value.trim();
+  const gender = document.getElementById("newKidGender").value;
+  const age = document.getElementById("newKidAge").value;
+  const dob = document.getElementById("newKidDob").value;
+  if(!name) return alert("Enter kid name!");
+
+  const body = { name, gender, age, dob, family: familyId };
+
+  const res = await fetch(`${API}/families/${familyId}/members`, {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(body)
+  });
+  if(res.ok) {
+    const newKid = await res.json();
+    alert(`Kid ${name} created!`);
+    // Reload kids list
+    const kidSelect = document.getElementById("kidSelect");
+    kidSelect.appendChild(new Option(newKid.name, newKid._id));
+    kidSelect.value = newKid._id;
+    localStorage.setItem("selectedKidId", newKid._id);
+    localStorage.setItem("selectedKidName", newKid.name);
+  } else {
+    const data = await res.json();
+    alert("Failed to create kid: " + (data.message || res.status));
+  }
+}
 
 // Save member
 async function saveMember() {
