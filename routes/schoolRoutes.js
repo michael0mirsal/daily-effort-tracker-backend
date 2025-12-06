@@ -3,12 +3,31 @@ import Nursery from "../models/Nursery.js";
 import ClassModel from "../models/Class.js";
 import Teacher from "../models/Teacher.js";
 import SchoolMember from "../models/sch-Member.js";
+import express from 'express';
+import License from '../models/License.js';
 
 const router = express.Router();
 
 //////////////////////////
 // 🏫 Nursery Routes
 //////////////////////////
+router.post('/validate-license', async (req, res) => {
+  const { license } = req.body;
+
+  if (!license) return res.status(400).json({ message: 'License is required' });
+
+  const licenseDoc = await License.findOne({ key: license });
+
+  if (!licenseDoc) return res.status(400).json({ message: 'Invalid license' });
+  if (licenseDoc.used) return res.status(400).json({ message: 'License already used' });
+
+  // Mark as used if you want
+  licenseDoc.used = true;
+  await licenseDoc.save();
+
+  res.json({ message: 'License valid' });
+});
+
 
 // GET all nurseries
 router.get("/nurseries", async (req, res) => {
