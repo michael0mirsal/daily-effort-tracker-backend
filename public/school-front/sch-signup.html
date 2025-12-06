@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nursery Signup</title>
-
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 
   <style>
@@ -19,7 +17,6 @@
       align-items: center;
       min-height: 100vh;
     }
-
     .card {
       background: white;
       padding: 40px;
@@ -30,44 +27,15 @@
       animation: fadeIn 0.8s ease-out;
       text-align: center;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    h1 {
-      margin-bottom: 25px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #555;
-      text-align: left;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      font-family: "Poppins", sans-serif;
-    }
-
-    .note {
-      font-size: 13px;
-      color: #ff4d4d;
-      margin-top: -15px;
-      margin-bottom: 15px;
-      text-align: left;
-    }
-
+    h1 { margin-bottom: 25px; font-weight: 600; color: #333; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; text-align: left; }
+    input { width: 100%; padding: 12px 14px; margin-bottom: 20px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; }
+    .note { font-size: 13px; color: #ff4d4d; margin-top: -15px; margin-bottom: 15px; text-align: left; }
+    .status { font-size: 14px; margin-bottom: 15px; }
     button {
       width: 100%;
       padding: 14px;
@@ -80,12 +48,12 @@
       font-weight: 500;
       transition: background 0.2s, transform 0.2s;
     }
-
     button:hover { background: #1976d2; transform: translateY(-2px); }
+    button:disabled { background: #999; cursor: not-allowed; }
   </style>
 </head>
-
 <body>
+
   <div class="card">
     <h1>Nursery Signup 🏫</h1>
 
@@ -103,96 +71,107 @@
       <input type="text" id="nurseryKey" placeholder="Enter Nursery Pass Key" required />
       <p class="note">This key will be used for the nursery to access the system and for teachers to join.</p>
 
-      <button type="submit">Complete Signup</button>
+      <label for="license">License Key</label>
+      <input type="text" id="license" placeholder="Enter License Key" required />
+      <button type="button" id="validateLicenseBtn">Validate License</button>
+      <p class="status" id="licenseStatus"></p>
+
+      <button type="submit" id="signupBtn" disabled>Complete Signup</button>
     </form>
   </div>
 
   <script>
-const licenseInput = document.getElementById('licenseInput');
-const validateBtn = document.getElementById('validateLicenseBtn');
-const licenseError = document.getElementById('licenseError');
-const signupForm = document.getElementById('signupForm');
-const signupBtn = signupForm.querySelector('button');
+    const signupForm = document.getElementById('signupForm');
+    const validateBtn = document.getElementById('validateLicenseBtn');
+    const licenseInput = document.getElementById('license');
+    const licenseStatus = document.getElementById('licenseStatus');
+    const signupBtn = document.getElementById('signupBtn');
 
-let selectedLicense = null;
+    let licenseValidated = false;
 
-// License validation
-validateBtn.addEventListener('click', async () => {
-  const license = licenseInput.value.trim();
-  if (!license) {
-    licenseError.textContent = "Please enter your license number.";
-    return;
-  }
+    validateBtn.addEventListener('click', async () => {
+      const license = licenseInput.value.trim();
+      if (!license) {
+        licenseStatus.textContent = "Please enter a license key.";
+        licenseStatus.style.color = "red";
+        return;
+      }
 
-  try {
-    const res = await fetch("/api/nursery/validate-license", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ license })
+      try {
+        const res = await fetch("http://localhost:3000/api/nursery/validate-license", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ license })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          licenseStatus.textContent = data.message;
+          licenseStatus.style.color = "green";
+          licenseValidated = true;
+          localStorage.setItem("selectedLicense", license);
+          signupBtn.disabled = false;
+        } else {
+          licenseStatus.textContent = data.message;
+          licenseStatus.style.color = "red";
+          licenseValidated = false;
+          signupBtn.disabled = true;
+        }
+
+      } catch (err) {
+        console.error(err);
+        licenseStatus.textContent = "Server error. Try again later.";
+        licenseStatus.style.color = "red";
+      }
     });
-    const data = await res.json();
 
-    if (res.ok) {
-      selectedLicense = license;
-      licenseError.textContent = "License validated ✅";
-      signupBtn.disabled = false; // Enable signup
-    } else {
-      selectedLicense = null;
-      licenseError.textContent = data.message || "Invalid license";
-      signupBtn.disabled = true;
-    }
-  } catch (err) {
-    console.error(err);
-    licenseError.textContent = "Server error. Try again later.";
-    signupBtn.disabled = true;
-  }
-});
+    signupForm.addEventListener('submit', function(e){
+      e.preventDefault();
 
-// Signup form submission
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+      if (!licenseValidated) {
+        alert("Please validate your license before signing up.");
+        return;
+      }
 
-  if (!selectedLicense) {
-    alert("Please validate your license before signing up.");
-    return;
-  }
+      const data = {
+        name: document.getElementById('nurseryName').value.trim(),
+        email: document.getElementById('contactEmail').value.trim(),
+        phone: document.getElementById('contactPhone').value.trim(),
+        passKey: document.getElementById('nurseryKey').value.trim(),
+        license: localStorage.getItem("selectedLicense"),
+        address: "Not provided"
+      };
 
-  const data = {
-    name: document.getElementById('nurseryName').value.trim(),
-    email: document.getElementById('contactEmail').value.trim(),
-    phone: document.getElementById('contactPhone').value.trim(),
-    passKey: document.getElementById('nurseryKey').value.trim(),
-    license: selectedLicense,
-    address: "Not provided"
-  };
+      // Basic empty check
+      for (let k in data) {
+        if (!data[k]) {
+          alert("Please fill all fields.");
+          return;
+        }
+      }
 
-  for (let k in data) {
-    if (!data[k]) {
-      alert("Please fill all fields.");
-      return;
-    }
-  }
+      fetch("http://localhost:3000/api/nurseries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if (resData.error) {
+          alert(resData.error);
+          return;
+        }
 
-  try {
-    const res = await fetch("/api/nurseries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+        alert("Nursery registered successfully!");
+        window.location.href = "/sch-login.html";
+      })
+      .catch(err => {
+        alert("Error connecting to server.");
+        console.error(err);
+      });
     });
-    const resData = await res.json();
-
-    if (res.ok) {
-      alert("Nursery registered successfully!");
-      window.location.href = "/sch-login.html";
-    } else {
-      alert(resData.error || "Signup failed");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Error connecting to server.");
-  }
-});
-</script>
+  </script>
 
 </body>
 </html>
