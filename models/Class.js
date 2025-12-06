@@ -5,7 +5,7 @@ const classSchema = new mongoose.Schema({
   passKey: { type: String, required: true },                     // Class Pass Key
   nursery: { type: mongoose.Schema.Types.ObjectId, ref: "Nursery" },
   teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Teacher" }],
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "Member" }]
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember" }]
 }, { timestamps: true });
 
 export default mongoose.model("Class", classSchema);
