@@ -25,7 +25,7 @@ router.post("/admin/create-license", async (req, res) => {
 
 // 🏫 Nursery Routes
 // Validate License (before showing signup form)
-router.post('/validate-license', async (req, res) => {
+router.post('/nursery/validate-license', async (req, res) => {
   try {
     const { license } = req.body;
 
