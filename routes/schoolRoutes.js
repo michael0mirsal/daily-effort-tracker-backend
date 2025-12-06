@@ -16,7 +16,10 @@ router.get("/nurseries", async (req, res) => {
     const nurseries = await Nursery.find()
       .populate({
         path: "classes",
-        populate: { path: "teachers members", select: "fullName role age phone" }
+        populate: {
+          path: "teachers members",
+          select: "fullName role age gender"
+        }
       })
       .populate("workers", "name role email phone classes");
 
@@ -32,7 +35,9 @@ router.post("/nurseries", async (req, res) => {
     const { name, address, email, phone, passKey } = req.body;
 
     if (!name || !email || !phone || !passKey) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res
+        .status(400)
+        .json({ error: "Missing required fields" });
     }
 
     const nursery = await Nursery.create({
@@ -53,7 +58,6 @@ router.post("/nurseries", async (req, res) => {
 // 🎓 Class Routes
 //////////////////////////
 
-// GET all classes
 router.get("/classes", async (req, res) => {
   try {
     const classes = await ClassModel.find()
@@ -67,7 +71,7 @@ router.get("/classes", async (req, res) => {
   }
 });
 
-// CREATE new class
+// CREATE class
 router.post("/classes", async (req, res) => {
   try {
     const { name, passKey, nurseryId, teacherIds, memberIds } = req.body;
@@ -80,14 +84,14 @@ router.post("/classes", async (req, res) => {
       members: memberIds || []
     });
 
-    // link class → nursery
+    // link: nursery -> class
     if (nurseryId) {
       await Nursery.findByIdAndUpdate(nurseryId, {
         $addToSet: { classes: classDoc._id }
       });
     }
 
-    // link class → teachers
+    // link: teachers -> class
     if (teacherIds?.length) {
       await Teacher.updateMany(
         { _id: { $in: teacherIds } },
@@ -117,6 +121,7 @@ router.get("/teachers", async (req, res) => {
   }
 });
 
+// CREATE teacher
 router.post("/teachers", async (req, res) => {
   try {
     const { name, role, email, phone, nurseryId, classIds } = req.body;
@@ -130,7 +135,7 @@ router.post("/teachers", async (req, res) => {
       classes: classIds || []
     });
 
-    // Add teacher → classes
+    // link teacher → classes
     if (classIds?.length) {
       await ClassModel.updateMany(
         { _id: { $in: classIds } },
@@ -138,7 +143,7 @@ router.post("/teachers", async (req, res) => {
       );
     }
 
-    // Add teacher → nursery
+    // link teacher → nursery
     if (nurseryId) {
       await Nursery.findByIdAndUpdate(nurseryId, {
         $addToSet: { workers: teacher._id }
@@ -149,23 +154,22 @@ router.post("/teachers", async (req, res) => {
       message: "Teacher created successfully",
       teacher
     });
-
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
 //////////////////////////
-// 🧒 Member (Kid) Routes
+// 🧒 School Member Routes
 //////////////////////////
 
-// GET all members
-router.get("/members", async (req, res) => {
+// GET all kids
+router.get("/schoolMembers", async (req, res) => {
   try {
-    const members = await Member.find()
+    const members = await SchoolMember.find()
       .populate("class", "name passKey")
       .populate("nursery", "name email phone")
-      .populate("family", "fatherName motherName");
+      .populate("family", "dad mom");
 
     res.json(members);
   } catch (err) {
@@ -173,12 +177,12 @@ router.get("/members", async (req, res) => {
   }
 });
 
-// CREATE kid member
-router.post("/members", async (req, res) => {
+// CREATE kid
+router.post("/schoolMembers", async (req, res) => {
   try {
-    const kid = await Member.create(req.body);
+    const kid = await SchoolMember.create(req.body);
 
-    // add kid → class.members
+    // link: kid -> class.members
     if (req.body.class) {
       await ClassModel.findByIdAndUpdate(req.body.class, {
         $addToSet: { members: kid._id }
@@ -186,10 +190,9 @@ router.post("/members", async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Member created successfully",
+      message: "School Member created successfully",
       kid
     });
-
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
