@@ -249,27 +249,26 @@ loadClasses();
 
 // Save member
 async function saveMember() {
+  const familyMemberId = localStorage.getItem("selectedKidId"); // from FamilyMember form
+  if(!familyMemberId) return alert("Select or create a kid first");
+
   const body = {
-    fullName: fullName.value,
-    gender: gender.value,
-    age: age.value,
-    dateOfBirth: dob.value,
-    dadName: dadName.value,
-    dadPhone: dadPhone.value,
-    dadEmail: dadEmail.value,
-    momName: momName.value,
-    momPhone: momPhone.value,
-    momEmail: momEmail.value,
-    emergencyContactName: emgName.value,
-    emergencyContactPhone: emgPhone.value,
-    emergencyRelation: emgRelation.value,
+    familyMember: familyMemberId,
     class: classSelect.value,
     nursery: localStorage.getItem("nurseryId"),
-    family: localStorage.getItem("familyId")
+    role: "kid",
+    notes: "", // optional
   };
-  await fetch(`${API}/members`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
-  alert("Member saved!");
+
+  const res = await fetch(`${API}/schoolMembers`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(body)
+  });
+  if(res.ok) alert("School member saved successfully!");
+  else alert("Failed to save school member");
 }
+
 
 // Popup
 async function openPopup() {
