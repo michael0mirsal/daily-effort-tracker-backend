@@ -105,6 +105,14 @@
 
     .hidden { display: none; }
   </style>
+  <style>
+.error-msg {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+}
+</style>
+
 </head>
 
 <body>
@@ -117,57 +125,61 @@
   </div>
 
   <div class="card hidden" id="license-card">
-    <h1>Nursery Signup 🏫</h1>
-    <p>Please enter your valid license number to continue:</p>
+  <h1>Nursery Signup 🏫</h1>
+  <p>Please enter your valid license number to continue:</p>
 
-    <input type="text" id="license" placeholder="Enter your License Number" />
-    <p class="note">⚠ This license will be used <strong>only once</strong>.</p>
-    <button class="continue-btn" onclick="validateLicense()">Continue</button>
-  </div>
+  <input type="text" id="license" placeholder="Enter your License Number" />
+  <p class="note">⚠ This license will be used <strong>only once</strong>.</p>
+  <p id="license-error" class="error-msg"></p>
+  <button class="continue-btn" onclick="validateLicense()">Continue</button>
+</div>
 
-  <script>
-    const accessCard = document.getElementById('access-card');
-    const licenseCard = document.getElementById('license-card');
+<script>
+const accessCard = document.getElementById('access-card');
+const licenseCard = document.getElementById('license-card');
+const licenseError = document.getElementById('license-error');
 
-    function chooseOption(option) {
-      if(option === 'login') {
-        window.location.href = "/pages/nursery/nursery-login.html";
-      } else {
-        // Show license input for signup
-        accessCard.classList.add('hidden');
-        licenseCard.classList.remove('hidden');
-      }
-    }
+function chooseOption(option) {
+  if(option === 'login') {
+    window.location.href = "/pages/nursery/nursery-login.html";
+  } else {
+    accessCard.classList.add('hidden');
+    licenseCard.classList.remove('hidden');
+  }
+}
 
-    async function validateLicense() {
-  const license = document.getElementById('license').value.trim();
-
-  if (!license) {
-    alert('Please enter your license number.');
+async function validateLicense() {
+  const licenseInput = document.getElementById('license').value.trim();
+  if (!licenseInput) {
+    licenseError.textContent = 'Please enter your license number.';
     return;
   }
+
+  licenseError.textContent = ''; // reset error
 
   try {
     const res = await fetch('/api/nursery/validate-license', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ license })
+      body: JSON.stringify({ license: licenseInput.toUpperCase() }) // normalize case
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert('License validated! Proceeding to signup form...');
+      // Redirect to signup after success
       window.location.href = "/pages/nursery/nursery-signup-form.html";
     } else {
-      alert(data.message); // e.g., "License invalid or already used"
+      licenseError.textContent = data.message;
     }
-
   } catch (err) {
     console.error(err);
-    alert('Server error. Please try again later.');
+    licenseError.textContent = 'Server error. Please try again later.';
   }
 }
+</script>
+
+
 
   </script>
 </body>
