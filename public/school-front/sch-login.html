@@ -139,27 +139,36 @@
       }
     }
 
-    function validateLicense() {
-      const license = document.getElementById('license').value.trim();
+    async function validateLicense() {
+  const license = document.getElementById('license').value.trim();
 
-      if (!license) {
-        alert('Please enter your license number.');
-        return;
-      }
+  if (!license) {
+    alert('Please enter your license number.');
+    return;
+  }
 
-      // TODO: Call backend API to validate license
-      // Example:
-      // fetch('/api/nursery/validate-license', { method: 'POST', body: JSON.stringify({ license }) })
+  try {
+    const res = await fetch('/api/nursery/validate-license', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ license })
+    });
 
-      // Simulate validation
-      const validLicenses = ['12345', 'ABCDE']; // Example valid licenses
-      if(validLicenses.includes(license)) {
-        alert('License validated! Proceeding to signup form...');
-        window.location.href = "/pages/nursery/nursery-signup-form.html";
-      } else {
-        alert('Invalid license! Please check and try again.');
-      }
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('License validated! Proceeding to signup form...');
+      window.location.href = "/pages/nursery/nursery-signup-form.html";
+    } else {
+      alert(data.message); // e.g., "License invalid or already used"
     }
+
+  } catch (err) {
+    console.error(err);
+    alert('Server error. Please try again later.');
+  }
+}
+
   </script>
 </body>
 </html>
