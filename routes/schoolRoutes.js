@@ -6,25 +6,39 @@ import SchoolMember from "../models/sch-Member.js";
 import License from '../models/License.js';
 import crypto from "crypto";
 
-export async function generateLicenseKey() {
-  const key = crypto.randomBytes(16).toString("hex").toUpperCase();
-  await License.create({ key });
-  return key;
-}
-
 
 const router = express.Router();
 
-//////////////////////////
+function generateLicenseKey() {
+  const blocks = [];
+
+  for (let i = 0; i < 4; i++) {
+    blocks.push(crypto.randomBytes(2).toString("hex").toUpperCase());
+  }
+
+  return `NURSERY-${blocks.join("-")}`;
+}
+
+
+
+
+// Create license key (Admin)
 router.post("/admin/create-license", async (req, res) => {
-  const key = generateLicenseKey();
+  try {
+    const key = generateLicenseKey();
 
-  const license = new License({ key });
-  await license.save();
+    const license = await License.create({
+      key,
+      used: false,
+      assignedTo: null
+    });
 
-  res.json({ success: true, key });
+    res.status(201).json({ success: true, key });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error creating license" });
+  }
 });
-
 // 🏫 Nursery Routes
 // Validate License (before showing signup form)
 router.post('/nursery/validate-license', async (req, res) => {
