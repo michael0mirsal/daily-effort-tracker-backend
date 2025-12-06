@@ -4,10 +4,25 @@ import ClassModel from "../models/Class.js";
 import Teacher from "../models/Teacher.js";
 import SchoolMember from "../models/sch-Member.js";
 import License from '../models/License.js';
+import crypto from "crypto";
+
+export function generateLicenseKey() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 
 const router = express.Router();
 
 //////////////////////////
+router.post("/admin/create-license", async (req, res) => {
+  const key = generateLicenseKey();
+
+  const license = new License({ key });
+  await license.save();
+
+  res.json({ success: true, key });
+});
+
 // 🏫 Nursery Routes
 // Validate License (before showing signup form)
 router.post('/validate-license', async (req, res) => {
