@@ -176,28 +176,39 @@ tr:hover {
   <h2>Add New Member</h2>
 
   <div class="form-grid">
-    <div class="form-group"><label>Full Name</label><input id="fullName" type="text"></div>
-    <div class="form-group"><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
-    <div class="form-group"><label>Age</label><input id="age" type="number"></div>
-    <div class="form-group"><label>Date of Birth</label><input id="dob" type="date"></div>
+  <!-- Basic Info -->
+  <div class="form-group"><label>Full Name</label><input id="fullName" type="text"></div>
+  <div class="form-group"><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+  <div class="form-group"><label>Age</label><input id="age" type="number"></div>
+  <div class="form-group"><label>Date of Birth</label><input id="dob" type="date"></div>
 
-    <div class="section-title">Dad Info</div>
-    <div class="form-group"><label>Dad Name</label><input id="dadName" type="text"></div>
-    <div class="form-group"><label>Dad Phone</label><input id="dadPhone" type="text"></div>
-    <div class="form-group"><label>Dad Email</label><input id="dadEmail" type="email"></div>
+  <!-- Dad Info -->
+  <div class="section-title">Dad Info</div>
+  <div class="form-group"><label>Dad Name</label><input id="dadName" type="text"></div>
+  <div class="form-group"><label>Dad Phone</label><input id="dadPhone" type="text"></div>
+  <div class="form-group"><label>Dad Email</label><input id="dadEmail" type="email"></div>
 
-    <div class="section-title">Mom Info</div>
-    <div class="form-group"><label>Mom Name</label><input id="momName" type="text"></div>
-    <div class="form-group"><label>Mom Phone</label><input id="momPhone" type="text"></div>
-    <div class="form-group"><label>Mom Email</label><input id="momEmail" type="email"></div>
+  <!-- Mom Info -->
+  <div class="section-title">Mom Info</div>
+  <div class="form-group"><label>Mom Name</label><input id="momName" type="text"></div>
+  <div class="form-group"><label>Mom Phone</label><input id="momPhone" type="text"></div>
+  <div class="form-group"><label>Mom Email</label><input id="momEmail" type="email"></div>
 
-    <div class="section-title">Emergency Contact</div>
-    <div class="form-group"><label>Name</label><input id="emgName" type="text"></div>
-    <div class="form-group"><label>Phone</label><input id="emgPhone" type="text"></div>
-    <div class="form-group"><label>Relation</label><input id="emgRelation" type="text"></div>
+  <!-- Emergency Contact -->
+  <div class="section-title">Emergency Contact</div>
+  <div class="form-group"><label>Name</label><input id="emgName" type="text"></div>
+  <div class="form-group"><label>Phone</label><input id="emgPhone" type="text"></div>
+  <div class="form-group"><label>Relation</label><input id="emgRelation" type="text"></div>
 
-    <div class="form-group"><label>Select Class</label><select id="classSelect"></select></div>
+  <!-- Class Selection -->
+  <div class="section-title">Assign to Class</div>
+  <div class="form-group" style="grid-column: 1/-1;">
+    <select id="classSelect" style="padding:12px 15px; border-radius:12px; width:100%; border:1px solid #ccc; font-size:0.95em;">
+      <option value="">Select Class</option>
+    </select>
   </div>
+</div>
+
 
   <button class="button-primary" onclick="saveMember()">Save Member</button>
 
