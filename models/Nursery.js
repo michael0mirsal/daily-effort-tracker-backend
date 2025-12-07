@@ -8,7 +8,8 @@ const NurserySchema = new mongoose.Schema({
   address: { type: String },                              // Optional
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }], // Classes in this nursery
   workers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Teacher" }], // Teachers/Staff
-  manager: [{ type: mongoose.Schema.Types.ObjectId, ref: "Manager" }]
+  manager: { type: String, required: true },
+  managerPassKey: { type: String, required: true }
 }, { timestamps: true }); // adds createdAt and updatedAt
 
 export default mongoose.model("Nursery", NurserySchema);
