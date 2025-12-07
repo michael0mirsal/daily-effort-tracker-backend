@@ -198,8 +198,10 @@
           signinMsg.textContent = resData.error || "Sign-in failed";
           return;
         }
-
+        // Save user & nurseryId
         localStorage.setItem("user", JSON.stringify(resData.user));
+        localStorage.setItem("nurseryId", resData.user.nurseryId);  // ✅ add this
+        
 
         if (data.role === "admin") {
           window.location.href = "/sch-choose.html";
