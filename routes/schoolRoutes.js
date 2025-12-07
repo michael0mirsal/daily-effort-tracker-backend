@@ -31,30 +31,25 @@ router.post("/school/signin", async (req, res) => {
 
     let user;
 
-    if (role === "admin") {
-      // Admin = Nursery
-      user = await Nursery.findOne({ name, passKey });
-    } 
-    else if (role === "teacher") {
-      user = await Teacher.findOne({ name, passKey });
-    } 
-    else if (role === "parent") {
-      user = await SchoolMember.findOne({ fullName: name, passKey })
-        .populate("family", "dad mom phone");
-    }
+    if (role === "manager") {
+  user = await Nursery.findOne({ name: data.nurseryName, passKey });
+} else if (role === "teacher") {
+  user = await Teacher.findOne({ name, passKey }).populate("nursery", "name passKey");
+} else if (role === "parent") {
+  user = await SchoolMember.findOne({ fullName: name, passKey }).populate("family", "dad mom phone");
+}
 
-    if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
-    }
+// return nursery name
+res.json({
+  success: true,
+  user: {
+    id: user._id,
+    name: user.name || user.fullName,
+    role,
+    nurseryName: user.name || user.nursery?.name
+  }
+});
 
-    res.json({
-      success: true,
-      user: {
-        id: user._id,
-        name,
-        role
-      }
-    });
 
   } catch (err) {
     console.error(err);
