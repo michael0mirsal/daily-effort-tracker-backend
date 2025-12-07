@@ -146,6 +146,7 @@ router.post("/nurseries", async (req, res) => {
       address,
       email,
       phone,
+      manager,
       passKey
     });
 
