@@ -22,62 +22,78 @@ function generateLicenseKey() {
 
 // LOGIN route
 // LOGIN route
+// POST /api/school/signin
 router.post("/school/signin", async (req, res) => {
   try {
     const { name, nurseryName, role, passKey } = req.body;
 
+    // 1️⃣ Check required fields
     if (!name || !nurseryName || !role || !passKey) {
-      return res.status(400).json({ error: "Missing fields" });
+      return res.status(400).json({ success: false, message: "Missing fields" });
     }
 
     let user;
 
-    if (role === "admin") {
-      // Admin uses managerPassKey
-      user = await Nursery.findOne({
-        manager: name,
-        name: nurseryName,
-        managerPassKey: passKey
-      });
+    // 2️⃣ Role-based authentication
+    if (role === "admin" || role === "manager") {
+      // Admin/Manager → check managerPassKey in nursery
+      const nursery = await Nursery.findOne({ name: nurseryName });
+      if (!nursery) return res.status(404).json({ success: false, message: "Nursery not found" });
 
-      if (!user) return res.status(401).json({ error: "Invalid admin credentials" });
+      if (passKey !== nursery.managerPassKey) {
+        return res.status(401).json({ success: false, message: "Invalid manager/admin credentials" });
+      }
 
-      return res.json({ user: { role, name, nurseryName } });
-    }
-
+      user = {
+        name,
+        role,
+        nurseryId: nursery._id,
+        nurseryName: nursery.name,
+        manager: nursery.manager,
+        managerPassKey: nursery.managerPassKey
+      };
+    } 
     else if (role === "teacher") {
-      // Teacher uses nursery passKey
-      user = await Teacher.findOne({ name })
-        .populate("nursery", "name passKey");
-
+      // Teacher → check nursery passKey
+      user = await Teacher.findOne({ name }).populate("nursery", "name passKey");
       if (!user || user.nursery.name !== nurseryName || user.nursery.passKey !== passKey) {
-        return res.status(401).json({ error: "Invalid teacher credentials" });
+        return res.status(401).json({ success: false, message: "Invalid teacher credentials" });
       }
 
-      return res.json({ user: { role, name, nurseryName } });
-    }
-
+      user = {
+        name: user.name,
+        role,
+        nurseryId: user.nursery._id,
+        nurseryName: user.nursery.name
+      };
+    } 
     else if (role === "parent") {
-      // Parent uses nursery passKey also
-      user = await SchoolMember.findOne({ fullName: name })
-        .populate("family", "dad mom phone nursery");
-
-      if (
-        !user ||
-        !user.family.nursery ||
-        user.family.nursery.name !== nurseryName ||
-        user.family.nursery.passKey !== passKey
-      ) {
-        return res.status(401).json({ error: "Invalid parent credentials" });
+      // Parent → check nursery passKey via family
+      user = await SchoolMember.findOne({ fullName: name }).populate("family.nursery", "name passKey");
+      if (!user || !user.family.nursery || user.family.nursery.name !== nurseryName || user.family.nursery.passKey !== passKey) {
+        return res.status(401).json({ success: false, message: "Invalid parent credentials" });
       }
 
-      return res.json({ user: { role, name, nurseryName } });
+      user = {
+        name: user.fullName,
+        role,
+        nurseryId: user.family.nursery._id,
+        nurseryName: user.family.nursery.name
+      };
+    } 
+    else {
+      return res.status(400).json({ success: false, message: "Invalid role" });
     }
+
+    // 3️⃣ Return user info
+    return res.json({ success: true, user });
 
   } catch (err) {
-    return res.status(500).json({ error: "Server error" });
+    console.error("Sign-in error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 
 
