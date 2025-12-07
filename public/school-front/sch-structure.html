@@ -153,7 +153,7 @@ const API = "http://localhost:3000/api/nurseries";
 ----------------------*/
 async function loadNursery() {
   try {
-    const nurseryId = localStorage.getItem("nurseryId");
+    const nurseryId = localStorage.getItem("nurseryId") || "6935e44bd5f8f6d780a82492";
     if (!nurseryId) return alert("Missing nursery ID");
 
     const res = await fetch(`${API}/${nurseryId}/dashboard`);
@@ -181,8 +181,7 @@ document.getElementById("managerPassKey").value = data.managerPassKey || "";
    SAVE NURSERY INFO TO DB
 ----------------------*/
 async function saveNursery() {
-  const nurseryId = localStorage.getItem("nurseryId") || "6935e44bd5f8f6d780a82492";
-
+  const nurseryId = localStorage.getItem("nurseryId");
 
   const payload = {
     name: document.getElementById("nurseryName").value,
