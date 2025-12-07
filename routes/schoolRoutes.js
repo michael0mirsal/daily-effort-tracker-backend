@@ -19,7 +19,7 @@ function generateLicenseKey() {
   return `NURSERY-${blocks.join("-")}`;
 }
 
-app.get("/api/nurseries/:id/dashboard", async (req, res) => {
+app.get("/nurseries/:id/dashboard", async (req, res) => {
   try {
     const nurseryId = req.params.id;
     const nursery = await Nursery.findById(nurseryId)
