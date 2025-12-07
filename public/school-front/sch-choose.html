@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nursery Dashboard</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
 
 <style>
   body {
@@ -70,7 +70,6 @@
     transform: translateY(-2px);
   }
 
-  /* Buttons in top-right corner */
   .top-buttons {
     position: absolute;
     top: 20px;
@@ -96,30 +95,33 @@
 </head>
 
 <body>
-  <!-- Top-right buttons -->
-  <div class="top-buttons">
-    <button class="btn" id="backBtn">Back</button>
-    <button class="btn" id="logoutBtn">Logout</button>
-  </div>
 
-  <div class="card">
-    <h1>Nursery Dashboard</h1>
-    <h2 id="welcomeText">Welcome, User</h2>
+<div class="top-buttons">
+  <button class="btn" id="backBtn">Back</button>
+  <button class="btn" id="logoutBtn">Logout</button>
+</div>
 
-    <ul id="menuList"></ul>
-  </div>
+<div class="card">
+  <h1>Nursery Dashboard</h1>
+  <h2 id="welcomeText">Welcome, User</h2>
+  <ul id="menuList"></ul>
+</div>
 
 <script>
-  // Example user info
-  const userName = 'John Doe';
-  const userRole = 'manager'; // member, teacher, supervisor, manager
+  // Load user data from localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  // Display welcome text
-  document.getElementById('welcomeText').textContent = `Welcome, ${userName}`;
+  if (!user) {
+    alert("Session expired. Please sign in again.");
+    window.location.href = "/signin.html";
+  }
 
-  const menuList = document.getElementById('menuList');
+  // Show welcome message
+  document.getElementById("welcomeText").textContent = `Welcome, ${user.name}`;
 
-  // Define menu items per role
+  const menuList = document.getElementById("menuList");
+
+  // Menu items per role
   const menuItems = {
     parent: ["Class Kids", "Class Activities", "Class Routines"],
     teacher: ["Class Kids", "Class Activities", "Class Routines", "Class Behavior Chart"],
@@ -127,26 +129,30 @@
     admin: ["Which Class", "Class Kids", "Class Activities", "Class Routines", "Class Behavior Chart", "Class Teacher Behavior", "Nursery Structure"]
   };
 
-  // Render menu for current role
-  const itemsToShow = menuItems[userRole] || [];
-  itemsToShow.forEach(item => {
-    const li = document.createElement('li');
+  // Render menu
+  const role = user.role.toLowerCase();
+  const items = menuItems[role] || [];
+
+  items.forEach(item => {
+    const li = document.createElement("li");
     li.textContent = item;
+
     li.onclick = () => {
       alert(`Clicked: ${item}`);
-      // TODO: redirect to respective page
+      // TODO: link pages here
     };
+
     menuList.appendChild(li);
   });
 
-  // Logout button
-  document.getElementById('logoutBtn').onclick = () => {
-    alert('Logging out...');
-    window.location.href = "/pages/signin.html";
+  // Logout handler
+  document.getElementById("logoutBtn").onclick = () => {
+    localStorage.removeItem("user");
+    window.location.href = "/signin.html";
   };
 
-  // Back button
-  document.getElementById('backBtn').onclick = () => {
+  // Back handler
+  document.getElementById("backBtn").onclick = () => {
     window.history.back();
   };
 </script>
