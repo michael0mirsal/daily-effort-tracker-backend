@@ -129,31 +129,38 @@
 
     <form id="signinForm">
 
-      <label>Your Name</label>
-      <div class="input-group">
-        <i class="fa-solid fa-user"></i>
-        <input type="text" id="name" placeholder="Enter your name" required>
-      </div>
+  <label>Your Name</label>
+  <div class="input-group">
+    <i class="fa-solid fa-user"></i>
+    <input type="text" id="name" placeholder="Enter your name" required>
+  </div>
 
-      <label>Select Role</label>
-      <div class="input-group">
-        <i class="fa-solid fa-users"></i>
-        <select id="role" required>
-          <option value="">Choose role...</option>
-          <option value="admin">Nursery Admin</option>
-          <option value="teacher">Teacher</option>
-          <option value="parent">Parent</option>
-        </select>
-      </div>
+  <label>Nursery Name</label>
+  <div class="input-group">
+    <i class="fa-solid fa-school"></i>
+    <input type="text" id="nurseryName" placeholder="Enter nursery name" required>
+  </div>
 
-      <label>Pass Key</label>
-      <div class="input-group">
-        <i class="fa-solid fa-key"></i>
-        <input type="password" id="passKey" placeholder="Enter pass key" required>
-      </div>
+  <label>Select Role</label>
+  <div class="input-group">
+    <i class="fa-solid fa-users"></i>
+    <select id="role" required>
+      <option value="">Choose role...</option>
+      <option value="admin">Nursery Admin</option>
+      <option value="teacher">Teacher</option>
+      <option value="parent">Parent</option>
+    </select>
+  </div>
 
-      <button type="submit">Sign In</button>
-    </form>
+  <label>Nursery Pass Key</label>
+  <div class="input-group">
+    <i class="fa-solid fa-key"></i>
+    <input type="password" id="passKey" placeholder="Enter nursery pass key" required>
+  </div>
+
+  <button type="submit">Sign In</button>
+</form>
+
   </div>
 
   <script>
@@ -165,23 +172,25 @@
 
       const data = {
         name: document.getElementById("name").value.trim(),
+        nurseryName: document.getElementById("nurseryName").value.trim(),
         role: document.getElementById("role").value.trim(),
         passKey: document.getElementById("passKey").value.trim(),
       };
 
+        // Check all fields
       for (let k in data) {
-        if (!data[k]) {
-          signinMsg.textContent = "Please fill all fields.";
-          return;
-        }
+       if (!data[k]) {
+       signinMsg.textContent = "Please fill all fields.";
+         return;
+       }
       }
 
       try {
         const res = await fetch("http://localhost:3000/api/school/signin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+});
 
         const resData = await res.json();
 
