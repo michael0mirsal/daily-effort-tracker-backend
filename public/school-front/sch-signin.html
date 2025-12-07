@@ -3,43 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In – Family / Nursery</title>
+  <title>Nursery Sign In</title>
 
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
     body {
       margin: 0;
       padding: 0;
       font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #a8edea, #fed6e3);
+      background: linear-gradient(140deg, #84fab0 0%, #8fd3f4 100%);
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    .card {
-      background: white;
-      padding: 40px;
-      border-radius: 24px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-      width: 90%;
-      max-width: 450px;
+    .wrapper {
       text-align: center;
       animation: fadeIn 0.8s ease-out;
     }
 
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(14px);
+      padding: 45px;
+      border-radius: 28px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+      width: 90%;
+      max-width: 420px;
+      animation: slideUp 0.8s ease;
+    }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0 }
+      to { opacity: 1 }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(25px); opacity: 0 }
+      to { transform: translateY(0); opacity: 1 }
     }
 
     h1 {
-      margin-bottom: 20px;
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #222;
       font-weight: 600;
+    }
+
+    .subtext {
+      font-size: 15px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin: 10px 0 6px;
+      font-weight: 500;
       color: #333;
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    .input-group i {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      color: #777;
+      font-size: 16px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px 12px 40px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      border: 1px solid #ccc;
+      background: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: 0.25s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: #4a90e2;
+      box-shadow: 0 0 8px rgba(74,144,226,0.4);
     }
 
     button {
@@ -49,69 +105,62 @@
       border-radius: 14px;
       font-size: 17px;
       cursor: pointer;
-      margin: 10px 0;
-      font-weight: 500;
+      font-weight: 600;
       color: white;
-      transition: background 0.2s, transform 0.2s;
+      background: linear-gradient(135deg, #4f9cff, #1b6be0);
+      transition: 0.2s;
+      margin-top: 5px;
     }
 
-    .btn-family { background: #4caf50; }
-    .btn-family:hover { background: #45a049; transform: translateY(-2px); }
-
-    .btn-nursery { background: #2196f3; }
-    .btn-nursery:hover { background: #1976d2; transform: translateY(-2px); }
-
-    .hidden { display: none; }
-
-    label {
-      display: block;
-      text-align: left;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #555;
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
 
-    input, select {
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      font-size: 16px;
+    .error {
+      color: red;
+      margin-bottom: 10px;
+      font-size: 15px;
     }
-
-    .submit-btn {
-      background: #ff7a2a;
-    }
-
-    .submit-btn:hover { background: #ff6000; transform: translateY(-2px); }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>Sign In</h1>
+  <div class="wrapper">
+    <div class="card">
+      <h1>Welcome Back 👋</h1>
+      <p class="subtext">Sign in to access your nursery dashboard</p>
 
-    <p id="signinMsg" class="error"></p>
+      <p id="signinMsg" class="error"></p>
 
-    <form id="signinForm">
+      <form id="signinForm">
 
-      <label for="name">Your Name</label>
-      <input type="text" id="name" placeholder="Enter your name" required>
+        <label>Your Name</label>
+        <div class="input-group">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" id="name" placeholder="Enter your name" required>
+        </div>
 
-      <label for="role">Select Role</label>
-      <select id="role" required>
-        <option value="">-- Choose your role --</option>
-        <option value="admin">Nursery Admin</option>
-        <option value="teacher">Teacher</option>
-        <option value="parent">Parent</option>
-      </select>
+        <label>Select Role</label>
+        <div class="input-group">
+          <i class="fa-solid fa-users"></i>
+          <select id="role" required>
+            <option value="">Choose role...</option>
+            <option value="admin">Nursery Admin</option>
+            <option value="teacher">Teacher</option>
+            <option value="parent">Parent</option>
+          </select>
+        </div>
 
-      <label for="passKey">Pass Key</label>
-      <input type="password" id="passKey" placeholder="Enter pass key" required>
+        <label>Pass Key</label>
+        <div class="input-group">
+          <i class="fa-solid fa-key"></i>
+          <input type="password" id="passKey" placeholder="Enter pass key" required>
+        </div>
 
-      <button type="submit">Sign In</button>
-    </form>
+        <button type="submit">Sign In</button>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -127,7 +176,6 @@
         passKey: document.getElementById("passKey").value.trim(),
       };
 
-      // Check empty fields
       for (let k in data) {
         if (!data[k]) {
           signinMsg.textContent = "Please fill all fields.";
@@ -149,10 +197,8 @@
           return;
         }
 
-        // Save logged user data
         localStorage.setItem("user", JSON.stringify(resData.user));
 
-        // Redirect by role
         if (data.role === "admin") {
           window.location.href = "/admin-dashboard.html";
         } else if (data.role === "teacher") {
