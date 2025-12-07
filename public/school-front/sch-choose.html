@@ -118,52 +118,68 @@
 
   // Set dashboard title to nursery name
   const dashboardTitle = document.getElementById("dashboardTitle");
-  if (user.nurseryName) {
-    dashboardTitle.textContent = `${user.nurseryName} Dashboard`;
-  } else {
-    dashboardTitle.textContent = "Nursery Dashboard";
-  }
+  dashboardTitle.textContent = user.nurseryName
+    ? `${user.nurseryName} Dashboard`
+    : "Nursery Dashboard";
 
-  // Show welcome message with user name
-  const welcomeText = document.getElementById("welcomeText");
-  welcomeText.textContent = `Welcome, ${user.name}`;
-  
-  const menuList = document.getElementById("menuList");
+  // Welcome message
+  document.getElementById("welcomeText").textContent = `Welcome, ${user.name}`;
 
-  // Menu items per role
+  // Menu items by role
   const menuItems = {
-    parent: ["Class Kids", "Class Activities", "Class Routines"],
-    teacher: ["Class Kids", "Class Activities", "Class Routines", "Class Behavior Chart"],
-    supervisor: ["Which Class", "Class Kids", "Class Activities", "Class Routines", "Class Behavior Chart", "Class Teacher Behavior"],
-    admin: ["Which Class", "Class Kids", "Class Activities", "Class Routines", "Class Behavior Chart", "Class Teacher Behavior", "Nursery Structure"]
+    parent: [
+      { label: "Class Kids", page: "/sch-class-kids.html" },
+      { label: "Class Activities", page: "/sch-class-activities.html" },
+      { label: "Class Routines", page: "/sch-class-routines.html" }
+    ],
+
+    teacher: [
+      { label: "Class Kids", page: "/sch-class-kids.html" },
+      { label: "Class Activities", page: "/sch-class-activities.html" },
+      { label: "Class Routines", page: "/sch-class-routines.html" },
+      { label: "Class Behavior Chart", page: "/sch-class-behavior.html" }
+    ],
+
+    supervisor: [
+      { label: "Which Class", page: "/sch-choose-class.html" },
+      { label: "Class Kids", page: "/sch-class-kids.html" },
+      { label: "Class Activities", page: "/sch-class-activities.html" },
+      { label: "Class Routines", page: "/sch-class-routines.html" },
+      { label: "Class Behavior Chart", page: "/sch-class-behavior.html" },
+      { label: "Class Teacher Behavior", page: "/sch-teacher-behavior.html" }
+    ],
+
+    admin: [
+      { label: "Which Class", page: "/sch-choose-class.html" },
+      { label: "Class Kids", page: "/sch-class-kids.html" },
+      { label: "Class Activities", page: "/sch-class-activities.html" },
+      { label: "Class Routines", page: "/sch-class-routines.html" },
+      { label: "Class Behavior Chart", page: "/sch-class-behavior.html" },
+      { label: "Class Teacher Behavior", page: "/sch-teacher-behavior.html" },
+      { label: "Nursery Structure", page: "/sch-structure.html" }
+    ]
   };
 
-  // Render menu
+  // Render menu buttons
+  const menuList = document.getElementById("menuList");
   const role = user.role.toLowerCase();
   const items = menuItems[role] || [];
 
   items.forEach(item => {
     const li = document.createElement("li");
-    li.textContent = item;
-
-    li.onclick = () => {
-      alert(`Clicked: ${item}`);
-      // TODO: link pages here
-    };
-
+    li.textContent = item.label;
+    li.onclick = () => window.location.href = item.page;
     menuList.appendChild(li);
   });
 
-  // Logout handler
+  // Logout
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("user");
     window.location.href = "/signin.html";
   };
 
-  // Back handler
-  document.getElementById("backBtn").onclick = () => {
-    window.history.back();
-  };
+  // Back
+  document.getElementById("backBtn").onclick = () => window.history.back();
 </script>
 
 </body>
