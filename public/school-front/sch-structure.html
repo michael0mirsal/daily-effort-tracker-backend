@@ -156,16 +156,21 @@ async function loadNursery() {
     const nurseryId = localStorage.getItem("nurseryId");
     if (!nurseryId) return alert("Missing nursery ID");
 
-    const res = await fetch(`${API}/${nurseryId}`);
-    const data = await res.json();
+    const res = await fetch(`${API}/${nurseryId}/dashboard`);
+const result = await res.json();
 
-    document.getElementById("nurseryName").value = data.name || "";
-    document.getElementById("nurseryEmail").value = data.email || "";
-    document.getElementById("nurseryPhone").value = data.phone || "";
-    document.getElementById("nurseryPassKey").value = data.passKey || "";
+if (!result.success) return alert("Failed to load nursery");
 
-    document.getElementById("managerName").value = data.manager || "";
-    document.getElementById("managerPassKey").value = data.managerPassKey || "";
+const data = result.nursery;
+
+document.getElementById("nurseryName").value = data.name || "";
+document.getElementById("nurseryEmail").value = data.email || "";
+document.getElementById("nurseryPhone").value = data.phone || "";
+document.getElementById("nurseryPassKey").value = data.passKey || "";
+
+document.getElementById("managerName").value = data.manager || "";
+document.getElementById("managerPassKey").value = data.managerPassKey || "";
+
 
   } catch (err) {
     console.error(err);
