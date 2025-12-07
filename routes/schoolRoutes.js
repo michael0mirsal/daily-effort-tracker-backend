@@ -33,7 +33,7 @@ router.post("/school/signin", async (req, res) => {
     let user;
 
     if (role === "admin") {
-      user = await Nursery.findOne({ manager: name, name: nurseryName, managerPassKey });
+      user = await Nursery.findOne({ manager: name, name: nurseryName, managerPassKey:passKey });
     } else if (role === "teacher") {
       user = await Teacher.findOne({ name, passKey }).populate("nursery", "name passKey");
     } else if (role === "parent") {
