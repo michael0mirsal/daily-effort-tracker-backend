@@ -122,7 +122,7 @@ router.get("/nurseries", async (req, res) => {
 // POST create nursery
 router.post("/nurseries", async (req, res) => {
   try {
-    const { name, address, email, phone, passKey, license } = req.body;
+    const { name, address, email, phone, passKey, license, manager, managerPassKey  } = req.body;
 
     // 1️⃣ Check required fields
     if (!name || !email || !phone || !passKey || !license) {
@@ -147,6 +147,7 @@ router.post("/nurseries", async (req, res) => {
       email,
       phone,
       manager,
+      managerPassKey,
       passKey
     });
 
