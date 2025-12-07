@@ -181,7 +181,8 @@ document.getElementById("managerPassKey").value = data.managerPassKey || "";
    SAVE NURSERY INFO TO DB
 ----------------------*/
 async function saveNursery() {
-  const nurseryId = localStorage.getItem("nurseryId");
+  const nurseryId = localStorage.getItem("nurseryId") || "6935e44bd5f8f6d780a82492";
+
 
   const payload = {
     name: document.getElementById("nurseryName").value,
