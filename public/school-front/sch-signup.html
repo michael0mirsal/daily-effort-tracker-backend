@@ -69,6 +69,9 @@
       <label for="nurseryAdmin">Nursery Manager</label>
       <input type="text" id="nurseryAdmin" placeholder="Enter Manager Name" required />
 
+      <label for="managerKey">Nursery Pass Key</label>
+      <input type="text" id="managerKey" placeholder="Enter Manager Pass Key" required />
+
       <label for="nurseryKey">Nursery Pass Key</label>
       <input type="text" id="nurseryKey" placeholder="Enter Nursery Pass Key" required />
       <p class="note">This key will be used for nursery access and teachers to join.</p>
@@ -137,6 +140,7 @@
         email: document.getElementById("contactEmail").value.trim(),
         phone: document.getElementById("contactPhone").value.trim(),
         manager: document.getElementById("nurseryAdmin").value.trim(),
+        managerPassKey: document.getElementById("managerKey").value.trim(),
         passKey: document.getElementById("nurseryKey").value.trim(),
         license: validatedLicense,
         address: "Not provided"
