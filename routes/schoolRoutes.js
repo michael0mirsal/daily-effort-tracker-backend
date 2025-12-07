@@ -23,16 +23,17 @@ function generateLicenseKey() {
 // LOGIN route
 router.post("/school/signin", async (req, res) => {
   try {
-    const { name, nurseryName, role, passKey } = req.body;
+    const { name, nurseryName, role, passKey, managerPassKey} = req.body;
 
-    if ((!name && role !== "admin") || !role || !passKey || (role === "admin" && !nurseryName)) {
-      return res.status(400).json({ error: "Missing fields" });
-    }
+    if ((!name && role !== "admin") || !role || (role === "admin" && (!nurseryName || !managerPassKey)) || (role !== "admin" && !passKey)) {
+    return res.status(400).json({ error: "Missing fields" });
+     }
+
 
     let user;
 
     if (role === "admin") {
-      user = await Nursery.findOne({ manager: name, managerPassKey });
+      user = await Nursery.findOne({ manager: name, name: nurseryName, managerPassKey });
     } else if (role === "teacher") {
       user = await Teacher.findOne({ name, passKey }).populate("nursery", "name passKey");
     } else if (role === "parent") {
