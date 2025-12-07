@@ -102,8 +102,8 @@
 </div>
 
 <div class="card">
-  <h1>User, Dashboard</h1>
-  <h2 id="welcomeText">Welcome</h2>
+  <h1 id="dashboardTitle">Nursery Dashboard</h1>
+  <h2 id="welcomeText">Welcome, User</h2>
   <ul id="menuList"></ul>
 </div>
 
@@ -116,9 +116,18 @@
     window.location.href = "/signin.html";
   }
 
-  // Show welcome message
-  document.getElementById("welcomeText").textContent = `Welcome, ${user.name}`;
+  // Set dashboard title to nursery name
+  const dashboardTitle = document.getElementById("dashboardTitle");
+  if (user.nurseryName) {
+    dashboardTitle.textContent = `${user.nurseryName} Dashboard`;
+  } else {
+    dashboardTitle.textContent = "Nursery Dashboard";
+  }
 
+  // Show welcome message with user name
+  const welcomeText = document.getElementById("welcomeText");
+  welcomeText.textContent = `Welcome, ${user.name}`;
+  
   const menuList = document.getElementById("menuList");
 
   // Menu items per role
