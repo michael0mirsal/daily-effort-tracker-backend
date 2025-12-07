@@ -23,39 +23,42 @@ function generateLicenseKey() {
 // LOGIN route
 router.post("/school/signin", async (req, res) => {
   try {
-    const { name, role, passKey } = req.body;
+    const { name, nurseryName, role, passKey } = req.body;
 
-    if (!name || !role || !passKey) {
+    if ((!name && role !== "admin") || !role || !passKey || (role === "admin" && !nurseryName)) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
     let user;
 
     if (role === "admin") {
-  user = await Nursery.findOne({ name: data.nurseryName, passKey });
-} else if (role === "teacher") {
-  user = await Teacher.findOne({ name, passKey }).populate("nursery", "name passKey");
-} else if (role === "parent") {
-  user = await SchoolMember.findOne({ fullName: name, passKey }).populate("family", "dad mom phone");
-}
+      user = await Nursery.findOne({ name: nurseryName, passKey });
+    } else if (role === "teacher") {
+      user = await Teacher.findOne({ name, passKey }).populate("nursery", "name passKey");
+    } else if (role === "parent") {
+      user = await SchoolMember.findOne({ fullName: name, passKey }).populate("family", "dad mom phone");
+    }
 
-// return nursery name
-res.json({
-  success: true,
-  user: {
-    id: user._id,
-    name: user.name || user.fullName,
-    role,
-    nurseryName: user.name || user.nursery?.name
-  }
-});
+    if (!user) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
 
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name || user.fullName,
+        role,
+        nurseryName: user.name || user.nursery?.name
+      }
+    });
 
   } catch (err) {
-    console.error(err);
+    console.error("Sign-in error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 
 // Create license key (Admin)
