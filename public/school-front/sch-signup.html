@@ -66,6 +66,9 @@
       <label for="contactPhone">Contact Phone</label>
       <input type="tel" id="contactPhone" placeholder="Enter Phone Number" required />
 
+      <label for="nurseryAdmin">Nursery Manager</label>
+      <input type="text" id="nurseryAdmin" placeholder="Enter Manager Name" required />
+
       <label for="nurseryKey">Nursery Pass Key</label>
       <input type="text" id="nurseryKey" placeholder="Enter Nursery Pass Key" required />
       <p class="note">This key will be used for nursery access and teachers to join.</p>
@@ -94,7 +97,7 @@
       }
 
       try {
-        const res = await fetch("http://localhost:3000/api/school/nursery/validate-license", {
+        const res = await fetch("http://localhost:3000/api/nursery/validate-license", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ license })
@@ -133,6 +136,7 @@
         name: document.getElementById("nurseryName").value.trim(),
         email: document.getElementById("contactEmail").value.trim(),
         phone: document.getElementById("contactPhone").value.trim(),
+        manager: document.getElementById("nurseryAdmin").value.trim(),
         passKey: document.getElementById("nurseryKey").value.trim(),
         license: validatedLicense,
         address: "Not provided"
@@ -148,7 +152,7 @@
       }
 
       try {
-        const res = await fetch("http://localhost:3000/api/school/nurseries", {
+        const res = await fetch("http://localhost:3000/api/nurseries", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
