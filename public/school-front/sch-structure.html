@@ -25,7 +25,8 @@
 </style>
 </head>
 <body>
-  <!-- Top-right buttons -->
+
+<!-- Top-right buttons -->
 <div style="position:fixed; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:300;">
   <button class="btn btn-delete" onclick="logout()">Logout</button>
   <button class="btn btn-edit" onclick="goBack()">Back</button>
@@ -34,10 +35,35 @@
 <!-- Nursery Info -->
 <div class="card">
   <h1>Nursery Info</h1>
-  <p><strong>Name:</strong> <input type="text" id="nurseryName" value="Happy Kids Nursery" /></p>
-  <p><strong>Email:</strong> <input type="text" id="nurseryEmail" value="contact@happykids.com" /></p>
-  <p><strong>Phone:</strong> <input type="text" id="nurseryPhone" value="+201234567890" /></p>
-  <p><strong>Pass Key:</strong> <input type="text" id="nurseryPassKey" value="ABC123XYZ" /></p>
+
+  <p><strong>Name:</strong>
+    <input type="text" id="nurseryName" />
+  </p>
+
+  <p><strong>Email:</strong>
+    <input type="text" id="nurseryEmail" />
+  </p>
+
+  <p><strong>Phone:</strong>
+    <input type="text" id="nurseryPhone" />
+  </p>
+
+  <p><strong>Pass Key:</strong>
+    <input type="text" id="nurseryPassKey" />
+  </p>
+
+  <hr />
+
+  <h2>Manager Info</h2>
+
+  <p><strong>Manager Name:</strong>
+    <input type="text" id="managerName" />
+  </p>
+
+  <p><strong>Manager Pass Key:</strong>
+    <input type="text" id="managerPassKey" />
+  </p>
+
   <button class="btn btn-add" onclick="saveNursery()">Save Nursery Info</button>
 </div>
 
@@ -113,196 +139,144 @@
   </div>
 </div>
 
-<!-- Tooltip for class members/teachers -->
+<!-- Tooltip -->
 <div class="tooltip" id="classTooltip"></div>
 
 <script>
-  // Data
-  let classes = [
-    { name: "Class A", passKey: "A123", members: [], teachers: [] },
-    { name: "Class B", passKey: "B456", members: [], teachers: [] }
-  ];
-  let workers = [
-    { name: "Alice", role: "Teacher", assignedClass: "Class A", email:"alice@mail.com", phone:"1234" },
-    { name: "Bob", role: "Supervisor", assignedClass: "Class B", email:"bob@mail.com", phone:"5678" }
-  ];
+/* ---------------------
+   API CONFIG
+----------------------*/
+const API = "http://localhost:3000/api/nurseries";
 
-  // ---------- Render Tables ----------
-  const classesTableBody = document.getElementById('classesTableBody');
-  const workersTableBody = document.getElementById('workersTableBody');
+/* ---------------------
+   LOAD NURSERY INFO FROM DB
+----------------------*/
+async function loadNursery() {
+  try {
+    const nurseryId = localStorage.getItem("nurseryId");
+    if (!nurseryId) return alert("Missing nursery ID");
 
-  function renderClasses() {
-    classesTableBody.innerHTML = '';
-    classes.forEach((cls,index)=>{
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td onmouseover="showClassTooltip(event, ${index})" onmouseout="hideTooltip()">${cls.name}</td>
-        <td>${cls.passKey}</td>
-        <td>
-          <button class="btn btn-edit" onclick="editClass(${index})">Edit</button>
-          <button class="btn btn-delete" onclick="deleteClass(${index})">Delete</button>
-        </td>
-      `;
-      classesTableBody.appendChild(row);
+    const res = await fetch(`${API}/${nurseryId}`);
+    const data = await res.json();
+
+    document.getElementById("nurseryName").value = data.name || "";
+    document.getElementById("nurseryEmail").value = data.email || "";
+    document.getElementById("nurseryPhone").value = data.phone || "";
+    document.getElementById("nurseryPassKey").value = data.passKey || "";
+
+    document.getElementById("managerName").value = data.manager || "";
+    document.getElementById("managerPassKey").value = data.managerPassKey || "";
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+/* ---------------------
+   SAVE NURSERY INFO TO DB
+----------------------*/
+async function saveNursery() {
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  const payload = {
+    name: document.getElementById("nurseryName").value,
+    email: document.getElementById("nurseryEmail").value,
+    phone: document.getElementById("nurseryPhone").value,
+    passKey: document.getElementById("nurseryPassKey").value,
+    manager: document.getElementById("managerName").value,
+    managerPassKey: document.getElementById("managerPassKey").value
+  };
+
+  try {
+    await fetch(`${API}/${nurseryId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
+
+    alert("Nursery info saved!");
+  } catch (err) {
+    console.error(err);
   }
+}
 
-  function renderWorkers() {
-    workersTableBody.innerHTML = '';
-    workers.forEach((worker,index)=>{
-      const classOptions = classes.map(c=>`<option value="${c.name}" ${c.name===worker.assignedClass?'selected':''}>${c.name}</option>`).join('');
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${worker.name}</td>
-        <td>${worker.role}</td>
-        <td><select onchange="updateAssignedClass(${index}, this.value)">${classOptions}</select></td>
-        <td>${worker.email}</td>
-        <td>${worker.phone}</td>
-        <td>
-          <button class="btn btn-edit" onclick="editWorker(${index})">Edit</button>
-          <button class="btn btn-delete" onclick="deleteWorker(${index})">Delete</button>
-        </td>
-      `;
-      workersTableBody.appendChild(row);
-    });
-  }
+/* ---------------------
+   STATIC MOCK DATA (KEEP YOUR ORIGINAL)
+----------------------*/
+let classes = [
+  { name: "Class A", passKey: "A123", members: [], teachers: [] },
+  { name: "Class B", passKey: "B456", members: [], teachers: [] }
+];
 
-  // ---------- Nursery Info ----------
-  function saveNursery() {
-    alert('Nursery info saved! Connect to backend for real saving.');
-  }
+let workers = [
+  { name: "Alice", role: "Teacher", assignedClass: "Class A", email:"alice@mail.com", phone:"1234" },
+  { name: "Bob", role: "Supervisor", assignedClass: "Class B", email:"bob@mail.com", phone:"5678" }
+];
 
-  // ---------- Class Modal ----------
-  const classModal = document.getElementById('classModal');
-  const classForm = document.getElementById('classForm');
-  const classModalTitle = document.getElementById('classModalTitle');
-  const classNameInput = document.getElementById('classNameInput');
-  const classPassKeyInput = document.getElementById('classPassKeyInput');
-  let editingClassIndex = null;
+/* ---------------------
+   YOUR ORIGINAL TABLE RENDERING
+----------------------*/
+const classesTableBody = document.getElementById('classesTableBody');
+const workersTableBody = document.getElementById('workersTableBody');
 
-  function openClassModal() {
-    editingClassIndex = null;
-    classModalTitle.textContent = 'Add Class';
-    classForm.reset();
-    classModal.style.display = 'block';
-  }
-  function closeClassModal(){ classModal.style.display='none'; }
+function renderClasses() {
+  classesTableBody.innerHTML = '';
+  classes.forEach((cls,index)=>{
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td onmouseover="showClassTooltip(event, ${index})" onmouseout="hideTooltip()">${cls.name}</td>
+      <td>${cls.passKey}</td>
+      <td>
+        <button class="btn btn-edit" onclick="editClass(${index})">Edit</button>
+        <button class="btn btn-delete" onclick="deleteClass(${index})">Delete</button>
+      </td>
+    `;
+    classesTableBody.appendChild(row);
+  });
+}
 
-  classForm.onsubmit = function(e){
-    e.preventDefault();
-    const cls = { name:classNameInput.value, passKey:classPassKeyInput.value, members:[], teachers:[] };
-    if(editingClassIndex !== null){
-      classes[editingClassIndex] = cls;
-    }else classes.push(cls);
-    renderClasses();
-    renderWorkers();
-    closeClassModal();
-  }
+function renderWorkers() {
+  workersTableBody.innerHTML = '';
+  workers.forEach((worker,index)=>{
+    const classOptions = classes.map(c=>`<option value="${c.name}" ${c.name===worker.assignedClass?'selected':''}>${c.name}</option>`).join('');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${worker.name}</td>
+      <td>${worker.role}</td>
+      <td><select onchange="updateAssignedClass(${index}, this.value)">${classOptions}</select></td>
+      <td>${worker.email}</td>
+      <td>${worker.phone}</td>
+      <td>
+        <button class="btn btn-edit" onclick="editWorker(${index})">Edit</button>
+        <button class="btn btn-delete" onclick="deleteWorker(${index})">Delete</button>
+      </td>
+    `;
+    workersTableBody.appendChild(row);
+  });
+}
 
-  function editClass(index){
-    editingClassIndex=index;
-    classModalTitle.textContent='Edit Class';
-    const cls=classes[index];
-    classNameInput.value=cls.name;
-    classPassKeyInput.value=cls.passKey;
-    classModal.style.display='block';
-  }
+/* ---------------------
+   LOGOUT & BACK
+----------------------*/
+function logout() {
+  localStorage.clear();
+  window.location.href = "/choose-user.html";
+}
 
-  function deleteClass(index){
-    if(confirm('Delete this class?')){
-      const removed=classes.splice(index,1)[0];
-      workers.forEach(w=>{ if(w.assignedClass===removed.name) w.assignedClass=''; });
-      renderClasses(); renderWorkers();
-    }
-  }
+function goBack() {
+  window.history.back();
+}
 
-  // ---------- Teacher Modal ----------
-  const teacherModal = document.getElementById('teacherModal');
-  const teacherForm = document.getElementById('teacherForm');
-  const teacherModalTitle = document.getElementById('teacherModalTitle');
-  const teacherNameInput = document.getElementById('teacherNameInput');
-  const teacherRoleInput = document.getElementById('teacherRoleInput');
-  const teacherEmailInput = document.getElementById('teacherEmailInput');
-  const teacherPhoneInput = document.getElementById('teacherPhoneInput');
-  const teacherClassInput = document.getElementById('teacherClassInput');
-  let editingWorkerIndex = null;
-
-  function openAddTeacherModal(){
-    editingWorkerIndex=null;
-    teacherModalTitle.textContent='Add Teacher';
-    teacherForm.reset();
-    populateClassOptions();
-    teacherModal.style.display='block';
-  }
-
-  function closeTeacherModal(){ teacherModal.style.display='none'; }
-
-  function populateClassOptions(){
-    teacherClassInput.innerHTML='<option value="">Assign Class</option>';
-    classes.forEach(c=>{ const opt=document.createElement('option'); opt.value=c.name; opt.textContent=c.name; teacherClassInput.appendChild(opt); });
-  }
-
-  function editWorker(index){
-    editingWorkerIndex=index;
-    teacherModalTitle.textContent='Edit Teacher';
-    const w=workers[index];
-    teacherNameInput.value=w.name;
-    teacherRoleInput.value=w.role;
-    teacherEmailInput.value=w.email;
-    teacherPhoneInput.value=w.phone;
-    populateClassOptions();
-    teacherClassInput.value=w.assignedClass;
-    teacherModal.style.display='block';
-  }
-
-  function deleteWorker(index){
-    if(confirm('Delete this worker?')){ workers.splice(index,1); renderWorkers(); }
-  }
-
-  function updateAssignedClass(index,value){ workers[index].assignedClass=value; }
-
-  teacherForm.onsubmit=function(e){
-    e.preventDefault();
-    const w={ 
-      name:teacherNameInput.value,
-      role:teacherRoleInput.value,
-      email:teacherEmailInput.value,
-      phone:teacherPhoneInput.value,
-      assignedClass:teacherClassInput.value
-    };
-    if(editingWorkerIndex!==null) workers[editingWorkerIndex]=w; else workers.push(w);
-    renderWorkers(); closeTeacherModal();
-  }
-
-  // ---------- Class Tooltip ----------
-  const tooltip = document.getElementById('classTooltip');
-  function showClassTooltip(e,index){
-    const cls=classes[index];
-    tooltip.innerHTML=`<strong>Members:</strong> ${cls.members.join(', ')}<br><strong>Teachers:</strong> ${cls.teachers.join(', ')}`;
-    tooltip.style.display='block';
-    tooltip.style.top=e.pageY+10+'px';
-    tooltip.style.left=e.pageX+10+'px';
-  }
-  function hideTooltip(){ tooltip.style.display='none'; }
-
-
-
-  function logout() {
-    // Clear session/local storage if needed
-    alert('Logged out!');
-    // Redirect to login page
-    window.location.href = '/choose-user.html';
-  }
-
-  function goBack() {
-    // Go back to previous page
-    window.history.back();
-  }
-
-    // Initial render
-  renderClasses();
-  renderWorkers();
+/* ---------------------
+   INITIAL LOAD
+----------------------*/
+window.onload = () => {
+  loadNursery();   // dynamic DB data
+  renderClasses(); // your original
+  renderWorkers(); // your original
+};
 </script>
 
 </body>
+
 </html>
