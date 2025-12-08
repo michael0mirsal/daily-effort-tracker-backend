@@ -332,7 +332,7 @@ async function updateAssignedClass(index, newClassId) {
   const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ classId: newClassId })
+    body: JSON.stringify({ assignedClass: newClassId })
   });
 
   const data = await res.json();
@@ -343,6 +343,7 @@ async function updateAssignedClass(index, newClassId) {
     alert("Failed to update assignment");
   }
 }
+
 
 async function deleteWorker(index) {
   const nurseryId = localStorage.getItem("nurseryId");
@@ -416,18 +417,25 @@ function renderClasses() {
   });
 }
 
+// Table rendering fix
 function renderWorkers() {
   workersTableBody.innerHTML = '';
   workers.forEach((worker, index) => {
-    const classOptions = classes.map(c =>
-      `<option value="${c._id}" ${worker.classes && worker.classes[0] === c._id ? "selected" : ""}>${c.name}</option>`
-    ).join('');
+    // ✅ Generate class options for the dropdown
+    const classOptions = `<option value="">No Class Assigned</option>` +
+      classes.map(c =>
+        `<option value="${c._id}" ${worker.assignedClass === c._id ? "selected" : ""}>${c.name}</option>`
+      ).join('');
 
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${worker.name}</td>
       <td>${worker.role}</td>
-      <td><select onchange="updateAssignedClass(${index}, this.value)">${classOptions}</select></td>
+      <td>
+        <select onchange="updateAssignedClass(${index}, this.value)">
+          ${classOptions}
+        </select>
+      </td>
       <td>${worker.email}</td>
       <td>${worker.phone}</td>
       <td>
@@ -438,6 +446,8 @@ function renderWorkers() {
     workersTableBody.appendChild(row);
   });
 }
+
+
 
 /* ---------------------
    MODALS
