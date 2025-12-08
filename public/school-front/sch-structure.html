@@ -443,8 +443,19 @@ function openClassModal(isEdit = false, cls = null) {
 
 async function saveClass() {
   const nurseryId = localStorage.getItem("nurseryId");
-  const name = document.getElementById("classNameInput").value;
-  const passKey = document.getElementById("classPassKeyInput").value;
+  const name = document.getElementById("classNameInput").value.trim();
+  const passKey = document.getElementById("classPassKeyInput").value.trim();
+
+  // -------------------
+  // Prevent duplicate class names
+  // -------------------
+  const duplicateClass = classes.find((c, idx) => 
+    c.name.toLowerCase() === name.toLowerCase() && idx !== editingClassIndex
+  );
+
+  if (duplicateClass) {
+    return alert("A class with this name already exists.");
+  }
 
   if (editingClassIndex !== null) {
     // EDIT existing class
@@ -480,6 +491,7 @@ async function saveClass() {
   }
 }
 
+
 document.getElementById("classForm").onsubmit = e => {
   e.preventDefault();
   saveClass();
@@ -498,16 +510,15 @@ function openAddTeacherModal(isEdit = false, worker = null) {
 
   const classSelect = document.getElementById("teacherClassInput");
 
-  // Build dropdown with classes and disable options already assigned to another teacher
   classSelect.innerHTML =
     `<option value="">-- Select Class --</option>` +
     classes.map(c => {
-      // Check if any other teacher is assigned to this class
+      // Check if another teacher already has this class
       const isAssigned = workers.some((w, idx) => {
-        if (isEdit && workers[editingTeacherIndex]?._id === w._id) return false; // ignore self
+        if (isEdit && worker && w._id === worker._id) return false; // ignore self
         return w.assignedClass === c._id;
       });
-      return `<option value="${c._id}" ${worker?.assignedClass === c._id ? "selected" : ""} ${isAssigned ? "disabled" : ""}>${c.name}</option>`;
+      return `<option value="${c._id}" ${worker?.assignedClass === c._id ? "selected" : ""} ${isAssigned ? "disabled" : ""}>${c.name}${isAssigned ? " (Assigned)" : ""}</option>`;
     }).join('');
 
   if (isEdit && worker) {
@@ -516,13 +527,13 @@ function openAddTeacherModal(isEdit = false, worker = null) {
     document.getElementById("teacherEmailInput").value = worker.email;
     document.getElementById("teacherPhoneInput").value = worker.phone;
     classSelect.value = worker.assignedClass || "";
-
     editingTeacherIndex = workers.findIndex(w => w._id === worker._id);
   } else {
     document.getElementById("teacherForm").reset();
     editingTeacherIndex = null;
   }
 }
+
 
 
 async function saveTeacher() {
@@ -544,7 +555,10 @@ async function saveTeacher() {
   if (!assignedClass) {
     return alert("Please assign a class before saving the teacher.");
   }
-
+  // ⚠️ Prevent assigning same class to multiple teachers
+  if (workers.some((w, idx) => idx !== editingTeacherIndex && w.assignedClass === assignedClass)) {
+    return alert("This class is already assigned to another teacher.");
+  }
   const payload = { name, role, email, phone, assignedClass };
 
   try {
