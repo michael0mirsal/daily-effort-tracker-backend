@@ -407,27 +407,29 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
 });
 
 // PUT assign class to teacher
+// UPDATE TEACHER FULL INFO
 router.put("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
   try {
+    const { nurseryId, teacherId } = req.params;
     const { name, role, email, phone, assignedClass } = req.body;
 
-    const teacher = await Teacher.findByIdAndUpdate(
-      req.params.teacherId,
-      {
-        name,
-        role,
-        email,
-        phone,
-        classes: assignedClass ? [assignedClass] : []
-      },
+    const teacher = await Teacher.findOneAndUpdate(
+      { _id: teacherId, nursery: nurseryId },
+      { name, role, email, phone, assignedClass },
       { new: true }
     );
 
+    if (!teacher) {
+      return res.json({ success: false, message: "Teacher not found" });
+    }
+
     res.json({ success: true, teacher });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error(err);
+    res.json({ success: false, message: "Update failed" });
   }
 });
+
 
 
 
