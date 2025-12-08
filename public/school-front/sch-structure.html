@@ -378,16 +378,28 @@ function renderClasses() {
 // Table rendering fix
 function renderWorkers() {
   workersTableBody.innerHTML = '';
+
   workers.forEach((worker, index) => {
-    const classOptions = classes.map(c =>
-      `<option value="${c._id}" ${worker.assignedClass === c._id ? "selected" : ""}>${c.name}</option>`
-    ).join('');
+    const classId = worker.classes?.[0] || "";
+    const className = classes.find(c => c._id === classId)?.name || "-";
+
+    // 🔥 build dropdown options for this worker
+    const classOptions = classes.map(c => `
+      <option value="${c._id}" ${c._id === classId ? "selected" : ""}>
+        ${c.name}
+      </option>
+    `).join('');
 
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${worker.name}</td>
       <td>${worker.role}</td>
-      <td><select onchange="updateAssignedClass(${index}, this.value)">${classOptions}</select></td>
+      <td>${className}</td>
+      <td>
+        <select onchange="updateAssignedClass(${index}, this.value)">
+          ${classOptions}
+        </select>
+      </td>
       <td>${worker.email}</td>
       <td>${worker.phone}</td>
       <td>
@@ -398,6 +410,7 @@ function renderWorkers() {
     workersTableBody.appendChild(row);
   });
 }
+
 
 
 /* ---------------------
