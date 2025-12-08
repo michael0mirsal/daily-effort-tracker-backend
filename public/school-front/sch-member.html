@@ -364,30 +364,44 @@ async function createKid() {
   }
 }
 
-// Save member
 async function saveMember() {
-  const kidId = localStorage.getItem("selectedKidId"); // must exist
-  if (!kidId) return alert("Please select a kid first!");
+  const familyId = document.getElementById("familySelect").value;
+  const memberId = localStorage.getItem("selectedKidId");
+  const classId = document.getElementById("classSelect").value;
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  if (!familyId) return alert("Select a family!");
+  if (!memberId) return alert("Select a kid!");
+  if (!classId) return alert("Select a class!");
+  if (!nurseryId) return alert("Nursery not set!");
 
   const body = {
-    kid: kidId,
-    family: document.getElementById("familySelect").value,
-    class: document.getElementById("classSelect").value,
-    nursery: localStorage.getItem("nurseryId"),
+    family: familyId,
+    member: memberId,
+    nursery: nurseryId,
+    class: classId,
+    dadPhone: document.getElementById("dadPhone").value,
+    dadEmail: document.getElementById("dadEmail").value,
+    momPhone: document.getElementById("momPhone").value,
+    momEmail: document.getElementById("momEmail").value,
+    emergencyContactName: document.getElementById("emergencyName").value,
+    emergencyContactPhone: document.getElementById("emergencyPhone").value,
+    emergencyContactRelation: document.getElementById("emergencyRelation").value,
     role: "kid",
-    notes: ""
+    notes: document.getElementById("notes").value
   };
 
-  const res = await fetch(`${API}/schoolMembers`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  try {
+    const res = await fetch(`${API}/schoolMembers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
 
-  if (res.ok) alert("School member saved successfully!");
-  else {
-    const data = await res.json();
-    alert("Failed to save school member: " + (data.message || res.status));
+    if (!res.ok) throw new Error((await res.json()).message || res.status);
+    alert("Member saved successfully!");
+  } catch (err) {
+    alert("Failed: " + err.message);
   }
 }
 
