@@ -511,21 +511,19 @@ let editingTeacherIndex = null;
 
 function openAddTeacherModal(isEdit = false, worker = null) {
   document.getElementById("teacherModal").style.display = "block";
-  document.getElementById("teacherModalTitle").innerText = isEdit ? "Edit Worker" : "Add Worker";
+  document.getElementById("teacherModalTitle").innerText = isEdit ? "Edit Teacher" : "Add Teacher";
 
   const classSelect = document.getElementById("teacherClassInput");
   classSelect.innerHTML =
-    `<option value="">Assign Class</option>` +
+    `<option value="">-- Select Class --</option>` +
     classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
 
-  if (isEdit) {
+  if (isEdit && worker) {
     document.getElementById("teacherNameInput").value = worker.name;
     document.getElementById("teacherRoleInput").value = worker.role;
     document.getElementById("teacherEmailInput").value = worker.email;
     document.getElementById("teacherPhoneInput").value = worker.phone;
-
-    const assigned = worker.classes?.[0] || "";
-    classSelect.value = assigned;
+    classSelect.value = worker.assignedClass || "";
 
     editingTeacherIndex = workers.findIndex(w => w._id === worker._id);
   } else {
@@ -537,45 +535,64 @@ function openAddTeacherModal(isEdit = false, worker = null) {
 async function saveTeacher() {
   const nurseryId = localStorage.getItem("nurseryId");
 
-  const payload = {
-    name: document.getElementById("teacherNameInput").value,
-    role: document.getElementById("teacherRoleInput").value,
-    email: document.getElementById("teacherEmailInput").value,
-    phone: document.getElementById("teacherPhoneInput").value,
-    assignedClass: document.getElementById("teacherClassInput").value
-  };
+  const name = document.getElementById("teacherNameInput").value.trim();
+  const role = document.getElementById("teacherRoleInput").value.trim();
+  const email = document.getElementById("teacherEmailInput").value.trim();
+  const phone = document.getElementById("teacherPhoneInput").value.trim();
+  const assignedClass = document.getElementById("teacherClassInput").value;
 
-  if (editingTeacherIndex !== null) {
-    // EDIT existing teacher
-    const teacherId = workers[editingTeacherIndex]._id;
-    const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ classId: payload.assignedClass, ...payload })
-    });
-    const data = await res.json();
-    if (data.success) {
-      workers[editingTeacherIndex] = data.teacher;
-      renderWorkers();
-      closeTeacherModal();
+  // ----------------------
+  // Frontend validation
+  // ----------------------
+  if (!name || !role || !email || !phone) {
+    return alert("Please fill all teacher details.");
+  }
+
+  if (!assignedClass) {
+    return alert("Please assign a class before saving the teacher.");
+  }
+
+  const payload = { name, role, email, phone, assignedClass };
+
+  try {
+    let res, data;
+
+    if (editingTeacherIndex !== null) {
+      // EDIT existing teacher
+      const teacherId = workers[editingTeacherIndex]._id;
+      res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      data = await res.json();
+
+      if (data.success) {
+        workers[editingTeacherIndex] = data.teacher;
+      } else {
+        return alert("Failed to update teacher");
+      }
     } else {
-      alert("Failed to update teacher");
+      // ADD new teacher
+      res = await fetch(`${API}/${nurseryId}/teachers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      data = await res.json();
+
+      if (data.success) {
+        workers.push(data.teacher);
+      } else {
+        return alert("Error adding teacher");
+      }
     }
-  } else {
-    // ADD new teacher
-    const res = await fetch(`${API}/${nurseryId}/teachers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (data.success) {
-      workers.push(data.teacher);
-      renderWorkers();
-      closeTeacherModal();
-    } else {
-      alert("Error adding teacher");
-    }
+
+    renderWorkers();
+    closeTeacherModal();
+  } catch (err) {
+    console.error(err);
+    alert("Error saving teacher");
   }
 }
 
@@ -584,11 +601,10 @@ document.getElementById("teacherForm").onsubmit = e => {
   saveTeacher();
 };
 
-
-
 function closeTeacherModal() {
   document.getElementById("teacherModal").style.display = "none";
 }
+
 
 /* ---------------------
    TOOLTIP
