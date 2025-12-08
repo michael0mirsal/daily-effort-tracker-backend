@@ -349,15 +349,42 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
   }
 });
 
+// PUT: Assign teacher to a class
 router.put("/nurseries/:nurseryId/teachers/:teacherId/assign", async (req, res) => {
   try {
-    const { classId } = req.body;
-    const teacher = await Teacher.findByIdAndUpdate(req.params.teacherId, { classes: [classId] }, { new: true });
+    const { classId } = req.body; // new class assignment
+    const teacherId = req.params.teacherId;
+
+    // 1️⃣ Find the teacher
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) return res.status(404).json({ success: false, message: "Teacher not found" });
+
+    // 2️⃣ Remove teacher from any previous classes
+    if (teacher.classes && teacher.classes.length) {
+      await ClassModel.updateMany(
+        { _id: { $in: teacher.classes } },
+        { $pull: { teachers: teacher._id } }
+      );
+    }
+
+    // 3️⃣ Update teacher with new class
+    teacher.classes = classId ? [classId] : [];
+    await teacher.save();
+
+    // 4️⃣ Add teacher to the new class's teachers array
+    if (classId) {
+      await ClassModel.findByIdAndUpdate(classId, { $addToSet: { teachers: teacher._id } });
+    }
+
+    // 5️⃣ Return updated teacher
     res.json({ success: true, teacher });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 router.delete("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
   try {
