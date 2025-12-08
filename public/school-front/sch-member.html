@@ -242,14 +242,13 @@ tr:hover {
 <script>
 const API = "http://localhost:3000/api";
 
-// =================== LOAD FAMILIES ===================
+// ===== Load families into the dropdown =====
 async function loadFamilies() {
   try {
     const res = await fetch(`${API}/families`);
     const families = await res.json();
     const select = document.getElementById("familySelect");
     select.innerHTML = '<option value="">Select Family</option>';
-
     families.forEach(f => {
       select.appendChild(new Option(f.name, f._id));
     });
@@ -258,8 +257,39 @@ async function loadFamilies() {
   }
 }
 
+// ===== Load classes into dropdowns =====
+async function initTeacherClasses() {
+  try {
+    const teacherId = localStorage.getItem("teacherId"); // or get from session/login
+    if (!teacherId) return alert("Teacher not logged in");
 
-// ===== Load classes for the teacher's nursery =====
+    // 1️⃣ Fetch teacher info
+    const res = await fetch(`${API}/teachers/${teacherId}`);
+    if (!res.ok) throw new Error("Failed to fetch teacher info");
+    const teacher = await res.json();
+
+    if (!teacher.nursery) return alert("No nursery assigned. Please log in again.");
+
+    // Save nursery ID locally
+    localStorage.setItem("nurseryId", teacher.nursery._id);
+
+    // 2️⃣ Load classes for this nursery
+    await loadClasses(teacher.nursery._id);
+
+    // Optionally, set the nursery dropdown to teacher's nursery
+    const nurserySelect = document.getElementById("nurserySelect");
+    if (nurserySelect) {
+      nurserySelect.innerHTML = `<option value="${teacher.nursery._id}">${teacher.nursery.name}</option>`;
+      nurserySelect.disabled = true; // optional: prevent changing
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+// ===== Modified loadClasses to accept nurseryId =====
 async function loadClasses(nurseryId) {
   const classSelect = document.getElementById("classSelect");
   const classShow = document.getElementById("classShow");
@@ -270,20 +300,11 @@ async function loadClasses(nurseryId) {
   if (!nurseryId) return;
 
   try {
-    // Get the teacher's classes from localStorage
-    const teacherClasses = JSON.parse(localStorage.getItem("teacherClasses") || "[]");
+    const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
+    if (!res.ok) throw new Error("Failed to fetch classes");
+    const classes = await res.json();
 
-    if (!teacherClasses.length) return;
-
-    // Fetch each class from backend
-    const classData = await Promise.all(
-      teacherClasses.map(id =>
-        fetch(`${API}/classes/${id}`).then(r => r.json())
-      )
-    );
-
-    // Populate dropdowns
-    classData.forEach(c => {
+    classes.forEach(c => {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
     });
@@ -292,7 +313,9 @@ async function loadClasses(nurseryId) {
   }
 }
 
-// ===== Load family info when selected =====
+
+
+// ===== When a family is selected =====
 document.getElementById("familySelect").addEventListener("change", async () => {
   const familyId = document.getElementById("familySelect").value;
   const kidSelect = document.getElementById("kidSelect");
@@ -341,7 +364,7 @@ document.getElementById("familySelect").addEventListener("change", async () => {
   }
 });
 
-// ===== Load kid info when selected =====
+// ===== When a kid is selected =====
 document.getElementById("kidSelect").addEventListener("change", async () => {
   const kidId = document.getElementById("kidSelect").value;
   if (!kidId) {
@@ -357,6 +380,7 @@ document.getElementById("kidSelect").addEventListener("change", async () => {
   localStorage.setItem("selectedKidId", kidId);
   localStorage.setItem("selectedKidName", document.getElementById("kidSelect").selectedOptions[0].text);
 
+  // Fetch kid info to fill form
   try {
     const res = await fetch(`${API}/members/${kidId}`);
     if (!res.ok) throw new Error("Kid not found");
@@ -394,12 +418,14 @@ async function createKid() {
     const newKid = await res.json();
     alert(`Kid ${name} created!`);
 
+    // Add new kid to dropdown & select it
     const kidSelect = document.getElementById("kidSelect");
     kidSelect.appendChild(new Option(newKid.name, newKid._id));
     kidSelect.value = newKid._id;
     localStorage.setItem("selectedKidId", newKid._id);
     localStorage.setItem("selectedKidName", newKid.name);
 
+    // Fill form
     document.getElementById("fullName").value = newKid.name;
     document.getElementById("age").value = newKid.age || "";
     document.getElementById("dob").value = newKid.dob ? newKid.dob.split("T")[0] : "";
@@ -410,12 +436,13 @@ async function createKid() {
   }
 }
 
-// ===== Save member to school =====
+// ===== Save member to SchoolMember =====
 async function saveMember() {
   const familyId = document.getElementById("familySelect").value;
-  const memberId = localStorage.getItem("selectedKidId") || document.getElementById("kidSelect").value;
+  const kidSelect = document.getElementById("kidSelect");
+  const memberId = localStorage.getItem("selectedKidId") || kidSelect.value;
   const classId = document.getElementById("classSelect").value;
-  const nurseryId = localStorage.getItem("teacherNurseryId");
+  const nurseryId = localStorage.getItem("nurseryId");
 
   if (!familyId) return alert("Select a family!");
   if (!memberId) return alert("Select a kid!");
@@ -444,6 +471,7 @@ async function saveMember() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
+
     if (!res.ok) throw new Error((await res.json()).message || res.status);
     alert("Member saved successfully!");
   } catch (err) {
@@ -451,15 +479,57 @@ async function saveMember() {
   }
 }
 
-// ===== Show class members popup =====
+async function loadNurseries() {
+  const res = await fetch(`${API}/nurseries`);
+  const nurseries = await res.json();
+  const select = document.getElementById("nurserySelect");
+  nurseries.forEach(n => {
+    select.appendChild(new Option(n.name, n._id));
+  });
+
+  // If nursery changes → load its classes dynamically
+  select.addEventListener("change", () => {
+    const nurseryId = select.value;
+    localStorage.setItem("nurseryId", nurseryId); // save for later
+    loadClasses(nurseryId); // dynamically load classes for this nursery
+  });
+}
+
+// Call this on page load
+loadNurseries();
+
+
+async function loadClasses(nurseryId) {
+  const classSelect = document.getElementById("classSelect");
+  const classShow = document.getElementById("classShow");
+
+  classSelect.innerHTML = '<option value="">Select Class</option>';
+  classShow.innerHTML = '<option value="">Select Class</option>';
+
+  if (!nurseryId) return;
+
+  try {
+    const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
+    const classes = await res.json();
+
+    classes.forEach(c => {
+      classSelect.appendChild(new Option(c.name, c._id));
+      classShow.appendChild(new Option(c.name, c._id));
+    });
+  } catch (err) {
+    console.error("Failed to load classes:", err);
+  }
+}
+
+
+
+// ===== Popup to show class members =====
 async function openPopup() {
   const classId = document.getElementById("classShow").value;
   if (!classId) return alert("Select a class to view members!");
-
   try {
     const res = await fetch(`${API}/members/class/${classId}`);
     if (!res.ok) throw new Error("Failed to load members");
-
     const members = await res.json();
     const table = document.getElementById("membersTable");
     table.innerHTML = "";
@@ -471,7 +541,6 @@ async function openPopup() {
         <td>${m.momName || ""}</td>
       </tr>`;
     });
-
     document.getElementById("popup").style.display = "flex";
   } catch (err) {
     alert(err.message);
@@ -482,16 +551,8 @@ function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
-// ===== Initialize page for teacher =====
-window.addEventListener("DOMContentLoaded", () => {
-  const nurseryId = localStorage.getItem("teacherNurseryId");
-  if (!nurseryId) {
-    alert("No nursery assigned. Please log in again.");
-    return;
-  }
-
-  loadClasses(nurseryId);
-});
+// ===== Initialize =====
+initTeacherClasses();
 </script>
 
 
