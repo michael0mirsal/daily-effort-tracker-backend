@@ -442,6 +442,8 @@ function renderWorkers() {
 /* ---------------------
    MODALS
 ----------------------*/
+let editingClassIndex = null;
+
 function openClassModal(isEdit = false, cls = null) {
   document.getElementById("classModal").style.display = "block";
   document.getElementById("classModalTitle").innerText = isEdit ? "Edit Class" : "Add Class";
@@ -449,20 +451,68 @@ function openClassModal(isEdit = false, cls = null) {
   if (isEdit) {
     document.getElementById("classNameInput").value = cls.name;
     document.getElementById("classPassKeyInput").value = cls.passKey;
+    editingClassIndex = classes.findIndex(c => c._id === cls._id); // remember which class we edit
   } else {
     document.getElementById("classForm").reset();
+    editingClassIndex = null;
   }
 }
+
+async function saveClass() {
+  const nurseryId = localStorage.getItem("nurseryId");
+  const name = document.getElementById("classNameInput").value;
+  const passKey = document.getElementById("classPassKeyInput").value;
+
+  if (editingClassIndex !== null) {
+    // EDIT existing class
+    const classId = classes[editingClassIndex]._id;
+    const res = await fetch(`${API}/${nurseryId}/classes/${classId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, passKey })
+    });
+    const data = await res.json();
+    if (data.success) {
+      classes[editingClassIndex] = data.class;
+      renderClasses();
+      closeClassModal();
+    } else {
+      alert("Failed to update class");
+    }
+  } else {
+    // ADD new class
+    const res = await fetch(`${API}/${nurseryId}/classes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, passKey })
+    });
+    const data = await res.json();
+    if (data.success) {
+      classes.push(data.class);
+      renderClasses();
+      closeClassModal();
+    } else {
+      alert("Error adding class");
+    }
+  }
+}
+
+document.getElementById("classForm").onsubmit = e => {
+  e.preventDefault();
+  saveClass();
+};
+
 
 function closeClassModal() {
   document.getElementById("classModal").style.display = "none";
 }
 
+let editingTeacherIndex = null;
+
 function openAddTeacherModal(isEdit = false, worker = null) {
   document.getElementById("teacherModal").style.display = "block";
   document.getElementById("teacherModalTitle").innerText = isEdit ? "Edit Worker" : "Add Worker";
 
-  // Populate the class dropdown every time modal opens
   const classSelect = document.getElementById("teacherClassInput");
   classSelect.innerHTML =
     `<option value="">Assign Class</option>` +
@@ -476,10 +526,64 @@ function openAddTeacherModal(isEdit = false, worker = null) {
 
     const assigned = worker.classes?.[0] || "";
     classSelect.value = assigned;
+
+    editingTeacherIndex = workers.findIndex(w => w._id === worker._id);
   } else {
     document.getElementById("teacherForm").reset();
+    editingTeacherIndex = null;
   }
 }
+
+async function saveTeacher() {
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  const payload = {
+    name: document.getElementById("teacherNameInput").value,
+    role: document.getElementById("teacherRoleInput").value,
+    email: document.getElementById("teacherEmailInput").value,
+    phone: document.getElementById("teacherPhoneInput").value,
+    assignedClass: document.getElementById("teacherClassInput").value
+  };
+
+  if (editingTeacherIndex !== null) {
+    // EDIT existing teacher
+    const teacherId = workers[editingTeacherIndex]._id;
+    const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ classId: payload.assignedClass, ...payload })
+    });
+    const data = await res.json();
+    if (data.success) {
+      workers[editingTeacherIndex] = data.teacher;
+      renderWorkers();
+      closeTeacherModal();
+    } else {
+      alert("Failed to update teacher");
+    }
+  } else {
+    // ADD new teacher
+    const res = await fetch(`${API}/${nurseryId}/teachers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      workers.push(data.teacher);
+      renderWorkers();
+      closeTeacherModal();
+    } else {
+      alert("Error adding teacher");
+    }
+  }
+}
+
+document.getElementById("teacherForm").onsubmit = e => {
+  e.preventDefault();
+  saveTeacher();
+};
+
 
 
 function closeTeacherModal() {
