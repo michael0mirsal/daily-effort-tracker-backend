@@ -258,54 +258,14 @@ async function loadFamilies() {
 }
 
 // ===== Load classes into dropdowns =====
-async function initClassesForTeacher() {
-  const teacherId = localStorage.getItem("teacherId");
-  if (!teacherId) return alert("Teacher not logged in");
-
+async function loadClasses() {
   try {
-    // Fetch teacher info
-    const res = await fetch(`${API}/teachers/${teacherId}`);
-    if (!res.ok) throw new Error("Failed to fetch teacher info");
-    const teacher = await res.json();
-
-    if (!teacher.nursery) return alert("No nursery assigned. Please log in again.");
-
-    // Save nursery for later
-    localStorage.setItem("nurseryId", teacher.nursery);
-
-    // Load classes for this nursery
-    await loadClasses(teacher.nursery);
-
-    // Optionally, lock nursery dropdown
-    const nurserySelect = document.getElementById("nurserySelect");
-    if (nurserySelect) {
-      nurserySelect.innerHTML = `<option value="${teacher.nursery}">Nursery</option>`;
-      nurserySelect.disabled = true;
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-}
-
-
-
-// ===== Modified loadClasses to accept nurseryId =====
-async function loadClasses(nurseryId) {
-  const classSelect = document.getElementById("classSelect");
-  const classShow = document.getElementById("classShow");
-
-  classSelect.innerHTML = '<option value="">Select Class</option>';
-  classShow.innerHTML = '<option value="">Select Class</option>';
-
-  if (!nurseryId) return;
-
-  try {
-    const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
-    if (!res.ok) throw new Error("Failed to fetch classes");
+    const res = await fetch(`${API}/classes`);
     const classes = await res.json();
-
+    const classSelect = document.getElementById("classSelect");
+    const classShow = document.getElementById("classShow");
+    classSelect.innerHTML = '<option value="">Select Class</option>';
+    classShow.innerHTML = '<option value="">Select Class</option>';
     classes.forEach(c => {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
@@ -554,9 +514,8 @@ function closePopup() {
 }
 
 // ===== Initialize =====
-initTeacherClasses();
-</script>
 
+</script>
 
 
 </body>
