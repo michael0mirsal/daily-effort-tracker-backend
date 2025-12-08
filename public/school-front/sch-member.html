@@ -242,29 +242,34 @@ tr:hover {
 <script>
 const API = "http://localhost:3000/api";
 
-// ===== Automatically load nursery (NO manual selection) =====
+/* ============================================================
+   1) AUTO LOAD DEFAULT NURSERY + ITS CLASSES + FAMILIES
+   ============================================================ */
 async function loadInitialData() {
   try {
-    // Load families
-    loadFamilies();
+    loadFamilies(); // load families dropdown
 
-    // GET the nurseryId from backend (recommended)
+    // GET default nursery from backend
     const res = await fetch(`${API}/nurseries/default`);
     const data = await res.json();
 
     const nurseryId = data._id;
     localStorage.setItem("nurseryId", nurseryId);
 
-    // Load classes based on nursery
-    loadClassesForNursery(nurseryId);
+    console.log("Loaded Nursery:", nurseryId);
+
+    // Load classes for this nursery
+    loadClasses(nurseryId);
 
   } catch (err) {
-    console.error("Failed to load initial data:", err);
+    console.error("Initial load failed:", err);
   }
 }
 
-// ===== Load classes for a nursery =====
-async function loadClassesForNursery(nurseryId) {
+/* ============================================================
+   2) LOAD CLASSES FOR NURSERY
+   ============================================================ */
+async function loadClasses(nurseryId) {
   const classSelect = document.getElementById("classSelect");
   const classShow = document.getElementById("classShow");
 
@@ -272,7 +277,7 @@ async function loadClassesForNursery(nurseryId) {
   classShow.innerHTML = '<option value="">Select Class</option>';
 
   if (!nurseryId) {
-    console.warn("Nursery ID missing. Classes NOT loaded.");
+    console.warn("No nurseryId found in storage");
     return;
   }
 
@@ -280,46 +285,52 @@ async function loadClassesForNursery(nurseryId) {
     const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
     const classes = await res.json();
 
+    if (!Array.isArray(classes)) return;
+
     classes.forEach(c => {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
     });
+
+    console.log("Classes loaded:", classes);
 
   } catch (err) {
     console.error("Failed to load classes:", err);
   }
 }
 
-loadInitialData();
+/* ============================================================
+   3) LOAD FAMILIES
+   ============================================================ */
+async function loadFamilies() {
+  const res = await fetch(`${API}/families`);
+  const families = await res.json();
+  const select = document.getElementById("familySelect");
 
+  select.innerHTML = '<option value="">Select Family</option>';
 
+  families.forEach(f => {
+    select.appendChild(new Option(f.name, f._id));
+  });
+}
 
-
-// ===== When a family is selected =====
+/* ============================================================
+   4) WHEN FAMILY SELECTED → LOAD KIDS + PARENT INFO
+   ============================================================ */
 document.getElementById("familySelect").addEventListener("change", async () => {
   const familyId = document.getElementById("familySelect").value;
   const kidSelect = document.getElementById("kidSelect");
 
   kidSelect.innerHTML = '<option value="">Select Kid</option>';
   localStorage.removeItem("selectedKidId");
-  localStorage.removeItem("selectedKidName");
 
-  if (!familyId) {
-    // Clear parent fields
-    document.getElementById("dadName").value = "";
-    document.getElementById("momName").value = "";
-    document.getElementById("dadPhone").value = "";
-    document.getElementById("dadEmail").value = "";
-    document.getElementById("momPhone").value = "";
-    document.getElementById("momEmail").value = "";
-    return;
-  }
+  if (!familyId) return;
 
   try {
     const res = await fetch(`${API}/families/${familyId}`);
     const family = await res.json();
 
-    // Fill parent info
+    // Fill parents
     document.getElementById("dadName").value = family.dad || "";
     document.getElementById("momName").value = family.mom || "";
     document.getElementById("dadPhone").value = family.dadPhone || "";
@@ -327,122 +338,69 @@ document.getElementById("familySelect").addEventListener("change", async () => {
     document.getElementById("momPhone").value = family.momPhone || "";
     document.getElementById("momEmail").value = family.momEmail || "";
 
-    // Populate kids dropdown
-    if (family.members && family.members.length > 0) {
-      family.members.forEach(kid => {
-        kidSelect.appendChild(new Option(kid.name, kid._id));
-      });
-    }
+    // Fill kids
+    family.members.forEach(k => {
+      kidSelect.appendChild(new Option(k.name, k._id));
+    });
 
-    // Clear kid form
-    document.getElementById("fullName").value = "";
-    document.getElementById("age").value = "";
-    document.getElementById("dob").value = "";
-    document.getElementById("gender").value = "male";
   } catch (err) {
-    console.error("Failed to fetch family:", err);
+    console.error("Failed to load family:", err);
   }
 });
 
-// ===== When a kid is selected =====
+/* ============================================================
+   5) WHEN KID SELECTED → LOAD KID INFO
+   ============================================================ */
 document.getElementById("kidSelect").addEventListener("change", async () => {
   const kidId = document.getElementById("kidSelect").value;
+
   if (!kidId) {
     localStorage.removeItem("selectedKidId");
-    localStorage.removeItem("selectedKidName");
-    document.getElementById("fullName").value = "";
-    document.getElementById("age").value = "";
-    document.getElementById("dob").value = "";
-    document.getElementById("gender").value = "male";
     return;
   }
 
   localStorage.setItem("selectedKidId", kidId);
-  localStorage.setItem("selectedKidName", document.getElementById("kidSelect").selectedOptions[0].text);
 
-  // Fetch kid info to fill form
   try {
     const res = await fetch(`${API}/members/${kidId}`);
-    if (!res.ok) throw new Error("Kid not found");
     const kid = await res.json();
 
     document.getElementById("fullName").value = kid.name || "";
     document.getElementById("age").value = kid.age || "";
     document.getElementById("dob").value = kid.dob ? kid.dob.split("T")[0] : "";
     document.getElementById("gender").value = kid.gender || "male";
+
   } catch (err) {
-    console.error("Failed to fetch kid info:", err);
+    console.error("Failed to load kid:", err);
   }
 });
 
-// ===== Create new kid =====
-async function createKid() {
-  const familyId = document.getElementById("familySelect").value;
-  if (!familyId) return alert("Select a family first!");
-  const name = document.getElementById("newKidName").value.trim();
-  const gender = document.getElementById("newKidGender").value;
-  const age = document.getElementById("newKidAge").value;
-  const dob = document.getElementById("newKidDob").value;
-  if (!name) return alert("Enter kid name!");
-
-  const body = { name, gender, age, dob, family: familyId };
-
-  try {
-    const res = await fetch(`${API}/families/${familyId}/members`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error((await res.json()).message || "Failed to create kid");
-
-    const newKid = await res.json();
-    alert(`Kid ${name} created!`);
-
-    // Add new kid to dropdown & select it
-    const kidSelect = document.getElementById("kidSelect");
-    kidSelect.appendChild(new Option(newKid.name, newKid._id));
-    kidSelect.value = newKid._id;
-    localStorage.setItem("selectedKidId", newKid._id);
-    localStorage.setItem("selectedKidName", newKid.name);
-
-    // Fill form
-    document.getElementById("fullName").value = newKid.name;
-    document.getElementById("age").value = newKid.age || "";
-    document.getElementById("dob").value = newKid.dob ? newKid.dob.split("T")[0] : "";
-    document.getElementById("gender").value = newKid.gender || "male";
-
-  } catch (err) {
-    alert("Failed to create kid: " + err.message);
-  }
-}
-
-// ===== Save member to SchoolMember =====
+/* ============================================================
+   6) SAVE MEMBER TO SCHOOLMEMBER
+   ============================================================ */
 async function saveMember() {
   const familyId = document.getElementById("familySelect").value;
-  const kidSelect = document.getElementById("kidSelect");
-  const memberId = localStorage.getItem("selectedKidId") || kidSelect.value;
+  const memberId = localStorage.getItem("selectedKidId");
   const classId = document.getElementById("classSelect").value;
   const nurseryId = localStorage.getItem("nurseryId");
 
   if (!familyId) return alert("Select a family!");
   if (!memberId) return alert("Select a kid!");
   if (!classId) return alert("Select a class!");
-  if (!nurseryId) return alert("Nursery not set!");
 
   const body = {
     family: familyId,
     member: memberId,
-    nursery: nurseryId,
     class: classId,
-    dadPhone: document.getElementById("dadPhone").value,
-    dadEmail: document.getElementById("dadEmail").value,
-    momPhone: document.getElementById("momPhone").value,
-    momEmail: document.getElementById("momEmail").value,
-    emergencyContactName: document.getElementById("emergencyName").value,
-    emergencyContactPhone: document.getElementById("emergencyPhone").value,
-    emergencyContactRelation: document.getElementById("emergencyRelation").value,
-    role: "kid",
-    notes: document.getElementById("notes").value
+    nursery: nurseryId,
+    dadPhone: dadPhone.value,
+    dadEmail: dadEmail.value,
+    momPhone: momPhone.value,
+    momEmail: momEmail.value,
+    emergencyContactName: emergencyName.value,
+    emergencyContactPhone: emergencyPhone.value,
+    emergencyContactRelation: emergencyRelation.value,
+    role: "kid"
   };
 
   try {
@@ -452,88 +410,51 @@ async function saveMember() {
       body: JSON.stringify(body)
     });
 
-    if (!res.ok) throw new Error((await res.json()).message || res.status);
-    alert("Member saved successfully!");
+    if (!res.ok) throw new Error(await res.text());
+
+    alert("Member saved!");
   } catch (err) {
-    alert("Failed to save member: " + err.message);
+    alert("Save failed: " + err.message);
   }
 }
 
-async function loadNurseries() {
-  const res = await fetch(`${API}/nurseries`);
-  const nurseries = await res.json();
-  const select = document.getElementById("nurserySelect");
-  nurseries.forEach(n => {
-    select.appendChild(new Option(n.name, n._id));
-  });
-
-  // If nursery changes → load its classes dynamically
-  select.addEventListener("change", () => {
-    const nurseryId = select.value;
-    localStorage.setItem("nurseryId", nurseryId); // save for later
-    loadClasses(nurseryId); // dynamically load classes for this nursery
-  });
-}
-
-// Call this on page load
-loadNurseries();
-
-
-async function loadClasses(nurseryId) {
-  const classSelect = document.getElementById("classSelect");
-  const classShow = document.getElementById("classShow");
-
-  classSelect.innerHTML = '<option value="">Select Class</option>';
-  classShow.innerHTML = '<option value="">Select Class</option>';
-
-  if (!nurseryId) return;
-
-  try {
-    const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
-    const classes = await res.json();
-
-    classes.forEach(c => {
-      classSelect.appendChild(new Option(c.name, c._id));
-      classShow.appendChild(new Option(c.name, c._id));
-    });
-  } catch (err) {
-    console.error("Failed to load classes:", err);
-  }
-}
-
-
-
-// ===== Popup to show class members =====
+/* ============================================================
+   7) SHOW CLASS MEMBERS POPUP
+   ============================================================ */
 async function openPopup() {
   const classId = document.getElementById("classShow").value;
-  if (!classId) return alert("Select a class to view members!");
-  try {
-    const res = await fetch(`${API}/members/class/${classId}`);
-    if (!res.ok) throw new Error("Failed to load members");
-    const members = await res.json();
-    const table = document.getElementById("membersTable");
-    table.innerHTML = "";
-    members.forEach(m => {
-      table.innerHTML += `<tr>
+  if (!classId) return alert("Select a class!");
+
+  const res = await fetch(`${API}/members/class/${classId}`);
+  const members = await res.json();
+
+  const table = document.getElementById("membersTable");
+  table.innerHTML = "";
+
+  members.forEach(m => {
+    table.innerHTML += `
+      <tr>
         <td>${m.fullName || ""}</td>
         <td>${m.age || ""}</td>
         <td>${m.dadName || ""}</td>
         <td>${m.momName || ""}</td>
-      </tr>`;
-    });
-    document.getElementById("popup").style.display = "flex";
-  } catch (err) {
-    alert(err.message);
-  }
+      </tr>
+    `;
+  });
+
+  document.getElementById("popup").style.display = "flex";
 }
 
 function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
-// ===== Initialize =====
-
+/* ============================================================
+   RUN EVERYTHING
+   ============================================================ */
+loadInitialData();
 </script>
+
 
 
 </body>
