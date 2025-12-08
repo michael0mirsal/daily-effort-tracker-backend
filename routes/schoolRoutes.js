@@ -36,6 +36,45 @@ router.get("/families/:id", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+router.post("/schoolMembers", async (req, res) => {
+  try {
+    const {
+      family,
+      member,
+      nursery,
+      class: classId,
+      dadPhone,
+      dadEmail,
+      momPhone,
+      momEmail,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      role,
+      notes
+    } = req.body;
+
+    const schoolMember = await SchoolMember.create({
+      family,
+      member,
+      nursery,
+      class: classId,
+      dadPhone,
+      dadEmail,
+      momPhone,
+      momEmail,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      role: role || "kid",
+      notes: notes || ""
+    });
+
+    res.status(201).json(schoolMember);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
 
 
