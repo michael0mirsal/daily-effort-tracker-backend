@@ -269,74 +269,61 @@ router.post("/nurseries", async (req, res) => {
 //////////////////////////
 // 🎓 Class Routes
 //////////////////////////
-
-router.get("/classes", async (req, res) => {
+/*
+CLASSES (nested under nursery)
+--------------------- */
+router.get("/nurseries/:id/classes", async (req, res) => {
   try {
-    const classes = await ClassModel.find()
-      .populate("nursery", "name email phone passKey")
-      .populate("teachers", "name role email phone")
-      .populate("members", "fullName age gender");
-
-    res.json(classes);
+    const classes = await ClassModel.find({ nursery: req.params.id });
+    res.json({ success: true, classes });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// CREATE class
-router.post("/classes", async (req, res) => {
+router.post("/nurseries/:id/classes", async (req, res) => {
   try {
-    const { name, passKey, nurseryId, teacherIds, memberIds } = req.body;
+    const { name, passKey } = req.body;
+    const nurseryId = req.params.id;
 
-    const classDoc = await ClassModel.create({
-      name,
-      passKey,
-      nursery: nurseryId,
-      teachers: teacherIds || [],
-      members: memberIds || []
-    });
+    const cls = await ClassModel.create({ name, passKey, nursery: nurseryId });
 
-    // link: nursery -> class
-    if (nurseryId) {
-      await Nursery.findByIdAndUpdate(nurseryId, {
-        $addToSet: { classes: classDoc._id }
-      });
-    }
+    // link to nursery
+    await Nursery.findByIdAndUpdate(nurseryId, { $addToSet: { classes: cls._id } });
 
-    // link: teachers -> class
-    if (teacherIds?.length) {
-      await Teacher.updateMany(
-        { _id: { $in: teacherIds } },
-        { $addToSet: { classes: classDoc._id } }
-      );
-    }
-
-    res.status(201).json(classDoc);
+    res.status(201).json({ success: true, class: cls });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-//////////////////////////
-// 👩‍🏫 Teacher Routes
-//////////////////////////
-
-router.get("/teachers", async (req, res) => {
+router.delete("/nurseries/:nurseryId/classes/:classId", async (req, res) => {
   try {
-    const teachers = await Teacher.find()
-      .populate("classes", "name passKey")
-      .populate("nursery", "name email phone");
-
-    res.json(teachers);
+    await ClassModel.findByIdAndDelete(req.params.classId);
+    await Nursery.findByIdAndUpdate(req.params.nurseryId, { $pull: { classes: req.params.classId } });
+    res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// CREATE teacher
-router.post("/teachers", async (req, res) => {
+/* ---------------------
+   TEACHERS (nested under nursery)
+--------------------- */
+router.get("/nurseries/:id/teachers", async (req, res) => {
   try {
-    const { name, role, email, phone, nurseryId, classIds } = req.body;
+    const teachers = await Teacher.find({ nursery: req.params.id });
+    res.json({ success: true, teachers });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post("/nurseries/:id/teachers", async (req, res) => {
+  try {
+    const nurseryId = req.params.id;
+    const { name, role, email, phone, assignedClass } = req.body;
 
     const teacher = await Teacher.create({
       name,
@@ -344,30 +331,41 @@ router.post("/teachers", async (req, res) => {
       email,
       phone,
       nursery: nurseryId,
-      classes: classIds || []
+      classes: assignedClass ? [assignedClass] : []
     });
 
-    // link teacher → classes
-    if (classIds?.length) {
-      await ClassModel.updateMany(
-        { _id: { $in: classIds } },
-        { $addToSet: { teachers: teacher._id } }
-      );
+    // link teacher to nursery
+    await Nursery.findByIdAndUpdate(nurseryId, { $addToSet: { workers: teacher._id } });
+
+    // link teacher to class
+    if (assignedClass) {
+      await ClassModel.findByIdAndUpdate(assignedClass, { $addToSet: { teachers: teacher._id } });
     }
 
-    // link teacher → nursery
-    if (nurseryId) {
-      await Nursery.findByIdAndUpdate(nurseryId, {
-        $addToSet: { workers: teacher._id }
-      });
-    }
-
-    res.status(201).json({
-      message: "Teacher created successfully",
-      teacher
-    });
+    res.status(201).json({ success: true, teacher });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put("/nurseries/:nurseryId/teachers/:teacherId/assign", async (req, res) => {
+  try {
+    const { classId } = req.body;
+    const teacher = await Teacher.findByIdAndUpdate(req.params.teacherId, { classes: [classId] }, { new: true });
+    res.json({ success: true, teacher });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
+  try {
+    await Teacher.findByIdAndDelete(req.params.teacherId);
+    await Nursery.findByIdAndUpdate(req.params.nurseryId, { $pull: { workers: req.params.teacherId } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
