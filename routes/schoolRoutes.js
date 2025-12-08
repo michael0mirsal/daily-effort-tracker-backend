@@ -300,13 +300,34 @@ router.post("/nurseries/:id/classes", async (req, res) => {
 
 router.delete("/nurseries/:nurseryId/classes/:classId", async (req, res) => {
   try {
-    await ClassModel.findByIdAndDelete(req.params.classId);
-    await Nursery.findByIdAndUpdate(req.params.nurseryId, { $pull: { classes: req.params.classId } });
-    res.json({ success: true });
+    const { nurseryId, classId } = req.params;
+
+    // 1️⃣ Find the class
+    const cls = await ClassModel.findById(classId);
+    if (!cls) return res.status(404).json({ success: false, message: "Class not found" });
+
+    // 2️⃣ Find all teachers assigned to this class
+    const teachersToDelete = await Teacher.find({ classes: classId });
+
+    // 3️⃣ Delete each teacher and remove from nursery
+    for (const teacher of teachersToDelete) {
+      await Teacher.findByIdAndDelete(teacher._id);
+      await Nursery.findByIdAndUpdate(nurseryId, { $pull: { workers: teacher._id } });
+    }
+
+    // 4️⃣ Delete the class
+    await ClassModel.findByIdAndDelete(classId);
+
+    // 5️⃣ Remove class from nursery
+    await Nursery.findByIdAndUpdate(nurseryId, { $pull: { classes: classId } });
+
+    res.json({ success: true, message: "Class and all assigned teachers deleted successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 /* ---------------------
    TEACHERS (nested under nursery)
@@ -320,10 +341,19 @@ router.get("/nurseries/:id/teachers", async (req, res) => {
   }
 });
 
+// POST add teacher
 router.post("/nurseries/:id/teachers", async (req, res) => {
   try {
     const nurseryId = req.params.id;
     const { name, role, email, phone, assignedClass } = req.body;
+
+    // ✅ Validate assigned class exists (if provided)
+    if (assignedClass) {
+      const cls = await ClassModel.findById(assignedClass);
+      if (!cls) {
+        return res.status(400).json({ success: false, message: "Assigned class does not exist" });
+      }
+    }
 
     const teacher = await Teacher.create({
       name,
@@ -349,41 +379,31 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
   }
 });
 
-// PUT: Assign teacher to a class
+// PUT assign class to teacher
 router.put("/nurseries/:nurseryId/teachers/:teacherId/assign", async (req, res) => {
   try {
-    const { classId } = req.body; // new class assignment
-    const teacherId = req.params.teacherId;
+    const { classId } = req.body;
 
-    // 1️⃣ Find the teacher
-    const teacher = await Teacher.findById(teacherId);
-    if (!teacher) return res.status(404).json({ success: false, message: "Teacher not found" });
-
-    // 2️⃣ Remove teacher from any previous classes
-    if (teacher.classes && teacher.classes.length) {
-      await ClassModel.updateMany(
-        { _id: { $in: teacher.classes } },
-        { $pull: { teachers: teacher._id } }
-      );
-    }
-
-    // 3️⃣ Update teacher with new class
-    teacher.classes = classId ? [classId] : [];
-    await teacher.save();
-
-    // 4️⃣ Add teacher to the new class's teachers array
+    // ✅ Validate class exists
     if (classId) {
-      await ClassModel.findByIdAndUpdate(classId, { $addToSet: { teachers: teacher._id } });
+      const cls = await ClassModel.findById(classId);
+      if (!cls) {
+        return res.status(400).json({ success: false, message: "Class does not exist" });
+      }
     }
 
-    // 5️⃣ Return updated teacher
-    res.json({ success: true, teacher });
+    const teacher = await Teacher.findByIdAndUpdate(
+      req.params.teacherId,
+      { classes: classId ? [classId] : [] },
+      { new: true }
+    );
 
+    res.json({ success: true, teacher });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 
 router.delete("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
