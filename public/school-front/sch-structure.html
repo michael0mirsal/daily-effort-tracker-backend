@@ -595,12 +595,12 @@ if (editingTeacherIndex === null) {
   const teacherId = workers[editingTeacherIndex]._id;
 
   // Check duplicates excluding the teacher being edited
-  const duplicate = workers.find((w, idx) =>
-    idx !== editingTeacherIndex &&
-    (w.name.toLowerCase() === name.toLowerCase() ||
-     w.email.toLowerCase() === email.toLowerCase() ||
-     w.phone === phone)
-  );
+  const duplicate = workers.find(w =>
+  (w.name || "").trim().toLowerCase() === name.trim().toLowerCase() ||
+  (w.email || "").trim().toLowerCase() === email.trim().toLowerCase() ||
+  (w.phone || "").trim() === phone.trim()
+);
+
 
   if (duplicate) {
     return alert("Another teacher with the same name, email, or phone already exists.");
