@@ -282,6 +282,49 @@ async function addWorker() {
   }
 }
 
+async function saveTeacher(index = null) {
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  const payload = {
+    name: document.getElementById("teacherNameInput").value,
+    role: document.getElementById("teacherRoleInput").value,
+    email: document.getElementById("teacherEmailInput").value,
+    phone: document.getElementById("teacherPhoneInput").value,
+    assignedClass: document.getElementById("teacherClassInput").value
+  };
+
+  try {
+    let data;
+    if (index !== null) {
+      // EDIT existing teacher
+      const teacherId = workers[index]._id;
+      const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, classId: payload.assignedClass })
+      });
+      data = await res.json();
+      workers[index] = data.teacher; // update local array
+    } else {
+      // ADD new teacher
+      const res = await fetch(`${API}/${nurseryId}/teachers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      data = await res.json();
+      workers.push(data.teacher);
+    }
+
+    renderWorkers();
+    closeTeacherModal();
+  } catch (err) {
+    console.error(err);
+    alert("Error saving teacher");
+  }
+}
+
+
 async function updateAssignedClass(index, newClassId) {
   const nurseryId = localStorage.getItem("nurseryId");
   const teacherId = workers[index]._id;
@@ -419,6 +462,12 @@ function openAddTeacherModal(isEdit = false, worker = null) {
   document.getElementById("teacherModal").style.display = "block";
   document.getElementById("teacherModalTitle").innerText = isEdit ? "Edit Worker" : "Add Worker";
 
+  // Populate the class dropdown every time modal opens
+  const classSelect = document.getElementById("teacherClassInput");
+  classSelect.innerHTML =
+    `<option value="">Assign Class</option>` +
+    classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+
   if (isEdit) {
     document.getElementById("teacherNameInput").value = worker.name;
     document.getElementById("teacherRoleInput").value = worker.role;
@@ -426,11 +475,12 @@ function openAddTeacherModal(isEdit = false, worker = null) {
     document.getElementById("teacherPhoneInput").value = worker.phone;
 
     const assigned = worker.classes?.[0] || "";
-    document.getElementById("teacherClassInput").value = assigned;
+    classSelect.value = assigned;
   } else {
     document.getElementById("teacherForm").reset();
   }
 }
+
 
 function closeTeacherModal() {
   document.getElementById("teacherModal").style.display = "none";
