@@ -258,18 +258,34 @@ async function loadFamilies() {
 }
 
 // ===== Load classes into dropdowns =====
-async function loadClasses() {
+async function loadClasses(nurseryId) {
+  const classSelect = document.getElementById("classSelect");
+  const classShow   = document.getElementById("classShow");
+
+  classSelect.innerHTML = '<option value="">Select Class</option>';
+  classShow.innerHTML   = '<option value="">Select Class</option>';
+
+  if (!nurseryId) return;
+
   try {
-    const res = await fetch(`${API}/classes`);
-    const classes = await res.json();
-    const classSelect = document.getElementById("classSelect");
-    const classShow = document.getElementById("classShow");
-    classSelect.innerHTML = '<option value="">Select Class</option>';
-    classShow.innerHTML = '<option value="">Select Class</option>';
-    classes.forEach(c => {
+    // STEP 1 → Load nursery
+    const nursery = await fetch(`${API}/nurseries/${nurseryId}`).then(r => r.json());
+
+    if (!nursery.classes || nursery.classes.length === 0) return;
+
+    // STEP 2 → Get each class from backend
+    const classData = await Promise.all(
+      nursery.classes.map(id =>
+        fetch(`${API}/classes/${id}`).then(r => r.json())
+      )
+    );
+
+    // STEP 3 → Fill dropdowns
+    classData.forEach(c => {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
     });
+
   } catch (err) {
     console.error("Failed to load classes:", err);
   }
