@@ -439,6 +439,30 @@ async function saveMember() {
   }
 }
 
+async function loadClasses(nurseryId) {
+  const classSelect = document.getElementById("classSelect");
+  const classShow = document.getElementById("classShow");
+
+  classSelect.innerHTML = '<option value="">Select Class</option>';
+  classShow.innerHTML = '<option value="">Select Class</option>';
+
+  if (!nurseryId) return; // no nursery selected, leave empty
+
+  try {
+    const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
+    const classes = await res.json();
+
+    classes.forEach(c => {
+      classSelect.appendChild(new Option(c.name, c._id));
+      classShow.appendChild(new Option(c.name, c._id));
+    });
+  } catch (err) {
+    console.error("Failed to load classes:", err);
+  }
+}
+
+
+
 // ===== Popup to show class members =====
 async function openPopup() {
   const classId = document.getElementById("classShow").value;
