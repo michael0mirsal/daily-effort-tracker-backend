@@ -331,7 +331,7 @@ async function updateAssignedClass(index, newClassId) {
   const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ assignedClass: newClassId })
+    body: JSON.stringify({ classId: newClassId })
   });
 
   const data = await res.json();
@@ -342,7 +342,6 @@ async function updateAssignedClass(index, newClassId) {
     alert("Failed to update assignment");
   }
 }
-
 
 async function deleteWorker(index) {
   const nurseryId = localStorage.getItem("nurseryId");
@@ -417,7 +416,6 @@ function renderClasses() {
 }
 
 // Table rendering fix
-// Table rendering fix
 function renderWorkers() {
   workersTableBody.innerHTML = '';
   workers.forEach((worker, index) => {
@@ -440,8 +438,6 @@ function renderWorkers() {
     workersTableBody.appendChild(row);
   });
 }
-
-
 
 
 /* ---------------------
