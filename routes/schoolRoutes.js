@@ -407,21 +407,19 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
 });
 
 // PUT assign class to teacher
-router.put("/nurseries/:nurseryId/teachers/:teacherId/assign", async (req, res) => {
+router.put("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
   try {
-    const { classId } = req.body;
-
-    // ✅ Validate class exists
-    if (classId) {
-      const cls = await ClassModel.findById(classId);
-      if (!cls) {
-        return res.status(400).json({ success: false, message: "Class does not exist" });
-      }
-    }
+    const { name, role, email, phone, assignedClass } = req.body;
 
     const teacher = await Teacher.findByIdAndUpdate(
       req.params.teacherId,
-      { classes: classId ? [classId] : [] },
+      {
+        name,
+        role,
+        email,
+        phone,
+        classes: assignedClass ? [assignedClass] : []
+      },
       { new: true }
     );
 
