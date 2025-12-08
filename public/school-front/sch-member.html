@@ -243,29 +243,40 @@ tr:hover {
 const API = "http://localhost:3000/api";
 
 // ===== Load families into the dropdown =====
+// Example: backend sends nurseryId when fetching families
 async function loadFamilies() {
-  try {
-    const res = await fetch(`${API}/families`);
-    const families = await res.json();
-    const select = document.getElementById("familySelect");
-    select.innerHTML = '<option value="">Select Family</option>';
-    families.forEach(f => {
-      select.appendChild(new Option(f.name, f._id));
-    });
-  } catch (err) {
-    console.error("Failed to load families:", err);
-  }
+  const res = await fetch(`${API}/families`);
+  const data = await res.json();
+  
+  const families = data.families; // array
+  const nurseryId = data.nurseryId; // automatically set
+  localStorage.setItem("nurseryId", nurseryId);
+
+  const select = document.getElementById("familySelect");
+  select.innerHTML = '<option value="">Select Family</option>';
+  families.forEach(f => {
+    select.appendChild(new Option(f.name, f._id));
+  });
+
+  // Load classes automatically
+  loadClasses(nurseryId);
 }
 
+
 // ===== Load classes into dropdowns =====
-async function loadClasses() {
+async function loadClasses(nurseryId) {
+  const classSelect = document.getElementById("classSelect");
+  const classShow = document.getElementById("classShow");
+
+  classSelect.innerHTML = '<option value="">Select Class</option>';
+  classShow.innerHTML = '<option value="">Select Class</option>';
+
+  if (!nurseryId) return;
+
   try {
-    const res = await fetch(`${API}/classes`);
+    const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
     const classes = await res.json();
-    const classSelect = document.getElementById("classSelect");
-    const classShow = document.getElementById("classShow");
-    classSelect.innerHTML = '<option value="">Select Class</option>';
-    classShow.innerHTML = '<option value="">Select Class</option>';
+
     classes.forEach(c => {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
@@ -274,6 +285,7 @@ async function loadClasses() {
     console.error("Failed to load classes:", err);
   }
 }
+
 
 // ===== When a family is selected =====
 document.getElementById("familySelect").addEventListener("change", async () => {
