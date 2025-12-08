@@ -366,7 +366,24 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
     const nurseryId = req.params.id;
     const { name, role, email, phone, assignedClass } = req.body;
 
-    // ✅ Validate assigned class exists (if provided)
+    // 1️⃣ Duplicate protection
+    const existing = await Teacher.findOne({
+      nursery: nurseryId,
+      $or: [
+        { name: new RegExp(`^${name}$`, "i") },
+        { email: email.toLowerCase() },
+        { phone }
+      ]
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Teacher already exists (same name, email, or phone)."
+      });
+    }
+
+    // 2️⃣ Validate assigned class exists (if provided)
     if (assignedClass) {
       const cls = await ClassModel.findById(assignedClass);
       if (!cls) {
@@ -374,10 +391,11 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
       }
     }
 
+    // 3️⃣ Create teacher
     const teacher = await Teacher.create({
       name,
       role,
-      email,
+      email: email.toLowerCase(),
       phone,
       nursery: nurseryId,
       classes: assignedClass ? [assignedClass] : []
@@ -389,34 +407,49 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
     // link teacher to class
     if (assignedClass) {
       await ClassModel.findByIdAndUpdate(assignedClass, { $addToSet: { teachers: teacher._id } });
+    } else {
+      return res.status(400).json({ success: false, message: "Teacher must be assigned to a class" });
     }
-    if (!assignedClass) {
-       return res.status(400).json({ success: false, message: "Teacher must be assigned to a class" });
-    }
-
-    // Check that the class exists
-     const cls = await ClassModel.findById(assignedClass);
-     if (!cls) return res.status(400).json({ success: false, message: "Assigned class does not exist" });
-
 
     res.status(201).json({ success: true, teacher });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
+
 // PUT assign class to teacher
+// UPDATE TEACHER
 // UPDATE TEACHER
 router.put("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
   try {
     const { nurseryId, teacherId } = req.params;
     const { name, role, email, phone, assignedClass } = req.body;
 
+    // 1️⃣ Duplicate protection during update
+    const duplicate = await Teacher.findOne({
+      nursery: nurseryId,
+      _id: { $ne: teacherId },
+      $or: [
+        { name: new RegExp(`^${name}$`, "i") },
+        { email: email.toLowerCase() },
+        { phone }
+      ]
+    });
+
+    if (duplicate) {
+      return res.status(400).json({
+        success: false,
+        message: "Another teacher already uses this name, email, or phone."
+      });
+    }
+
     const updateData = {
       name,
       role,
-      email,
+      email: email.toLowerCase(),
       phone,
       classes: assignedClass ? [assignedClass] : []
     };
@@ -432,12 +465,12 @@ router.put("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
     }
 
     res.json({ success: true, teacher: updated });
+
   } catch (err) {
     console.error(err);
     res.json({ success: false, message: err.message });
   }
 });
-
 
 
 
