@@ -19,6 +19,41 @@ function generateLicenseKey() {
   return `NURSERY-${blocks.join("-")}`;
 }
 
+// UPDATE NURSERY
+router.put("/nurseries/:id", async (req, res) => {
+  try {
+    const nurseryId = req.params.id;
+
+    const updatedNursery = await Nursery.findByIdAndUpdate(
+      nurseryId,
+      {
+        name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
+        passKey: req.body.passKey,
+        manager: req.body.manager,
+        managerPassKey: req.body.managerPassKey
+      },
+      { new: true }
+    );
+
+    if (!updatedNursery) {
+      return res.status(404).json({ success: false, message: "Nursery not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Nursery updated successfully",
+      nursery: updatedNursery
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 router.get("/nurseries/:id/dashboard", async (req, res) => {
   try {
     const nurseryId = req.params.id;
