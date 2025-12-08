@@ -86,6 +86,7 @@
 <!-- Teachers Table -->
 <div class="card">
   <h1>Workers</h1>
+  
   <table>
     <thead>
       <tr>
@@ -97,42 +98,55 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="workersTableBody"></tbody>
+
+    <tbody id="workersTableBody">
+      <!-- Filled dynamically by renderWorkers() -->
+    </tbody>
   </table>
+
   <button class="btn btn-add" onclick="openAddTeacherModal()">Add Teacher</button>
 </div>
+
 
 <!-- Class Modal -->
 <div id="classModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="closeClassModal()">&times;</span>
     <h2 id="classModalTitle">Add Class</h2>
+
     <form id="classForm">
       <input type="text" id="classNameInput" placeholder="Class Name" required /><br>
       <input type="text" id="classPassKeyInput" placeholder="Class Pass Key" required /><br>
+
       <button type="submit" class="btn btn-add">Save Class</button>
     </form>
   </div>
 </div>
+
 
 <!-- Teacher Modal -->
 <div id="teacherModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="closeTeacherModal()">&times;</span>
     <h2 id="teacherModalTitle">Add Teacher</h2>
+
     <form id="teacherForm">
       <input type="text" id="teacherNameInput" placeholder="Full Name" required /><br>
+
       <select id="teacherRoleInput" required>
         <option value="">Select Role</option>
         <option value="Teacher">Teacher</option>
         <option value="Supervisor">Supervisor</option>
         <option value="Manager">Manager</option>
       </select><br>
+
       <input type="email" id="teacherEmailInput" placeholder="Email" required /><br>
       <input type="text" id="teacherPhoneInput" placeholder="Phone" required /><br>
+
       <select id="teacherClassInput">
         <option value="">Assign Class</option>
       </select><br>
+
       <button type="submit" class="btn btn-add">Save Teacher</button>
     </form>
   </div>
