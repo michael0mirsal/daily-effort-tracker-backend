@@ -566,11 +566,11 @@ async function saveTeacher() {
 
     // ADD new teacher or EDIT existing teacher
 if (editingTeacherIndex === null) {
-  // Check for duplicates (name, email, phone) in workers array
+  // Check for duplicates safely
   const duplicate = workers.find(w =>
-    w.name.toLowerCase() === name.toLowerCase() ||
-    w.email.toLowerCase() === email.toLowerCase() ||
-    w.phone === phone
+    (w.name || "").trim().toLowerCase() === name.toLowerCase().trim() ||
+    (w.email || "").trim().toLowerCase() === email.toLowerCase().trim() ||
+    (w.phone || "").trim() === phone.trim()
   );
 
   if (duplicate) {
