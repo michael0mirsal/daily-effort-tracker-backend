@@ -328,6 +328,25 @@ router.delete("/nurseries/:nurseryId/classes/:classId", async (req, res) => {
   }
 });
 
+router.put("/nurseries/:nurseryId/classes/:classId", async (req, res) => {
+  try {
+    const { name, passKey } = req.body;
+    const { classId } = req.params;
+
+    const updatedClass = await ClassModel.findByIdAndUpdate(
+      classId,
+      { name, passKey },
+      { new: true }
+    );
+
+    if (!updatedClass) return res.status(404).json({ success: false, message: "Class not found" });
+
+    res.json({ success: true, class: updatedClass });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 
 /* ---------------------
    TEACHERS (nested under nursery)
