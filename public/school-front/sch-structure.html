@@ -521,11 +521,12 @@ async function saveTeacher() {
     if (editingTeacherIndex !== null) {
       // EDIT existing teacher
       const teacherId = workers[editingTeacherIndex]._id;
-      res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+      res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
       });
+
       data = await res.json();
 
       if (data.success) {
