@@ -4,6 +4,8 @@ import ClassModel from "../models/Class.js";
 import Teacher from "../models/Teacher.js";
 import SchoolMember from "../models/sch-Member.js";
 import License from '../models/License.js';
+import Family from "../models/Family.js";
+import Member from "../models/Member.js"; 
 import crypto from "crypto";
 
 
