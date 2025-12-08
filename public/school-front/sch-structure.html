@@ -148,6 +148,10 @@
 ----------------------*/
 const API = "http://localhost:3000/api/nurseries";
 
+/* IMPORTANT: Declare arrays */
+let classes = [];
+let workers = [];
+
 /* ---------------------
    LOAD NURSERY INFO FROM DB
 ----------------------*/
@@ -157,20 +161,19 @@ async function loadNursery() {
     if (!nurseryId) return alert("Missing nursery ID");
 
     const res = await fetch(`${API}/${nurseryId}/dashboard`);
-const result = await res.json();
+    const result = await res.json();
 
-if (!result.success) return alert("Failed to load nursery");
+    if (!result.success) return alert("Failed to load nursery");
 
-const data = result.nursery;
+    const data = result.nursery;
 
-document.getElementById("nurseryName").value = data.name || "";
-document.getElementById("nurseryEmail").value = data.email || "";
-document.getElementById("nurseryPhone").value = data.phone || "";
-document.getElementById("nurseryPassKey").value = data.passKey || "";
+    document.getElementById("nurseryName").value = data.name || "";
+    document.getElementById("nurseryEmail").value = data.email || "";
+    document.getElementById("nurseryPhone").value = data.phone || "";
+    document.getElementById("nurseryPassKey").value = data.passKey || "";
 
-document.getElementById("managerName").value = data.manager || "";
-document.getElementById("managerPassKey").value = data.managerPassKey || "";
-
+    document.getElementById("managerName").value = data.manager || "";
+    document.getElementById("managerPassKey").value = data.managerPassKey || "";
 
   } catch (err) {
     console.error(err);
@@ -178,7 +181,7 @@ document.getElementById("managerPassKey").value = data.managerPassKey || "";
 }
 
 /* ---------------------
-   SAVE NURSERY INFO TO DB
+   SAVE NURSERY INFO
 ----------------------*/
 async function saveNursery() {
   const nurseryId = localStorage.getItem("nurseryId");
@@ -206,34 +209,164 @@ async function saveNursery() {
 }
 
 /* ---------------------
-   STATIC MOCK DATA (KEEP YOUR ORIGINAL)
+   CLASS CRUD
 ----------------------*/
-let classes = [
-  { name: "Class A", passKey: "A123", members: [], teachers: [] },
-  { name: "Class B", passKey: "B456", members: [], teachers: [] }
-];
+async function addClass() {
+  const nurseryId = localStorage.getItem("nurseryId");
 
-let workers = [
-  { name: "Alice", role: "Teacher", assignedClass: "Class A", email:"alice@mail.com", phone:"1234" },
-  { name: "Bob", role: "Supervisor", assignedClass: "Class B", email:"bob@mail.com", phone:"5678" }
-];
+  const name = document.getElementById("classNameInput").value;
+  const passKey = document.getElementById("classPassKeyInput").value;
+
+  const res = await fetch(`${API}/${nurseryId}/classes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, passKey })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    classes.push(data.class);
+    renderClasses();
+    closeClassModal();
+  } else {
+    alert("Error adding class");
+  }
+}
+
+async function deleteClass(classId) {
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  const res = await fetch(`${API}/${nurseryId}/classes/${classId}`, {
+    method: "DELETE"
+  });
+
+  const result = await res.json();
+
+  if (result.success) {
+    classes = classes.filter(c => c._id !== classId);
+    renderClasses();
+  } else {
+    alert("Failed to delete class");
+  }
+}
 
 /* ---------------------
-   YOUR ORIGINAL TABLE RENDERING
+   TEACHER CRUD
+----------------------*/
+async function addWorker() {
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  const payload = {
+    name: document.getElementById("teacherNameInput").value,
+    role: document.getElementById("teacherRoleInput").value,
+    email: document.getElementById("teacherEmailInput").value,
+    phone: document.getElementById("teacherPhoneInput").value,
+    assignedClass: document.getElementById("teacherClassInput").value || null
+  };
+
+  const res = await fetch(`${API}/${nurseryId}/teachers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    workers.push(data.teacher);
+    renderWorkers();
+    closeTeacherModal();
+  } else {
+    alert("Error adding teacher");
+  }
+}
+
+async function updateAssignedClass(index, newClassId) {
+  const nurseryId = localStorage.getItem("nurseryId");
+  const teacherId = workers[index]._id;
+
+  const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}/assign`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ classId: newClassId })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    workers[index] = data.teacher;
+  } else {
+    alert("Failed to update assignment");
+  }
+}
+
+async function deleteWorker(index) {
+  const nurseryId = localStorage.getItem("nurseryId");
+  const teacherId = workers[index]._id;
+
+  if (!confirm("Delete this teacher?")) return;
+
+  const res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}`, {
+    method: "DELETE"
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    workers.splice(index, 1);
+    renderWorkers();
+  } else {
+    alert("Failed to delete teacher");
+  }
+}
+
+/* ---------------------
+   LOAD CLASSES & TEACHERS
+----------------------*/
+async function loadClasses() {
+  const nurseryId = localStorage.getItem("nurseryId");
+  const res = await fetch(`${API}/${nurseryId}/classes`);
+  const data = await res.json();
+
+  if (data.success) {
+    classes = data.classes;
+    renderClasses();
+
+    const classSelect = document.getElementById("teacherClassInput");
+    classSelect.innerHTML =
+      `<option value="">Assign Class</option>` +
+      classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+  }
+}
+
+async function loadWorkers() {
+  const nurseryId = localStorage.getItem("nurseryId");
+  const res = await fetch(`${API}/${nurseryId}/teachers`);
+  const data = await res.json();
+
+  if (data.success) {
+    workers = data.teachers;
+    renderWorkers();
+  }
+}
+
+/* ---------------------
+   TABLE RENDERING
 ----------------------*/
 const classesTableBody = document.getElementById('classesTableBody');
 const workersTableBody = document.getElementById('workersTableBody');
 
 function renderClasses() {
   classesTableBody.innerHTML = '';
-  classes.forEach((cls,index)=>{
+  classes.forEach((cls, index) => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td onmouseover="showClassTooltip(event, ${index})" onmouseout="hideTooltip()">${cls.name}</td>
       <td>${cls.passKey}</td>
       <td>
         <button class="btn btn-edit" onclick="editClass(${index})">Edit</button>
-        <button class="btn btn-delete" onclick="deleteClass(${index})">Delete</button>
+        <button class="btn btn-delete" onclick="deleteClass('${cls._id}')">Delete</button>
       </td>
     `;
     classesTableBody.appendChild(row);
@@ -242,8 +375,11 @@ function renderClasses() {
 
 function renderWorkers() {
   workersTableBody.innerHTML = '';
-  workers.forEach((worker,index)=>{
-    const classOptions = classes.map(c=>`<option value="${c.name}" ${c.name===worker.assignedClass?'selected':''}>${c.name}</option>`).join('');
+  workers.forEach((worker, index) => {
+    const classOptions = classes.map(c =>
+      `<option value="${c._id}" ${worker.classes && worker.classes[0] === c._id ? "selected" : ""}>${c.name}</option>`
+    ).join('');
+
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${worker.name}</td>
@@ -258,6 +394,85 @@ function renderWorkers() {
     `;
     workersTableBody.appendChild(row);
   });
+}
+
+/* ---------------------
+   MODALS
+----------------------*/
+function openClassModal(isEdit = false, cls = null) {
+  document.getElementById("classModal").style.display = "block";
+  document.getElementById("classModalTitle").innerText = isEdit ? "Edit Class" : "Add Class";
+
+  if (isEdit) {
+    document.getElementById("classNameInput").value = cls.name;
+    document.getElementById("classPassKeyInput").value = cls.passKey;
+  } else {
+    document.getElementById("classForm").reset();
+  }
+}
+
+function closeClassModal() {
+  document.getElementById("classModal").style.display = "none";
+}
+
+function openAddTeacherModal(isEdit = false, worker = null) {
+  document.getElementById("teacherModal").style.display = "block";
+  document.getElementById("teacherModalTitle").innerText = isEdit ? "Edit Worker" : "Add Worker";
+
+  if (isEdit) {
+    document.getElementById("teacherNameInput").value = worker.name;
+    document.getElementById("teacherRoleInput").value = worker.role;
+    document.getElementById("teacherEmailInput").value = worker.email;
+    document.getElementById("teacherPhoneInput").value = worker.phone;
+
+    const assigned = worker.classes?.[0] || "";
+    document.getElementById("teacherClassInput").value = assigned;
+  } else {
+    document.getElementById("teacherForm").reset();
+  }
+}
+
+function closeTeacherModal() {
+  document.getElementById("teacherModal").style.display = "none";
+}
+
+/* ---------------------
+   TOOLTIP
+----------------------*/
+function showClassTooltip(e, index) {
+  const tooltip = document.getElementById("classTooltip");
+  tooltip.innerHTML = `<strong>Class:</strong> ${classes[index].name}<br><strong>Pass Key:</strong> ${classes[index].passKey}`;
+  tooltip.style.left = e.pageX + 10 + "px";
+  tooltip.style.top = e.pageY + 10 + "px";
+  tooltip.style.display = "block";
+}
+
+function hideTooltip() {
+  document.getElementById("classTooltip").style.display = "none";
+}
+
+/* ---------------------
+   FORM HANDLERS
+----------------------*/
+document.getElementById("classForm").onsubmit = e => {
+  e.preventDefault();
+  addClass();
+};
+
+document.getElementById("teacherForm").onsubmit = e => {
+  e.preventDefault();
+  addWorker();
+};
+
+/* ---------------------
+   EDIT HANDLERS
+----------------------*/
+function editClass(index) {
+  openClassModal(true, classes[index]);
+}
+
+function editWorker(index) {
+  openAddTeacherModal(true, workers[index]);
 }
 
 /* ---------------------
@@ -276,11 +491,13 @@ function goBack() {
    INITIAL LOAD
 ----------------------*/
 window.onload = () => {
-  loadNursery();   // dynamic DB data
-  renderClasses(); // your original
-  renderWorkers(); // your original
+  loadNursery();
+  loadClasses();
+  loadWorkers();
 };
+
 </script>
+
 
 </body>
 
