@@ -260,7 +260,7 @@ async function loadFamilies() {
 // ===== Load classes into dropdowns =====
 async function loadClasses() {
   try {
-    const res = await fetch(`${API}/classes`);
+    const res = await fetch(`${API}/${nurseryId}`);
     const classes = await res.json();
     const classSelect = document.getElementById("classSelect");
     const classShow = document.getElementById("classShow");
@@ -274,6 +274,7 @@ async function loadClasses() {
     console.error("Failed to load classes:", err);
   }
 }
+
 
 // ===== When a family is selected =====
 document.getElementById("familySelect").addEventListener("change", async () => {
