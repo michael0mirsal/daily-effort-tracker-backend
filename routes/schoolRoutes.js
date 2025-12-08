@@ -18,7 +18,29 @@ function generateLicenseKey() {
 
   return `NURSERY-${blocks.join("-")}`;
 }
+//////////////Family---------------------------------data-----------------------ner----------------
+router.get("/families", async (req, res) => {
+  const families = await Family.find().populate("members");
+  res.json(families);
+});
 
+
+router.get("/families/:id", async (req, res) => {
+  try {
+    const family = await Family.findById(req.params.id).populate("members");
+    if (!family) return res.status(404).json({ message: "Family not found" });
+    res.json(family);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+
+
+
+
+/////////////////////ner-----------------------data----------------------------------------------
 // UPDATE NURSERY
 router.put("/nurseries/:id", async (req, res) => {
   try {
