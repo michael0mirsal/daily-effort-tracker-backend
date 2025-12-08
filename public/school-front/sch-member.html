@@ -439,6 +439,26 @@ async function saveMember() {
   }
 }
 
+async function loadNurseries() {
+  const res = await fetch(`${API}/nurseries`);
+  const nurseries = await res.json();
+  const select = document.getElementById("nurserySelect");
+  nurseries.forEach(n => {
+    select.appendChild(new Option(n.name, n._id));
+  });
+
+  // If nursery changes → load its classes dynamically
+  select.addEventListener("change", () => {
+    const nurseryId = select.value;
+    localStorage.setItem("nurseryId", nurseryId); // save for later
+    loadClasses(nurseryId); // dynamically load classes for this nursery
+  });
+}
+
+// Call this on page load
+loadNurseries();
+
+
 async function loadClasses(nurseryId) {
   const classSelect = document.getElementById("classSelect");
   const classShow = document.getElementById("classShow");
@@ -446,7 +466,7 @@ async function loadClasses(nurseryId) {
   classSelect.innerHTML = '<option value="">Select Class</option>';
   classShow.innerHTML = '<option value="">Select Class</option>';
 
-  if (!nurseryId) return; // no nursery selected, leave empty
+  if (!nurseryId) return;
 
   try {
     const res = await fetch(`${API}/classes?nursery=${nurseryId}`);
