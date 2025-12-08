@@ -497,9 +497,18 @@ function openAddTeacherModal(isEdit = false, worker = null) {
   document.getElementById("teacherModalTitle").innerText = isEdit ? "Edit Teacher" : "Add Teacher";
 
   const classSelect = document.getElementById("teacherClassInput");
+
+  // Build dropdown with classes and disable options already assigned to another teacher
   classSelect.innerHTML =
     `<option value="">-- Select Class --</option>` +
-    classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+    classes.map(c => {
+      // Check if any other teacher is assigned to this class
+      const isAssigned = workers.some((w, idx) => {
+        if (isEdit && workers[editingTeacherIndex]?._id === w._id) return false; // ignore self
+        return w.assignedClass === c._id;
+      });
+      return `<option value="${c._id}" ${worker?.assignedClass === c._id ? "selected" : ""} ${isAssigned ? "disabled" : ""}>${c.name}</option>`;
+    }).join('');
 
   if (isEdit && worker) {
     document.getElementById("teacherNameInput").value = worker.name;
@@ -514,6 +523,7 @@ function openAddTeacherModal(isEdit = false, worker = null) {
     editingTeacherIndex = null;
   }
 }
+
 
 async function saveTeacher() {
   const nurseryId = localStorage.getItem("nurseryId");
@@ -540,37 +550,62 @@ async function saveTeacher() {
   try {
     let res, data;
 
-    if (editingTeacherIndex !== null) {
-      // EDIT existing teacher
-      const teacherId = workers[editingTeacherIndex]._id;
-      res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-      });
+    // ADD new teacher or EDIT existing teacher
+if (editingTeacherIndex === null) {
+  // Check for duplicates (name, email, phone) in workers array
+  const duplicate = workers.find(w =>
+    w.name.toLowerCase() === name.toLowerCase() ||
+    w.email.toLowerCase() === email.toLowerCase() ||
+    w.phone === phone
+  );
 
-      data = await res.json();
+  if (duplicate) {
+    return alert("A teacher with the same name, email, or phone already exists.");
+  }
 
-      if (data.success) {
-        workers[editingTeacherIndex] = data.teacher;
-      } else {
-        return alert("Failed to update teacher");
-      }
-    } else {
-      // ADD new teacher
-      res = await fetch(`${API}/${nurseryId}/teachers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      data = await res.json();
+  // Proceed to POST new teacher
+  res = await fetch(`${API}/${nurseryId}/teachers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  data = await res.json();
 
-      if (data.success) {
-        workers.push(data.teacher);
-      } else {
-        return alert("Error adding teacher");
-      }
-    }
+  if (data.success) {
+    workers.push(data.teacher);
+  } else {
+    return alert("Error adding teacher");
+  }
+} else {
+  // EDIT existing teacher
+  const teacherId = workers[editingTeacherIndex]._id;
+
+  // Check duplicates excluding the teacher being edited
+  const duplicate = workers.find((w, idx) =>
+    idx !== editingTeacherIndex &&
+    (w.name.toLowerCase() === name.toLowerCase() ||
+     w.email.toLowerCase() === email.toLowerCase() ||
+     w.phone === phone)
+  );
+
+  if (duplicate) {
+    return alert("Another teacher with the same name, email, or phone already exists.");
+  }
+
+  res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  data = await res.json();
+
+  if (data.success) {
+    workers[editingTeacherIndex] = data.teacher;
+  } else {
+    return alert("Failed to update teacher");
+  }
+}
+
 
     renderWorkers();
     closeTeacherModal();
