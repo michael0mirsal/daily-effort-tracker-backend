@@ -260,27 +260,27 @@ async function loadFamilies() {
 // ===== Load classes into dropdowns =====
 async function initTeacherClasses() {
   try {
-    const teacherId = localStorage.getItem("teacherId"); // or get from session/login
+    const teacherId = localStorage.getItem("teacherId") || "6936ba666b858dda3538b580"; // temp test
     if (!teacherId) return alert("Teacher not logged in");
 
-    // 1️⃣ Fetch teacher info
-    const res = await fetch(`${API}/teachers/${teacherId}`);
-    if (!res.ok) throw new Error("Failed to fetch teacher info");
-    const teacher = await res.json();
+    // Fetch nurseries where this teacher is assigned
+    const res = await fetch(`${API}/nurseries?teacher=${teacherId}`);
+    if (!res.ok) throw new Error("Failed to fetch teacher nursery");
+    const nurseries = await res.json();
 
-    if (!teacher.nursery) return alert("No nursery assigned. Please log in again.");
+    if (!nurseries.length) return alert("No nursery assigned. Please log in again.");
 
-    // Save nursery ID locally
-    localStorage.setItem("nurseryId", teacher.nursery._id);
+    const nursery = nurseries[0]; // assume 1 nursery per teacher
+    localStorage.setItem("nurseryId", nursery._id);
 
-    // 2️⃣ Load classes for this nursery
-    await loadClasses(teacher.nursery._id);
+    // Load classes for this nursery
+    await loadClasses(nursery._id);
 
-    // Optionally, set the nursery dropdown to teacher's nursery
+    // Set nursery dropdown
     const nurserySelect = document.getElementById("nurserySelect");
     if (nurserySelect) {
-      nurserySelect.innerHTML = `<option value="${teacher.nursery._id}">${teacher.nursery.name}</option>`;
-      nurserySelect.disabled = true; // optional: prevent changing
+      nurserySelect.innerHTML = `<option value="${nursery._id}">${nursery.name}</option>`;
+      nurserySelect.disabled = true;
     }
 
   } catch (err) {
@@ -288,6 +288,7 @@ async function initTeacherClasses() {
     alert(err.message);
   }
 }
+
 
 // ===== Modified loadClasses to accept nurseryId =====
 async function loadClasses(nurseryId) {
