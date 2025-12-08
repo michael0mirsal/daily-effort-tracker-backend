@@ -371,6 +371,14 @@ router.post("/nurseries/:id/teachers", async (req, res) => {
     if (assignedClass) {
       await ClassModel.findByIdAndUpdate(assignedClass, { $addToSet: { teachers: teacher._id } });
     }
+    if (!assignedClass) {
+       return res.status(400).json({ success: false, message: "Teacher must be assigned to a class" });
+    }
+
+    // Check that the class exists
+     const cls = await ClassModel.findById(assignedClass);
+     if (!cls) return res.status(400).json({ success: false, message: "Assigned class does not exist" });
+
 
     res.status(201).json({ success: true, teacher });
   } catch (err) {
