@@ -595,16 +595,21 @@ if (editingTeacherIndex === null) {
   const teacherId = workers[editingTeacherIndex]._id;
 
   // Check duplicates excluding the teacher being edited
-  const duplicate = workers.find(w =>
-  (w.name || "").trim().toLowerCase() === name.trim().toLowerCase() ||
-  (w.email || "").trim().toLowerCase() === email.trim().toLowerCase() ||
-  (w.phone || "").trim() === phone.trim()
-);
+  const duplicate = workers.find((w, idx) => {
+  // skip the teacher being edited
+  if (editingTeacherIndex !== null && idx === editingTeacherIndex) return false;
+  
+  return (
+    (w.name || "").trim().toLowerCase() === name.trim().toLowerCase() ||
+    (w.email || "").trim().toLowerCase() === email.trim().toLowerCase() ||
+    (w.phone || "").trim() === phone.trim()
+  );
+});
 
+if (duplicate) {
+  return alert("A teacher with the same name, email, or phone already exists.");
+}
 
-  if (duplicate) {
-    return alert("Another teacher with the same name, email, or phone already exists.");
-  }
 
   res = await fetch(`${API}/${nurseryId}/teachers/${teacherId}`, {
     method: "PUT",
