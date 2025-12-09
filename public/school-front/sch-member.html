@@ -460,6 +460,47 @@ async function saveMember() {
   }
 }
 
+// ---- Load members for selected class ----
+async function loadClassMembers() {
+  const classId = document.getElementById("classShow").value;
+  if (!classId) return; // no class selected
+
+  try {
+    const res = await fetch(`${API}/members/class/${classId}`);
+    if (!res.ok) throw new Error("Failed to load class members");
+
+    const members = await res.json(); // array of school members
+    const table = document.getElementById("membersTable");
+    table.innerHTML = `
+      <tr>
+        <th>Kid Name</th>
+        <th>Age</th>
+        <th>Dad</th>
+        <th>Mom</th>
+        <th>Emergency Contact</th>
+      </tr>
+    `;
+
+    members.forEach(m => {
+      table.innerHTML += `
+        <tr>
+          <td>${m.member?.name || ""}</td>
+          <td>${m.member?.age || ""}</td>
+          <td>${m.family?.dad || ""} (${m.dadPhone || ""})</td>
+          <td>${m.family?.mom || ""} (${m.momPhone || ""})</td>
+          <td>${m.emergencyContactName || ""} (${m.emergencyContactPhone || ""})</td>
+        </tr>
+      `;
+    });
+
+  } catch (err) {
+    console.error("Failed to load class members:", err);
+  }
+}
+
+// ---- Event listener ----
+document.getElementById("classShow").addEventListener("change", loadClassMembers);
+
 
 // ---- Init ----
 loadFamilies();
