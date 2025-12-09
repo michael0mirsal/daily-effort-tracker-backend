@@ -414,37 +414,47 @@ async function saveMember() {
 }
 
 // ---- Popup: show class members ----
-async function openPopup() {
+// ---- Load members for selected class ----
+async function loadClassMembers() {
   const classId = document.getElementById("classShow").value;
-  if (!classId) return alert("Select a class");
+  if (!classId) return; // no class selected
 
   try {
     const res = await fetch(`${API}/members/class/${classId}`);
-    if (!res.ok) throw new Error("Failed to load members");
-    const members = await res.json();
-    const table = document.getElementById("membersTable");
-    table.innerHTML = "";
+    if (!res.ok) throw new Error("Failed to load class members");
 
-    (members || []).forEach(m => {
+    const members = await res.json(); // array of school members
+    const table = document.getElementById("membersTable");
+    table.innerHTML = `
+      <tr>
+        <th>Kid Name</th>
+        <th>Age</th>
+        <th>Dad</th>
+        <th>Mom</th>
+        <th>Emergency Contact</th>
+      </tr>
+    `;
+
+    members.forEach(m => {
       table.innerHTML += `
         <tr>
-          <td>${m.member?.name || m.fullName || ""}</td>
-          <td>${m.member?.age || m.age || ""}</td>
-          <td>${m.family?.dad || ""}</td>
-          <td>${m.family?.mom || ""}</td>
-        </tr>`;
+          <td>${m.member?.name || ""}</td>
+          <td>${m.member?.age || ""}</td>
+          <td>${m.family?.dad || ""} (${m.dadPhone || ""})</td>
+          <td>${m.family?.mom || ""} (${m.momPhone || ""})</td>
+          <td>${m.emergencyContactName || ""} (${m.emergencyContactPhone || ""})</td>
+        </tr>
+      `;
     });
 
-    document.getElementById("popup").style.display = "flex";
   } catch (err) {
-    console.error(err);
-    alert("Failed: " + err.message);
+    console.error("Failed to load class members:", err);
   }
 }
 
-function closePopup() {
-  document.getElementById("popup").style.display = "none";
-}
+// ---- Event listener ----
+document.getElementById("classShow").addEventListener("change", loadClassMembers);
+
 
 // ---- Init ----
 loadFamilies();
