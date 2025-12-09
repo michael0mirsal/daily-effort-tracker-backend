@@ -336,6 +336,23 @@ async function saveMember() {
   if (!classId) return alert("Select class");
   if (!nurseryId) return alert("Nursery not set");
 
+  const checkRes = await fetch(`${API}/schoolMembers/:id`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    family: familyId,
+    member: selectedKidId,
+    nursery: nurseryId,
+    class: classId
+  })
+});
+
+const checkData = await checkRes.json();
+
+if (!checkRes.ok) {
+  return alert(checkData.message || "Duplicate entry detected");
+}
+
   const body = {
     family: familyId,
     member: selectedKidId,
