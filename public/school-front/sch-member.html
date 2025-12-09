@@ -370,7 +370,7 @@ async function saveMember() {
   };
 
   try {
-    const res = await fetch(`${API_URL}/api/schoolMembers/${id}`, {
+    const res = await fetch(`${API_URL}/schoolMembers/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
