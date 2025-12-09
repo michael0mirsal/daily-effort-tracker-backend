@@ -26,7 +26,7 @@ h1 {
 
 h2 {
   text-align: center;
-  color: #fff;
+  color: #4a597d;
   font-weight: 500;
   margin-bottom: 15px;
 }
@@ -230,12 +230,13 @@ tr:hover {
 
 <div id="popup" class="popup">
   <div class="popup-content">
-    <h2>Class Members</h2>
+    <h2 id="popupTitle">Class Members</h2>
     <table>
       <tbody id="membersTable"></tbody>
     </table>
   </div>
 </div>
+
 
 <script>
 const API = "http://localhost:3000/api";
@@ -529,9 +530,19 @@ function resetMemberForm() {
 
 function openPopup() {
   const popup = document.getElementById("popup");
-  popup.style.display = "flex";   // show popup
-  loadClassMembers();              // load members into table
+  const classShow = document.getElementById("classShow");
+  const selectedClassName = classShow.options[classShow.selectedIndex]?.text || "Class Members";
+
+  // Set dynamic title
+  document.getElementById("popupTitle").textContent = ` Class: ${selectedClassName} Kids`;
+
+  // Show popup
+  popup.style.display = "flex";
+
+  // Load members for selected class
+  loadClassMembers();
 }
+
 
 // Close popup when clicking outside content
 document.getElementById("popup").addEventListener("click", (e) => {
