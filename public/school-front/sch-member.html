@@ -347,15 +347,17 @@ document.getElementById("kidSelect").addEventListener("change", () => {
 });
 
 // ---- Save member (with duplicate check) ----
+// ---- Save member (with duplicate check) ----
 async function saveMember() {
-  const familyId = document.getElementById("familySelect").value;
-  const classId  = document.getElementById("classSelect").value;
-  const nurseryId = localStorage.getItem("nurseryId");
 
-  if (!familyId) return alert("Select family");
+  const familyId   = document.getElementById("familySelect").value;
+  const classId    = document.getElementById("classSelect").value;
+  const nurseryId  = localStorage.getItem("nurseryId");
+
+  if (!familyId)   return alert("Select family");
   if (!selectedKidId) return alert("Select kid");
-  if (!classId) return alert("Select class");
-  if (!nurseryId) return alert("Nursery not set");
+  if (!classId)    return alert("Select class");
+  if (!nurseryId)  return alert("Nursery not set");
 
   const body = {
     family: familyId,
@@ -364,7 +366,7 @@ async function saveMember() {
     class: classId
   };
 
-  // 1) duplicate check
+  // 1) ---- Duplicate check ----
   try {
     const checkRes = await fetch(`${API}/schoolMembers/check`, {
       method: "POST",
@@ -378,11 +380,10 @@ async function saveMember() {
     }
   } catch (err) {
     console.error("Duplicate check failed:", err);
-    // optionally allow proceed or stop — we stop to be safe
     return alert("Failed to validate duplicate — try again");
   }
 
-  // 2) create school member (include extra fields)
+  // 2) ---- Create school member with extra fields ----
   const payload = {
     ...body,
     dadPhone: document.getElementById("dadPhone").value,
@@ -406,59 +407,65 @@ async function saveMember() {
     if (!res.ok) throw new Error(data.message || "Failed to save member");
 
     alert("Member saved successfully!");
-    // Optionally refresh UI or clear form
-  } catch (err) {
-    console.error("Save failed:", err);
-    alert("Failed: " + err.message);
-  }
-}
 
-// ---- Popup: show class members ----
-// ---- Load members for selected class ----
-async function loadClassMembers() {
-  const classId = document.getElementById("classShow").value;
-  if (!classId) return; // no class selected
+    // ---- Reset fields for new entry ----
+    resetMemberForm();
 
-  try {
-    const res = await fetch(`${API}/members/class/${classId}`);
-    if (!res.ok) throw new Error("Failed to load class members");
+    // ---- Refresh class members table ----
+    const classShow = document.getElementById("classShow");
+    if (classShow.value === classId) {
+      loadClassMembers();
+    } else {
+      classShow.value = classId;
+      loadClassMembers();
+    }
 
-    const members = await res.json(); // array of school members
-    const table = document.getElementById("membersTable");
-    table.innerHTML = `
-      <tr>
-        <th>Kid Name</th>
-        <th>Age</th>
-        <th>Dad</th>
-        <th>Mom</th>
-        <th>Emergency Contact</th>
-      </tr>
-    `;
+    // ---- Load members manually (your original code) ----
+    try {
+      const res = await fetch(`${API}/members/class/${classId}`);
+      if (!res.ok) throw new Error("Failed to load class members");
 
-    members.forEach(m => {
-      table.innerHTML += `
+      const members = await res.json();
+      const table = document.getElementById("membersTable");
+
+      table.innerHTML = `
         <tr>
-          <td>${m.member?.name || ""}</td>
-          <td>${m.member?.age || ""}</td>
-          <td>${m.family?.dad || ""} (${m.dadPhone || ""})</td>
-          <td>${m.family?.mom || ""} (${m.momPhone || ""})</td>
-          <td>${m.emergencyContactName || ""} (${m.emergencyContactPhone || ""})</td>
+          <th>Kid Name</th>
+          <th>Age</th>
+          <th>Dad</th>
+          <th>Mom</th>
+          <th>Emergency Contact</th>
         </tr>
       `;
-    });
+
+      members.forEach(m => {
+        table.innerHTML += `
+          <tr>
+            <td>${m.member?.name || ""}</td>
+            <td>${m.member?.age || ""}</td>
+            <td>${m.family?.dad || ""} (${m.dadPhone || ""})</td>
+            <td>${m.family?.mom || ""} (${m.momPhone || ""})</td>
+            <td>${m.emergencyContactName || ""} (${m.emergencyContactPhone || ""})</td>
+          </tr>
+        `;
+      });
+
+    } catch (err) {
+      console.error("Failed to load class members:", err);
+    }
 
   } catch (err) {
-    console.error("Failed to load class members:", err);
+    console.error("Save member failed:", err);
+    alert(err.message || "Failed to save member");
   }
 }
-
-// ---- Event listener ----
-document.getElementById("classShow").addEventListener("change", loadClassMembers);
 
 
 // ---- Init ----
 loadFamilies();
 loadClassesByRole();
+
+
 </script>
 
 
