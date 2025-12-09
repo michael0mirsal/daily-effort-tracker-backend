@@ -625,4 +625,22 @@ router.post("/schoolMembers", async (req, res) => {
   }
 });
 
+// GET all members inside one class
+router.get("/members/class/:classId", async (req, res) => {
+  try {
+    const classId = req.params.classId;
+
+    const members = await SchoolMember.find({ class: classId })
+      .populate("member") // kid info (name, age, etc)
+      .populate("family"); // dad, mom, etc
+
+    res.json(members);
+
+  } catch (err) {
+    console.error("Error loading class members:", err);
+    res.status(500).json({ message: "Server error loading class members" });
+  }
+});
+
+
 export default router;
