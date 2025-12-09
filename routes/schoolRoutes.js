@@ -554,6 +554,27 @@ router.delete("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
 
 // GET all kids
 // GET one school member by ID
+
+// GET classes assigned to a teacher
+router.get("/teachers/:id/classes", async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id).populate("classes");
+
+    if (!teacher) {
+      return res.status(404).json({ success: false, message: "Teacher not found" });
+    }
+
+    res.json({
+      success: true,
+      classes: teacher.classes
+    });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
 router.get("/schoolMembers/:id", async (req, res) => {
   try {
     const member = await SchoolMember.findById(req.params.id)
