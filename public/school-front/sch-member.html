@@ -258,9 +258,9 @@ async function loadFamilies() {
 }
 
 // ---- Load classes: prefer teacher classes, fallback to nursery classes ----
-async function loadClasses() {
-  const teacherId = localStorage.getItem("teacherId");
-  const nurseryId = localStorage.getItem("nurseryId");
+async function loadClassesByRole() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return console.error("User not signed in");
 
   const classSelect = document.getElementById("classSelect");
   const classShow = document.getElementById("classShow");
@@ -271,28 +271,27 @@ async function loadClasses() {
   try {
     let classes = [];
 
-    if (teacherId) {
-      // try fetch teacher classes
-      const res = await fetch(`${API}/teachers/${teacherId}/classes`);
+    if (user.role.toLowerCase() === "teacher") {
+      // Teacher → only fetch their classes
+      const res = await fetch(`${API}/teachers/${user._id}/classes`);
       if (res.ok) {
         const data = await res.json();
         classes = data.classes || [];
       } else {
-        console.warn("Teacher classes endpoint returned", res.status, "- falling back to nursery classes");
+        console.warn("Teacher classes endpoint returned", res.status);
       }
-    }
-
-    if ((!classes || classes.length === 0) && nurseryId) {
-      // fallback to nursery classes
-      const res2 = await fetch(`${API}/nurseries/${nurseryId}/classes`);
-      if (res2.ok) {
-        const data2 = await res2.json(); // { success: true, classes: [...] }
-        classes = data2.classes || [];
+    } else {
+      // Admin / Manager / Supervisor → fetch all nursery classes
+      const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+      if (res.ok) {
+        const data = await res.json();
+        classes = data.classes || [];
       } else {
-        console.warn("Nursery classes endpoint returned", res2.status);
+        console.warn("Nursery classes endpoint returned", res.status);
       }
     }
 
+    // Populate selects
     classes.forEach(c => {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
