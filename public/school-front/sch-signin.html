@@ -193,21 +193,23 @@
 });
 
         const resData = await res.json();
+        const user = resData.user;
 
         if (!res.ok) {
           signinMsg.textContent = resData.error || "Sign-in failed";
           return;
         }
         // Save user & nurseryId
-        localStorage.setItem("user", JSON.stringify(resData.user));
-        localStorage.setItem("nurseryId", resData.user.nurseryId);  // ✅ add this
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("nurseryId", user.nurseryId || "");
+
+  if (user.role.toLowerCase() === "teacher") {
+    localStorage.setItem("teacherId", user._id);
+  } else {
+    localStorage.removeItem("teacherId");
+  }// ✅ add this
         // Only teachers need teacherId
-    if (resData.role.toLowerCase() === "teacher") {
-      localStorage.setItem("teacherId", user._id);
-    } else {
-      localStorage.removeItem("teacherId");
-    }
-        
+    // ✅ Save user info
 
 
         if (data.role === "admin") {
