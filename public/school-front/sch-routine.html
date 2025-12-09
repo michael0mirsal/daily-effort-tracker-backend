@@ -459,6 +459,8 @@
 
 
 <script>
+
+  const API = "http://localhost:3000/api";
   /* ----------------------------
      CONFIG / MEMBERS LIST
      Replace membersList with real backend data if available
@@ -466,6 +468,58 @@
   const membersList = ["Omar", "Laila", "Sara", "Adam", "Mariam"];
 
   // Utility: create option list HTML
+  async function loadClassesByUser() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return console.error("User not signed in");
+
+  const classSelect = document.getElementById("classSelect");
+  classSelect.innerHTML = '<option value="">Loading classes...</option>';
+
+  try {
+    let classes = [];
+
+    if (user.role && user.role.toLowerCase() === "teacher") {
+      // Teacher → fetch only assigned classes
+      const res = await fetch(`${API}/teachers/${user._id}/classes`);
+      if (res.ok) {
+        const data = await res.json();
+        classes = data.classes || [];
+      } else {
+        console.warn("Teacher classes endpoint returned", res.status);
+      }
+    } else {
+      // Admin / Manager → fetch all nursery classes
+      const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+      if (res.ok) {
+        const data = await res.json();
+        classes = data.classes || [];
+      } else {
+        console.warn("Nursery classes endpoint returned", res.status);
+      }
+    }
+
+    // Populate select
+    classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+    classes.forEach(c => {
+      const option = new Option(c.name, c._id);
+      classSelect.appendChild(option);
+    });
+
+  } catch (err) {
+    console.error("Failed to load classes:", err);
+    classSelect.innerHTML = '<option value="">Failed to load classes</option>';
+  }
+}
+
+// Call this function when page loads
+window.addEventListener("DOMContentLoaded", async () => {
+  // show popup
+  document.getElementById("classPopup").style.display = "block";
+
+  // load classes
+  await loadClassesByUser();
+});
+//////////////////////////////////////////////////////////////////
   function optionsHTML() {
     return membersList.map(m => `<option value="${m}">${m}</option>`).join("");
   }
