@@ -201,9 +201,12 @@
         // Save user & nurseryId
         localStorage.setItem("user", JSON.stringify(resData.user));
         localStorage.setItem("nurseryId", resData.user.nurseryId);  // ✅ add this
-        if (resData.user.role === "teacher") {
-         localStorage.setItem("teacherId", resData.user.userId); // use returned userId
-          }
+        // Only teachers need teacherId
+    if (resData.user.role.toLowerCase() === "teacher") {
+      localStorage.setItem("teacherId", user._id);
+    } else {
+      localStorage.removeItem("teacherId");
+    }
         
 
 
