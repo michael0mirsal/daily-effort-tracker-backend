@@ -242,10 +242,10 @@ tr:hover {
 <script>
 const API = "http://localhost:3000/api";
 
-// Store selected kid ID
+// Store selected kid ID globally
 let selectedKidId = null;
 
-// ===== Load families =====
+// ===== Load families into dropdown =====
 async function loadFamilies() {
   try {
     const res = await fetch(`${API}/families`);
@@ -260,7 +260,36 @@ async function loadFamilies() {
   }
 }
 
-// ===== When family changes =====
+// ===== Load classes for the current nursery =====
+async function loadClasses() {
+  const nurseryId = localStorage.getItem("nurseryId");
+  if (!nurseryId) {
+    console.error("No nurseryId found in localStorage");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/nurseries/${nurseryId}/classes`);
+    if (!res.ok) throw new Error("Failed to load classes");
+    const data = await res.json(); // { success: true, classes: [...] }
+    const classes = data.classes || [];
+
+    const classSelect = document.getElementById("classSelect");
+    const classShow = document.getElementById("classShow");
+
+    classSelect.innerHTML = '<option value="">Select Class</option>';
+    classShow.innerHTML = '<option value="">Select Class</option>';
+
+    classes.forEach(c => {
+      classSelect.appendChild(new Option(c.name, c._id));
+      classShow.appendChild(new Option(c.name, c._id));
+    });
+  } catch (err) {
+    console.error("Failed to load classes:", err);
+  }
+}
+
+// ===== When family changes, load kids and parent info =====
 document.getElementById("familySelect").addEventListener("change", async () => {
   const familyId = document.getElementById("familySelect").value;
   const kidSelect = document.getElementById("kidSelect");
@@ -291,12 +320,12 @@ document.getElementById("familySelect").addEventListener("change", async () => {
   }
 });
 
-// ===== When kid is selected =====
+// ===== When kid is selected, store selected ID =====
 document.getElementById("kidSelect").addEventListener("change", () => {
   selectedKidId = document.getElementById("kidSelect").value || null;
 });
 
-// ===== Save member =====
+// ===== Save member to school =====
 async function saveMember() {
   const familyId = document.getElementById("familySelect").value;
   const classId = document.getElementById("classSelect").value;
@@ -309,7 +338,7 @@ async function saveMember() {
 
   const body = {
     family: familyId,
-    member: selectedKidId,   // ✅ use the selected kid id
+    member: selectedKidId,
     nursery: nurseryId,
     class: classId,
     dadPhone: document.getElementById("dadPhone").value,
@@ -337,8 +366,7 @@ async function saveMember() {
   }
 }
 
-
-// ===== Popup: load class members =====
+// ===== Popup: show class members =====
 async function openPopup() {
   const classId = document.getElementById("classShow").value;
   if (!classId) return alert("Select a class");
@@ -354,8 +382,8 @@ async function openPopup() {
         <tr>
           <td>${m.fullName || ""}</td>
           <td>${m.age || ""}</td>
-          <td>${m.dadName || ""}</td>
-          <td>${m.momName || ""}</td>
+          <td>${m.dadPhone || ""}</td>
+          <td>${m.momPhone || ""}</td>
         </tr>`;
     });
 
@@ -373,6 +401,7 @@ function closePopup() {
 loadFamilies();
 loadClasses();
 </script>
+
 
 
 
