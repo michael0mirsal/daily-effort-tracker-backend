@@ -139,6 +139,50 @@
       color: white;
       cursor: pointer;
     }
+/* Popup overlay */
+.popup {
+  display: none; /* hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+/* Popup content box */
+.popup-content {
+  background-color: #fff8dc;
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+#classSelect {
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 80%;
+}
+
+#classSelectBtn {
+  margin-top: 15px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  background-color: #4c8dff;
+  color: white;
+  cursor: pointer;
+}
+
+#classSelectBtn:hover {
+  background-color: #2f6cff;
+}
 
   </style>
 </head>
@@ -334,6 +378,22 @@
     </table>
   </div>
 
+  <!-- Class Selection Popup -->
+<div id="classPopup" class="popup">
+  <div class="popup-content">
+    <h2>Select Class</h2>
+    <select id="classSelect">
+      <option value="">-- Choose a Class --</option>
+      <option value="Class A">Class A</option>
+      <option value="Class B">Class B</option>
+      <option value="Class C">Class C</option>
+      <!-- Add more classes dynamically if needed -->
+    </select>
+    <br><br>
+    <button id="classSelectBtn">Confirm</button>
+  </div>
+</div>
+
 <script>
   /* ----------------------------
      CONFIG / MEMBERS LIST
@@ -345,6 +405,29 @@
   function optionsHTML() {
     return membersList.map(m => `<option value="${m}">${m}</option>`).join("");
   }
+
+  // Show popup when page loads
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("classPopup").style.display = "block";
+});
+
+// Handle class selection
+document.getElementById("classSelectBtn").onclick = () => {
+  const selectedClass = document.getElementById("classSelect").value;
+  if (!selectedClass) {
+    alert("Please select a class!");
+    return;
+  }
+
+  // Store selected class for later use
+  window.selectedClass = selectedClass;
+
+  // Close popup
+  document.getElementById("classPopup").style.display = "none";
+
+  // Optionally, show selected class somewhere
+  alert(`You selected: ${selectedClass}`);
+};
 
   /* ----------------------------
      Member selector setup
