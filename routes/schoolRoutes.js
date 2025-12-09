@@ -553,18 +553,26 @@ router.delete("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
 //////////////////////////
 
 // GET all kids
-router.get("/schoolMembers", async (req, res) => {
+// GET one school member by ID
+router.get("/schoolMembers/:id", async (req, res) => {
   try {
-    const members = await SchoolMember.find()
+    const member = await SchoolMember.findById(req.params.id)
       .populate("class", "name passKey")
       .populate("nursery", "name email phone")
-      .populate("family", "dad mom");
+      .populate("family", "dad mom")
+      .populate("member");
 
-    res.json(members);
+    if (!member) {
+      return res.status(404).json({ error: "School member not found" });
+    }
+
+    res.json(member);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // CREATE kid
 router.post("/schoolMembers", async (req, res) => {
