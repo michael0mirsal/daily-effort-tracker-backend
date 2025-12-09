@@ -325,6 +325,20 @@ document.getElementById("kidSelect").addEventListener("change", () => {
   selectedKidId = document.getElementById("kidSelect").value || null;
 });
 
+const checkRes = await fetch(`${API}/schoolMembers/check`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body)
+});
+
+if (!checkRes.ok) {
+  const data = await checkRes.json();
+  alert(data.message);
+  return;
+}
+
+
+
 // ===== Save member to school =====
 async function saveMember() {
   const familyId = document.getElementById("familySelect").value;
@@ -335,23 +349,6 @@ async function saveMember() {
   if (!selectedKidId) return alert("Select kid");
   if (!classId) return alert("Select class");
   if (!nurseryId) return alert("Nursery not set");
-
-  const checkRes = await fetch(`${API}/schoolMembers/:id`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    family: familyId,
-    member: selectedKidId,
-    nursery: nurseryId,
-    class: classId
-  })
-});
-
-const checkData = await checkRes.json();
-
-if (!checkRes.ok) {
-  return alert(checkData.message || "Duplicate entry detected");
-}
 
   const body = {
     family: familyId,
@@ -375,13 +372,17 @@ if (!checkRes.ok) {
       body: JSON.stringify(body)
     });
 
-    if (!res.ok) throw new Error((await res.json()).message);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
 
     alert("Member saved successfully!");
+
   } catch (err) {
     alert("Failed: " + err.message);
   }
 }
+
 
 // ===== Popup: show class members =====
 async function openPopup() {
