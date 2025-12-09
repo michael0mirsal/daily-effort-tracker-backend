@@ -242,6 +242,9 @@ tr:hover {
 <script>
 const API = "http://localhost:3000/api";
 
+// Store selected kid ID
+let selectedKidId = null;
+
 // ===== Load families =====
 async function loadFamilies() {
   try {
@@ -249,7 +252,6 @@ async function loadFamilies() {
     const families = await res.json();
     const select = document.getElementById("familySelect");
     select.innerHTML = '<option value="">Select Family</option>';
-
     families.forEach(f => {
       select.appendChild(new Option(f.name, f._id));
     });
@@ -258,46 +260,12 @@ async function loadFamilies() {
   }
 }
 
-// ===== Load all classes (no teacher dependency) =====
-async function loadClasses() {
-  const nurseryId = localStorage.getItem("nurseryId");
-
-  if (!nurseryId) {
-    console.error("No nurseryId found in localStorage");
-    alert("No nursery assigned. Please log in again.");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API}/nurseries/${nurseryId}/classes`);
-    if (!res.ok) throw new Error("Failed to load classes");
-
-    const data = await res.json();      // data = { success, classes }
-    const classes = data.classes || [];
-
-    const classSelect = document.getElementById("classSelect");
-    const classShow = document.getElementById("classShow");
-
-    classSelect.innerHTML = '<option value="">Select Class</option>';
-    classShow.innerHTML = '<option value="">Select Class</option>';
-
-    classes.forEach(c => {
-      classSelect.appendChild(new Option(c.name, c._id));
-      classShow.appendChild(new Option(c.name, c._id));
-    });
-  } catch (err) {
-    console.error("Failed to load classes:", err);
-  }
-}
-
-
-
-// ===== Load kids + family info when family changes =====
+// ===== When family changes =====
 document.getElementById("familySelect").addEventListener("change", async () => {
   const familyId = document.getElementById("familySelect").value;
   const kidSelect = document.getElementById("kidSelect");
-
   kidSelect.innerHTML = '<option value="">Select Kid</option>';
+  selectedKidId = null;
 
   if (!familyId) return;
 
@@ -305,7 +273,7 @@ document.getElementById("familySelect").addEventListener("change", async () => {
     const res = await fetch(`${API}/families/${familyId}`);
     const family = await res.json();
 
-    // Parent info
+    // Fill parent info
     document.getElementById("dadName").value = family.dad || "";
     document.getElementById("dadPhone").value = family.dadPhone || "";
     document.getElementById("dadEmail").value = family.dadEmail || "";
@@ -313,50 +281,35 @@ document.getElementById("familySelect").addEventListener("change", async () => {
     document.getElementById("momPhone").value = family.momPhone || "";
     document.getElementById("momEmail").value = family.momEmail || "";
 
-    // Kids list
-    if (family.members?.length > 0) {
-      family.members.forEach(k => {
-        kidSelect.appendChild(new Option(k.name, k._id));
-      });
-    }
+    // Populate kids
+    family.members?.forEach(kid => {
+      kidSelect.appendChild(new Option(kid.name, kid._id));
+    });
+
   } catch (err) {
-    console.error("Error loading family:", err);
+    console.error("Failed to load family:", err);
   }
 });
 
-// ===== Load kid info when kid selected =====
-document.getElementById("kidSelect").addEventListener("change", async () => {
-  const kidId = document.getElementById("kidSelect").value;
-  if (!kidId) return;
-
-  try {
-    const res = await fetch(`${API}/members/${kidId}`);
-    const kid = await res.json();
-
-    document.getElementById("age").value = kid.age || "";
-    document.getElementById("dob").value = kid.dob ? kid.dob.split("T")[0] : "";
-    document.getElementById("gender").value = kid.gender || "male";
-
-  } catch (err) {
-    console.error("Failed to load kid:", err);
-  }
+// ===== When kid is selected =====
+document.getElementById("kidSelect").addEventListener("change", () => {
+  selectedKidId = document.getElementById("kidSelect").value || null;
 });
 
-// ===== Save Member (assign kid to class) =====
+// ===== Save member =====
 async function saveMember() {
   const familyId = document.getElementById("familySelect").value;
-  const kidId = document.getElementById("kidSelect").value;
   const classId = document.getElementById("classSelect").value;
   const nurseryId = localStorage.getItem("nurseryId");
 
   if (!familyId) return alert("Select family");
-  if (!kidId) return alert("Select kid");
+  if (!selectedKidId) return alert("Select kid");
   if (!classId) return alert("Select class");
-  if (!nurseryId) return alert("Nursery not set (login error)");
+  if (!nurseryId) return alert("Nursery not set");
 
   const body = {
     family: familyId,
-    member: kidId,
+    member: selectedKidId,   // ✅ use the selected kid id
     nursery: nurseryId,
     class: classId,
     dadPhone: document.getElementById("dadPhone").value,
@@ -370,7 +323,7 @@ async function saveMember() {
   };
 
   try {
-    const res = await fetch(`${API}/schoolMembers/${id}`, {
+    const res = await fetch(`${API}/schoolMembers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
@@ -383,6 +336,7 @@ async function saveMember() {
     alert("Failed: " + err.message);
   }
 }
+
 
 // ===== Popup: load class members =====
 async function openPopup() {
