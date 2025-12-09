@@ -463,14 +463,16 @@ async function saveMember() {
 // ---- Load members for selected class ----
 async function loadClassMembers() {
   const classId = document.getElementById("classShow").value;
-  if (!classId) return; // no class selected
+  if (!classId) return;
 
   try {
     const res = await fetch(`${API}/members/class/${classId}`);
     if (!res.ok) throw new Error("Failed to load class members");
 
-    const members = await res.json(); // array of school members
+    const members = await res.json();
     const table = document.getElementById("membersTable");
+
+    // Header
     table.innerHTML = `
       <tr>
         <th>Kid Name</th>
@@ -481,13 +483,16 @@ async function loadClassMembers() {
       </tr>
     `;
 
+    // Rows
     members.forEach(m => {
       table.innerHTML += `
         <tr>
           <td>${m.member?.name || ""}</td>
           <td>${m.member?.age || ""}</td>
+
           <td>${m.family?.dad || ""} (${m.dadPhone || ""})</td>
           <td>${m.family?.mom || ""} (${m.momPhone || ""})</td>
+
           <td>${m.emergencyContactName || ""} (${m.emergencyContactPhone || ""})</td>
         </tr>
       `;
@@ -498,8 +503,31 @@ async function loadClassMembers() {
   }
 }
 
+
 // ---- Event listener ----
 document.getElementById("classShow").addEventListener("change", loadClassMembers);
+
+function resetMemberForm() {
+  // reset selects
+  document.getElementById("familySelect").value = "";
+  document.getElementById("kidSelect").innerHTML = '<option value="">Select Kid</option>';
+  document.getElementById("classSelect").value = "";
+
+  // reset stored kid
+  selectedKidId = null;
+
+  // reset parent fields
+  const parentFields = ["dadName","dadPhone","dadEmail","momName","momPhone","momEmail"];
+  parentFields.forEach(id => {
+    if (document.getElementById(id)) document.getElementById(id).value = "";
+  });
+
+  // reset emergency fields
+  const emgFields = ["emgName","emgPhone","emgRelation"];
+  emgFields.forEach(id => {
+    if (document.getElementById(id)) document.getElementById(id).value = "";
+  });
+}
 
 
 // ---- Init ----
