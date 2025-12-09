@@ -528,6 +528,19 @@ function resetMemberForm() {
   });
 }
 
+function openPopup() {
+  const popup = document.getElementById("popup");
+  popup.style.display = "flex";   // show popup
+  loadClassMembers();              // load members into table
+}
+
+// Close popup when clicking outside content
+document.getElementById("popup").addEventListener("click", (e) => {
+  if (e.target.id === "popup") {
+    e.target.style.display = "none";
+  }
+});
+
 
 // ---- Init ----
 loadFamilies();
