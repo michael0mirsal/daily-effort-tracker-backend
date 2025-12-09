@@ -260,9 +260,24 @@ async function loadFamilies() {
 
 // ===== Load all classes (no teacher dependency) =====
 async function loadClasses() {
+  const nurseryId = localStorage.getItem("nurseryId");
+
+  if (!nurseryId) {
+    console.error("No nurseryId in localStorage");
+    alert("Nursery not set. Please login again.");
+    return;
+  }
+
   try {
-    const res = await fetch(`${API}/classes`);
-    const classes = await res.json();
+    const res = await fetch(`${API}/nurseries/${nurseryId}/classes`);
+
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
+    }
+
+    const json = await res.json();
+    const classes = json.classes || []; // backend returns: { success: true, classes: [...] }
+
     const classSelect = document.getElementById("classSelect");
     const classShow = document.getElementById("classShow");
 
@@ -273,10 +288,12 @@ async function loadClasses() {
       classSelect.appendChild(new Option(c.name, c._id));
       classShow.appendChild(new Option(c.name, c._id));
     });
+
   } catch (err) {
     console.error("Failed to load classes:", err);
   }
 }
+
 
 // ===== Load kids + family info when family changes =====
 document.getElementById("familySelect").addEventListener("change", async () => {
