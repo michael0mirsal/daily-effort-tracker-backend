@@ -187,6 +187,7 @@ router.post("/school/signin", async (req, res) => {
       }
 
       user = {
+        _id: Teacher._id,
         name: user.name,
         role,
         nurseryId: user.nursery._id,
