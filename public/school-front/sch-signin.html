@@ -201,7 +201,9 @@
         // Save user & nurseryId
         localStorage.setItem("user", JSON.stringify(resData.user));
         localStorage.setItem("nurseryId", resData.user.nurseryId);  // ✅ add this
+        localStorage.setItem("teacherId", data.teacher._id);
         
+
 
         if (data.role === "admin") {
           window.location.href = "/sch-choose.html";
