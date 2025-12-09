@@ -559,17 +559,11 @@ router.delete("/nurseries/:nurseryId/teachers/:teacherId", async (req, res) => {
 router.get("/teachers/:id/classes", async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.params.id).populate("classes");
+    if (!teacher) return res.status(404).json({ success: false, message: "Teacher not found" });
 
-    if (!teacher) {
-      return res.status(404).json({ success: false, message: "Teacher not found" });
-    }
-
-    res.json({
-      success: true,
-      classes: teacher.classes
-    });
-
+    res.json({ success: true, classes: teacher.classes });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -595,15 +589,18 @@ router.get("/schoolMembers/:id", async (req, res) => {
 });
 
 router.post("/schoolMembers/check", async (req, res) => {
-  const { family, member, nursery, class: classId } = req.body;
+  try {
+    const { family, member, nursery, class: classId } = req.body;
+    const existing = await SchoolMember.findOne({ family, member, nursery, class: classId });
 
-  const existing = await SchoolMember.findOne({ family, member, nursery, class: classId });
-
-  if (existing) {
-    return res.status(409).json({ message: "Kid already assigned to this class" });
+    if (existing) {
+      return res.status(409).json({ success: false, message: "Kid already assigned to this class" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
-
-  res.json({ ok: true });
 });
 
 // CREATE kid
