@@ -594,6 +594,17 @@ router.get("/schoolMembers/:id", async (req, res) => {
   }
 });
 
+router.post("/schoolMembers/check", async (req, res) => {
+  const { family, member, nursery, class: classId } = req.body;
+
+  const existing = await SchoolMember.findOne({ family, member, nursery, class: classId });
+
+  if (existing) {
+    return res.status(409).json({ message: "Kid already assigned to this class" });
+  }
+
+  res.json({ ok: true });
+});
 
 // CREATE kid
 router.post("/schoolMembers", async (req, res) => {
