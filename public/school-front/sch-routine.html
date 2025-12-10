@@ -462,7 +462,7 @@
      CONFIG / MEMBERS LIST
      Replace membersList with real backend data if available
   ---------------------------- */
-
+let CLASS_MEMBERS = [];                   // all members in selected class
 
   // Utility: create option list HTML
   async function loadClassesByUser() {
@@ -548,162 +548,96 @@ document.getElementById("classSelectBtn").onclick = () => {
  * GLOBAL STORAGE
  *********************************************/
   // update if needed
-let CLASS_MEMBERS = [];                   // all members in selected class
 
 
-/*********************************************
- * 1️⃣ Load Classes For The User (popup)
- *********************************************/
-async function loadClassesByUser() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return console.error("User not signed in");
 
-  const classSelect = document.getElementById("classSelect");
-  classSelect.innerHTML = '<option value="">Loading classes...</option>';
-
-  try {
-    let classes = [];
-
-    if (user.role && user.role.toLowerCase() === "teacher") {
-      // Teacher → only fetch their assigned classes
-      const res = await fetch(`${API}/teachers/${user._id}/classes`);
-      const data = await res.json();
-      classes = data.classes || [];
-
-    } else {
-      // Admin / Manager → fetch all nursery classes
-      const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-      const data = await res.json();
-      classes = data.classes || [];
-    }
-
-    classSelect.innerHTML = '<option value="">-- Select Class --</option>';
-    classes.forEach(c => {
-      classSelect.appendChild(new Option(c.name, c._id));
-    });
-
-  } catch (err) {
-    console.error("Failed to load classes:", err);
-    classSelect.innerHTML = '<option value="">Failed to load classes</option>';
-  }
-}
-
-
-/*********************************************
- * 2️⃣ Load Members Based On Selected Class
- *    (called when popup Confirm is clicked)
- *********************************************/
-async function loadMembersForSelectedClass() {
-  const classId = window.selectedClass;  
-  if (!classId) return console.warn("No class selected yet");
-
+async function loadMembersIntoSelector(classId) {
   try {
     const res = await fetch(`${API}/members/class/${classId}`);
     if (!res.ok) throw new Error("Failed to load class members");
 
-    CLASS_MEMBERS = await res.json(); // store globally
-    console.log("Loaded members:", CLASS_MEMBERS);
+    const members = await res.json();
 
-    // Now populate all .member-select dropdowns
-    initAllMemberSelects();
+    window.classMembersList = members.map(m => ({
+      id: m.member?._id,
+      name: m.member?.name
+    }));
+
+    fillAllMemberSelects();
 
   } catch (err) {
-    console.error("Error loading class members:", err);
+    console.error("Error loading members:", err);
   }
 }
 
+/* ============================================================
+   4) Fill all <select class="member-select">
+   ============================================================ */
+function fillAllMemberSelects() {
+  document.querySelectorAll(".member-select").forEach(select => {
+    select.innerHTML = `<option value="">Select member</option>`;
 
-/*********************************************
- * 3️⃣ Convert Members Into Select Options
- *********************************************/
-function optionsHTML() {
-  return CLASS_MEMBERS.map(m => {
-    const name = m.member?.name || "";
-    return `<option value="${name}">${name}</option>`;
-  }).join("");
+    window.classMembersList.forEach(m => {
+      select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+    });
+  });
 }
 
+/* ============================================================
+   5) Create tags inside .member-box
+   ============================================================ */
+function fillMemberTagsOnLoad() {
+  document.querySelectorAll(".member-box").forEach(box => {
+    box.innerHTML = "";
 
-/*********************************************
- * 4️⃣ Setup Member Selector For Each Row
- *********************************************/
-function setupMemberSelector(row) {
-  const select = row.querySelector(".member-select");
-  const box = row.querySelector(".member-box");
+    window.classMembersList.forEach(m => {
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.dataset.id = m.id;
+      tag.innerHTML = `<span>${m.name}</span><span class="remove">×</span>`;
+      tag.querySelector(".remove").onclick = () => tag.remove();
 
-  if (!select || !box) return;
-
-  // Populate options ONLY when CLASS_MEMBERS is loaded
-  if (CLASS_MEMBERS.length > 0 && select.querySelectorAll("option").length <= 1) {
-    select.insertAdjacentHTML("beforeend", optionsHTML());
-  }
+      box.appendChild(tag);
+    });
+  });
 }
 
-
-/*********************************************
- * 5️⃣ Add Member Tag (called by button in row)
- *********************************************/
+/* ============================================================
+   6) Add button handler
+   ============================================================ */
 function addMemberFromBtn(btn) {
   const cell = btn.closest("td");
-  if (!cell) return;
+  const select = cell.parentElement.querySelector(".member-select");
+  const box = cell.parentElement.querySelector(".member-box");
 
-  const select = cell.querySelector(".member-select");
-  const box = cell.querySelector(".member-box");
-  const name = select.value;
-  if (!name) return;
+  const id = select.value;
+  const name = select.options[select.selectedIndex]?.text;
 
-  // Prevent duplicate tags
-  const exists = Array.from(box.querySelectorAll(".tag"))
-    .some(tag => tag.dataset.name === name);
-  if (exists) { select.value = ""; return; }
+  if (!id) return;
+
+  // Prevent duplicates
+  if ([...box.querySelectorAll(".tag")].some(t => t.dataset.id === id)) return;
 
   const tag = document.createElement("div");
   tag.className = "tag";
-  tag.dataset.name = name;
+  tag.dataset.id = id;
   tag.innerHTML = `<span>${name}</span><span class="remove">×</span>`;
-
   tag.querySelector(".remove").onclick = () => tag.remove();
 
   box.appendChild(tag);
   select.value = "";
 }
 
+/* ============================================================
+   7) Initialize on load (after class selected)
+   ============================================================ */
+async function initOnLoad() {
+  const classId = document.getElementById("classShow").value;
+  if (!classId) return;
 
-/*********************************************
- * 6️⃣ Initialize All Member Select Dropdowns
- *********************************************/
-function initAllMemberSelects() {
-  document.querySelectorAll("tbody tr").forEach(row => {
-    setupMemberSelector(row);
-  });
+  await loadMembersIntoSelector(classId);
+  fillMemberTagsOnLoad();
 }
-
-
-/*********************************************
- * 7️⃣ Popup Logic – Confirm & Load Members
- *********************************************/
-document.getElementById("classSelectBtn").onclick = async () => {
-  const selectedClass = document.getElementById("classSelect").value;
-  if (!selectedClass) return alert("Please select a class!");
-
-  window.selectedClass = selectedClass;
-
-  // Hide popup
-  document.getElementById("classPopup").style.display = "none";
-
-  // Load members for chosen class
-  await loadMembersForSelectedClass();
-};
-
-
-/*********************************************
- * 8️⃣ On Page Load → Show Popup + Load Classes
- *********************************************/
-window.addEventListener("DOMContentLoaded", async () => {
-  document.getElementById("classPopup").style.display = "block";
-  await loadClassesByUser();
-});
-
 
   /* ----------------------------
      TASK CRUD + Add Row creation (with Members UI)
