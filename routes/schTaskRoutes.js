@@ -49,6 +49,34 @@ router.post("/sch-routine/save", async (req, res) => {
   }
 });
 
+router.get("/search", async (req, res) => {
+  try {
+    const { schmember, date } = req.query;
+
+    if (!schmember) {
+      return res.status(400).json({ msg: "schmember is required" });
+    }
+
+    let routines;
+
+    if (date === "all") {
+      // return all routines for this member
+      routines = await Routine.find({ schmember }).sort({ date: -1 });
+    } else if (date) {
+      // return specific routine for the given date
+      routines = await Routine.findOne({ schmember, date });
+    } else {
+      return res.status(400).json({ msg: "date is required" });
+    }
+
+    res.json(routines || []);
+  } catch (err) {
+    console.error("Search routine error:", err);
+    res.status(500).json({ msg: "Server error searching routines" });
+  }
+});
+
+
 
 
 
