@@ -779,11 +779,10 @@ async function initOnLoad() {
   }
 
   async function saveRoutine() {
-    const date = document.getElementById("routineDate").value;
-    if (!date) return alert("Select a date first!");
+    // Use current date automatically
+    const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
     const rows = document.querySelectorAll("table tbody tr");
-
     const kidMap = {};  // { kidId : [items] }
 
     rows.forEach(row => {
@@ -795,7 +794,6 @@ async function initOnLoad() {
 
         memberTags.forEach(tag => {
             const kidId = tag.dataset.id;
-
             if (!kidMap[kidId]) kidMap[kidId] = [];
 
             kidMap[kidId].push({
@@ -828,6 +826,7 @@ async function initOnLoad() {
             alert("Save failed");
         }
     } catch (err) {
+        console.error(err);
         alert("Server error while saving routine.");
     }
 }
@@ -838,7 +837,7 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
   document.getElementById("loadBtn").onclick = async () => {
     try {
       const u = JSON.parse(localStorage.getItem("currentUser")) || {};
-      const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(u.name||"")}&family=${encodeURIComponent(u.family||"")}&date=all`);
+      const res = await fetch(`${API}/api/routines/search?name=${encodeURIComponent(u.name||"")}&family=${encodeURIComponent(u.family||"")}&date=all`);
       const data = await res.json();
       if (!data || !data.length) return alert("No saved routine found.");
 
@@ -868,7 +867,7 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
   async function loadRoutineByDate(date, auto=false) {
     try {
       const u = JSON.parse(localStorage.getItem("currentUser")) || {};
-      const res = await fetch(`${API_BASE}/api/routines/search?name=${encodeURIComponent(u.name||"")}&date=${date}&family=${encodeURIComponent(u.family||"")}`);
+      const res = await fetch(`${API}/routines/search?name=${encodeURIComponent(u.name||"")}&date=${date}&family=${encodeURIComponent(u.family||"")}`);
       const data = await res.json();
       // pick routine that matches family if multiple
       const routine = Array.isArray(data) ? data.find(r => (r.family||"").trim().toLowerCase() === (u.family||"").trim().toLowerCase()) || data[0] : data;
