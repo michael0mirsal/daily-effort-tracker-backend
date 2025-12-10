@@ -647,7 +647,7 @@ async function initOnLoad() {
   await loadMembersIntoSelector(classId);
   fillMemberTagsOnLoad();
 }
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////
   /* ----------------------------
      TASK CRUD + Add Row creation (with Members UI)
   ---------------------------- */
@@ -768,7 +768,6 @@ async function initOnLoad() {
   /* ----------------------------
      SAVE / LOAD (integrated with members)
   ---------------------------- */
-  const API_BASE = "https://daily-effort-tracker-backend-production-2184.up.railway.app";
   const user = JSON.parse(localStorage.getItem("currentUser"));
   if (!user) {
     // graceful redirect if no user
@@ -790,7 +789,7 @@ async function initOnLoad() {
     const payload = { name: u.name, date, items, checkedData, family: u.family };
 
     try {
-      const res = await fetch(`${API_BASE}/api/routines/save`, {
+      const res = await fetch(`${API}/routines/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
