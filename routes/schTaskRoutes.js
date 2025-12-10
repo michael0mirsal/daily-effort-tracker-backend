@@ -13,33 +13,53 @@ import crypto from "crypto";
 const router = express.Router();
 
 
-router.post("/routines/add", async (req, res) => {
+router.post("/save", async (req, res) => {
   try {
-    const { memberId, section, task, date } = req.body;
+    const { date, data } = req.body;
 
-    let routine = await SchRoutine.findOne({ kidmember: memberId, date });
+    if (!date || !data)
+      return res.status(400).json({ error: "Missing date or data." });
 
-    if (!routine) {
-      routine = new SchRoutine({
-        kidmember: memberId,
-        date,
-        items: []
-      });
+    /*
+      data = [
+        {
+          kidId: "...",
+          items: [
+            { section: "morning", task: "Wake up early", done: true },
+            ...
+          ]
+        },
+        ...
+      ]
+    */
+
+    let results = [];
+
+    for (const entry of data) {
+      const { kidId, items } = entry;
+
+      // Check existing routine for same date + kid
+      let routine = await SchRoutine.findOne({ kidmember: kidId, date });
+
+      if (routine) {
+        routine.items = items;
+        await routine.save();
+      } else {
+        routine = await SchRoutine.create({
+          kidmember: kidId,
+          date,
+          items
+        });
+      }
+
+      results.push(routine);
     }
 
-    routine.items.push({
-      section,
-      task,
-      done: false
-    });
-
-    await routine.save();
-
-    res.json({ message: "Routine saved!", routine });
+    res.json({ success: true, count: results.length, results });
 
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to save routines." });
   }
 });
 
