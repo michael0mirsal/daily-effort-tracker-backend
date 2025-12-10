@@ -272,6 +272,9 @@
     🏦 Stars Box: <span id="routineStarsDisplay">0⭐</span>
   </div>
 
+  <!-- Hidden date input for saveRoutine -->
+  <input type="hidden" id="routineDate" value="">
+
   <div class="load-section">
     <h3>📅 Load Routine by Date</h3>
     <input type="date" id="loadDate" />
@@ -288,16 +291,15 @@
   </div>
 
   <!-- -------------------------
-       MORNING (now with Members)
+       MORNING (with Members)
   -------------------------- -->
   <div class="routine-section">
     <h2>☀️ Morning Routine</h2>
-    <table id="morningTable">
+    <table id="morningTable" data-section="morning">
       <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
       <tbody id="morningBody">
-        <!-- initial rows -->
         <tr>
-          <td>Wake up early ⏰</td>
+          <td class="task-name">Wake up early ⏰</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -307,9 +309,8 @@
             </div>
           </td>
         </tr>
-
         <tr>
-          <td>Talk to Jesus</td>
+          <td class="task-name">Talk to Jesus</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -319,9 +320,8 @@
             </div>
           </td>
         </tr>
-
         <tr>
-          <td>Brush teeth 🪥</td>
+          <td class="task-name">Brush teeth 🪥</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -331,25 +331,22 @@
             </div>
           </td>
         </tr>
-
-        <!-- other initial rows omitted for brevity but same structure -->
       </tbody>
     </table>
-
     <input type="text" id="morningInput" placeholder="Add morning task" />
     <button onclick="addTask('morning')">➕ Add</button>
   </div>
 
   <!-- -------------------------
-       AFTER (with Members)
+       AFTER SCHOOL (with Members)
   -------------------------- -->
   <div class="routine-section">
     <h2>🎒 After School Routine</h2>
-    <table id="afterTable">
+    <table id="afterTable" data-section="after">
       <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
       <tbody id="afterBody">
         <tr>
-          <td>Wash hands and change clothes 🧼</td>
+          <td class="task-name">Wash hands and change clothes 🧼</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -360,7 +357,7 @@
           </td>
         </tr>
         <tr>
-          <td>Eat a healthy snack 🍎</td>
+          <td class="task-name">Eat a healthy snack 🍎</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -372,7 +369,6 @@
         </tr>
       </tbody>
     </table>
-
     <input type="text" id="afterInput" placeholder="Add after-school task" />
     <button onclick="addTask('after')">➕ Add</button>
   </div>
@@ -382,11 +378,11 @@
   -------------------------- -->
   <div class="routine-section">
     <h2>🌙 Sleeping Routine</h2>
-    <table id="nightTable">
+    <table id="nightTable" data-section="night">
       <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
       <tbody id="nightBody">
         <tr>
-          <td>Take a shower 🚿</td>
+          <td class="task-name">Take a shower 🚿</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -397,7 +393,7 @@
           </td>
         </tr>
         <tr>
-          <td>Limit daytime naps</td>
+          <td class="task-name">Limit daytime naps</td>
           <td><input type="checkbox" /></td>
           <td>
             <div class="member-box"></div>
@@ -409,18 +405,16 @@
         </tr>
       </tbody>
     </table>
-
     <input type="text" id="nightInput" placeholder="Add night task" />
     <button onclick="addTask('night')">➕ Add</button>
   </div>
 
   <!-- -------------------------
-       (Optional) CLASS Routine Section
-       (kept if you used it before)
+       Optional CLASS Routine
   -------------------------- -->
   <div class="routine-section" id="classRoutineSection" style="display:none;">
     <h2>🏫 Class Routine (optional)</h2>
-    <table id="classRoutineTable">
+    <table id="classRoutineTable" data-section="class">
       <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
       <tbody id="classRoutineBody"></tbody>
     </table>
@@ -440,21 +434,29 @@
   </div>
 
   <!-- Class Selection Popup -->
-<div id="classPopup" class="popup">
-  <div class="popup-content">
-    <div class="popup-header">
-      <h2>🏫 Select Your Class</h2>
-      <p>Choose the class you want to manage today</p>
+  <div id="classPopup" class="popup">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2>🏫 Select Your Class</h2>
+        <p>Choose the class you want to manage today</p>
+      </div>
+      <select id="classSelect">
+        <option value="">Loading classes...</option>
+      </select>
+      <br><br>
+      <button id="classSelectBtn">✅ Confirm</button>
     </div>
-    <select id="classSelect">
-      <option value="">Loading classes...</option>
-    </select>
-    <br><br>
-    <button id="classSelectBtn">✅ Confirm</button>
   </div>
-</div>
-<input type="hidden" id="classShow" value="">
+  <input type="hidden" id="classShow" value="">
 
+  <script>
+    // Auto-set current date for routine
+    window.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      document.getElementById("routineDate").value = today;
+    });
+  </script>
+</body>
 
 <script>
 
@@ -779,28 +781,24 @@ async function initOnLoad() {
   }
 
   async function saveRoutine() {
-    // Use current date automatically
-    const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const dateInput = document.getElementById("routineDate");
+    const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
 
     const rows = document.querySelectorAll("table tbody tr");
+
     const kidMap = {};  // { kidId : [items] }
 
     rows.forEach(row => {
-        const taskText = row.querySelector(".task-name").textContent.trim();
-        const section = row.closest("table").dataset.section;
+        const taskCell = row.querySelector(".task-name") || row.children[0];
+        const taskText = taskCell.textContent.trim();
+        const section = row.closest("table").dataset.section || "unknown";
         const done = row.querySelector("input[type='checkbox']").checked;
 
         const memberTags = row.querySelectorAll(".member-tag");
-
         memberTags.forEach(tag => {
             const kidId = tag.dataset.id;
             if (!kidMap[kidId]) kidMap[kidId] = [];
-
-            kidMap[kidId].push({
-                section,
-                task: taskText,
-                done
-            });
+            kidMap[kidId].push({ section, task: taskText, done });
         });
     });
 
@@ -818,7 +816,6 @@ async function initOnLoad() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
-
         const json = await res.json();
         if (json.success) {
             alert("Routine saved for all kids!");
@@ -826,12 +823,10 @@ async function initOnLoad() {
             alert("Save failed");
         }
     } catch (err) {
-        console.error(err);
         alert("Server error while saving routine.");
     }
 }
 
-document.getElementById("saveBtn").addEventListener("click", saveRoutine);
 
 
   document.getElementById("loadBtn").onclick = async () => {
