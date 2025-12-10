@@ -453,6 +453,7 @@
     <button id="classSelectBtn">✅ Confirm</button>
   </div>
 </div>
+<input type="hidden" id="classShow" value="">
 
 
 <script>
@@ -530,17 +531,15 @@ document.getElementById("classSelectBtn").onclick = async () => {
     return;
   }
 
-  // Store selected class
   window.selectedClass = selectedClass;
-  document.getElementById("classShow").value = selectedClass;
 
-  // Close popup
+  // Optional: store in hidden field
+  const classShow = document.getElementById("classShow");
+  if (classShow) classShow.value = selectedClass;
+
   document.getElementById("classPopup").style.display = "none";
 
-  // LOAD CLASS MEMBERS INTO SELECTOR
   await loadMembersIntoSelector(selectedClass);
-
-  // LOAD TAGS TOO
   fillMemberTagsOnLoad();
 
   console.log("Loaded class:", selectedClass);
@@ -909,7 +908,7 @@ async function initOnLoad() {
   // auto-load today's date on page ready
   window.addEventListener("DOMContentLoaded", async () => {
     // initialize any existing rows selects
-    initAllMemberSelects();
+    fillAllMemberSelects();
     attachCheckboxListeners();
 
     const today = (new Date()).toISOString().split("T")[0];
