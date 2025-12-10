@@ -815,7 +815,7 @@ async function initOnLoad() {
     };
 
     try {
-        const res = await fetch("http://localhost:3000/api/sch-routine/save", {
+        const res = await fetch(`${API}/sch-routine/save}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
