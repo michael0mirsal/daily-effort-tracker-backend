@@ -17,11 +17,11 @@ router.post("/routines/add", async (req, res) => {
   try {
     const { memberId, section, task, date } = req.body;
 
-    let routine = await SchRoutine.findOne({ member: memberId, date });
+    let routine = await SchRoutine.findOne({ kidmember: memberId, date });
 
     if (!routine) {
       routine = new SchRoutine({
-        member: memberId,
+        kidmember: memberId,
         date,
         items: []
       });
