@@ -13,32 +13,18 @@ import crypto from "crypto";
 const router = express.Router();
 
 
-router.post("sch-routine/save", async (req, res) => {
+router.post("/sch-routine/save", async (req, res) => {
   try {
     const { date, data } = req.body;
 
     if (!date || !data)
-      return res.status(400).json({ error: "Missing date or data." });
-
-    /*
-      data = [
-        {
-          kidId: "...",
-          items: [
-            { section: "morning", task: "Wake up early", done: true },
-            ...
-          ]
-        },
-        ...
-      ]
-    */
+      return res.status(400).json({ error: "Missing date or data" });
 
     let results = [];
 
     for (const entry of data) {
       const { kidId, items } = entry;
 
-      // Check existing routine for same date + kid
       let routine = await SchRoutine.findOne({ kidmember: kidId, date });
 
       if (routine) {
@@ -55,13 +41,14 @@ router.post("sch-routine/save", async (req, res) => {
       results.push(routine);
     }
 
-    res.json({ success: true, count: results.length, results });
+    res.json({ success: true, saved: results.length, results });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to save routines." });
+    res.status(500).json({ error: "Failed to save routine" });
   }
 });
+
 
 
 
