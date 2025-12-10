@@ -49,34 +49,22 @@ router.post("/sch-routine/save", async (req, res) => {
   }
 });
 
-router.get("/search", async (req, res) => {
+router.get("/class", async (req, res) => {
+  const { classId, date } = req.query;
+  if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
+
   try {
-    const { kidmember, date } = req.query;
+    // Find all school members in this class
+    const members = await SchoolMember.find({ class: classId });
+    const memberIds = members.map(m => m._id);
 
-    // Validate required fields
-    if (!kidmember) {
-      return res.status(400).json({ error: "Missing required parameter: kidmember" });
-    }
-
-    // Build query
-    const query = { kidmember };
-
-    // If date is NOT "all", add date filter
-    if (date && date !== "all") {
-      query.date = date;
-    }
-
-    // Search routines
-    const routines = await Routine.find(query);
-
-    if (!routines.length) {
-      return res.status(404).json({ error: "No routines found for this member/date" });
-    }
+    // Find all routines for these members on the date
+    const routines = await Routine.find({ kidmember: { $in: memberIds }, date });
 
     res.json(routines);
   } catch (err) {
-    console.error("Search error:", err);
-    res.status(500).json({ error: "Server error searching routines" });
+    console.error(err);
+    res.status(500).json({ error: "Server error fetching routines" });
   }
 });
 
