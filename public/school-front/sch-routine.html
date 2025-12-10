@@ -844,20 +844,14 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
 ////333333333333333333333333333333
 
   document.getElementById("loadBtn").onclick = async () => {
+  const classId = window.selectedClass;
+  if (!classId) return alert("Please select a class first.");
+
   try {
-    const u = JSON.parse(localStorage.getItem("currentSchoolMember")) || {};
-    const schId = u._id;
-
-    if (!schId) {
-      return alert("❌ No school member selected.");
-    }
-
-    const res = await fetch(`${API}/routines/search?schmember=${schId}&date=all`);
+    const res = await fetch(`${API}/routines/class?classId=${classId}&date=all`);
     const data = await res.json();
 
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return alert("No saved routines found.");
-    }
+    if (!data.length) return alert("No saved routines for this class.");
 
     const reportBody = document.getElementById("reportBody");
     reportBody.innerHTML = "";
@@ -871,7 +865,7 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
       tr.innerHTML = `
         <td>${r.date}</td>
         <td>${doneCount}/${total} ✅</td>
-        <td class="stars">${getStars(doneCount)}</td>
+        <td>${getStars(doneCount)}</td>
       `;
       reportBody.appendChild(tr);
     });
@@ -881,6 +875,7 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
     alert("Failed to load routines.");
   }
 };
+
 
 //////////////////////////////////////////////////////////////////////////
   async function loadRoutineByDate(date, auto=false) {
