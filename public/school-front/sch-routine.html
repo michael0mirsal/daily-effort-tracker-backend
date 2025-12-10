@@ -290,7 +290,7 @@
     With You beside me, I feel so blessed! 🙏</p>
   </div>
 
-<!-- Morning Routine -->
+ <!-- Morning Routine -->
 <div class="routine-section">
   <h2>☀️ Morning Routine</h2>
   <table id="morningTable" data-section="morning">
@@ -841,153 +841,126 @@ async function initOnLoad() {
 // Attach save button
 document.getElementById("saveBtn").addEventListener("click", saveRoutine);
 
-
+////333333333333333333333333333333
 
   document.getElementById("loadBtn").onclick = async () => {
-    try {
-      const u = JSON.parse(localStorage.getItem("currentUser")) || {};
-      const res = await fetch(`${API}/api/routines/search?name=${encodeURIComponent(u.name||"")}&family=${encodeURIComponent(u.family||"")}&date=all`);
-      const data = await res.json();
-      if (!data || !data.length) return alert("No saved routine found.");
-
-      const reportBody = document.getElementById("reportBody");
-      reportBody.innerHTML = "";
-      document.getElementById("reportSection").style.display = "block";
-
-      data.forEach(r => {
-        const doneCount = r.items.filter(i => i.done).length;
-        const total = r.items.length;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${r.date}</td><td>${doneCount}/${total} ✅</td><td class="stars">${getStars(doneCount)}</td>`;
-        reportBody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load routines.");
-    }
-  };
-
-  document.getElementById("loadByDateBtn").onclick = async () => {
-    const selectedDate = document.getElementById("loadDate").value;
-    if (!selectedDate) return alert("Please select a date.");
-    await loadRoutineByDate(selectedDate);
-  };
-
-  async function loadRoutineByDate(date, auto = false) {
   try {
-    const u = JSON.parse(localStorage.getItem("currentUser")) || {};
+    const u = JSON.parse(localStorage.getItem("currentSchoolMember")) || {};
+    const schId = u._id;
 
-    const res = await fetch(
-      `${API}/routines/search?name=${encodeURIComponent(u.name || "")}&date=${date}&family=${encodeURIComponent(u.family || "")}`
-    );
+    if (!schId) {
+      return alert("❌ No school member selected.");
+    }
 
+    const res = await fetch(`${API}/routines/search?schmember=${schId}&date=all`);
     const data = await res.json();
 
-    // Matching routine
-    const routine = Array.isArray(data)
-      ? data.find(r => (r.family || "").trim().toLowerCase() === (u.family || "").trim().toLowerCase()) || data[0]
-      : data;
-
-    if (!routine) {
-      if (!auto) alert(`No routine found for ${date}`);
-      return;
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return alert("No saved routines found.");
     }
 
-    // -------------------------------------
-    // CLEAR ALL BEFORE LOADING NEW ROUTINE
-    // -------------------------------------
-    document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-    document.querySelectorAll(".member-box").forEach(b => b.innerHTML = "");
+    const reportBody = document.getElementById("reportBody");
+    reportBody.innerHTML = "";
+    document.getElementById("reportSection").style.display = "block";
 
-    // ----------------------------
-    // LOAD EACH ITEM
-    // ----------------------------
-    routine.items.forEach(item => {
+    data.forEach(r => {
+      const doneCount = (r.items || []).filter(i => i.done).length;
+      const total = (r.items || []).length;
 
-      if (!item.section || !item.task) return;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${doneCount}/${total} ✅</td>
+        <td class="stars">${getStars(doneCount)}</td>
+      `;
+      reportBody.appendChild(tr);
+    });
 
-      // Map section to body ID
-      let bodyId = "";
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load routines.");
+  }
+};
 
-      switch (item.section.toLowerCase()) {
-        case "morning": bodyId = "morningBody"; break;
-        case "after": bodyId = "afterBody"; break;
-        case "night": bodyId = "nightBody"; break;
-        case "class": bodyId = "classRoutineBody"; break;
-        default: return;
+//////////////////////////////////////////////////////////////////////////
+  async function loadRoutineByDate(date, auto=false) {
+    try {
+      const u = JSON.parse(localStorage.getItem("currentUser")) || {};
+      const res = await fetch(`${API}/routines/search?name=${encodeURIComponent(u.name||"")}&date=${date}&family=${encodeURIComponent(u.family||"")}`);
+      const data = await res.json();
+      // pick routine that matches family if multiple
+      const routine = Array.isArray(data) ? data.find(r => (r.family||"").trim().toLowerCase() === (u.family||"").trim().toLowerCase()) || data[0] : data;
+      if (!routine) {
+        if (!auto) alert(`No routine found for ${date}`);
+        return;
       }
 
-      const body = document.getElementById(bodyId);
-      if (!body) return;
+      // clear existing checkboxes & members
+      clearAllCheckboxes();
+      document.querySelectorAll(".member-box").forEach(b => b.innerHTML = "");
 
-      // Find existing row
-      let targetRow = Array.from(body.querySelectorAll("tr"))
-        .find(r => r.querySelector(".task-name") &&
-                   r.querySelector(".task-name").textContent.trim().toLowerCase() === item.task.trim().toLowerCase());
+      // iterate items and assign into proper tables (create rows if missing)
+      routine.items.forEach(item => {
+        const body = document.getElementById((item.section === "class" ? "classRoutineBody" : item.section + "Body"));
+        if (!body) return;
 
-      // Create row if missing
-      if (!targetRow) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = createRowHTML(item.task);   // ← you already have this helper
-        body.appendChild(tr);
-        setupMemberSelector(tr);
-        targetRow = tr;
-      }
+        const rows = Array.from(body.querySelectorAll("tr"));
+        let targetRow = rows.find(r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase());
 
-      // Set checkbox
-      const cb = targetRow.querySelector("input[type='checkbox']");
-      if (cb) cb.checked = !!item.done;
+        if (!targetRow) {
+          // create new row (with members UI)
+          const tr = document.createElement("tr");
+          tr.innerHTML = createRowHTML(item.task);
+          body.appendChild(tr);
+          setupMemberSelector(tr);
+          attachCheckboxListeners();
+          targetRow = tr;
+        }
 
-      // Load members
-      const box = targetRow.querySelector(".member-box");
-      if (box) {
-        box.innerHTML = "";
+        // set checkbox
+        const cb = targetRow.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = !!item.done;
+
+        // rebuild members tags
+        const box = targetRow.querySelector(".member-box");
+        box.innerHTML = ""; // clear
         if (Array.isArray(item.members)) {
-          item.members.forEach(member => {
-            if (!member) return;
+          item.members.forEach(name => {
+            if (!name) return;
             const tag = document.createElement("div");
-            tag.className = "member-tag";
-            tag.dataset.id = member.id || "";
-            tag.innerHTML = `${member.name || member} <span class="remove">×</span>`;
+            tag.className = "tag";
+            tag.dataset.name = name;
+            tag.innerHTML = `<span>${escapeHtml(name)}</span><span class="remove">×</span>`;
             tag.querySelector(".remove").onclick = () => tag.remove();
             box.appendChild(tag);
           });
         }
-      }
-    });
+      });
 
-    // Update stars
-    updateRoutineStars();
+      // attach listeners and stars
+      attachCheckboxListeners();
+      updateRoutineStars();
 
-    // -------------------------------------
-    // DISABLE PAST DATES
-    // -------------------------------------
-    const today = new Date((new Date()).toISOString().split("T")[0]);
-    const selected = new Date(date);
-    const isPast = selected < today;
+      // lock past dates if necessary
+      const today = new Date((new Date()).toISOString().split("T")[0]);
+      const selected = new Date(date);
+      const isPast = selected < today;
+      document.querySelectorAll("input[type='checkbox'], input[type='text'], button, select").forEach(el => {
+        if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
+          el.disabled = isPast; el.style.opacity = isPast ? 0.5 : 1; el.style.cursor = isPast ? "not-allowed" : "pointer";
+        } else if (el.type === "checkbox" || el.type === "text" || el.tagName === "SELECT") {
+          el.disabled = isPast;
+        }
+      });
 
-    document.querySelectorAll("input, button, select").forEach(el => {
-      if (el.id === "saveBtn") return;
-      el.disabled = isPast;
-      if (el.tagName === "BUTTON") {
-        el.style.opacity = isPast ? 0.5 : 1;
-        el.style.cursor = isPast ? "not-allowed" : "pointer";
-      }
-    });
+      window.currentLoadedDate = date;
+      if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
 
-    window.currentLoadedDate = date;
-
-    if (!auto) {
-      if (isPast) alert(`🔒 Viewing past routine (${date}). Editing disabled.`);
-      else alert(`✅ Routine loaded for ${date}`);
+    } catch (err) {
+      console.error(err);
+      if (!auto) alert("Failed to load routine by date.");
     }
-
-  } catch (err) {
-    console.error(err);
-    if (!auto) alert("Failed to load routine by date.");
   }
-}
-
 
   // auto-load today's date on page ready
   window.addEventListener("DOMContentLoaded", async () => {
