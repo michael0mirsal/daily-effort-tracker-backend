@@ -873,84 +873,121 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
     await loadRoutineByDate(selectedDate);
   };
 
-  async function loadRoutineByDate(date, auto=false) {
-    try {
-      const u = JSON.parse(localStorage.getItem("currentUser")) || {};
-      const res = await fetch(`${API}/routines/search?name=${encodeURIComponent(u.name||"")}&date=${date}&family=${encodeURIComponent(u.family||"")}`);
-      const data = await res.json();
-      // pick routine that matches family if multiple
-      const routine = Array.isArray(data) ? data.find(r => (r.family||"").trim().toLowerCase() === (u.family||"").trim().toLowerCase()) || data[0] : data;
-      if (!routine) {
-        if (!auto) alert(`No routine found for ${date}`);
-        return;
+  async function loadRoutineByDate(date, auto = false) {
+  try {
+    const u = JSON.parse(localStorage.getItem("currentUser")) || {};
+
+    const res = await fetch(
+      `${API}/routines/search?name=${encodeURIComponent(u.name || "")}&date=${date}&family=${encodeURIComponent(u.family || "")}`
+    );
+
+    const data = await res.json();
+
+    // Matching routine
+    const routine = Array.isArray(data)
+      ? data.find(r => (r.family || "").trim().toLowerCase() === (u.family || "").trim().toLowerCase()) || data[0]
+      : data;
+
+    if (!routine) {
+      if (!auto) alert(`No routine found for ${date}`);
+      return;
+    }
+
+    // -------------------------------------
+    // CLEAR ALL BEFORE LOADING NEW ROUTINE
+    // -------------------------------------
+    document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
+    document.querySelectorAll(".member-box").forEach(b => b.innerHTML = "");
+
+    // ----------------------------
+    // LOAD EACH ITEM
+    // ----------------------------
+    routine.items.forEach(item => {
+
+      if (!item.section || !item.task) return;
+
+      // Map section to body ID
+      let bodyId = "";
+
+      switch (item.section.toLowerCase()) {
+        case "morning": bodyId = "morningBody"; break;
+        case "after": bodyId = "afterBody"; break;
+        case "night": bodyId = "nightBody"; break;
+        case "class": bodyId = "classRoutineBody"; break;
+        default: return;
       }
 
-      // clear existing checkboxes & members
-      clearAllCheckboxes();
-      document.querySelectorAll(".member-box").forEach(b => b.innerHTML = "");
+      const body = document.getElementById(bodyId);
+      if (!body) return;
 
-      // iterate items and assign into proper tables (create rows if missing)
-      routine.items.forEach(item => {
-        const body = document.getElementById((item.section === "class" ? "classRoutineBody" : item.section + "Body"));
-        if (!body) return;
+      // Find existing row
+      let targetRow = Array.from(body.querySelectorAll("tr"))
+        .find(r => r.querySelector(".task-name") &&
+                   r.querySelector(".task-name").textContent.trim().toLowerCase() === item.task.trim().toLowerCase());
 
-        const rows = Array.from(body.querySelectorAll("tr"));
-        let targetRow = rows.find(r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase());
+      // Create row if missing
+      if (!targetRow) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = createRowHTML(item.task);   // ← you already have this helper
+        body.appendChild(tr);
+        setupMemberSelector(tr);
+        targetRow = tr;
+      }
 
-        if (!targetRow) {
-          // create new row (with members UI)
-          const tr = document.createElement("tr");
-          tr.innerHTML = createRowHTML(item.task);
-          body.appendChild(tr);
-          setupMemberSelector(tr);
-          attachCheckboxListeners();
-          targetRow = tr;
-        }
+      // Set checkbox
+      const cb = targetRow.querySelector("input[type='checkbox']");
+      if (cb) cb.checked = !!item.done;
 
-        // set checkbox
-        const cb = targetRow.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = !!item.done;
-
-        // rebuild members tags
-        const box = targetRow.querySelector(".member-box");
-        box.innerHTML = ""; // clear
+      // Load members
+      const box = targetRow.querySelector(".member-box");
+      if (box) {
+        box.innerHTML = "";
         if (Array.isArray(item.members)) {
-          item.members.forEach(name => {
-            if (!name) return;
+          item.members.forEach(member => {
+            if (!member) return;
             const tag = document.createElement("div");
-            tag.className = "tag";
-            tag.dataset.name = name;
-            tag.innerHTML = `<span>${escapeHtml(name)}</span><span class="remove">×</span>`;
+            tag.className = "member-tag";
+            tag.dataset.id = member.id || "";
+            tag.innerHTML = `${member.name || member} <span class="remove">×</span>`;
             tag.querySelector(".remove").onclick = () => tag.remove();
             box.appendChild(tag);
           });
         }
-      });
+      }
+    });
 
-      // attach listeners and stars
-      attachCheckboxListeners();
-      updateRoutineStars();
+    // Update stars
+    updateRoutineStars();
 
-      // lock past dates if necessary
-      const today = new Date((new Date()).toISOString().split("T")[0]);
-      const selected = new Date(date);
-      const isPast = selected < today;
-      document.querySelectorAll("input[type='checkbox'], input[type='text'], button, select").forEach(el => {
-        if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
-          el.disabled = isPast; el.style.opacity = isPast ? 0.5 : 1; el.style.cursor = isPast ? "not-allowed" : "pointer";
-        } else if (el.type === "checkbox" || el.type === "text" || el.tagName === "SELECT") {
-          el.disabled = isPast;
-        }
-      });
+    // -------------------------------------
+    // DISABLE PAST DATES
+    // -------------------------------------
+    const today = new Date((new Date()).toISOString().split("T")[0]);
+    const selected = new Date(date);
+    const isPast = selected < today;
 
-      window.currentLoadedDate = date;
-      if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
+    document.querySelectorAll("input, button, select").forEach(el => {
+      if (el.id === "saveBtn") return;
+      el.disabled = isPast;
+      if (el.tagName === "BUTTON") {
+        el.style.opacity = isPast ? 0.5 : 1;
+        el.style.cursor = isPast ? "not-allowed" : "pointer";
+      }
+    });
 
-    } catch (err) {
-      console.error(err);
-      if (!auto) alert("Failed to load routine by date.");
+    window.currentLoadedDate = date;
+
+    if (!auto) {
+      if (isPast) alert(`🔒 Viewing past routine (${date}). Editing disabled.`);
+      else alert(`✅ Routine loaded for ${date}`);
     }
+
+  } catch (err) {
+    console.error(err);
+    if (!auto) alert("Failed to load routine by date.");
   }
+}
+
 
   // auto-load today's date on page ready
   window.addEventListener("DOMContentLoaded", async () => {
