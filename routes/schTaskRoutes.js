@@ -49,16 +49,14 @@ router.post("/sch-routine/save", async (req, res) => {
   }
 });
 
-router.get("/class", async (req, res) => {
+router.get("/routines/class", async (req, res) => {
   const { classId, date } = req.query;
   if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
   try {
-    // Find all school members in this class
     const members = await SchoolMember.find({ class: classId });
     const memberIds = members.map(m => m._id);
 
-    // Find all routines for these members on the date
     const routines = await SchRoutine.find({ kidmember: { $in: memberIds }, date });
 
     res.json(routines);
@@ -67,6 +65,7 @@ router.get("/class", async (req, res) => {
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
+
 
 
 
