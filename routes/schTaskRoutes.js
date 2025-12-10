@@ -51,28 +51,32 @@ router.post("/sch-routine/save", async (req, res) => {
 
 router.get("/search", async (req, res) => {
   try {
-    const { schmember, date } = req.query;
+    const { kidmember, date } = req.query;
 
-    if (!schmember) {
-      return res.status(400).json({ msg: "schmember is required" });
+    // Validate required fields
+    if (!kidmember) {
+      return res.status(400).json({ error: "Missing required parameter: kidmember" });
     }
 
-    let routines;
+    // Build query
+    const query = { kidmember };
 
-    if (date === "all") {
-      // return all routines for this member
-      routines = await Routine.find({ schmember }).sort({ date: -1 });
-    } else if (date) {
-      // return specific routine for the given date
-      routines = await Routine.findOne({ schmember, date });
-    } else {
-      return res.status(400).json({ msg: "date is required" });
+    // If date is NOT "all", add date filter
+    if (date && date !== "all") {
+      query.date = date;
     }
 
-    res.json(routines || []);
+    // Search routines
+    const routines = await Routine.find(query);
+
+    if (!routines.length) {
+      return res.status(404).json({ error: "No routines found for this member/date" });
+    }
+
+    res.json(routines);
   } catch (err) {
-    console.error("Search routine error:", err);
-    res.status(500).json({ msg: "Server error searching routines" });
+    console.error("Search error:", err);
+    res.status(500).json({ error: "Server error searching routines" });
   }
 });
 
