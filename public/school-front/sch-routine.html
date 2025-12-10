@@ -298,111 +298,93 @@
     <table id="morningTable" data-section="morning">
       <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
       <tbody id="morningBody">
-        <tr>
-          <td class="task-name">Wake up early ⏰</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-name">Talk to Jesus</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-name">Brush teeth 🪥</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <input type="text" id="morningInput" placeholder="Add morning task" />
-    <button onclick="addTask('morning')">➕ Add</button>
-  </div>
+    <!-- Morning Routine -->
+<tr>
+  <td class="task-name">Wake up early ⏰</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
 
-  <!-- -------------------------
-       AFTER SCHOOL (with Members)
-  -------------------------- -->
-  <div class="routine-section">
-    <h2>🎒 After School Routine</h2>
-    <table id="afterTable" data-section="after">
-      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
-      <tbody id="afterBody">
-        <tr>
-          <td class="task-name">Wash hands and change clothes 🧼</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-name">Eat a healthy snack 🍎</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <input type="text" id="afterInput" placeholder="Add after-school task" />
-    <button onclick="addTask('after')">➕ Add</button>
-  </div>
+<tr>
+  <td class="task-name">Talk to Jesus</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
 
-  <!-- -------------------------
-       NIGHT (with Members)
-  -------------------------- -->
-  <div class="routine-section">
-    <h2>🌙 Sleeping Routine</h2>
-    <table id="nightTable" data-section="night">
-      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
-      <tbody id="nightBody">
-        <tr>
-          <td class="task-name">Take a shower 🚿</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-name">Limit daytime naps</td>
-          <td><input type="checkbox" /></td>
-          <td>
-            <div class="member-box"></div>
-            <div>
-              <select class="member-select"><option value="">Add member...</option></select>
-              <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-            </div>
-          </td>
-        </tr>
+<tr>
+  <td class="task-name">Brush teeth 🪥</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
+
+<!-- After School Routine -->
+<tr>
+  <td class="task-name">Wash hands and change clothes 🧼</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
+
+<tr>
+  <td class="task-name">Eat a healthy snack 🍎</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
+
+<!-- Night Routine -->
+<tr>
+  <td class="task-name">Take a shower 🚿</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
+
+<tr>
+  <td class="task-name">Limit daytime naps</td>
+  <td><input type="checkbox" /></td>
+  <td>
+    <div class="member-box"></div>
+    <div>
+      <select class="member-select"><option value="">Add member...</option></select>
+      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+    </div>
+  </td>
+</tr>
+
       </tbody>
     </table>
     <input type="text" id="nightInput" placeholder="Add night task" />
@@ -781,51 +763,65 @@ async function initOnLoad() {
   }
 
   async function saveRoutine() {
-    const dateInput = document.getElementById("routineDate");
-    const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById("routineDate");
+  // Use today's date if input not found
+  const date = dateInput?.value || new Date().toISOString().split("T")[0];
 
-    const rows = document.querySelectorAll("table tbody tr");
+  // Collect all rows from all routine tables
+  const rows = document.querySelectorAll("table tbody tr");
+  const kidMap = {}; // { kidId : [items] }
 
-    const kidMap = {};  // { kidId : [items] }
+  rows.forEach(row => {
+    // task-name class fallback
+    const taskCell = row.querySelector(".task-name") || row.children[0];
+    const taskText = taskCell?.textContent.trim();
+    if (!taskText) return;
 
-    rows.forEach(row => {
-        const taskCell = row.querySelector(".task-name") || row.children[0];
-        const taskText = taskCell.textContent.trim();
-        const section = row.closest("table").dataset.section || "unknown";
-        const done = row.querySelector("input[type='checkbox']").checked;
+    const section = row.closest("table")?.dataset.section || "unknown";
+    const done = row.querySelector("input[type='checkbox']")?.checked || false;
 
-        const memberTags = row.querySelectorAll(".member-tag");
-        memberTags.forEach(tag => {
-            const kidId = tag.dataset.id;
-            if (!kidMap[kidId]) kidMap[kidId] = [];
-            kidMap[kidId].push({ section, task: taskText, done });
-        });
+    const memberTags = row.querySelectorAll(".member-tag");
+    memberTags.forEach(tag => {
+      const kidId = tag.dataset.id;
+      if (!kidId) return;
+
+      if (!kidMap[kidId]) kidMap[kidId] = [];
+      kidMap[kidId].push({ section, task: taskText, done });
     });
+  });
 
-    const payload = {
-        date,
-        data: Object.keys(kidMap).map(kidId => ({
-            kidId,
-            items: kidMap[kidId]
-        }))
-    };
+  if (Object.keys(kidMap).length === 0) {
+    return alert("No members selected for tasks. Cannot save.");
+  }
 
-    try {
-        const res = await fetch(`${API}/sch-routine/save`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-            alert("Routine saved for all kids!");
-        } else {
-            alert("Save failed");
-        }
-    } catch (err) {
-        alert("Server error while saving routine.");
+  const payload = {
+    date,
+    data: Object.keys(kidMap).map(kidId => ({
+      kidId,
+      items: kidMap[kidId]
+    }))
+  };
+
+  try {
+    const res = await fetch(`${API}/sch-routine/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (json.success) {
+      alert(`Routine saved for all kids! (${date})`);
+    } else {
+      alert("Save failed. Please try again.");
     }
+  } catch (err) {
+    console.error(err);
+    alert("Server error while saving routine.");
+  }
 }
+
+// Attach save button
+document.getElementById("saveBtn").addEventListener("click", saveRoutine);
 
 
 
