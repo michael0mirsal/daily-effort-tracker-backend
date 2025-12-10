@@ -560,30 +560,37 @@ async function loadMembersIntoSelector(classId) {
 
     const members = await res.json();
 
-    window.classMembersList = members.map(m => ({
-      id: m.member?._id,
-      name: m.member?.name
-    }));
+    // Ensure array and fallback for undefined member
+    window.classMembersList = Array.isArray(members)
+      ? members.map(m => ({
+          id: m.member?._id || m._id || "",
+          name: m.member?.name || "Unknown"
+        }))
+      : [];
 
     fillAllMemberSelects();
 
   } catch (err) {
     console.error("Error loading members:", err);
+    window.classMembersList = []; // fallback
+    fillAllMemberSelects();
   }
 }
+
 
 /* ============================================================
    4) Fill all <select class="member-select">
    ============================================================ */
 function fillAllMemberSelects() {
+  const members = window.classMembersList || [];
   document.querySelectorAll(".member-select").forEach(select => {
     select.innerHTML = `<option value="">Select member</option>`;
-
-    window.classMembersList.forEach(m => {
+    members.forEach(m => {
       select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
     });
   });
 }
+
 
 /* ============================================================
    5) Create tags inside .member-box
