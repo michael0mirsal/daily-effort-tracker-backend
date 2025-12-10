@@ -290,106 +290,124 @@
     With You beside me, I feel so blessed! 🙏</p>
   </div>
 
-  <!-- -------------------------
-       MORNING (with Members)
-  -------------------------- -->
-  <div class="routine-section">
-    <h2>☀️ Morning Routine</h2>
-    <table id="morningTable" data-section="morning">
-      <thead><tr><th>Task</th><th>Status</th><th>Members</th></tr></thead>
-      <tbody id="morningBody">
-    <!-- Morning Routine -->
-<tr>
-  <td class="task-name">Wake up early ⏰</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
-
-<tr>
-  <td class="task-name">Talk to Jesus</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
-
-<tr>
-  <td class="task-name">Brush teeth 🪥</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
+<!-- Morning Routine -->
+<div class="routine-section">
+  <h2>☀️ Morning Routine</h2>
+  <table id="morningTable" data-section="morning">
+    <thead>
+      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
+    </thead>
+    <tbody id="morningBody">
+      <tr>
+        <td class="task-name">Wake up early ⏰</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="task-name">Talk to Jesus</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="task-name">Brush teeth 🪥</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <input type="text" id="morningInput" placeholder="Add morning task" />
+  <button onclick="addTask('morning')">➕ Add</button>
+</div>
 
 <!-- After School Routine -->
-<tr>
-  <td class="task-name">Wash hands and change clothes 🧼</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
-
-<tr>
-  <td class="task-name">Eat a healthy snack 🍎</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
+<div class="routine-section">
+  <h2>🎒 After School Routine</h2>
+  <table id="afterTable" data-section="after">
+    <thead>
+      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
+    </thead>
+    <tbody id="afterBody">
+      <tr>
+        <td class="task-name">Wash hands and change clothes 🧼</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="task-name">Eat a healthy snack 🍎</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <input type="text" id="afterInput" placeholder="Add after-school task" />
+  <button onclick="addTask('after')">➕ Add</button>
+</div>
 
 <!-- Night Routine -->
-<tr>
-  <td class="task-name">Take a shower 🚿</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
-
-<tr>
-  <td class="task-name">Limit daytime naps</td>
-  <td><input type="checkbox" /></td>
-  <td>
-    <div class="member-box"></div>
-    <div>
-      <select class="member-select"><option value="">Add member...</option></select>
-      <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
-    </div>
-  </td>
-</tr>
-
-      </tbody>
-    </table>
-    <input type="text" id="nightInput" placeholder="Add night task" />
-    <button onclick="addTask('night')">➕ Add</button>
-  </div>
+<div class="routine-section">
+  <h2>🌙 Night Routine</h2>
+  <table id="nightTable" data-section="night">
+    <thead>
+      <tr><th>Task</th><th>Status</th><th>Members</th></tr>
+    </thead>
+    <tbody id="nightBody">
+      <tr>
+        <td class="task-name">Take a shower 🚿</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="task-name">Limit daytime naps</td>
+        <td><input type="checkbox" /></td>
+        <td>
+          <div class="member-box"></div>
+          <div>
+            <select class="member-select"><option value="">Add member...</option></select>
+            <button class="small-btn" onclick="addMemberFromBtn(this)">Add</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <input type="text" id="nightInput" placeholder="Add night task" />
+  <button onclick="addTask('night')">➕ Add</button>
+</div>
 
   <!-- -------------------------
        Optional CLASS Routine
