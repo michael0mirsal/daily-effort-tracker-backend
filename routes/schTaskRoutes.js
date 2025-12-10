@@ -13,7 +13,7 @@ import crypto from "crypto";
 const router = express.Router();
 
 
-router.post("/save", async (req, res) => {
+router.post("sch-routine/save", async (req, res) => {
   try {
     const { date, data } = req.body;
 
