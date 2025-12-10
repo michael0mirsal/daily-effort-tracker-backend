@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./db.js"; // 🌐 MongoDB connection
 import familyRoutes from "./routes/familyRoutes.js"; // 🌳 Family System
 import schoolRoutes from "./routes/schoolRoutes.js";
-
+import schTaskRoutes from "./routes/schTaskRoutes.js";
 
 
 
@@ -35,6 +35,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public/school-front")));
 app.use("/api", schoolRoutes);
+app.use("/api", schTaskRoutes);
 // Serve welcome page
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public/school-front", "ask-user.html"));
