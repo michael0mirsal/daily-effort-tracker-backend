@@ -1,16 +1,17 @@
 import mongoose from "mongoose";
 
 const routineSchema = new mongoose.Schema({
- schmember: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember" },
-  date: { type: String, required: true },
+  member: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember", required: true },
+
+  date: { type: String, required: true }, // "2025-01-03"
+
   items: [
     {
-      section: String,
-      task: String,
-      done: Boolean,
-    },
-  ],
-  checkedData: Number,
+      section: { type: String, required: true },
+      task: { type: String, required: true },
+      done: { type: Boolean, default: false }
+    }
+  ]
 });
 
-export default mongoose.model("sch-Routine", routineSchema);
+export default mongoose.model("Sch-Routine", routineSchema);
