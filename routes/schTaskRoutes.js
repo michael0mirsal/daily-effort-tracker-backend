@@ -59,7 +59,7 @@ router.get("/class", async (req, res) => {
     const memberIds = members.map(m => m._id);
 
     // Find all routines for these members on the date
-    const routines = await Routine.find({ kidmember: { $in: memberIds }, date });
+    const routines = await SchRoutine.find({ kidmember: { $in: memberIds }, date });
 
     res.json(routines);
   } catch (err) {
