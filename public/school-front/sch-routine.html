@@ -601,7 +601,7 @@ function fillMemberTagsOnLoad() {
 
     window.classMembersList.forEach(m => {
       const tag = document.createElement("div");
-      tag.className = "tag";
+      tag.className = "member-tag";
       tag.dataset.id = m.id;
       tag.innerHTML = `<span>${m.name}</span><span class="remove">×</span>`;
       tag.querySelector(".remove").onclick = () => tag.remove();
@@ -628,7 +628,7 @@ function addMemberFromBtn(btn) {
   if ([...box.querySelectorAll(".tag")].some(t => t.dataset.id === id)) return;
 
   const tag = document.createElement("div");
-  tag.className = "tag";
+  tag.className = "member-tag";
   tag.dataset.id = id;
   tag.innerHTML = `<span>${name}</span><span class="remove">×</span>`;
   tag.querySelector(".remove").onclick = () => tag.remove();
@@ -815,7 +815,7 @@ async function initOnLoad() {
     };
 
     try {
-        const res = await fetch(`${API}/sch-routine/save}`, {
+        const res = await fetch(`${API}/sch-routine/save`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
