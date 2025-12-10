@@ -13,4 +13,4 @@ const routineSchema = new mongoose.Schema({
   checkedData: Number,
 });
 
-export default mongoose.model("Routine", routineSchema);
+export default mongoose.model("sch-Routine", routineSchema);
