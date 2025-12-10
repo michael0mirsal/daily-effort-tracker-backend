@@ -778,29 +778,62 @@ async function initOnLoad() {
     if (fEl) fEl.textContent = user.family || "Unknown";
   }
 
-  document.getElementById("saveBtn").onclick = async () => {
-    const u = JSON.parse(localStorage.getItem("currentUser"));
-    if (!u || !u.family || !u.name) return alert("Missing user info");
+  async function saveRoutine() {
+    const date = document.getElementById("routineDate").value;
+    if (!date) return alert("Select a date first!");
 
-    const items = getAllTasks();
-    const date = (new Date()).toISOString().split("T")[0];
-    const checkedData = items.filter(i => i.done).length;
+    const rows = document.querySelectorAll("table tbody tr");
 
-    const payload = { name: u.name, date, items, checkedData, family: u.family };
+    const kidMap = {};  // { kidId : [items] }
+
+    rows.forEach(row => {
+        const taskText = row.querySelector(".task-name").textContent.trim();
+        const section = row.closest("table").dataset.section;
+        const done = row.querySelector("input[type='checkbox']").checked;
+
+        const memberTags = row.querySelectorAll(".member-tag");
+
+        memberTags.forEach(tag => {
+            const kidId = tag.dataset.id;
+
+            if (!kidMap[kidId]) kidMap[kidId] = [];
+
+            kidMap[kidId].push({
+                section,
+                task: taskText,
+                done
+            });
+        });
+    });
+
+    const payload = {
+        date,
+        data: Object.keys(kidMap).map(kidId => ({
+            kidId,
+            items: kidMap[kidId]
+        }))
+    };
 
     try {
-      const res = await fetch(`${API}/routines/save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (res.ok) { alert("Routine saved!"); updateRoutineStars(); }
-      else { console.error(data); alert("Save error"); }
+        const res = await fetch("http://localhost:3000/api/sch-routine/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        if (json.success) {
+            alert("Routine saved for all kids!");
+        } else {
+            alert("Save failed");
+        }
     } catch (err) {
-      console.error(err); alert("Network error while saving routine.");
+        alert("Server error while saving routine.");
     }
-  };
+}
+
+document.getElementById("saveBtn").addEventListener("click", saveRoutine);
+
 
   document.getElementById("loadBtn").onclick = async () => {
     try {
