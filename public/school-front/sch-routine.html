@@ -516,10 +516,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   // load classes
   await loadClassesByUser();
 });
-//////////////////////////////////////////////////////////////////
-  function optionsHTML() {
-    return membersList.map(m => `<option value="${m}">${m}</option>`).join("");
-  }
 
   // Show popup when page loads
 window.addEventListener("DOMContentLoaded", () => {
@@ -527,22 +523,29 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 // Handle class selection
-document.getElementById("classSelectBtn").onclick = () => {
+document.getElementById("classSelectBtn").onclick = async () => {
   const selectedClass = document.getElementById("classSelect").value;
   if (!selectedClass) {
     alert("Please select a class!");
     return;
   }
 
-  // Store selected class for later use
+  // Store selected class
   window.selectedClass = selectedClass;
+  document.getElementById("classShow").value = selectedClass;
 
   // Close popup
   document.getElementById("classPopup").style.display = "none";
 
-  // Optionally, show selected class somewhere
-  alert(`You selected: ${selectedClass}`);
+  // LOAD CLASS MEMBERS INTO SELECTOR
+  await loadMembersIntoSelector(selectedClass);
+
+  // LOAD TAGS TOO
+  fillMemberTagsOnLoad();
+
+  console.log("Loaded class:", selectedClass);
 };
+
 
   /*********************************************
  * GLOBAL STORAGE
