@@ -921,25 +921,24 @@ async function loadRoutineByDate(date, auto = false) {
   if (!date) return alert("Please choose a date.");
 
   try {
-    // Ensure class members are loaded
+    // Load members if not already
     if (!window.classMembers || !Array.isArray(window.classMembers)) {
-      await loadClassMembers(classId); // loadClassMembers should populate window.classMembers
+      await loadMembersIntoSelector(classId);
+      window.classMembers = window.classMembersList.map(m => ({ _id: m.id, name: m.name }));
     }
 
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
     const routines = await res.json();
-
-    if (!routines || routines.length === 0) {
+    if (!Array.isArray(routines) || !routines.length) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
     }
 
-    // Clear all current checkboxes and member boxes
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // Group routines by task and section, so multiple kids appear under same row
-    const grouped = {}; // { section: { task: [items...] } }
+    // Group routines by section and task
+    const grouped = {};
     routines.forEach(r => {
       r.items.forEach(item => {
         if (!grouped[item.section]) grouped[item.section] = {};
@@ -948,13 +947,12 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Render each section and task
+    // Render
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
       if (!sectionBody) return;
 
       Object.entries(tasks).forEach(([taskName, items]) => {
-        // Find existing row or create new one
         let row = Array.from(sectionBody.querySelectorAll("tr")).find(
           r => r.children[0].textContent.trim().toLowerCase() === taskName.trim().toLowerCase()
         );
@@ -963,18 +961,18 @@ async function loadRoutineByDate(date, auto = false) {
           row = document.createElement("tr");
           row.innerHTML = createRowHTML(taskName, window.classMembers);
           sectionBody.appendChild(row);
-          setupMemberSelector(row);
           attachCheckboxListeners();
+          // attach add-member click
+          row.querySelector(".add-member-btn").onclick = () => addMemberFromBtn(row.querySelector(".add-member-btn"));
         }
 
-        // Set checkbox if any kid has done the task
+        // Checkbox checked if any kid did task
         const cb = row.querySelector("input[type='checkbox']");
         if (cb) cb.checked = items.some(i => i.done);
 
-        // Render member tags for all kids in this task
+        // Render member tags
         const box = row.querySelector(".member-box");
-        box.innerHTML = ""; // clear
-
+        box.innerHTML = "";
         items.forEach(i => {
           const kid = window.classMembers.find(m => m._id === i.kidId);
           if (!kid) return;
@@ -988,31 +986,23 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Update stars and attach checkbox listeners
     updateRoutineStars();
-    attachCheckboxListeners();
 
-    // Lock past days if needed
+    // Lock past dates
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
     document.querySelectorAll("input, button, select").forEach(el => {
-      if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
+      if (el.id === "saveBtn" || el.classList.contains("add-member-btn")) {
         el.disabled = isPast;
         el.style.opacity = isPast ? 0.5 : 1;
         el.style.cursor = isPast ? "not-allowed" : "pointer";
-      } else if (el.type === "checkbox" || el.type === "text" || el.tagName === "SELECT") {
+      } else if (["checkbox", "text"].includes(el.type) || el.tagName === "SELECT") {
         el.disabled = isPast;
       }
     });
 
     window.currentLoadedDate = date;
-    if (!auto) {
-      alert(
-        isPast
-          ? `🔒 Viewing past routine (${date}). Editing locked.`
-          : `✅ Routine loaded for ${date}`
-      );
-    }
+    if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
   } catch (err) {
     console.error(err);
     if (!auto) alert("Failed to load routine by date.");
