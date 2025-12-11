@@ -881,7 +881,6 @@ document.getElementById("loadBtn").onclick = async () => {
 /////////////////////////////////////////////////////////
 async function loadRoutineByDate(date, auto = false) {
   const classId = window.selectedClass;
-
   if (!classId) return alert("Please select a class first.");
   if (!date) return alert("Please choose a date.");
 
@@ -898,8 +897,11 @@ async function loadRoutineByDate(date, auto = false) {
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // Apply items for each child
+    // Loop through routines for each kid
     routines.forEach(routine => {
+      const kid = window.classMembers.find(m => m._id === routine.kidmember);
+      if (!kid) return; // skip if kid info missing
+
       routine.items.forEach(item => {
         const sectionBody = document.getElementById(item.section + "Body");
         if (!sectionBody) return;
@@ -909,7 +911,7 @@ async function loadRoutineByDate(date, auto = false) {
           r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase()
         );
 
-        // Create missing row
+        // create row if missing
         if (!row) {
           row = document.createElement("tr");
           row.innerHTML = createRowHTML(item.task);
@@ -922,14 +924,10 @@ async function loadRoutineByDate(date, auto = false) {
         const cb = row.querySelector("input[type='checkbox']");
         if (cb) cb.checked = !!item.done;
 
-        // Add members (TAG system)
+        // Add kid as tag
         const box = row.querySelector(".member-box");
-        box.innerHTML = "";
-
-        if (!box.dataset._loadedMembers) box.dataset._loadedMembers = "";
-
-        const kid = window.classMembers.find(m => m._id === routine.kidmember);
-        if (kid) {
+        const existingNames = Array.from(box.querySelectorAll(".tag span")).map(t => t.textContent);
+        if (!existingNames.includes(kid.name)) {
           const tag = document.createElement("div");
           tag.className = "tag";
           tag.dataset.id = kid._id;
@@ -940,7 +938,7 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Update stars
+    // Update stars & attach listeners
     updateRoutineStars();
     attachCheckboxListeners();
 
@@ -959,7 +957,6 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
-
     if (!auto) {
       alert(
         isPast
@@ -973,7 +970,7 @@ async function loadRoutineByDate(date, auto = false) {
   }
 }
 
-// Load routine by date when user clicks 🔍 Load Routine
+// Click handler for "Load Routine" button
 document.getElementById("loadByDateBtn").onclick = async () => {
   const loadDateEl = document.getElementById("loadDate");
   if (!loadDateEl || !loadDateEl.value) return alert("Please select a date.");
