@@ -932,7 +932,6 @@ async function loadRoutineByDate(date, auto = false) {
       return;
     }
 
-    // Clear checkboxes and member boxes first
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
@@ -946,7 +945,6 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Render grouped tasks
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
       if (!sectionBody) return;
@@ -968,27 +966,29 @@ async function loadRoutineByDate(date, auto = false) {
           row.querySelector(".add-member-btn").onclick = () => addMemberFromBtn(row.querySelector(".add-member-btn"));
         }
 
-        // Checkbox: checked if any kid has done the task
+        // Checkbox checked if any kid has done this task
         const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = items.some(i => !!i.done);
+        if (cb) cb.checked = items.some(i => i.done);
 
-        // Render member tags for all kids in this task
+        // Render all class members in the row
         const box = row.querySelector(".member-box");
         box.innerHTML = "";
-        items.forEach(i => {
-          const kid = window.classMembers.find(m => m._id === i.kidId);
-          if (!kid) return;
+        window.classMembers.forEach(kid => {
+          const isAssigned = items.some(i => i.kidId === kid._id);
           const tag = document.createElement("div");
           tag.className = "tag";
           tag.dataset.id = kid._id;
           tag.innerHTML = `<span>${escapeHtml(kid.name)}</span><span class="remove">×</span>`;
           tag.querySelector(".remove").onclick = () => tag.remove();
+
+          // Optional: gray out unassigned kids
+          if (!isAssigned) tag.style.opacity = 0.4;
+
           box.appendChild(tag);
         });
       });
     });
 
-    // Update stars after checkboxes are set
     updateRoutineStars();
 
     // Lock past dates
