@@ -61,25 +61,28 @@ router.get("/routines/class", async (req, res) => {
   if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
   try {
-    // 1. Get all members in this class
+    // 1. Get all members in the class
     const members = await SchoolMember.find({ class: classId });
-    const memberIds = members.map(m => m._id);
 
-    // 2. Filter routines
-    let filter = { kidmember: { $in: memberIds } };   // <-- FIXED
+    // 2. Get kid IDs (from member field)
+    const kidIds = members.map(m => m.member);
+
+    let filter = { kidmember: { $in: kidIds } };
 
     if (date !== "all") {
       filter.date = date;
     }
 
+    // 3. Fetch routines
     const routines = await SchRoutine.find(filter);
-
     res.json(routines);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
+
 
 
 
