@@ -892,70 +892,91 @@ async function loadClassMembers(classId) {
 }
 
 // Full working loadRoutineByDate
+// Generates <option> elements for a select dropdown
+function optionsHTML(members = []) {
+  return members
+    .map(m => `<option value="${m._id}">${escapeHtml(m.name)}</option>`)
+    .join("");
+}
+
+// Creates a task row with checkbox and members select/add UI
+function createRowHTML(task, members = []) {
+  return `
+    <td>${task}</td>
+    <td><input type="checkbox" /></td>
+    <td>
+      <div class="member-box"></div>
+      <select class="member-select">
+        ${optionsHTML(members)}
+      </select>
+      <button type="button" class="add-member-btn">Add</button>
+    </td>
+  `;
+}
+
+// Load routine for a given date and display tasks + members
 async function loadRoutineByDate(date, auto = false) {
   const classId = window.selectedClass;
   if (!classId) return alert("Please select a class first.");
   if (!date) return alert("Please choose a date.");
 
   try {
-    // 1️⃣ Fetch routines for the class on the given date
+    // Ensure class members are loaded
+    if (!window.classMembers || !Array.isArray(window.classMembers)) {
+      await loadClassMembers(classId); // loadClassMembers should populate window.classMembers
+    }
+
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
     const routines = await res.json();
+
     if (!routines || routines.length === 0) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
     }
 
-    // 2️⃣ Build class members list from routines
-    const classMembers = [];
-    routines.forEach(r => {
-      const exists = classMembers.find(m => m._id === r.kidmember);
-      if (!exists) {
-        classMembers.push({ _id: r.kidmember, name: r.kidName || "Unknown" });
-      }
-    });
-
-    // 3️⃣ Clear previous UI
+    // Clear all current checkboxes and member boxes
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
-    ["morningBody","afterSchoolBody","nightBody"].forEach(sec => {
-      const body = document.getElementById(sec);
-      if(body) body.innerHTML = "";
-    });
 
-    // 4️⃣ Group routines by task & section, including members
-    const grouped = {}; // grouped[section][task] = { doneCount, membersIds }
+    // Group routines by task and section, so multiple kids appear under same row
+    const grouped = {}; // { section: { task: [items...] } }
     routines.forEach(r => {
       r.items.forEach(item => {
         if (!grouped[item.section]) grouped[item.section] = {};
-        if (!grouped[item.section][item.task]) grouped[item.section][item.task] = { doneCount: 0, membersIds: [] };
-
-        if (item.done) grouped[item.section][item.task].doneCount += 1;
-        grouped[item.section][item.task].membersIds.push(r.kidmember);
+        if (!grouped[item.section][item.task]) grouped[item.section][item.task] = [];
+        grouped[item.section][item.task].push({ ...item, kidId: r.kidmember });
       });
     });
 
-    // 5️⃣ Render tasks per section
-    Object.keys(grouped).forEach(section => {
-      const body = document.getElementById(section + "Body");
-      if (!body) return;
+    // Render each section and task
+    Object.entries(grouped).forEach(([section, tasks]) => {
+      const sectionBody = document.getElementById(section + "Body");
+      if (!sectionBody) return;
 
-      Object.keys(grouped[section]).forEach(task => {
-        const info = grouped[section][task];
+      Object.entries(tasks).forEach(([taskName, items]) => {
+        // Find existing row or create new one
+        let row = Array.from(sectionBody.querySelectorAll("tr")).find(
+          r => r.children[0].textContent.trim().toLowerCase() === taskName.trim().toLowerCase()
+        );
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = createRowHTML(task, classMembers);
-        body.appendChild(tr);
+        if (!row) {
+          row = document.createElement("tr");
+          row.innerHTML = createRowHTML(taskName, window.classMembers);
+          sectionBody.appendChild(row);
+          setupMemberSelector(row);
+          attachCheckboxListeners();
+        }
 
-        // Set checkbox if at least one kid did it
-        const cb = tr.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = info.doneCount > 0;
+        // Set checkbox if any kid has done the task
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = items.some(i => i.done);
 
-        // Add member tags
-        const box = tr.querySelector(".member-box");
-        box.innerHTML = "";
-        info.membersIds.forEach(kidId => {
-          const kid = classMembers.find(m => m._id === kidId);
+        // Render member tags for all kids in this task
+        const box = row.querySelector(".member-box");
+        box.innerHTML = ""; // clear
+
+        items.forEach(i => {
+          const kid = window.classMembers.find(m => m._id === i.kidId);
           if (!kid) return;
           const tag = document.createElement("div");
           tag.className = "tag";
@@ -967,11 +988,11 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // 6️⃣ Attach checkbox listeners & update stars
-    attachCheckboxListeners();
+    // Update stars and attach checkbox listeners
     updateRoutineStars();
+    attachCheckboxListeners();
 
-    // 7️⃣ Lock past dates
+    // Lock past days if needed
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
     document.querySelectorAll("input, button, select").forEach(el => {
@@ -985,7 +1006,6 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
-
     if (!auto) {
       alert(
         isPast
@@ -997,26 +1017,6 @@ async function loadRoutineByDate(date, auto = false) {
     console.error(err);
     if (!auto) alert("Failed to load routine by date.");
   }
-}
-
-// Helpers (make sure you have these)
-
-function optionsHTML(members) {
-  return members.map(m => `<option value="${m._id}">${escapeHtml(m.name)}</option>`).join("");
-}
-
-function createRowHTML(task, members = []) {
-  return `
-    <td>${task}</td>
-    <td><input type="checkbox" /></td>
-    <td>
-      <div class="member-box"></div>
-      <select class="member-select">
-        ${optionsHTML(members)}
-      </select>
-      <button type="button" class="add-member-btn">Add</button>
-    </td>
-  `;
 }
 
 
