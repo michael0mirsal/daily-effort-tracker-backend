@@ -932,6 +932,10 @@ async function loadRoutineByDate(date, auto = false) {
       return;
     }
 
+    // Clear checkboxes and member boxes first
+    clearAllCheckboxes();
+    document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
+
     // Group routines by section and task
     const grouped = {};
     routines.forEach(r => {
@@ -964,11 +968,11 @@ async function loadRoutineByDate(date, auto = false) {
           row.querySelector(".add-member-btn").onclick = () => addMemberFromBtn(row.querySelector(".add-member-btn"));
         }
 
-        // Set checkbox if any kid has done the task
+        // Checkbox: checked if any kid has done the task
         const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = items.some(i => i.done);
+        if (cb) cb.checked = items.some(i => !!i.done);
 
-        // Render member tags
+        // Render member tags for all kids in this task
         const box = row.querySelector(".member-box");
         box.innerHTML = "";
         items.forEach(i => {
@@ -984,7 +988,7 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Update stars
+    // Update stars after checkboxes are set
     updateRoutineStars();
 
     // Lock past dates
@@ -1007,6 +1011,7 @@ async function loadRoutineByDate(date, auto = false) {
     if (!auto) alert("Failed to load routine by date.");
   }
 }
+
 
 
 
