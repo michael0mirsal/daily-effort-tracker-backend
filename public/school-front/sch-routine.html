@@ -845,9 +845,8 @@ const payload = {
 // Attach save button
 document.getElementById("saveBtn").addEventListener("click", saveRoutine);
 
-////333333333333333333333333333333
-
-  document.getElementById("loadBtn").onclick = async () => {
+////////////////////////////
+document.getElementById("loadBtn").onclick = async () => {
   const classId = window.selectedClass;
   if (!classId) return alert("Please select a class first.");
 
@@ -879,87 +878,100 @@ document.getElementById("saveBtn").addEventListener("click", saveRoutine);
     alert("Failed to load routines.");
   }
 };
+/////////////////////////////////////////////////////////
+async function loadRoutineByDate(date, auto = false) {
+  const classId = window.selectedClass;
 
+  if (!classId) return alert("Please select a class first.");
+  if (!date) return alert("Please choose a date.");
 
-//////////////////////////////////////////////////////////////////////////
-  async function loadRoutineByDate(date, auto=false) {
-    try {
-      const u = JSON.parse(localStorage.getItem("currentUser")) || {};
-      const res = await fetch(`${API}/routines/search?name=${encodeURIComponent(u.name||"")}&date=${date}&family=${encodeURIComponent(u.family||"")}`);
-      const data = await res.json();
-      // pick routine that matches family if multiple
-      const routine = Array.isArray(data) ? data.find(r => (r.family||"").trim().toLowerCase() === (u.family||"").trim().toLowerCase()) || data[0] : data;
-      if (!routine) {
-        if (!auto) alert(`No routine found for ${date}`);
-        return;
-      }
+  try {
+    const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
+    const routines = await res.json();
 
-      // clear existing checkboxes & members
-      clearAllCheckboxes();
-      document.querySelectorAll(".member-box").forEach(b => b.innerHTML = "");
+    if (!routines || routines.length === 0) {
+      if (!auto) alert(`No routine found for ${date}`);
+      return;
+    }
 
-      // iterate items and assign into proper tables (create rows if missing)
+    // Clear UI
+    clearAllCheckboxes();
+    document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
+
+    // Apply items for each child
+    routines.forEach(routine => {
       routine.items.forEach(item => {
-        const body = document.getElementById((item.section === "class" ? "classRoutineBody" : item.section + "Body"));
-        if (!body) return;
+        const sectionBody = document.getElementById(item.section + "Body");
+        if (!sectionBody) return;
 
-        const rows = Array.from(body.querySelectorAll("tr"));
-        let targetRow = rows.find(r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase());
+        // find existing row
+        let row = Array.from(sectionBody.querySelectorAll("tr")).find(
+          r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase()
+        );
 
-        if (!targetRow) {
-          // create new row (with members UI)
-          const tr = document.createElement("tr");
-          tr.innerHTML = createRowHTML(item.task);
-          body.appendChild(tr);
-          setupMemberSelector(tr);
+        // Create missing row
+        if (!row) {
+          row = document.createElement("tr");
+          row.innerHTML = createRowHTML(item.task);
+          sectionBody.appendChild(row);
+          setupMemberSelector(row);
           attachCheckboxListeners();
-          targetRow = tr;
         }
 
-        // set checkbox
-        const cb = targetRow.querySelector("input[type='checkbox']");
+        // Set checkbox
+        const cb = row.querySelector("input[type='checkbox']");
         if (cb) cb.checked = !!item.done;
 
-        // rebuild members tags
-        const box = targetRow.querySelector(".member-box");
-        box.innerHTML = ""; // clear
-        if (Array.isArray(item.members)) {
-          item.members.forEach(name => {
-            if (!name) return;
-            const tag = document.createElement("div");
-            tag.className = "tag";
-            tag.dataset.name = name;
-            tag.innerHTML = `<span>${escapeHtml(name)}</span><span class="remove">×</span>`;
-            tag.querySelector(".remove").onclick = () => tag.remove();
-            box.appendChild(tag);
-          });
+        // Add members (TAG system)
+        const box = row.querySelector(".member-box");
+        box.innerHTML = "";
+
+        if (!box.dataset._loadedMembers) box.dataset._loadedMembers = "";
+
+        const kid = window.classMembers.find(m => m._id === routine.kidmember);
+        if (kid) {
+          const tag = document.createElement("div");
+          tag.className = "tag";
+          tag.dataset.id = kid._id;
+          tag.innerHTML = `<span>${kid.name}</span><span class="remove">×</span>`;
+          tag.querySelector(".remove").onclick = () => tag.remove();
+          box.appendChild(tag);
         }
       });
+    });
 
-      // attach listeners and stars
-      attachCheckboxListeners();
-      updateRoutineStars();
+    // Update stars
+    updateRoutineStars();
+    attachCheckboxListeners();
 
-      // lock past dates if necessary
-      const today = new Date((new Date()).toISOString().split("T")[0]);
-      const selected = new Date(date);
-      const isPast = selected < today;
-      document.querySelectorAll("input[type='checkbox'], input[type='text'], button, select").forEach(el => {
-        if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
-          el.disabled = isPast; el.style.opacity = isPast ? 0.5 : 1; el.style.cursor = isPast ? "not-allowed" : "pointer";
-        } else if (el.type === "checkbox" || el.type === "text" || el.tagName === "SELECT") {
-          el.disabled = isPast;
-        }
-      });
+    // Lock past days
+    const today = new Date().toISOString().split("T")[0];
+    const isPast = date < today;
 
-      window.currentLoadedDate = date;
-      if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
+    document.querySelectorAll("input, button, select").forEach(el => {
+      if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
+        el.disabled = isPast;
+        el.style.opacity = isPast ? 0.5 : 1;
+        el.style.cursor = isPast ? "not-allowed" : "pointer";
+      } else if (el.type === "checkbox" || el.type === "text" || el.tagName === "SELECT") {
+        el.disabled = isPast;
+      }
+    });
 
-    } catch (err) {
-      console.error(err);
-      if (!auto) alert("Failed to load routine by date.");
+    window.currentLoadedDate = date;
+
+    if (!auto) {
+      alert(
+        isPast
+          ? `🔒 Viewing past routine (${date}). Editing locked.`
+          : `✅ Routine loaded for ${date}`
+      );
     }
+  } catch (err) {
+    console.error(err);
+    if (!auto) alert("Failed to load routine by date.");
   }
+}
 
   // auto-load today's date on page ready
   window.addEventListener("DOMContentLoaded", async () => {
