@@ -898,81 +898,82 @@ async function loadRoutineByDate(date, auto = false) {
   if (!date) return alert("Please choose a date.");
 
   try {
+    // 1️⃣ Fetch routines for the class on the given date
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
     const routines = await res.json();
-
     if (!routines || routines.length === 0) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
     }
 
-    // Extract class members from routines
-    const classMembersMap = {};
+    // 2️⃣ Build class members list from routines
+    const classMembers = [];
     routines.forEach(r => {
-      if (!classMembersMap[r.kidmember]) {
-        classMembersMap[r.kidmember] = { _id: r.kidmember, name: r.kidmember }; // replace with actual name if available
+      const exists = classMembers.find(m => m._id === r.kidmember);
+      if (!exists) {
+        classMembers.push({ _id: r.kidmember, name: r.kidName || "Unknown" });
       }
     });
-    const classMembers = Object.values(classMembersMap);
 
-    // Clear UI
+    // 3️⃣ Clear previous UI
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
+    ["morningBody","afterSchoolBody","nightBody"].forEach(sec => {
+      const body = document.getElementById(sec);
+      if(body) body.innerHTML = "";
+    });
 
-    // Group routines by section and task
-    const taskMap = {};
-    routines.forEach(routine => {
-      (routine.items || []).forEach(item => {
-        if (!taskMap[item.section]) taskMap[item.section] = {};
-        if (!taskMap[item.section][item.task]) taskMap[item.section][item.task] = [];
-        taskMap[item.section][item.task].push({
-          kidId: routine.kidmember,
-          done: !!item.done
+    // 4️⃣ Group routines by task & section, including members
+    const grouped = {}; // grouped[section][task] = { doneCount, membersIds }
+    routines.forEach(r => {
+      r.items.forEach(item => {
+        if (!grouped[item.section]) grouped[item.section] = {};
+        if (!grouped[item.section][item.task]) grouped[item.section][item.task] = { doneCount: 0, membersIds: [] };
+
+        if (item.done) grouped[item.section][item.task].doneCount += 1;
+        grouped[item.section][item.task].membersIds.push(r.kidmember);
+      });
+    });
+
+    // 5️⃣ Render tasks per section
+    Object.keys(grouped).forEach(section => {
+      const body = document.getElementById(section + "Body");
+      if (!body) return;
+
+      Object.keys(grouped[section]).forEach(task => {
+        const info = grouped[section][task];
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = createRowHTML(task, classMembers);
+        body.appendChild(tr);
+
+        // Set checkbox if at least one kid did it
+        const cb = tr.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = info.doneCount > 0;
+
+        // Add member tags
+        const box = tr.querySelector(".member-box");
+        box.innerHTML = "";
+        info.membersIds.forEach(kidId => {
+          const kid = classMembers.find(m => m._id === kidId);
+          if (!kid) return;
+          const tag = document.createElement("div");
+          tag.className = "tag";
+          tag.dataset.id = kid._id;
+          tag.innerHTML = `<span>${escapeHtml(kid.name)}</span><span class="remove">×</span>`;
+          tag.querySelector(".remove").onclick = () => tag.remove();
+          box.appendChild(tag);
         });
       });
     });
 
-    // Render grouped tasks
-    for (const section in taskMap) {
-      const body = document.getElementById(section + "Body");
-      if (!body) continue;
-      body.innerHTML = "";
-
-      for (const task in taskMap[section]) {
-        const kids = taskMap[section][task];
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = createRowHTML(task, classMembers); // pass members array
-        body.appendChild(tr);
-
-        const cb = tr.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = kids.some(k => k.done);
-
-        const box = tr.querySelector(".member-box");
-        box.innerHTML = "";
-        kids.forEach(k => {
-          const kid = classMembers.find(m => m._id === k.kidId);
-          if (!kid) return;
-
-          const tag = document.createElement("div");
-          tag.className = "tag";
-          tag.dataset.id = kid._id;
-          tag.innerHTML = `<span>${kid.name}</span><span class="remove">×</span>`;
-          tag.querySelector(".remove").onclick = () => tag.remove();
-          box.appendChild(tag);
-        });
-
-        setupMemberSelector(tr);
-        attachCheckboxListeners();
-      }
-    }
-
-    updateRoutineStars();
+    // 6️⃣ Attach checkbox listeners & update stars
     attachCheckboxListeners();
+    updateRoutineStars();
 
+    // 7️⃣ Lock past dates
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
-
     document.querySelectorAll("input, button, select").forEach(el => {
       if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
         el.disabled = isPast;
@@ -997,6 +998,27 @@ async function loadRoutineByDate(date, auto = false) {
     if (!auto) alert("Failed to load routine by date.");
   }
 }
+
+// Helpers (make sure you have these)
+
+function optionsHTML(members) {
+  return members.map(m => `<option value="${m._id}">${escapeHtml(m.name)}</option>`).join("");
+}
+
+function createRowHTML(task, members = []) {
+  return `
+    <td>${task}</td>
+    <td><input type="checkbox" /></td>
+    <td>
+      <div class="member-box"></div>
+      <select class="member-select">
+        ${optionsHTML(members)}
+      </select>
+      <button type="button" class="add-member-btn">Add</button>
+    </td>
+  `;
+}
+
 
 
 // Trigger routine load on button click
