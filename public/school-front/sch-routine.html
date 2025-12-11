@@ -879,10 +879,28 @@ document.getElementById("loadBtn").onclick = async () => {
   }
 };
 /////////////////////////////////////////////////////////
+// Load class members for selected class
+async function loadClassMembers(classId) {
+  try {
+    const res = await fetch(`${API}/class/${classId}/members`);
+    const members = await res.json();
+    window.classMembers = members || [];
+  } catch (err) {
+    console.error("Failed to load class members:", err);
+    window.classMembers = [];
+  }
+}
+
+// Full working loadRoutineByDate
 async function loadRoutineByDate(date, auto = false) {
   const classId = window.selectedClass;
   if (!classId) return alert("Please select a class first.");
   if (!date) return alert("Please choose a date.");
+
+  // Ensure class members are loaded
+  if (!window.classMembers || !window.classMembers.length) {
+    await loadClassMembers(classId);
+  }
 
   try {
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
@@ -897,73 +915,69 @@ async function loadRoutineByDate(date, auto = false) {
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // Group by section and task
-    const grouped = {};
+    // Group routines by section and task
+    const taskMap = {}; // { section: { task: [kidmember1, kidmember2, ...] } }
+
     routines.forEach(routine => {
-      const kid = window.classMembers.find(m => m._id === routine.kidmember);
-      if (!kid) return;
-
-      routine.items.forEach(item => {
-        const section = item.section;
-        const task = item.task.trim();
-
-        if (!grouped[section]) grouped[section] = {};
-        if (!grouped[section][task]) grouped[section][task] = [];
-
-        grouped[section][task].push({
-          kidId: kid._id,
-          kidName: kid.name,
+      (routine.items || []).forEach(item => {
+        if (!taskMap[item.section]) taskMap[item.section] = {};
+        if (!taskMap[item.section][item.task]) taskMap[item.section][item.task] = [];
+        taskMap[item.section][item.task].push({
+          kidId: routine.kidmember,
           done: !!item.done
         });
       });
     });
 
     // Render grouped tasks
-    Object.keys(grouped).forEach(section => {
-      const sectionBody = document.getElementById(section + "Body");
-      if (!sectionBody) return;
+    for (const section in taskMap) {
+      const body = document.getElementById(section + "Body");
+      if (!body) continue;
 
-      Object.keys(grouped[section]).forEach(task => {
-        let row = Array.from(sectionBody.querySelectorAll("tr")).find(
-          r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase()
-        );
+      body.innerHTML = ""; // clear existing rows
 
-        // Create row if missing
-        if (!row) {
-          row = document.createElement("tr");
-          row.innerHTML = createRowHTML(task);
-          sectionBody.appendChild(row);
-          setupMemberSelector(row);
-          attachCheckboxListeners();
-        }
+      for (const task in taskMap[section]) {
+        const kids = taskMap[section][task];
 
-        // Set checkbox: mark checked if any kid has done=true
-        const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = grouped[section][task].some(k => k.done);
+        // Create row
+        const tr = document.createElement("tr");
+        tr.innerHTML = createRowHTML(task);
+        body.appendChild(tr);
 
-        // Clear previous members
-        const box = row.querySelector(".member-box");
+        // Set checkbox if any kid has done=true
+        const cb = tr.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = kids.some(k => k.done);
+
+        // Populate members tags
+        const box = tr.querySelector(".member-box");
         box.innerHTML = "";
 
-        // Add all kids for this task
-        grouped[section][task].forEach(k => {
+        kids.forEach(k => {
+          const kid = window.classMembers.find(m => m._id === k.kidId);
+          if (!kid) return;
+
           const tag = document.createElement("div");
           tag.className = "tag";
-          tag.dataset.id = k.kidId;
-          tag.innerHTML = `<span>${k.kidName}</span><span class="remove">×</span>`;
+          tag.dataset.id = kid._id;
+          tag.innerHTML = `<span>${kid.name}</span><span class="remove">×</span>`;
           tag.querySelector(".remove").onclick = () => tag.remove();
           box.appendChild(tag);
         });
-      });
-    });
+
+        // Setup listeners
+        setupMemberSelector(tr);
+        attachCheckboxListeners();
+      }
+    }
 
     // Update stars
     updateRoutineStars();
     attachCheckboxListeners();
 
-    // Lock past days
+    // Lock past dates
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
+
     document.querySelectorAll("input, button, select").forEach(el => {
       if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
         el.disabled = isPast;
@@ -975,6 +989,7 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
+
     if (!auto) {
       alert(
         isPast
