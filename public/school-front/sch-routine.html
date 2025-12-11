@@ -881,15 +881,12 @@ document.getElementById("loadBtn").onclick = async () => {
 /////////////////////////////////////////////////////////
 async function loadRoutineByDate(date, auto = false) {
   const classId = window.selectedClass;
-
   if (!classId) return alert("Please select a class first.");
   if (!date) return alert("Please choose a date.");
 
   try {
-    // Fetch routines for the class and date
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
     const routines = await res.json();
-
     if (!routines || routines.length === 0) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
@@ -902,49 +899,55 @@ async function loadRoutineByDate(date, auto = false) {
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // Iterate all routines
-    routines.forEach(routine => {
-      // Find the kid info
-      const kid = classMembers.find(m => m._id === routine.kidmember);
+    // Group routines by task & section
+    const grouped = {}; // {section_task: [kidName,...]}
+    routines.forEach(r => {
+      const kid = classMembers.find(m => m._id === r.kidmember);
+      const kidName = kid ? kid.name : "Unknown";
 
-      routine.items.forEach(item => {
-        const sectionBody = document.getElementById(item.section + "Body");
-        if (!sectionBody) return;
-
-        // find existing row
-        let row = Array.from(sectionBody.querySelectorAll("tr")).find(
-          r => r.children[0].textContent.trim().toLowerCase() === item.task.trim().toLowerCase()
-        );
-
-        // create row if missing
-        if (!row) {
-          row = document.createElement("tr");
-          row.innerHTML = createRowHTML(item.task);
-          sectionBody.appendChild(row);
-          setupMemberSelector(row);
-          attachCheckboxListeners();
-        }
-
-        // set checkbox
-        const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = !!item.done;
-
-        // render members
-        const box = row.querySelector(".member-box");
-        box.innerHTML = ""; // clear existing
-
-        if (kid) {
-          const tag = document.createElement("div");
-          tag.className = "tag";
-          tag.dataset.id = kid._id;
-          tag.innerHTML = `<span>${kid.name}</span><span class="remove">×</span>`;
-          tag.querySelector(".remove").onclick = () => tag.remove();
-          box.appendChild(tag);
-        }
+      r.items.forEach(item => {
+        const key = item.section + "___" + item.task;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push({name: kidName, done: item.done});
       });
     });
 
-    // Update stars
+    // Render table rows
+    Object.entries(grouped).forEach(([key, kids]) => {
+      const [section, task] = key.split("___");
+      const sectionBody = document.getElementById(section + "Body");
+      if (!sectionBody) return;
+
+      let row = Array.from(sectionBody.querySelectorAll("tr")).find(
+        r => r.children[0].textContent.trim() === task
+      );
+
+      if (!row) {
+        row = document.createElement("tr");
+        row.innerHTML = createRowHTML(task);
+        sectionBody.appendChild(row);
+        setupMemberSelector(row);
+        attachCheckboxListeners();
+      }
+
+      // Set checkbox: if all kids done, checked
+      const cb = row.querySelector("input[type='checkbox']");
+      if (cb) cb.checked = kids.every(k => k.done);
+
+      // Render member tags
+      const box = row.querySelector(".member-box");
+      box.innerHTML = "";
+      kids.forEach(k => {
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.dataset.name = k.name;
+        tag.innerHTML = `<span>${escapeHtml(k.name)}</span><span class="remove">×</span>`;
+        tag.querySelector(".remove").onclick = () => tag.remove();
+        box.appendChild(tag);
+      });
+    });
+
+    // Update stars & attach listeners
     updateRoutineStars();
     attachCheckboxListeners();
 
