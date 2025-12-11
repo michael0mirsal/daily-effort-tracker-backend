@@ -973,6 +973,13 @@ async function loadRoutineByDate(date, auto = false) {
   }
 }
 
+// Load routine by date when user clicks 🔍 Load Routine
+document.getElementById("loadByDateBtn").onclick = async () => {
+  const loadDateEl = document.getElementById("loadDate");
+  if (!loadDateEl || !loadDateEl.value) return alert("Please select a date.");
+  await loadRoutineByDate(loadDateEl.value);
+};
+
   // auto-load today's date on page ready
   window.addEventListener("DOMContentLoaded", async () => {
     // initialize any existing rows selects
