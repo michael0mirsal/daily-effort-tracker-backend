@@ -61,17 +61,18 @@ router.get("/routines/class", async (req, res) => {
   if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
   try {
+    // 1. Get all members in this class
     const members = await SchoolMember.find({ class: classId });
     const memberIds = members.map(m => m._id);
 
-    let filter = { member: { $in: memberIds } };
+    // 2. Filter routines
+    let filter = { kidmember: { $in: memberIds } };   // <-- FIXED
 
-if (date !== "all") {
-  filter.date = date;
-}
+    if (date !== "all") {
+      filter.date = date;
+    }
 
-const routines = await SchRoutine.find(filter);
-
+    const routines = await SchRoutine.find(filter);
 
     res.json(routines);
   } catch (err) {
