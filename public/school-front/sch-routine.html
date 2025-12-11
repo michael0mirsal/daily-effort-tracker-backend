@@ -812,13 +812,17 @@ async function initOnLoad() {
     return alert("No members selected for tasks. Cannot save.");
   }
 
-  const payload = {
-    date,
-    data: Object.keys(kidMap).map(kidId => ({
-      kidId,
-      items: kidMap[kidId]
-    }))
-  };
+  const classId = window.selectedClass;   // GET SELECTED CLASS
+
+const payload = {
+  classId,   // <-- ADD THIS  
+  date,
+  data: Object.keys(kidMap).map(kidId => ({
+    classId,   // <-- ALSO ADD HERE  
+    kidId,
+    items: kidMap[kidId]
+  }))
+};
 
   try {
     const res = await fetch(`${API}/sch-routine/save`, {
