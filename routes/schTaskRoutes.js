@@ -15,23 +15,28 @@ const router = express.Router();
 
 router.post("/sch-routine/save", async (req, res) => {
   try {
-    const { date, data } = req.body;
+    const { date, classId, data } = req.body;
 
-    if (!date || !data)
-      return res.status(400).json({ error: "Missing date or data" });
+    if (!date || !data || !classId)
+      return res.status(400).json({ error: "Missing date, classId, or data" });
 
     let results = [];
 
     for (const entry of data) {
       const { kidId, items } = entry;
 
-      let routine = await SchRoutine.findOne({ kidmember: kidId, date });
+      let routine = await SchRoutine.findOne({
+        kidmember: kidId,
+        date,
+        classId
+      });
 
       if (routine) {
         routine.items = items;
         await routine.save();
       } else {
         routine = await SchRoutine.create({
+          classId,
           kidmember: kidId,
           date,
           items
@@ -48,6 +53,8 @@ router.post("/sch-routine/save", async (req, res) => {
     res.status(500).json({ error: "Failed to save routine" });
   }
 });
+
+
 
 router.get("/routines/class", async (req, res) => {
   const { classId, date } = req.query;
