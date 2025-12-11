@@ -880,6 +880,7 @@ document.getElementById("loadBtn").onclick = async () => {
 };
 /////////////////////////////////////////////////////////
 // Load class members for selected class
+// Load class members for selected class
 async function loadClassMembers(classId) {
   try {
     const res = await fetch(`${API}/class/${classId}/members`);
@@ -891,18 +892,15 @@ async function loadClassMembers(classId) {
   }
 }
 
-// Full working loadRoutineByDate
-// Generates <option> elements for a select dropdown
+// Generate <option> HTML for member select
 function optionsHTML(members = []) {
-  return members
-    .map(m => `<option value="${m._id}">${escapeHtml(m.name)}</option>`)
-    .join("");
+  return members.map(m => `<option value="${m._id}">${escapeHtml(m.name)}</option>`).join("");
 }
 
-// Creates a task row with checkbox and members select/add UI
+// Create a task row with checkbox and member select/add
 function createRowHTML(task, members = []) {
   return `
-    <td>${task}</td>
+    <td>${escapeHtml(task)}</td>
     <td><input type="checkbox" /></td>
     <td>
       <div class="member-box"></div>
@@ -914,14 +912,14 @@ function createRowHTML(task, members = []) {
   `;
 }
 
-// Load routine for a given date and display tasks + members
+// Load routine by date (tasks + members, checkboxes, stars)
 async function loadRoutineByDate(date, auto = false) {
   const classId = window.selectedClass;
   if (!classId) return alert("Please select a class first.");
   if (!date) return alert("Please choose a date.");
 
   try {
-    // Load members if not already
+    // Ensure members loaded
     if (!window.classMembers || !Array.isArray(window.classMembers)) {
       await loadMembersIntoSelector(classId);
       window.classMembers = window.classMembersList.map(m => ({ _id: m.id, name: m.name }));
@@ -934,9 +932,6 @@ async function loadRoutineByDate(date, auto = false) {
       return;
     }
 
-    clearAllCheckboxes();
-    document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
-
     // Group routines by section and task
     const grouped = {};
     routines.forEach(r => {
@@ -947,7 +942,7 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Render
+    // Render grouped tasks
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
       if (!sectionBody) return;
@@ -961,12 +956,15 @@ async function loadRoutineByDate(date, auto = false) {
           row = document.createElement("tr");
           row.innerHTML = createRowHTML(taskName, window.classMembers);
           sectionBody.appendChild(row);
+
+          // Setup checkbox listener
           attachCheckboxListeners();
-          // attach add-member click
+
+          // Setup add-member button
           row.querySelector(".add-member-btn").onclick = () => addMemberFromBtn(row.querySelector(".add-member-btn"));
         }
 
-        // Checkbox checked if any kid did task
+        // Set checkbox if any kid has done the task
         const cb = row.querySelector("input[type='checkbox']");
         if (cb) cb.checked = items.some(i => i.done);
 
@@ -986,6 +984,7 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
+    // Update stars
     updateRoutineStars();
 
     // Lock past dates
