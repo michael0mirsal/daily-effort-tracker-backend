@@ -881,10 +881,12 @@ document.getElementById("loadBtn").onclick = async () => {
 /////////////////////////////////////////////////////////
 async function loadRoutineByDate(date, auto = false) {
   const classId = window.selectedClass;
+
   if (!classId) return alert("Please select a class first.");
   if (!date) return alert("Please choose a date.");
 
   try {
+    // Fetch routines for the class and date
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
     const routines = await res.json();
 
@@ -893,14 +895,17 @@ async function loadRoutineByDate(date, auto = false) {
       return;
     }
 
+    // Ensure classMembers exists
+    const classMembers = Array.isArray(window.classMembers) ? window.classMembers : [];
+
     // Clear UI
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // Loop through routines for each kid
+    // Iterate all routines
     routines.forEach(routine => {
-      const kid = window.classMembers.find(m => m._id === routine.kidmember);
-      if (!kid) return; // skip if kid info missing
+      // Find the kid info
+      const kid = classMembers.find(m => m._id === routine.kidmember);
 
       routine.items.forEach(item => {
         const sectionBody = document.getElementById(item.section + "Body");
@@ -920,14 +925,15 @@ async function loadRoutineByDate(date, auto = false) {
           attachCheckboxListeners();
         }
 
-        // Set checkbox
+        // set checkbox
         const cb = row.querySelector("input[type='checkbox']");
         if (cb) cb.checked = !!item.done;
 
-        // Add kid as tag
+        // render members
         const box = row.querySelector(".member-box");
-        const existingNames = Array.from(box.querySelectorAll(".tag span")).map(t => t.textContent);
-        if (!existingNames.includes(kid.name)) {
+        box.innerHTML = ""; // clear existing
+
+        if (kid) {
           const tag = document.createElement("div");
           tag.className = "tag";
           tag.dataset.id = kid._id;
@@ -938,14 +944,13 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    // Update stars & attach listeners
+    // Update stars
     updateRoutineStars();
     attachCheckboxListeners();
 
-    // Lock past days
+    // Lock past dates
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
-
     document.querySelectorAll("input, button, select").forEach(el => {
       if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
         el.disabled = isPast;
@@ -957,6 +962,7 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
+
     if (!auto) {
       alert(
         isPast
@@ -970,12 +976,13 @@ async function loadRoutineByDate(date, auto = false) {
   }
 }
 
-// Click handler for "Load Routine" button
+// Trigger routine load on button click
 document.getElementById("loadByDateBtn").onclick = async () => {
   const loadDateEl = document.getElementById("loadDate");
   if (!loadDateEl || !loadDateEl.value) return alert("Please select a date.");
   await loadRoutineByDate(loadDateEl.value);
 };
+
 
   // auto-load today's date on page ready
   window.addEventListener("DOMContentLoaded", async () => {
