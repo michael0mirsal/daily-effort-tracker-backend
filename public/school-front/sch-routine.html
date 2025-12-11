@@ -885,13 +885,6 @@ async function loadRoutineByDate(date, auto = false) {
   if (!date) return alert("Please choose a date.");
 
   try {
-    // 1️⃣ Load class members if not already loaded
-    if (!window.classMembers || !window.classMembers.length) {
-      const resMembers = await fetch(`${API}/class/members?classId=${classId}`);
-      window.classMembers = await resMembers.json();
-    }
-
-    // 2️⃣ Load routines for the class and date
     const res = await fetch(`${API}/routines/class?classId=${classId}&date=${date}`);
     const routines = await res.json();
 
@@ -900,33 +893,42 @@ async function loadRoutineByDate(date, auto = false) {
       return;
     }
 
-    // 3️⃣ Clear UI
+    // Clear UI
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // 4️⃣ Group routines by section + task
-    const groupedTasks = {}; // { section: { task: [kidIds] } }
-
+    // Group by section and task
+    const grouped = {};
     routines.forEach(routine => {
-      const kidId = routine.kidmember;
+      const kid = window.classMembers.find(m => m._id === routine.kidmember);
+      if (!kid) return;
+
       routine.items.forEach(item => {
-        if (!groupedTasks[item.section]) groupedTasks[item.section] = {};
-        if (!groupedTasks[item.section][item.task]) groupedTasks[item.section][item.task] = [];
-        groupedTasks[item.section][item.task].push({ kidId, done: !!item.done });
+        const section = item.section;
+        const task = item.task.trim();
+
+        if (!grouped[section]) grouped[section] = {};
+        if (!grouped[section][task]) grouped[section][task] = [];
+
+        grouped[section][task].push({
+          kidId: kid._id,
+          kidName: kid.name,
+          done: !!item.done
+        });
       });
     });
 
-    // 5️⃣ Render grouped tasks
-    Object.keys(groupedTasks).forEach(section => {
+    // Render grouped tasks
+    Object.keys(grouped).forEach(section => {
       const sectionBody = document.getElementById(section + "Body");
       if (!sectionBody) return;
 
-      Object.keys(groupedTasks[section]).forEach(task => {
-        // Check if row already exists
+      Object.keys(grouped[section]).forEach(task => {
         let row = Array.from(sectionBody.querySelectorAll("tr")).find(
-          r => r.children[0].textContent.trim().toLowerCase() === task.trim().toLowerCase()
+          r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase()
         );
 
+        // Create row if missing
         if (!row) {
           row = document.createElement("tr");
           row.innerHTML = createRowHTML(task);
@@ -935,36 +937,33 @@ async function loadRoutineByDate(date, auto = false) {
           attachCheckboxListeners();
         }
 
-        // Set checkbox: checked if **all kids have done it**, or partially mark
-        const allDone = groupedTasks[section][task].every(k => k.done);
+        // Set checkbox: mark checked if any kid has done=true
         const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = allDone;
+        if (cb) cb.checked = grouped[section][task].some(k => k.done);
 
-        // Render member tags
+        // Clear previous members
         const box = row.querySelector(".member-box");
         box.innerHTML = "";
-        groupedTasks[section][task].forEach(({ kidId }) => {
-          const kid = window.classMembers.find(m => m._id === kidId);
-          const kidName = kid ? kid.name : "Unknown";
 
+        // Add all kids for this task
+        grouped[section][task].forEach(k => {
           const tag = document.createElement("div");
           tag.className = "tag";
-          tag.dataset.id = kidId;
-          tag.innerHTML = `<span>${escapeHtml(kidName)}</span><span class="remove">×</span>`;
+          tag.dataset.id = k.kidId;
+          tag.innerHTML = `<span>${k.kidName}</span><span class="remove">×</span>`;
           tag.querySelector(".remove").onclick = () => tag.remove();
           box.appendChild(tag);
         });
       });
     });
 
-    // 6️⃣ Update stars and checkbox listeners
+    // Update stars
     updateRoutineStars();
     attachCheckboxListeners();
 
-    // 7️⃣ Lock past dates if needed
+    // Lock past days
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
-
     document.querySelectorAll("input, button, select").forEach(el => {
       if (el.id === "saveBtn" || (el.textContent && el.textContent.includes("➕"))) {
         el.disabled = isPast;
@@ -976,7 +975,6 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
-
     if (!auto) {
       alert(
         isPast
@@ -989,6 +987,7 @@ async function loadRoutineByDate(date, auto = false) {
     if (!auto) alert("Failed to load routine by date.");
   }
 }
+
 
 // Trigger routine load on button click
 document.getElementById("loadByDateBtn").onclick = async () => {
