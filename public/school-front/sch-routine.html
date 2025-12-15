@@ -878,6 +878,7 @@ document.getElementById("loadBtn").onclick = async () => {
     alert("Failed to load routines.");
   }
 };
+
 /////////////////////////////////////////////////////////
 // Load class members for selected class
 // Load class members for selected class
@@ -1012,28 +1013,6 @@ async function loadRoutineByDate(date, auto = false) {
   }
 }
 
-
-
-
-// Trigger routine load on button click
-document.getElementById("loadByDateBtn").onclick = async () => {
-  const loadDateEl = document.getElementById("loadDate");
-  if (!loadDateEl || !loadDateEl.value) return alert("Please select a date.");
-  await loadRoutineByDate(loadDateEl.value);
-};
-
-
-  // auto-load today's date on page ready
-  window.addEventListener("DOMContentLoaded", async () => {
-    // initialize any existing rows selects
-    fillAllMemberSelects();
-    attachCheckboxListeners();
-
-    const today = (new Date()).toISOString().split("T")[0];
-    const loadDateEl = document.getElementById("loadDate");
-    if (loadDateEl) loadDateEl.value = today;
-    await loadRoutineByDate(today, true);
-  });
 
   // navigation / logout
   document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
