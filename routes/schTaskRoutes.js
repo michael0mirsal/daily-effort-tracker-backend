@@ -56,7 +56,7 @@ router.post("/sch-routine/save", async (req, res) => {
 
 
 
-router.get("/routines/class", async (req, res) => {
+router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
   if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
