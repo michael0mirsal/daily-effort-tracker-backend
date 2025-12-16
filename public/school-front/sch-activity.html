@@ -419,11 +419,11 @@ function renderLocalItems(){
   tableBody.innerHTML = addedItems.map((it,i)=>`
     <tr>
       <td>${i+1}</td>
+      <td>${it.member.name}</td>
       <td>${it.activity}</td>
       <td>${it.timeMin}</td>
       <td>${it.evaluation}</td>
-      <td>${it.note||""}</td>
-      <td>${it.member}</td>
+      <td>${it.note||""}</td>     
     </tr>
   `).join("");
 }
