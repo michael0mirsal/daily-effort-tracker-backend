@@ -1066,6 +1066,15 @@ async function loadRoutineByDate(date, auto = false) {
     if (!auto) alert("Failed to load routine by date.");
   }
 }
+document.getElementById("loadBtn").onclick = async () => {
+  console.log("Load Routine clicked", window.selectedClass);
+  const classId = window.selectedClass;
+  if (!classId) return alert("Please select a class first.");
+  const date = document.getElementById("loadDate").value;
+  if (!date) return alert("Please choose a date.");
+
+  await loadRoutineByDate(date);
+};
 
   // navigation / logout
   document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
