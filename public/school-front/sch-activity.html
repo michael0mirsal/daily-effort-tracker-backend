@@ -396,6 +396,9 @@ const tableBody = document.getElementById("tableBody");
 const addedItems = [];
 //----------------------------------------------------------------------------------------------------------------
 
+// =======================
+// Add Button
+// =======================
 document.getElementById("addBtn").addEventListener("click", () => {
   const date = document.getElementById("date").value;
   const activity = document.getElementById("activity").value.trim();
@@ -431,6 +434,24 @@ document.getElementById("addBtn").addEventListener("click", () => {
 
   renderLocalItems();
 });
+
+
+// =======================
+// Render Table (Merged)
+// =======================
+function renderLocalItems() {
+  tableBody.innerHTML = addedItems.map((it, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${it.activity}</td>
+      <td>${it.timeMin}</td>
+      <td>${it.evaluation}</td>
+      <td>${it.note || ""}</td>
+      <td>${it.memberName}</td>
+    </tr>
+  `).join("");
+}
+
 
 /*
 // ----------------------
