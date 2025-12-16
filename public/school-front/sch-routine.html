@@ -929,9 +929,15 @@ async function loadRoutineByDate(date, auto = false) {
 
     // Normalize members for easier lookup
     const members = window.classMembersList.map(m => ({
-      _id: m.id,
-      name: m.name
+    _id: String(m.member._id),
+     name: m.member.name
     }));
+
+    const assigned = taskItems.find(
+     i => String(i.kidId) === String(kid._id)
+    );
+
+
 
     /* =========================
        2) Fetch routines (kid-based)
