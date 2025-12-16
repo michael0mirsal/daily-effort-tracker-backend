@@ -1018,28 +1018,27 @@ async function loadRoutineByDate(date, auto = false) {
         }
 
         /* ===== Checkbox ===== */
-        const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = items.some(i => i.done);
+        /* ===== Member tags (ONLY saved members) ===== */
+const box = row.querySelector(".member-box");
+box.innerHTML = "";
 
-        /* ===== Member tags ===== */
-        const box = row.querySelector(".member-box");
-        box.innerHTML = "";
+// items already represent ONLY saved members
+items.forEach(i => {
+  const kid = window.classMembers.find(m => m._id === i.kidId);
+  if (!kid) return;
 
-        items.forEach(i => {
-          const kid = window.classMembers.find(m => m._id === i.kidId);
-          if (!kid) return;
+  const tag = document.createElement("div");
+  tag.className = "tag";
+  tag.dataset.id = kid._id;
+  tag.innerHTML = `
+    <span>${escapeHtml(kid.name)}</span>
+    <span class="remove">×</span>
+  `;
 
-          const tag = document.createElement("div");
-          tag.className = "tag";
-          tag.dataset.id = kid._id;
-          tag.innerHTML = `
-            <span>${escapeHtml(kid.name)}</span>
-            <span class="remove">×</span>
-          `;
+  tag.querySelector(".remove").onclick = () => tag.remove();
+  box.appendChild(tag);
+});
 
-          tag.querySelector(".remove").onclick = () => tag.remove();
-          box.appendChild(tag);
-        });
       });
     });
 
