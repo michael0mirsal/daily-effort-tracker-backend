@@ -159,35 +159,46 @@ router.post("/sch-activities", async (req, res) => {
 // GET /api/sch-activities?classId=...&date=YYYY-MM-DD
 router.get("/sch-activities", async (req, res) => {
   const { classId, date } = req.query;
-  if (!classId || !date) return res.status(400).json({ success: false, error: "Missing classId or date" });
+
+  if (!classId || !date) {
+    return res.status(400).json({ success: false, error: "Missing classId or date" });
+  }
 
   try {
-    // Validate ObjectId
-    const classObjId = mongoose.isValidObjectId(classId) ? mongoose.Types.ObjectId(classId) : classId;
+    // Validate and convert to ObjectId
+    let classObjId = classId;
+    if (mongoose.isValidObjectId(classId)) {
+      classObjId = new mongoose.Types.ObjectId(classId);
+    }
 
-    const activities = await schActivity.find({
-      classId: classObjId,
-      date
-    }).populate("kidmember", "name").lean(); // lean() avoids mongoose documents issues
+    const activities = await schActivity.find({ classId: classObjId, date })
+      .populate("kidmember", "name");
 
     res.json(activities);
   } catch (err) {
-    console.error("Load activities error:", err); // <-- See exact error
-    res.status(500).json({ success: false, error: err.message }); // <-- send real error to client
+    console.error("Load activities error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 });
 
+// ----------------------
 // PATCH /api/sch-activities/updateEvaluation
+// ----------------------
 router.patch("/sch-activities/updateEvaluation", async (req, res) => {
   const { member, date, index, evaluation } = req.body;
-  if (!member || !date || index === undefined || evaluation === undefined)
+
+  if (!member || !date || index === undefined || evaluation === undefined) {
     return res.status(400).json({ success: false, error: "Missing parameters" });
+  }
 
   try {
-    const doc = await schActivity.findOne({
-      kidmember: mongoose.Types.ObjectId(member),
-      date
-    });
+    // Validate member ObjectId
+    let memberObjId = member;
+    if (mongoose.isValidObjectId(member)) {
+      memberObjId = new mongoose.Types.ObjectId(member);
+    }
+
+    const doc = await schActivity.findOne({ kidmember: memberObjId, date });
 
     if (!doc) return res.status(404).json({ success: false, error: "Activity not found" });
     if (!doc.items[index]) return res.status(404).json({ success: false, error: "Item not found" });
@@ -201,7 +212,6 @@ router.patch("/sch-activities/updateEvaluation", async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
-
 
 
 
