@@ -992,7 +992,7 @@ async function loadRoutineByDate(date, auto = false) {
           if (!kid) return;
 
           const tag = document.createElement("div");
-          tag.className = "tag";
+          tag.className = "member-tag";
           tag.dataset.id = kid._id;
           tag.innerHTML = `
             <span>${escapeHtml(kid.name)}</span>
