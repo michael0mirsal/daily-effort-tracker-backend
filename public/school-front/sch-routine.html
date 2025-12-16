@@ -569,7 +569,7 @@ function fillAllMemberSelects() {
 /* ============================================================
    5) Create tags inside .member-box
    ============================================================ */
-function fillMemberTagsOnLoad() {
+function fillMemberTagsOnLoad(isPast = false) {
   document.querySelectorAll(".member-box").forEach(box => {
     box.innerHTML = "";
 
@@ -578,7 +578,11 @@ function fillMemberTagsOnLoad() {
       tag.className = "member-tag";
       tag.dataset.id = m.id;
       tag.innerHTML = `<span>${m.name}</span><span class="remove">×</span>`;
-      tag.querySelector(".remove").onclick = () => tag.remove();
+
+      tag.querySelector(".remove").onclick = (e) => {
+        if (isPast) return; // cannot remove
+        tag.remove();
+      };
 
       box.appendChild(tag);
     });
@@ -999,7 +1003,11 @@ async function loadRoutineByDate(date, auto = false) {
             <span class="remove">×</span>
           `;
 
-          tag.querySelector(".remove").onclick = () => tag.remove();
+          tag.querySelector(".remove").onclick = (e) => {
+           if (isPast) return; // do nothing if past date
+            tag.remove();
+            };
+
           box.appendChild(tag);
         });
       });
