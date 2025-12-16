@@ -522,7 +522,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   if (failedMembers.length === 0) {
     addedItems.length = 0;
     renderLocalItems();
-    loadEfforts();
+    loadActivities();
     alert("✅ " + successMessages.join("\n"));
   } else {
     alert(`⚠️ Could not save Activity for ${failedMembers.length} member(s).\nCheck console for details.\n\nSuccessful:\n${successMessages.join("\n")}`);
