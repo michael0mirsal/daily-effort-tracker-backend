@@ -107,26 +107,27 @@ router.post("/sch-activities", async (req, res) => {
       return res.status(400).json({ error: "Missing or invalid data" });
     }
 
-    let doc = await SchActivity.findOne({ classId, kidmember, date });
+    let existing = await SchActivity.findOne({ classId, kidmember, date });
 
-    if (doc) {
-      // merge (prevent duplicates)
-      const existingKeys = doc.items.map(
-        i => `${i.activity}_${i.timeMin}`
-      );
+    if (existing) {
+      const existingKeys = existing.items
+        .filter(i => i.activity && i.timeMin !== undefined)
+        .map(i => `${i.activity.toLowerCase()}_${i.timeMin}`);
 
       items.forEach(i => {
-        const key = `${i.activity}_${i.timeMin}`;
+        if (!i.activity || i.timeMin === undefined) return;
+
+        const key = `${i.activity.toLowerCase()}_${i.timeMin}`;
         if (!existingKeys.includes(key)) {
-          doc.items.push(i);
+          existing.items.push(i);
         }
       });
 
-      await doc.save();
-      return res.json(doc);
+      await existing.save();
+      return res.json(existing);
     }
 
-    doc = await SchActivity.create({
+    const doc = await SchActivity.create({
       classId,
       kidmember,
       date,
@@ -136,10 +137,11 @@ router.post("/sch-activities", async (req, res) => {
     res.status(201).json(doc);
 
   } catch (err) {
-    console.error("❌ sch-activities error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ sch-activities error:", err.message);
+    res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
