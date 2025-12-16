@@ -926,7 +926,7 @@ async function loadRoutineByDate(date, auto = false) {
     if (!window.classMembers || !Array.isArray(window.classMembers)) {
       await loadMembersIntoSelector(classId);
 
-      if (!window.classMembersList || !Array.isArray(window.classMembersList)) {
+      if (!Array.isArray(window.classMembersList)) {
         throw new Error("classMembersList not loaded");
       }
 
@@ -943,12 +943,9 @@ async function loadRoutineByDate(date, auto = false) {
       `${API}/sch-routine/load?classId=${classId}&date=${date}`
     );
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch routines");
-    }
+    if (!res.ok) throw new Error("Failed to fetch routines");
 
     const routines = await res.json();
-
     if (!Array.isArray(routines) || routines.length === 0) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
@@ -982,21 +979,12 @@ async function loadRoutineByDate(date, auto = false) {
       });
     });
 
-    if (Object.keys(grouped).length === 0) {
-      alert("Routine data exists but no tasks could be rendered.");
-      return;
-    }
-
     /* =========================
-       5) Render UI
+       5) Render (CORRECT)
        ========================= */
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
-
-      if (!sectionBody) {
-        console.warn(`❗ Missing HTML tbody for section: ${section}Body`);
-        return;
-      }
+      if (!sectionBody) return;
 
       Object.entries(tasks).forEach(([taskName, items]) => {
         let row = Array.from(sectionBody.querySelectorAll("tr")).find(
@@ -1007,38 +995,39 @@ async function loadRoutineByDate(date, auto = false) {
 
         if (!row) {
           row = document.createElement("tr");
-          row.innerHTML = createRowHTML(taskName, window.classMembers);
+
+          // 🔥 KEY FIX: DO NOT PASS MEMBERS
+          row.innerHTML = createRowHTML(taskName, []);
           sectionBody.appendChild(row);
           attachCheckboxListeners();
 
           const addBtn = row.querySelector(".add-member-btn");
-          if (addBtn) {
-            addBtn.onclick = () => addMemberFromBtn(addBtn);
-          }
+          if (addBtn) addBtn.onclick = () => addMemberFromBtn(addBtn);
         }
 
-        /* ===== Checkbox ===== */
-        /* ===== Member tags (ONLY saved members) ===== */
-const box = row.querySelector(".member-box");
-box.innerHTML = "";
+        /* ===== Checkbox (saved logic only) ===== */
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = items.some(i => i.done);
 
-// items already represent ONLY saved members
-items.forEach(i => {
-  const kid = window.classMembers.find(m => m._id === i.kidId);
-  if (!kid) return;
+        /* ===== Members (ONLY saved ones) ===== */
+        const box = row.querySelector(".member-box");
+        box.innerHTML = "";
 
-  const tag = document.createElement("div");
-  tag.className = "tag";
-  tag.dataset.id = kid._id;
-  tag.innerHTML = `
-    <span>${escapeHtml(kid.name)}</span>
-    <span class="remove">×</span>
-  `;
+        items.forEach(i => {
+          const kid = window.classMembers.find(m => m._id === i.kidId);
+          if (!kid) return;
 
-  tag.querySelector(".remove").onclick = () => tag.remove();
-  box.appendChild(tag);
-});
+          const tag = document.createElement("div");
+          tag.className = "tag";
+          tag.dataset.id = kid._id;
+          tag.innerHTML = `
+            <span>${escapeHtml(kid.name)}</span>
+            <span class="remove">×</span>
+          `;
 
+          tag.querySelector(".remove").onclick = () => tag.remove();
+          box.appendChild(tag);
+        });
       });
     });
 
@@ -1054,7 +1043,6 @@ items.forEach(i => {
       if (el.id === "saveBtn" || el.classList.contains("add-member-btn")) {
         el.disabled = isPast;
         el.style.opacity = isPast ? 0.5 : 1;
-        el.style.cursor = isPast ? "not-allowed" : "pointer";
       } else if (
         ["checkbox", "text"].includes(el.type) ||
         el.tagName === "SELECT"
@@ -1078,6 +1066,7 @@ items.forEach(i => {
     if (!auto) alert("❌ Failed to load routine by date.");
   }
 }
+
 
 document.getElementById("loadByDateBtn").onclick = async () => {
   const date = document.getElementById("loadDate").value;
