@@ -16,4 +16,4 @@ kidmember: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember", required
   checkedData: Number,
 });
 
-export default mongoose.model("sch-activity", activitySchema);
+export default mongoose.model("sch-Activity", activitySchema);
