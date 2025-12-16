@@ -920,161 +920,94 @@ async function loadRoutineByDate(date, auto = false) {
   if (!date) return alert("Please choose a date.");
 
   try {
-    /* =========================
-       1) Ensure members loaded
-       ========================= */
-    if (!window.classMembersList || !Array.isArray(window.classMembersList)) {
+    // Load members if not already
+    if (!window.classMembers || !Array.isArray(window.classMembers)) {
       await loadMembersIntoSelector(classId);
+      window.classMembers = window.classMembersList.map(m => ({ _id: m.id, name: m.name }));
     }
 
-    // Normalize members for easier lookup
-    const members = window.classMembersList.map(m => ({
-    _id: String(m.member._id),
-     name: m.member.name
-    }));
-
-    //const assigned = taskItems.find(
-     //i => String(i.kidId) === String(kid._id)
-    //);
-
-
-
-    /* =========================
-       2) Fetch routines (kid-based)
-       ========================= */
-    const res = await fetch(
-      `${API}/sch-routine/load?classId=${classId}&date=${date}`
-    );
+    const res = await fetch(`${API}/sch-routine/load?classId=${classId}&date=${date}`);
     const routines = await res.json();
-
     if (!Array.isArray(routines) || !routines.length) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
     }
 
-    /* =========================
-       3) Reset UI
-       ========================= */
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    /* ==================================================
-       4) Convert kid-based routines → grouped structure
-          section → task → [{ kidId, done }]
-       ================================================== */
+    // Group routines by section and task
     const grouped = {};
-
     routines.forEach(r => {
-      const kidId = r.kidmember;
       r.items.forEach(item => {
         if (!grouped[item.section]) grouped[item.section] = {};
-        if (!grouped[item.section][item.task])
-          grouped[item.section][item.task] = [];
-
-        grouped[item.section][item.task].push({
-          kidId,
-          done: item.done
-        });
+        if (!grouped[item.section][item.task]) grouped[item.section][item.task] = [];
+        grouped[item.section][item.task].push({ ...item, kidId: r.kidmember });
       });
     });
 
-    /* =========================
-       5) Render UI (your logic)
-       ========================= */
+    // Render
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
       if (!sectionBody) return;
 
-      Object.entries(tasks).forEach(([taskName, taskItems]) => {
+      Object.entries(tasks).forEach(([taskName, items]) => {
         let row = Array.from(sectionBody.querySelectorAll("tr")).find(
-          r =>
-            r.children[0].textContent.trim().toLowerCase() ===
-            taskName.trim().toLowerCase()
+          r => r.children[0].textContent.trim().toLowerCase() === taskName.trim().toLowerCase()
         );
 
-        // Create row if missing
         if (!row) {
           row = document.createElement("tr");
-          row.innerHTML = createRowHTML(taskName, members);
+          row.innerHTML = createRowHTML(taskName, window.classMembers);
           sectionBody.appendChild(row);
           attachCheckboxListeners();
+          // attach add-member click
+          row.querySelector(".add-member-btn").onclick = () => addMemberFromBtn(row.querySelector(".add-member-btn"));
         }
 
-        /* ===== Checkbox logic =====
-           Checked if ANY kid completed
-        */
+        // Checkbox checked if any kid did task
         const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = taskItems.some(i => i.done);
+        if (cb) cb.checked = items.some(i => i.done);
 
-        /* ===== Member tags ===== */
+        // Render member tags
         const box = row.querySelector(".member-box");
         box.innerHTML = "";
-
-        members.forEach(kid => {
-          const assigned = taskItems.find(i => i.kidId === kid._id);
-
+        items.forEach(i => {
+          const kid = window.classMembers.find(m => m._id === i.kidId);
+          if (!kid) return;
           const tag = document.createElement("div");
-          tag.className = "member-tag";
+          tag.className = "tag";
           tag.dataset.id = kid._id;
-          tag.innerHTML = `
-            <span>${escapeHtml(kid.name)}</span>
-            <span class="remove">×</span>
-          `;
-
+          tag.innerHTML = `<span>${escapeHtml(kid.name)}</span><span class="remove">×</span>`;
           tag.querySelector(".remove").onclick = () => tag.remove();
-
-          // Gray if not assigned (your UX preserved)
-          if (!assigned) tag.style.opacity = 0.4;
-
           box.appendChild(tag);
         });
       });
     });
 
-    /* =========================
-       6) Stars + locking logic
-       ========================= */
     updateRoutineStars();
 
+    // Lock past dates
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
-
     document.querySelectorAll("input, button, select").forEach(el => {
-      if (el.id === "saveBtn") {
+      if (el.id === "saveBtn" || el.classList.contains("add-member-btn")) {
         el.disabled = isPast;
         el.style.opacity = isPast ? 0.5 : 1;
-      } else if (
-        el.type === "checkbox" ||
-        el.type === "text" ||
-        el.tagName === "SELECT"
-      ) {
+        el.style.cursor = isPast ? "not-allowed" : "pointer";
+      } else if (["checkbox", "text"].includes(el.type) || el.tagName === "SELECT") {
         el.disabled = isPast;
       }
     });
 
     window.currentLoadedDate = date;
-
-    if (!auto) {
-      alert(
-        isPast
-          ? `🔒 Viewing past routine (${date}). Editing locked.`
-          : `✅ Routine loaded for ${date}`
-      );
-    }
+    if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
   } catch (err) {
     console.error(err);
     if (!auto) alert("Failed to load routine by date.");
   }
 }
-document.getElementById("loadBtn").onclick = async () => {
-  console.log("Load Routine clicked", window.selectedClass);
-  const classId = window.selectedClass;
-  if (!classId) return alert("Please select a class first.");
-  const date = document.getElementById("loadDate").value;
-  if (!date) return alert("Please choose a date.");
 
-  await loadRoutineByDate(date);
-};
 
   // navigation / logout
   document.getElementById("backBtn").onclick = () => window.location.href = "choose.html";
