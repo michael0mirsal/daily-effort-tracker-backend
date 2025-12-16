@@ -497,9 +497,11 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 
   for (const memberId in groupedByMember) {
     const items = groupedByMember[memberId];
+
+    // ⚡ Important change: send kidId instead of kidmember
     const payload = {
       classId,
-      kidmember: memberId,
+      kidId: memberId,      // <-- this matches backend expectation
       date: items[0].date,
       items
     };
@@ -511,7 +513,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json(); // <-- read JSON response
+      const data = await res.json(); // <-- parse JSON
 
       if (!res.ok || !data.success) {
         failedMembers.push(memberId);
@@ -527,7 +529,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   }
 
   // Reset UI
- if (failedMembers.length === 0) {
+  if (failedMembers.length === 0) {
     addedItems.length = 0;   // clear local array
     renderLocalItems();       // clear table
     alert("✅ Activities saved successfully!\n" + successMessages.join("\n"));
