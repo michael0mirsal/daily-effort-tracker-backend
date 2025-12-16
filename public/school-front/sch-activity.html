@@ -553,7 +553,7 @@ async function loadActivities(){
 
   try{
     // Fetch activities for selected class and date
-    const res = await fetch(`${API}/api/sch-activities?classId=${classId}&date=${date}`);
+    const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
     const data = await res.json();
     const ActivityList = document.getElementById("ActivityList");
 
@@ -615,7 +615,7 @@ function attachStarListeners(){
         evaluation: newEval
       };
       try{
-        await fetch(`${API}/api/sch-activities/updateEvaluation`, {
+        await fetch(`${API}/sch-activities/updateEvaluation`, {
           method: "PATCH",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify(saveData)
