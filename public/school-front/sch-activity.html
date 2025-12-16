@@ -82,6 +82,22 @@
 </head>
 <body>
 
+<!-- Class Selection Popup -->
+  <div id="classPopup" class="popup">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2>🏫 Select Your Class</h2>
+        <p>Choose the class you want to manage today</p>
+      </div>
+      <select id="classSelect">
+        <option value="">Loading classes...</option>
+      </select>
+      <br><br>
+      <button id="classSelectBtn">✅ Confirm</button>
+    </div>
+  </div>
+  <input type="hidden" id="classShow" value="">
+
 <div class="header">
   <h1>🌈 My Daily Activities Tracker</h1>
   <h2>Welcome, <span id="userName"></span>!</h2>
@@ -154,24 +170,120 @@
 <script>
 const API ="http://localhost:3000/api";
 
-// ----------------------
-// Load current user
-// ----------------------
-const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-let currentUser = storedUser.name;
-const currentRole = storedUser.role;
-const currentFamily = storedUser.family;
+let CLASS_MEMBERS = [];                   // all members in selected class
 
-// ----------------------
-// Members list from localStorage
-// ----------------------
-let members = JSON.parse(localStorage.getItem("members") || '[]');
-const memberSelect = document.getElementById("memberSelect");
-members.forEach(m=>{
-  const opt = document.createElement("option");
-  opt.value = m; opt.textContent = m;
-  memberSelect.appendChild(opt);
+  // Utility: create option list HTML
+  async function loadClassesByUser() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return console.error("User not signed in");
+
+  const classSelect = document.getElementById("classSelect");
+  classSelect.innerHTML = '<option value="">Loading classes...</option>';
+
+  try {
+    let classes = [];
+
+    if (user.role && user.role.toLowerCase() === "teacher") {
+      // Teacher → fetch only assigned classes
+      const res = await fetch(`${API}/teachers/${user._id}/classes`);
+      if (res.ok) {
+        const data = await res.json();
+        classes = data.classes || [];
+      } else {
+        console.warn("Teacher classes endpoint returned", res.status);
+      }
+    } else {
+      // Admin / Manager → fetch all nursery classes
+      const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+      if (res.ok) {
+        const data = await res.json();
+        classes = data.classes || [];
+      } else {
+        console.warn("Nursery classes endpoint returned", res.status);
+      }
+    }
+
+    // Populate select
+    classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+    classes.forEach(c => {
+      const option = new Option(c.name, c._id);
+      classSelect.appendChild(option);
+    });
+
+  } catch (err) {
+    console.error("Failed to load classes:", err);
+    classSelect.innerHTML = '<option value="">Failed to load classes</option>';
+  }
+}
+
+// Call this function when page loads
+window.addEventListener("DOMContentLoaded", async () => {
+  // show popup
+  document.getElementById("classPopup").style.display = "block";
+
+  // load classes
+  await loadClassesByUser();
 });
+
+  // Show popup when page loads
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("classPopup").style.display = "block";
+});
+
+// Handle class selection
+document.getElementById("classSelectBtn").onclick = async () => {
+  const selectedClass = document.getElementById("classSelect").value;
+  if (!selectedClass) {
+    alert("Please select a class!");
+    return;
+  }
+
+  window.selectedClass = selectedClass;
+
+  // Optional: store in hidden field
+  const classShow = document.getElementById("classShow");
+  if (classShow) classShow.value = selectedClass;
+
+  document.getElementById("classPopup").style.display = "none";
+
+  await loadMembersIntoSelector(selectedClass);
+  fillMemberTagsOnLoad();
+
+  console.log("Loaded class:", selectedClass);
+};
+
+
+  /*********************************************
+ * GLOBAL STORAGE
+ *********************************************/
+  // update if needed
+
+
+
+async function loadMembersIntoSelector(classId) {
+  try {
+    const res = await fetch(`${API}/members/class/${classId}`);
+    if (!res.ok) throw new Error("Failed to load class members");
+
+    const members = await res.json();
+
+    // Ensure array and fallback for undefined member
+    window.classMembersList = Array.isArray(members)
+      ? members.map(m => ({
+          id: m.member?._id || m._id || "",
+          name: m.member?.name || "Unknown"
+        }))
+      : [];
+
+    fillAllMemberSelects();
+
+  } catch (err) {
+    console.error("Error loading members:", err);
+    window.classMembersList = []; // fallback
+    fillAllMemberSelects();
+  }
+}
+
 
 //if(!currentUser){ window.location.href="login.html"; }
 //else { document.getElementById("userName").textContent = `${currentUser} (${currentFamily}'s Family)`; }
