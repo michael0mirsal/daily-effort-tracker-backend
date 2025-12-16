@@ -958,7 +958,7 @@ async function loadRoutineByDate(date, auto = false) {
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
     /* =========================
-       4) Group routines
+       4) Group ONLY completed items
        ========================= */
     const grouped = {};
 
@@ -968,19 +968,21 @@ async function loadRoutineByDate(date, auto = false) {
       r.items.forEach(item => {
         if (!item.section || !item.task) return;
 
+        // 🔥 CRITICAL FIX: ignore unfinished tasks
+        if (item.done !== true) return;
+
         if (!grouped[item.section]) grouped[item.section] = {};
         if (!grouped[item.section][item.task])
           grouped[item.section][item.task] = [];
 
         grouped[item.section][item.task].push({
-          kidId: String(r.kidmember),
-          done: !!item.done
+          kidId: String(r.kidmember)
         });
       });
     });
 
     /* =========================
-       5) Render (CORRECT)
+       5) Render UI (CORRECT)
        ========================= */
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
@@ -996,7 +998,7 @@ async function loadRoutineByDate(date, auto = false) {
         if (!row) {
           row = document.createElement("tr");
 
-          // 🔥 KEY FIX: DO NOT PASS MEMBERS
+          // 🔥 DO NOT inject members here
           row.innerHTML = createRowHTML(taskName, []);
           sectionBody.appendChild(row);
           attachCheckboxListeners();
@@ -1005,11 +1007,11 @@ async function loadRoutineByDate(date, auto = false) {
           if (addBtn) addBtn.onclick = () => addMemberFromBtn(addBtn);
         }
 
-        /* ===== Checkbox (saved logic only) ===== */
+        /* ===== Checkbox ===== */
         const cb = row.querySelector("input[type='checkbox']");
-        if (cb) cb.checked = items.some(i => i.done);
+        if (cb) cb.checked = true; // because items exist ONLY if done === true
 
-        /* ===== Members (ONLY saved ones) ===== */
+        /* ===== Members (ONLY saved & completed) ===== */
         const box = row.querySelector(".member-box");
         box.innerHTML = "";
 
@@ -1043,6 +1045,7 @@ async function loadRoutineByDate(date, auto = false) {
       if (el.id === "saveBtn" || el.classList.contains("add-member-btn")) {
         el.disabled = isPast;
         el.style.opacity = isPast ? 0.5 : 1;
+        el.style.cursor = isPast ? "not-allowed" : "pointer";
       } else if (
         ["checkbox", "text"].includes(el.type) ||
         el.tagName === "SELECT"
@@ -1066,6 +1069,7 @@ async function loadRoutineByDate(date, auto = false) {
     if (!auto) alert("❌ Failed to load routine by date.");
   }
 }
+
 
 
 document.getElementById("loadByDateBtn").onclick = async () => {
