@@ -519,13 +519,12 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   }
 
   // Reset UI
-  if (failedMembers.length === 0) {
-    addedItems.length = 0;
-    renderLocalItems();
-    loadActivities();
-    alert("✅ " + successMessages.join("\n"));
+ if (failedMembers.length === 0) {
+    addedItems.length = 0;   // clear local array
+    renderLocalItems();       // clear table
+    alert("✅ Activities saved successfully!\n" + successMessages.join("\n"));
   } else {
-    alert(`⚠️ Could not save Activity for ${failedMembers.length} member(s).\nCheck console for details.\n\nSuccessful:\n${successMessages.join("\n")}`);
+    alert(`⚠️ Could not save activity for ${failedMembers.length} member(s).\nSuccessful:\n${successMessages.join("\n")}`);
   }
 });
 
