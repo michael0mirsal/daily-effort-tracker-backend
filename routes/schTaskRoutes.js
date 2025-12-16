@@ -172,9 +172,8 @@ router.get("/sch-activities", async (req, res) => {
     }
     const classObjId = new mongoose.Types.ObjectId(classId);
 
-    const activities = await schActivity.find({ classId: classObjId, date })
-      .populate("kidmember", "name")
-      .lean(); // use .lean() for safer object mapping
+    const activities = await schActivity.find({ classId, date })
+  .populate("kidmember", "name"); // now works, returns Member's name
 
     const normalized = activities.map(a => ({
       _id: a._id,
