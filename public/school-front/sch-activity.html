@@ -453,49 +453,78 @@ function renderLocalItems() {
 }
 
 
-/*
+
 // ----------------------
 // Save all efforts
 // ----------------------
-document.getElementById("saveBtn").addEventListener("click", async ()=>{
-  if(addedItems.length===0) return alert("Please add at least one effort.");
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  if (addedItems.length === 0) {
+    alert("Please add at least one effort.");
+    return;
+  }
+
   const date = addedItems[0].date;
-  if(isPastDate(date)) return alert("❌ Cannot save efforts for past dates!");
+  if (isPastDate(date)) {
+    alert("❌ Cannot save efforts for past dates!");
+    return;
+  }
 
-  try{
-    const res = await fetch(`${API_BASE}/api/efforts/search?name=${currentUser}&family=${currentFamily}&date=${date}`);
-    const existing = await res.json();
-    let finalItems = [], newItemsAdded=false;
+  const classId = window.selectedClass; // from class popup
+  if (!classId) {
+    alert("⚠️ No class selected!");
+    return;
+  }
 
-    if(existing.length && existing[0].items){
-      const existingKeys = existing[0].items.map(it=>it.activity.trim().toLowerCase()+"_"+it.timeMin+"_"+it.member);
-      finalItems = [...existing[0].items];
-      addedItems.forEach(it=>{
-        const key = it.activity.trim().toLowerCase()+"_"+it.timeMin+"_"+it.member;
-        if(!existingKeys.includes(key)){ finalItems.push(it); newItemsAdded=true; }
+  try {
+    // Group items by member
+    const groupedByMember = {};
+
+    addedItems.forEach(it => {
+      if (!groupedByMember[it.memberId]) {
+        groupedByMember[it.memberId] = [];
+      }
+      groupedByMember[it.memberId].push({
+        activity: it.activity,
+        timeMin: Number(it.timeMin),
+        evaluation: Number(it.evaluation) || 0,
+        note: it.note || ""
       });
-    } else { finalItems=[...addedItems]; newItemsAdded=true; }
-
-    if(!newItemsAdded){ alert("⚠️ No new activities to save."); return; }
-
-    finalItems = finalItems.map(it=>({activity:it.activity,timeMin:it.timeMin,evaluation:Number(it.evaluation)||0,note:it.note||"",member:it.member}));
-
-    const saveRes = await fetch(`${API_BASE}/api/efforts`,{
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({name:currentUser,family:currentFamily,date,items:finalItems})
     });
-    const saveData = await saveRes.json();
-    if(!saveRes.ok) throw new Error(saveData.error||"Failed to save");
 
-    addedItems.length=0;
+    // Save per member
+    for (const memberId in groupedByMember) {
+      const payload = {
+        classId,
+        kidmember: memberId,
+        date,
+        items: groupedByMember[memberId]
+      };
+
+      const res = await fetch(`${API}/sch-activities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save");
+      }
+    }
+
+    // Reset UI
+    addedItems.length = 0;
     renderLocalItems();
-    updateStarsFromItems(finalItems);
     loadEfforts();
-    showToast("✨ Saved!");
-    alert("✅ Effort saved successfully!");
-  } catch(err){ console.error("❌ Save failed:",err); alert("⚠️ Could not save to server."); }
+    alert("✅ Efforts saved successfully!");
+
+  } catch (err) {
+    console.error("❌ Save failed:", err);
+    alert("⚠️ Could not save to server.");
+  }
 });
 
+/*
 // ----------------------
 // Show saved efforts
 // ----------------------
