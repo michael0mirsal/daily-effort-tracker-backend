@@ -326,6 +326,19 @@ document.getElementById("classSelectBtn").onclick = async () => {
  * GLOBAL STORAGE
  *********************************************/
   // update if needed
+function fillAllMemberSelects() {
+  const memberSelect = document.getElementById("memberSelect");
+  if (!memberSelect) return;
+
+  // Clear previous options
+  memberSelect.innerHTML = '<option value="">Select Member</option>';
+
+  // Add current members
+  window.classMembersList.forEach(m => {
+    const option = new Option(m.name, m.id);
+    memberSelect.appendChild(option);
+  });
+}
 
 
 
