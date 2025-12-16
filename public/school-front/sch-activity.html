@@ -576,8 +576,8 @@ async function loadActivities() {
       (doc.items || []).map((it, i) => ({
         ...it,
         date: doc.date,
-        memberId: doc.kidmember || null,        // ObjectId or null
-        memberName: doc.kidName || "Unknown",   // safe fallback
+        kidmember: a.kidmember?._id ? String(a.kidmember._id) : null,
+        kidName: a.kidmember?.name || "Unknown",
         index: i
       }))
     );
