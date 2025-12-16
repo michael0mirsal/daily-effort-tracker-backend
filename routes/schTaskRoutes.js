@@ -107,7 +107,7 @@ router.post("/sch-activities", async (req, res) => {
       return res.status(400).json({ error: "Missing or invalid data" });
     }
 
-    let existing = await SchActivity.findOne({ classId, kidmember, date });
+    let existing = await schActivity.findOne({ classId, kidmember, date });
 
     if (existing) {
       const existingKeys = existing.items
@@ -127,7 +127,7 @@ router.post("/sch-activities", async (req, res) => {
       return res.json(existing);
     }
 
-    const doc = await SchActivity.create({
+    const doc = await schActivity.create({
       classId,
       kidmember,
       date,
