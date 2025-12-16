@@ -161,7 +161,11 @@ router.get("/sch-activities", async (req, res) => {
   if (!classId || !date) return res.status(400).json({ success: false, error: "Missing classId or date" });
 
   try {
-    const activities = await SchActivity.find({ classId, date }).populate("kidmember", "name");
+    const activities = await schActivity.find({
+      classId: mongoose.Types.ObjectId(classId),
+      date
+    }).populate("kidmember", "name");
+
     res.json(activities);
   } catch (err) {
     console.error("Load activities error:", err);
@@ -170,17 +174,18 @@ router.get("/sch-activities", async (req, res) => {
 });
 
 // PATCH /api/sch-activities/updateEvaluation
-router.patch("/sch-activities/updateEvaluation", async (req, res) =>  {
+router.patch("/sch-activities/updateEvaluation", async (req, res) => {
   const { member, date, index, evaluation } = req.body;
   if (!member || !date || index === undefined || evaluation === undefined)
     return res.status(400).json({ success: false, error: "Missing parameters" });
 
   try {
-    // Find the document for this member and date
-    const doc = await SchActivity.findOne({ kidmember: member, date });
-    if (!doc) return res.status(404).json({ success: false, error: "Activity not found" });
+    const doc = await schActivity.findOne({
+      kidmember: mongoose.Types.ObjectId(member),
+      date
+    });
 
-    // Update evaluation for specific item
+    if (!doc) return res.status(404).json({ success: false, error: "Activity not found" });
     if (!doc.items[index]) return res.status(404).json({ success: false, error: "Item not found" });
 
     doc.items[index].evaluation = evaluation;
@@ -192,6 +197,7 @@ router.patch("/sch-activities/updateEvaluation", async (req, res) =>  {
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
+
 
 
 
