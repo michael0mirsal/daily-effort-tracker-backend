@@ -7,6 +7,7 @@ import License from '../models/License.js';
 import Family from "../models/Family.js";
 import Member from "../models/Member.js"; 
 import SchRoutine from "../models/sch-Routine.js"; 
+import schactivity from "../models/sch-activity.js"; 
 import crypto from "crypto";
 
 
