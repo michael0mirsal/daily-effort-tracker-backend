@@ -920,40 +920,89 @@ async function loadRoutineByDate(date, auto = false) {
   if (!date) return alert("Please choose a date.");
 
   try {
-    // Load members if not already
+    /* =========================
+       1) Ensure members loaded
+       ========================= */
     if (!window.classMembers || !Array.isArray(window.classMembers)) {
       await loadMembersIntoSelector(classId);
-      window.classMembers = window.classMembersList.map(m => ({ _id: m.id, name: m.name }));
+
+      if (!window.classMembersList || !Array.isArray(window.classMembersList)) {
+        throw new Error("classMembersList not loaded");
+      }
+
+      window.classMembers = window.classMembersList.map(m => ({
+        _id: String(m.id),
+        name: m.name
+      }));
     }
 
-    const res = await fetch(`${API}/sch-routine/load?classId=${classId}&date=${date}`);
+    /* =========================
+       2) Fetch routines
+       ========================= */
+    const res = await fetch(
+      `${API}/sch-routine/load?classId=${classId}&date=${date}`
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch routines");
+    }
+
     const routines = await res.json();
-    if (!Array.isArray(routines) || !routines.length) {
+
+    if (!Array.isArray(routines) || routines.length === 0) {
       if (!auto) alert(`No routine found for ${date}`);
       return;
     }
 
+    /* =========================
+       3) Reset UI
+       ========================= */
     clearAllCheckboxes();
     document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    // Group routines by section and task
+    /* =========================
+       4) Group routines
+       ========================= */
     const grouped = {};
+
     routines.forEach(r => {
+      if (!Array.isArray(r.items)) return;
+
       r.items.forEach(item => {
+        if (!item.section || !item.task) return;
+
         if (!grouped[item.section]) grouped[item.section] = {};
-        if (!grouped[item.section][item.task]) grouped[item.section][item.task] = [];
-        grouped[item.section][item.task].push({ ...item, kidId: r.kidmember });
+        if (!grouped[item.section][item.task])
+          grouped[item.section][item.task] = [];
+
+        grouped[item.section][item.task].push({
+          kidId: String(r.kidmember),
+          done: !!item.done
+        });
       });
     });
 
-    // Render
+    if (Object.keys(grouped).length === 0) {
+      alert("Routine data exists but no tasks could be rendered.");
+      return;
+    }
+
+    /* =========================
+       5) Render UI
+       ========================= */
     Object.entries(grouped).forEach(([section, tasks]) => {
       const sectionBody = document.getElementById(section + "Body");
-      if (!sectionBody) return;
+
+      if (!sectionBody) {
+        console.warn(`❗ Missing HTML tbody for section: ${section}Body`);
+        return;
+      }
 
       Object.entries(tasks).forEach(([taskName, items]) => {
         let row = Array.from(sectionBody.querySelectorAll("tr")).find(
-          r => r.children[0].textContent.trim().toLowerCase() === taskName.trim().toLowerCase()
+          r =>
+            r.children[0].textContent.trim().toLowerCase() ===
+            taskName.trim().toLowerCase()
         );
 
         if (!row) {
@@ -961,52 +1010,76 @@ async function loadRoutineByDate(date, auto = false) {
           row.innerHTML = createRowHTML(taskName, window.classMembers);
           sectionBody.appendChild(row);
           attachCheckboxListeners();
-          // attach add-member click
-          row.querySelector(".add-member-btn").onclick = () => addMemberFromBtn(row.querySelector(".add-member-btn"));
+
+          const addBtn = row.querySelector(".add-member-btn");
+          if (addBtn) {
+            addBtn.onclick = () => addMemberFromBtn(addBtn);
+          }
         }
 
-        // Checkbox checked if any kid did task
+        /* ===== Checkbox ===== */
         const cb = row.querySelector("input[type='checkbox']");
         if (cb) cb.checked = items.some(i => i.done);
 
-        // Render member tags
+        /* ===== Member tags ===== */
         const box = row.querySelector(".member-box");
         box.innerHTML = "";
+
         items.forEach(i => {
           const kid = window.classMembers.find(m => m._id === i.kidId);
           if (!kid) return;
+
           const tag = document.createElement("div");
           tag.className = "tag";
           tag.dataset.id = kid._id;
-          tag.innerHTML = `<span>${escapeHtml(kid.name)}</span><span class="remove">×</span>`;
+          tag.innerHTML = `
+            <span>${escapeHtml(kid.name)}</span>
+            <span class="remove">×</span>
+          `;
+
           tag.querySelector(".remove").onclick = () => tag.remove();
           box.appendChild(tag);
         });
       });
     });
 
+    /* =========================
+       6) Stars + Locking
+       ========================= */
     updateRoutineStars();
 
-    // Lock past dates
     const today = new Date().toISOString().split("T")[0];
     const isPast = date < today;
+
     document.querySelectorAll("input, button, select").forEach(el => {
       if (el.id === "saveBtn" || el.classList.contains("add-member-btn")) {
         el.disabled = isPast;
         el.style.opacity = isPast ? 0.5 : 1;
         el.style.cursor = isPast ? "not-allowed" : "pointer";
-      } else if (["checkbox", "text"].includes(el.type) || el.tagName === "SELECT") {
+      } else if (
+        ["checkbox", "text"].includes(el.type) ||
+        el.tagName === "SELECT"
+      ) {
         el.disabled = isPast;
       }
     });
 
     window.currentLoadedDate = date;
-    if (!auto) alert(isPast ? `🔒 Viewing past routine (${date}). Editing locked.` : `✅ Routine loaded for ${date}`);
+
+    if (!auto) {
+      alert(
+        isPast
+          ? `🔒 Viewing past routine (${date}). Editing locked.`
+          : `✅ Routine loaded for ${date}`
+      );
+    }
+
   } catch (err) {
-    console.error(err);
-    if (!auto) alert("Failed to load routine by date.");
+    console.error("Load routine error:", err);
+    if (!auto) alert("❌ Failed to load routine by date.");
   }
 }
+
 
 
   // navigation / logout
