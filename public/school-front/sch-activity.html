@@ -321,6 +321,14 @@ document.getElementById("classSelectBtn").onclick = async () => {
   console.log("Loaded class:", selectedClass);
 };
 
+function fillMemberTagsOnLoad() {
+  const container = document.getElementById("checkedStarsBox"); // or another container
+  if (!window.classMembersList || !container) return;
+
+  container.innerHTML = "🏦 Stars Box: " + window.classMembersList.map(m =>
+    `<span class="member-tag">${m.name}</span>`
+  ).join(" ");
+}
 
   /*********************************************
  * GLOBAL STORAGE
