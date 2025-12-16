@@ -459,13 +459,7 @@ function renderLocalItems() {
 // ----------------------
 document.getElementById("saveBtn").addEventListener("click", async () => {
   if (addedItems.length === 0) {
-    alert("Please add at least one effort.");
-    return;
-  }
-
-  const date = addedItems[0].date;
-  if (isPastDate(date)) {
-    alert("❌ Cannot save efforts for past dates!");
+    alert("⚠️ Please add at least one effort.");
     return;
   }
 
@@ -475,52 +469,60 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     return;
   }
 
-  try {
-    // Group items by member
-    const groupedByMember = {};
-
-    addedItems.forEach(it => {
-      if (!groupedByMember[it.memberId]) {
-        groupedByMember[it.memberId] = [];
-      }
-      groupedByMember[it.memberId].push({
-        activity: it.activity,
-        timeMin: Number(it.timeMin),
-        evaluation: Number(it.evaluation) || 0,
-        note: it.note || ""
-      });
+  // Group items by member
+  const groupedByMember = {};
+  addedItems.forEach(it => {
+    if (!groupedByMember[it.memberId]) {
+      groupedByMember[it.memberId] = [];
+    }
+    groupedByMember[it.memberId].push({
+      activity: it.activity,
+      timeMin: Number(it.timeMin),
+      evaluation: Number(it.evaluation) || 0,
+      note: it.note || "",
+      date: it.date // keep date per item
     });
+  });
 
-    // Save per member
-    for (const memberId in groupedByMember) {
-      const payload = {
-        classId,
-        kidmember: memberId,
-        date,
-        items: groupedByMember[memberId]
-      };
+  let failedMembers = [];
 
+  for (const memberId in groupedByMember) {
+    const items = groupedByMember[memberId];
+    const payload = {
+      classId,
+      kidmember: memberId,
+      date: items[0].date, // assuming all items for same member have same date
+      items
+    };
+
+    try {
       const res = await fetch(`${API}/sch-activities`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to save");
-      }
-    }
+      const data = await res.json();
 
-    // Reset UI
+      if (!res.ok || !data.success) {
+        failedMembers.push(memberId);
+        console.error(`Failed to save member ${memberId}:`, data.error);
+      }
+
+    } catch (err) {
+      failedMembers.push(memberId);
+      console.error(`Network error for member ${memberId}:`, err);
+    }
+  }
+
+  // Reset UI
+  if (failedMembers.length === 0) {
     addedItems.length = 0;
     renderLocalItems();
     loadEfforts();
-    alert("✅ Efforts saved successfully!");
-
-  } catch (err) {
-    console.error("❌ Save failed:", err);
-    alert("⚠️ Could not save to server.");
+    alert("✅ Efforts saved successfully for all members!");
+  } else {
+    alert(`⚠️ Could not save efforts for ${failedMembers.length} member(s). Check console for details.`);
   }
 });
 
