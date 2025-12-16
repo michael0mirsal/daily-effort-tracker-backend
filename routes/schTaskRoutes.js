@@ -155,7 +155,43 @@ router.post("/sch-activities", async (req, res) => {
 });
 
 
+// GET /api/sch-activities?classId=...&date=YYYY-MM-DD
+router.get("/", async (req, res) => {
+  const { classId, date } = req.query;
+  if (!classId || !date) return res.status(400).json({ success: false, error: "Missing classId or date" });
 
+  try {
+    const activities = await SchActivity.find({ classId, date }).populate("kidmember", "name");
+    res.json(activities);
+  } catch (err) {
+    console.error("Load activities error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// PATCH /api/sch-activities/updateEvaluation
+router.patch("/updateEvaluation", async (req, res) => {
+  const { member, date, index, evaluation } = req.body;
+  if (!member || !date || index === undefined || evaluation === undefined)
+    return res.status(400).json({ success: false, error: "Missing parameters" });
+
+  try {
+    // Find the document for this member and date
+    const doc = await SchActivity.findOne({ kidmember: member, date });
+    if (!doc) return res.status(404).json({ success: false, error: "Activity not found" });
+
+    // Update evaluation for specific item
+    if (!doc.items[index]) return res.status(404).json({ success: false, error: "Item not found" });
+
+    doc.items[index].evaluation = evaluation;
+    await doc.save();
+
+    res.json({ success: true, message: "Evaluation updated" });
+  } catch (err) {
+    console.error("Update evaluation error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
 
 
 
