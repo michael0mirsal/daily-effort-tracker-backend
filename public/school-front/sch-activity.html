@@ -560,10 +560,7 @@ async function loadActivities() {
   try {
     // Fetch activities for selected class and date
     const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
     const data = await res.json();
     const ActivityList = document.getElementById("ActivityList");
@@ -574,12 +571,13 @@ async function loadActivities() {
       return;
     }
 
-    // Flatten items for all members
+    // Flatten items for all members and safely handle null kidmember
     const allItems = data.flatMap(doc =>
-      doc.items.map((it, i) => ({
+      (doc.items || []).map((it, i) => ({
         ...it,
         date: doc.date,
-        member: doc.kidmember.name || doc.kidmember, // populated name if available
+        memberId: doc.kidmember || null,        // ObjectId or null
+        memberName: doc.kidName || "Unknown",   // safe fallback
         index: i
       }))
     );
@@ -592,11 +590,11 @@ async function loadActivities() {
         <td>${it.timeMin || ""}</td>
         <td>${currentRole === "parent"
           ? `<input type="number" class="starInput" min="0" max="10" value="${it.evaluation || 0}" 
-              data-index="${i}" data-date="${it.date}" data-member="${it.member}">`
+              data-index="${i}" data-date="${it.date}" data-member="${it.memberId}">`
           : it.evaluation || 0}</td>
         <td>${it.note || ""}</td>
         <td>${it.date || ""}</td>
-        <td>${it.member || currentUser}</td>
+        <td>${it.memberName || currentUser}</td>
       </tr>
     `).join("");
 
@@ -619,8 +617,10 @@ function attachStarListeners(items) {
 
       const box = e.target;
       const newEval = Number(box.value);
+
+      // Use memberId safely
       const saveData = {
-        member: box.dataset.member,
+        member: box.dataset.member || null,
         date: box.dataset.date,
         index: box.dataset.index,
         evaluation: newEval
@@ -645,6 +645,7 @@ function attachStarListeners(items) {
     });
   });
 }
+
 
 // ----------------------
 // Update total stars display
