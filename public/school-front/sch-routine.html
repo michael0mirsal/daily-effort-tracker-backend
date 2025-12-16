@@ -943,7 +943,7 @@ async function loadRoutineByDate(date, auto = false) {
        2) Fetch routines (kid-based)
        ========================= */
     const res = await fetch(
-      `${API}/sch-routine/load?classId=${classId}&date=${date}`
+      `${API}/api/sch-routine/load?classId=${classId}&date=${date}`
     );
     const routines = await res.json();
 
