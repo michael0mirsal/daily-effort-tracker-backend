@@ -543,69 +543,78 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 // ----------------------
 document.getElementById("showBtn").addEventListener("click", loadActivities);
 
-async function loadActivities(){
+// ----------------------
+// Load activities for selected class and date
+// ----------------------
+async function loadActivities() {
   const date = document.getElementById("filterDate").value;
   const classId = window.selectedClass;
-  if(!classId){
+
+  if (!classId) {
     alert("⚠️ No class selected!");
     return;
   }
 
-  try{
+  try {
     // Fetch activities for selected class and date
     const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
     const data = await res.json();
     const ActivityList = document.getElementById("ActivityList");
 
-    if(!data.length){
+    if (!data.length) {
       ActivityList.innerHTML = `<tr><td colspan="7" style="text-align:center;">No records found 💬</td></tr>`;
       document.getElementById("checkedStarsDisplay").textContent = "0⭐";
       return;
     }
 
     // Flatten items for all members
-    const allItems = data.flatMap(doc => 
+    const allItems = data.flatMap(doc =>
       doc.items.map((it, i) => ({
         ...it,
         date: doc.date,
-        member: doc.kidmember.name || doc.kidmember, // use populated name if available
+        member: doc.kidmember.name || doc.kidmember, // populated name if available
         index: i
       }))
     );
 
-    ActivityList.innerHTML = allItems.map((it,i) => `
+    // Render table
+    ActivityList.innerHTML = allItems.map((it, i) => `
       <tr>
-        <td>${i+1}</td>
-        <td>${it.activity||""}</td>
-        <td>${it.timeMin||""}</td>
-        <td>${currentRole==="parent"?`<input type="number" class="starInput" min="0" max="10" value="${it.evaluation||0}" data-index="${i}" data-date="${it.date}" data-member="${it.member}">`:it.evaluation||0}</td>
-        <td>${it.note||""}</td>
-        <td>${it.date||""}</td>
-        <td>${it.member||currentUser}</td>
+        <td>${i + 1}</td>
+        <td>${it.activity || ""}</td>
+        <td>${it.timeMin || ""}</td>
+        <td>${currentRole === "parent"
+          ? `<input type="number" class="starInput" min="0" max="10" value="${it.evaluation || 0}" 
+              data-index="${i}" data-date="${it.date}" data-member="${it.member}">`
+          : it.evaluation || 0}</td>
+        <td>${it.note || ""}</td>
+        <td>${it.date || ""}</td>
+        <td>${it.member || currentUser}</td>
       </tr>
     `).join("");
 
-    attachStarListeners();
+    attachStarListeners(allItems);
     updateStarsFromItems(allItems);
 
-  } catch(err){
+  } catch (err) {
     console.error("❌ Load failed:", err);
     alert("⚠️ Could not load activities.");
   }
 }
 
 // ----------------------
-// Update stars dynamically
+// Attach change listeners to stars inputs
 // ----------------------
-function updateStarsFromItems(items){
-  const total = items.reduce((s,it) => s + (Number(it.evaluation)||0), 0);
-  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
-}
-
-function attachStarListeners(){
+function attachStarListeners(items) {
   document.querySelectorAll(".starInput").forEach(input => {
     input.addEventListener("change", async e => {
-      if(currentRole !== "parent") return;
+      if (currentRole !== "parent") return;
+
       const box = e.target;
       const newEval = Number(box.value);
       const saveData = {
@@ -614,15 +623,20 @@ function attachStarListeners(){
         index: box.dataset.index,
         evaluation: newEval
       };
-      try{
-        await fetch(`${API}/sch-activities/updateEvaluation`, {
+
+      try {
+        const res = await fetch(`${API}/sch-activities/updateEvaluation`, {
           method: "PATCH",
-          headers: {"Content-Type":"application/json"},
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(saveData)
         });
+
+        const result = await res.json();
+        if (!result.success) throw new Error(result.error || "Update failed");
+
         loadActivities();
         showToast("✨ Stars updated!");
-      } catch(err){
+      } catch (err) {
         console.error("❌ Star update failed:", err);
         alert("⚠️ Could not update stars!");
       }
@@ -631,19 +645,35 @@ function attachStarListeners(){
 }
 
 // ----------------------
-function showToast(msg="✨ Saved!"){
+// Update total stars display
+// ----------------------
+function updateStarsFromItems(items) {
+  const total = items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
+}
+
+// ----------------------
+// Toast notification
+// ----------------------
+function showToast(msg = "✨ Saved!") {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 2000);
 }
 
-document.getElementById("backBtn").onclick = () => { window.location.href = "sch-choose.html"; };
+// ----------------------
+// Back button
+// ----------------------
+document.getElementById("backBtn").onclick = () => { 
+  window.location.href = "sch-choose.html"; 
+};
 
 // ----------------------
 // Auto-load today's saved activities
 // ----------------------
 loadActivities();
+
 
 
 </script>
