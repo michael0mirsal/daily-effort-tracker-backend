@@ -102,10 +102,22 @@ router.get("/sch-routine/load", async (req, res) => {
 // POST /api/sch-activities
 router.post("/sch-activities", async (req, res) => {
   try {
-    const { classId, kidmember, date, items } = req.body;
+    let { classId, kidmember, date, items } = req.body;
 
+    // Basic validation
     if (!classId || !kidmember || !date || !Array.isArray(items)) {
       return res.status(400).json({ success: false, error: "Missing or invalid data" });
+    }
+
+    // Ensure kidmember is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(kidmember)) {
+      return res.status(400).json({ success: false, error: "Invalid kidmember ID" });
+    }
+
+    // Check if the member exists
+    const memberDoc = await Member.findById(kidmember);
+    if (!memberDoc) {
+      return res.status(404).json({ success: false, error: "Kid member not found" });
     }
 
     // Check if a document already exists for this class, member, and date
@@ -131,17 +143,20 @@ router.post("/sch-activities", async (req, res) => {
       return res.json({
         success: true,
         message: "Activity updated successfully!",
-        data: existing
+        data: await existing.populate("kidmember", "name") // populate for frontend
       });
     }
 
     // Create new document
     const doc = await schActivity.create({
       classId,
-      kidmember,
+      kidmember: memberDoc._id, // store proper ObjectId
       date,
       items
     });
+
+    // Populate kidmember before returning
+    await doc.populate("kidmember", "name");
 
     res.status(201).json({
       success: true,
@@ -150,11 +165,10 @@ router.post("/sch-activities", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ sch-activities error:", err.message);
+    console.error("❌ sch-activities error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 // GET /api/sch-activities?classId=...&date=YYYY-MM-DD
 router.get("/sch-activities", async (req, res) => {
