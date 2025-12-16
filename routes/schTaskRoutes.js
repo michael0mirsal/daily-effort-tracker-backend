@@ -156,7 +156,7 @@ router.post("/sch-activities", async (req, res) => {
 
 
 // GET /api/sch-activities?classId=...&date=YYYY-MM-DD
-router.get("/", async (req, res) => {
+router.get("/sch-activities", async (req, res) => {
   const { classId, date } = req.query;
   if (!classId || !date) return res.status(400).json({ success: false, error: "Missing classId or date" });
 
@@ -170,7 +170,7 @@ router.get("/", async (req, res) => {
 });
 
 // PATCH /api/sch-activities/updateEvaluation
-router.patch("/updateEvaluation", async (req, res) => {
+router.patch("/sch-activities/updateEvaluation", async (req, res) =>  {
   const { member, date, index, evaluation } = req.body;
   if (!member || !date || index === undefined || evaluation === undefined)
     return res.status(400).json({ success: false, error: "Missing parameters" });
