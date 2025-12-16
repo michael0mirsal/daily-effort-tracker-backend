@@ -114,7 +114,7 @@ router.post("/sch-activities", async (req, res) => {
     }
 
     // Make sure the member exists
-    const memberDoc = await Member.findById(kidId);
+    const memberDoc = await SchoolMember.findById(kidId);
     if (!memberDoc) {
       return res.status(404).json({ success: false, error: "Kid member not found" });
     }
