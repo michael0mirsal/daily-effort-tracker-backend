@@ -104,12 +104,14 @@ router.post("/sch-activities", async (req, res) => {
     const { classId, kidmember, date, items } = req.body;
 
     if (!classId || !kidmember || !date || !Array.isArray(items)) {
-      return res.status(400).json({ error: "Missing or invalid data" });
+      return res.status(400).json({ success: false, error: "Missing or invalid data" });
     }
 
+    // Check if a document already exists for this class, member, and date
     let existing = await schActivity.findOne({ classId, kidmember, date });
 
     if (existing) {
+      // Avoid duplicating items
       const existingKeys = existing.items
         .filter(i => i.activity && i.timeMin !== undefined)
         .map(i => `${i.activity.toLowerCase()}_${i.timeMin}`);
@@ -124,9 +126,15 @@ router.post("/sch-activities", async (req, res) => {
       });
 
       await existing.save();
-      return res.json(existing);
+
+      return res.json({
+        success: true,
+        message: "Activity updated successfully!",
+        data: existing
+      });
     }
 
+    // Create new document
     const doc = await schActivity.create({
       classId,
       kidmember,
@@ -134,11 +142,15 @@ router.post("/sch-activities", async (req, res) => {
       items
     });
 
-    res.status(201).json(doc);
+    res.status(201).json({
+      success: true,
+      message: "Activity saved successfully!",
+      data: doc
+    });
 
   } catch (err) {
     console.error("❌ sch-activities error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
