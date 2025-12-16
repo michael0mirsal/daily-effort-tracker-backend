@@ -396,37 +396,42 @@ const tableBody = document.getElementById("tableBody");
 const addedItems = [];
 //----------------------------------------------------------------------------------------------------------------
 
-document.getElementById("addBtn").addEventListener("click",()=>{
+document.getElementById("addBtn").addEventListener("click", () => {
   const date = document.getElementById("date").value;
   const activity = document.getElementById("activity").value.trim();
   const timeMin = document.getElementById("timeMin").value;
   const evaluation = document.getElementById("evaluation").value;
   const note = document.getElementById("note").value;
-  const member = memberSelect.value;
 
-  if(!date || !activity) return alert("Please fill date and activity.");
-  if(isPastDate(date)) return alert("❌ Cannot add efforts for past dates!");
-  if(!member) return alert("⚠️ Please select a member!");
+  const memberSelect = document.getElementById("memberSelect");
+  const memberId = memberSelect.value;
+  const memberName = memberSelect.options[memberSelect.selectedIndex].text;
 
-  const duplicate = addedItems.some(it=>it.activity.trim().toLowerCase()===activity.toLowerCase() && it.timeMin==timeMin && it.member===member);
-  if(duplicate) return alert("⚠️ This activity for this member is already added today.");
+  if (!date || !activity) return alert("Please fill date and activity.");
+  if (isPastDate(date)) return alert("❌ Cannot add efforts for past dates!");
+  if (!memberId) return alert("⚠️ Please select a member!");
 
-  addedItems.push({date,activity,timeMin,evaluation,note,member});
+  const duplicate = addedItems.some(it =>
+    it.activity.toLowerCase() === activity.toLowerCase() &&
+    it.timeMin == timeMin &&
+    it.memberId === memberId
+  );
+
+  if (duplicate) return alert("⚠️ This activity for this member is already added today.");
+
+  addedItems.push({
+    date,
+    activity,
+    timeMin,
+    evaluation,
+    note,
+    memberId,
+    memberName
+  });
+
   renderLocalItems();
 });
 
-function renderLocalItems(){
-  tableBody.innerHTML = addedItems.map((it,i)=>`
-    <tr>
-      <td>${i+1}</td>
-      <td>${it.member.name}</td>
-      <td>${it.activity}</td>
-      <td>${it.timeMin}</td>
-      <td>${it.evaluation}</td>
-      <td>${it.note||""}</td>     
-    </tr>
-  `).join("");
-}
 /*
 // ----------------------
 // Save all efforts
