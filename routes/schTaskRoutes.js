@@ -161,15 +161,18 @@ router.get("/sch-activities", async (req, res) => {
   if (!classId || !date) return res.status(400).json({ success: false, error: "Missing classId or date" });
 
   try {
+    // Validate ObjectId
+    const classObjId = mongoose.isValidObjectId(classId) ? mongoose.Types.ObjectId(classId) : classId;
+
     const activities = await schActivity.find({
-      classId: mongoose.Types.ObjectId(classId),
+      classId: classObjId,
       date
-    }).populate("kidmember", "name");
+    }).populate("kidmember", "name").lean(); // lean() avoids mongoose documents issues
 
     res.json(activities);
   } catch (err) {
-    console.error("Load activities error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("Load activities error:", err); // <-- See exact error
+    res.status(500).json({ success: false, error: err.message }); // <-- send real error to client
   }
 });
 
