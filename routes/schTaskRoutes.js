@@ -99,48 +99,44 @@ router.get("/sch-routine/load", async (req, res) => {
 
 
 // POST /api/sch-activities
-router.post("/", async (req, res) => {
+router.post("/sch-activities", async (req, res) => {
   try {
     const { classId, kidmember, date, items } = req.body;
 
-    if (!classId || !kidmember || !date || !items?.length) {
-      return res.status(400).json({ error: "Missing data" });
+    if (!classId || !kidmember || !date || !Array.isArray(items)) {
+      return res.status(400).json({ error: "Missing or invalid data" });
     }
 
-    const existing = await SchActivity.findOne({
-      classId,
-      kidmember,
-      date
-    });
+    let doc = await SchActivity.findOne({ classId, kidmember, date });
 
-    if (existing) {
-      // Merge without duplicates
-      const existingKeys = existing.items.map(
-        i => i.activity.toLowerCase() + "_" + i.timeMin
+    if (doc) {
+      // merge (prevent duplicates)
+      const existingKeys = doc.items.map(
+        i => `${i.activity}_${i.timeMin}`
       );
 
       items.forEach(i => {
-        const key = i.activity.toLowerCase() + "_" + i.timeMin;
+        const key = `${i.activity}_${i.timeMin}`;
         if (!existingKeys.includes(key)) {
-          existing.items.push(i);
+          doc.items.push(i);
         }
       });
 
-      await existing.save();
-      return res.json(existing);
+      await doc.save();
+      return res.json(doc);
     }
 
-    const doc = await SchActivity.create({
+    doc = await SchActivity.create({
       classId,
       kidmember,
       date,
       items
     });
 
-    res.json(doc);
+    res.status(201).json(doc);
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ sch-activities error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
