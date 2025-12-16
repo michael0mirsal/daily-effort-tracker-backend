@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const activitySchema = new mongoose.Schema({
 classId: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
 kidmember: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember", required: true },
+
   date: { type: String, required: true },
   items: [
     {
