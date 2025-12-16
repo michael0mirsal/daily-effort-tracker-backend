@@ -113,13 +113,13 @@ router.post("/sch-activities", async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid kidmember ID" });
     }
 
-    // Find the SchoolMember document
+    // Make sure the member exists
     const memberDoc = await Member.findById(kidId);
     if (!memberDoc) {
       return res.status(404).json({ success: false, error: "Kid member not found" });
     }
 
-    // Check if an activity already exists for this class, member, and date
+    // Check if an activity already exists for this class, kid, and date
     let existing = await schActivity.findOne({ classId, kidmember: kidId, date });
 
     if (existing) {
@@ -135,34 +135,27 @@ router.post("/sch-activities", async (req, res) => {
       });
 
       await existing.save();
-      return res.json({
-        success: true,
-        message: "Activity updated successfully!",
-        data: await existing.populate("kidmember", "name") // populate for frontend
-      });
+      await existing.populate("kidmember", "name"); // populate before sending
+      return res.json({ success: true, message: "Activity updated successfully!", data: existing });
     }
 
-    // Create new document
+    // Create new activity
     const doc = await schActivity.create({
       classId,
-      kidmember: memberDoc._id, // always store valid ObjectId
+      kidmember: memberDoc._id, // ✅ store valid ObjectId
       date,
       items
     });
 
-    await doc.populate("kidmember", "name");
-
-    res.status(201).json({
-      success: true,
-      message: "Activity saved successfully!",
-      data: doc
-    });
+    await doc.populate("kidmember", "name"); // populate for frontend
+    res.status(201).json({ success: true, message: "Activity saved successfully!", data: doc });
 
   } catch (err) {
     console.error("❌ sch-activities error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // GET /api/sch-activities?classId=...&date=YYYY-MM-DD
 router.get("/sch-activities", async (req, res) => {
@@ -173,16 +166,24 @@ router.get("/sch-activities", async (req, res) => {
   }
 
   try {
-    // Validate and convert to ObjectId
-    let classObjId = classId;
-    if (mongoose.isValidObjectId(classId)) {
-      classObjId = new mongoose.Types.ObjectId(classId);
-    }
+    // Ensure classId is ObjectId
+    const classObjId = mongoose.Types.ObjectId(classId);
 
     const activities = await schActivity.find({ classId: classObjId, date })
-      .populate("kidmember", "name");
+      .populate("kidmember", "name"); // ✅ populate name
 
-    res.json(activities);
+    // Normalize for frontend
+    const normalized = activities.map(a => ({
+      _id: a._id,
+      classId: a.classId,
+      kidmember: String(a.kidmember?._id),   // string id
+      kidName: a.kidmember?.name || "Unknown", // populated name
+      date: a.date,
+      items: a.items
+    }));
+
+    res.json(normalized);
+
   } catch (err) {
     console.error("Load activities error:", err);
     res.status(500).json({ success: false, error: "Server error" });
