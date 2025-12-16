@@ -102,26 +102,25 @@ router.get("/sch-routine/load", async (req, res) => {
 // POST /api/sch-activities
 router.post("/sch-activities", async (req, res) => {
   try {
-    let { classId, kidmember, date, items } = req.body;
+    const { classId, kidId, date, items } = req.body; // use same key as sch-routine
 
-    // Validate inputs
-    if (!classId || !kidmember || !date || !Array.isArray(items)) {
+    if (!classId || !kidId || !date || !Array.isArray(items)) {
       return res.status(400).json({ success: false, error: "Missing or invalid data" });
     }
 
-    // Ensure kidmember is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(kidmember)) {
+    // Validate kidId
+    if (!mongoose.Types.ObjectId.isValid(kidId)) {
       return res.status(400).json({ success: false, error: "Invalid kidmember ID" });
     }
 
     // Find the SchoolMember document
-    const memberDoc = await Member.findById(kidmember);
+    const memberDoc = await Member.findById(kidId);
     if (!memberDoc) {
       return res.status(404).json({ success: false, error: "Kid member not found" });
     }
 
-    // Check if an activity already exists for this class, kid, and date
-    let existing = await schActivity.findOne({ classId, kidmember, date });
+    // Check if an activity already exists for this class, member, and date
+    let existing = await schActivity.findOne({ classId, kidmember: kidId, date });
 
     if (existing) {
       // Avoid duplicating items
@@ -143,10 +142,10 @@ router.post("/sch-activities", async (req, res) => {
       });
     }
 
-    // Create new activity with correct kidmember
+    // Create new document
     const doc = await schActivity.create({
       classId,
-      kidmember: memberDoc._id, // store proper ObjectId
+      kidmember: memberDoc._id, // always store valid ObjectId
       date,
       items
     });
@@ -164,6 +163,7 @@ router.post("/sch-activities", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 // GET /api/sch-activities?classId=...&date=YYYY-MM-DD
 router.get("/sch-activities", async (req, res) => {
   const { classId, date } = req.query;
