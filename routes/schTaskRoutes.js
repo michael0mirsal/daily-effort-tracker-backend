@@ -166,20 +166,23 @@ router.get("/sch-activities", async (req, res) => {
   }
 
   try {
-    // Ensure classId is ObjectId
-    const classObjId = mongoose.Types.ObjectId(classId);
+    // Validate classId
+    if (!mongoose.Types.ObjectId.isValid(classId)) {
+      return res.status(400).json({ success: false, error: "Invalid classId" });
+    }
+    const classObjId = new mongoose.Types.ObjectId(classId);
 
     const activities = await schActivity.find({ classId: classObjId, date })
-      .populate("kidmember", "name"); // ✅ populate name
+      .populate("kidmember", "name")
+      .lean(); // use .lean() for safer object mapping
 
-    // Normalize for frontend
     const normalized = activities.map(a => ({
       _id: a._id,
       classId: a.classId,
-      kidmember: String(a.kidmember?._id),   // string id
-      kidName: a.kidmember?.name || "Unknown", // populated name
+      kidmember: a.kidmember?._id ? String(a.kidmember._id) : null,
+      kidName: a.kidmember?.name || "Unknown",
       date: a.date,
-      items: a.items
+      items: a.items || []
     }));
 
     res.json(normalized);
@@ -189,6 +192,7 @@ router.get("/sch-activities", async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
+
 
 // ----------------------
 // PATCH /api/sch-activities/updateEvaluation
