@@ -104,7 +104,7 @@ router.post("/sch-activities", async (req, res) => {
   try {
     let { classId, kidmember, date, items } = req.body;
 
-    // Basic validation
+    // Validation
     if (!classId || !kidmember || !date || !Array.isArray(items)) {
       return res.status(400).json({ success: false, error: "Missing or invalid data" });
     }
@@ -114,24 +114,22 @@ router.post("/sch-activities", async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid kidmember ID" });
     }
 
-    // Check if the member exists
+    // Make sure the member exists
     const memberDoc = await Member.findById(kidmember);
     if (!memberDoc) {
       return res.status(404).json({ success: false, error: "Kid member not found" });
     }
 
-    // Check if a document already exists for this class, member, and date
+    // Check for existing activity
     let existing = await schActivity.findOne({ classId, kidmember, date });
 
     if (existing) {
-      // Avoid duplicating items
       const existingKeys = existing.items
         .filter(i => i.activity && i.timeMin !== undefined)
         .map(i => `${i.activity.toLowerCase()}_${i.timeMin}`);
 
       items.forEach(i => {
         if (!i.activity || i.timeMin === undefined) return;
-
         const key = `${i.activity.toLowerCase()}_${i.timeMin}`;
         if (!existingKeys.includes(key)) {
           existing.items.push(i);
@@ -139,30 +137,23 @@ router.post("/sch-activities", async (req, res) => {
       });
 
       await existing.save();
-
       return res.json({
         success: true,
         message: "Activity updated successfully!",
-        data: await existing.populate("kidmember", "name") // populate for frontend
+        data: await existing.populate("kidmember", "name")
       });
     }
 
-    // Create new document
+    // Create new activity document with valid kidmember
     const doc = await schActivity.create({
       classId,
-      kidmember: memberDoc._id, // store proper ObjectId
+      kidmember: memberDoc._id,
       date,
       items
     });
 
-    // Populate kidmember before returning
     await doc.populate("kidmember", "name");
-
-    res.status(201).json({
-      success: true,
-      message: "Activity saved successfully!",
-      data: doc
-    });
+    res.status(201).json({ success: true, message: "Activity saved successfully!", data: doc });
 
   } catch (err) {
     console.error("❌ sch-activities error:", err);
