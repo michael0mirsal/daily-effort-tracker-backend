@@ -463,7 +463,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     return;
   }
 
-  const classId = window.selectedClass; // from class popup
+  const classId = window.selectedClass;
   if (!classId) {
     alert("⚠️ No class selected!");
     return;
@@ -485,6 +485,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   });
 
   let failedMembers = [];
+  let successMessages = [];
 
   for (const memberId in groupedByMember) {
     const items = groupedByMember[memberId];
@@ -502,10 +503,13 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        const err = await res.text();
+      const data = await res.json(); // <-- read JSON response
+
+      if (!res.ok || !data.success) {
         failedMembers.push(memberId);
-        console.error(`Failed to save member ${memberId}:`, err);
+        console.error(`Failed to save member ${memberId}:`, data.error);
+      } else {
+        successMessages.push(`Member ${memberId}: ${data.message}`);
       }
 
     } catch (err) {
@@ -519,9 +523,9 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     addedItems.length = 0;
     renderLocalItems();
     loadEfforts();
-    alert("✅ Efforts saved successfully for all members!");
+    alert("✅ " + successMessages.join("\n"));
   } else {
-    alert(`⚠️ Could not save efforts for ${failedMembers.length} member(s). Check console for details.`);
+    alert(`⚠️ Could not save Activity for ${failedMembers.length} member(s).\nCheck console for details.\n\nSuccessful:\n${successMessages.join("\n")}`);
   }
 });
 
