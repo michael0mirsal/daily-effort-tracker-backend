@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import express from "express";
 import Nursery from "../models/Nursery.js";
 import ClassModel from "../models/Class.js";
