@@ -577,15 +577,15 @@ async function loadActivities() {
 
     // Flatten items for all members and safely handle null kidmember
     const allItems = data.flatMap(doc =>
-  (doc.items || []).map((it, i) => ({
-    ...it,
-    date: doc.date,
-    kidmember: doc.schoolMember?._id ? String(doc.schoolMember._id) : null,
-    kidName: doc.schoolMember?.member?.name || "Unknown",
-    index: i,
-    memberId: doc.schoolMember?._id
-  }))
-);
+      (doc.items || []).map((it, i) => ({
+        ...it,
+        date: doc.date,
+        kidmember: doc.schoolMemberId || null, // use schoolMemberId from backend
+        kidName: doc.kidName || "Unknown",     // use kidName from backend
+        index: i,
+        memberId: doc.schoolMemberId
+      }))
+    );
 
 
     // Render table
