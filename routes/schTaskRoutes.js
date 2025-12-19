@@ -11,7 +11,7 @@ import SchRoutine from "../models/sch-Routine.js";
 import schActivity from "../models/sch-activity.js"; 
 import crypto from "crypto";
 
-
+await schActivity.syncIndexes();
 const router = express.Router();
 
 
