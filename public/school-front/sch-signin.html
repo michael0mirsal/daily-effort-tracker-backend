@@ -202,6 +202,12 @@
         // Save user & nurseryId
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("nurseryId", user.nurseryId || "");
+        localStorage.setItem("currentUser", JSON.stringify({       // <--- ADD THIS
+        name: user.name,
+        role: user.role,
+       _id: user._id
+        }));
+        
 
   if (user.role.toLowerCase() === "teacher") {
     localStorage.setItem("teacherId", user._id);
