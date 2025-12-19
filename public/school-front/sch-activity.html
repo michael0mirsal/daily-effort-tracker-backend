@@ -316,7 +316,9 @@ document.getElementById("classSelectBtn").onclick = async () => {
   document.getElementById("classPopup").style.display = "none";
 
   await loadMembersIntoSelector(selectedClass);
-  fillMemberTagsOnLoad();
+        updateStarsForClass(selectedClass);  // <-- this calculates total stars
+
+  
 
   console.log("Loaded class:", selectedClass);
 };
