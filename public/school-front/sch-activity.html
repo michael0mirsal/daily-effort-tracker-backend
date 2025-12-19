@@ -633,12 +633,11 @@ async function updateStarsForClass(classId) {
   if (!classId) return;
 
   try {
-    // Backend endpoint to get ALL activities for this class
-    const res = await fetch(`${API}/sch-activities?classId=${classId}`);
+    const today = new Date().toISOString().split("T")[0]; // format YYYY-MM-DD
+    const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${today}`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
-    // Sum all evaluations
     const totalStars = data.reduce((total, doc) => {
       const sum = (doc.items || []).reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
       return total + sum;
@@ -651,6 +650,7 @@ async function updateStarsForClass(classId) {
     updateStarsDisplay(0);
   }
 }
+
 
 // ----------------------
 // Attach change listeners to stars inputs (if any)
