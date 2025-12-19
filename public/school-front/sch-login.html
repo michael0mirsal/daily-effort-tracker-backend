@@ -167,6 +167,14 @@ async function validateLicense() {
     const data = await res.json();
 
     if (res.ok) {
+
+      const user = {
+    name: data.user.name,   // assuming the API returns user info
+    role: data.user.role,
+    _id: data.user._id
+  };
+  localStorage.setItem("currentUser", JSON.stringify(user));
+
       // Redirect to signup after success
       window.location.href = "/sch-signup.html";
     } else {
