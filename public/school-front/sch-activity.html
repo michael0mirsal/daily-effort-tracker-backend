@@ -735,6 +735,21 @@ window.addEventListener("DOMContentLoaded", () => {
   if (window.selectedClass) loadActivities();
 });
 
+// Back button
+// ----------------------
+document.getElementById("backBtn").onclick = () => { 
+  window.location.href = "sch-choose.html"; 
+};
+// Logout
+// ----------------------
+function logout(){ localStorage.removeItem("currentUser"); window.location.href="welcome.html"; }
+
+// ----------------------
+
+
+
+
+
 </script>
 
 
