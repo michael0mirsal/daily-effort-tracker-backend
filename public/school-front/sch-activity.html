@@ -553,6 +553,9 @@ document.getElementById("showBtn").addEventListener("click", loadActivities);
 // ----------------------
 // Update total stars display safely
 // ----------------------
+// ----------------------
+// Update total stars display safely
+// ----------------------
 function updateStarsDisplay(total) {
   const totalStarsEl = document.getElementById("checkedStarsDisplay");
   if (!totalStarsEl) return;
@@ -560,80 +563,80 @@ function updateStarsDisplay(total) {
 }
 
 // ----------------------
-// Load activities for selected class and date (filtered view)
+// Load activities for selected class and selected date (table only)
 // ----------------------
 async function loadActivities() {
   const dateEl = document.getElementById("filterDate");
   const ActivityList = document.getElementById("ActivityList");
-
-  if (!dateEl || !ActivityList) return; // Safety check
+  if (!dateEl || !ActivityList) return;
 
   const date = dateEl.value;
   const classId = window.selectedClass;
-
   if (!classId) {
     alert("⚠️ No class selected!");
     return;
   }
 
   try {
+    // Fetch activities for selected class & date
     const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
     if (!data.length) {
       ActivityList.innerHTML = `<tr><td colspan="7" style="text-align:center;">No records found 💬</td></tr>`;
-      updateStarsDisplay(0); // Reset stars for this view
-      return;
+    } else {
+      // Flatten items
+      const allItems = data.flatMap(doc =>
+        (doc.items || []).map((it, i) => ({
+          ...it,
+          date: doc.date || "",
+          kidmember: doc.schoolMemberId || null,
+          kidName: doc.kidName || "Unknown",
+          index: i,
+          memberId: doc.schoolMemberId || null
+        }))
+      );
+
+      // Render table
+      ActivityList.innerHTML = allItems.map((it, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${it.activity || ""}</td>
+          <td>${it.timeMin || ""}</td>
+          <td>${it.evaluation || 0}</td>
+          <td>${it.note || ""}</td>
+          <td>${it.date || ""}</td>
+          <td>${it.kidName}</td>
+        </tr>
+      `).join("");
+
+      attachStarListeners(allItems);
     }
 
-    // Flatten items for display
-    const allItems = data.flatMap(doc =>
-      (doc.items || []).map((it, i) => ({
-        ...it,
-        date: doc.date || "",
-        kidmember: doc.schoolMemberId || null,
-        kidName: doc.kidName || "Unknown",
-        index: i,
-        memberId: doc.schoolMemberId || null
-      }))
-    );
-
-    // Render table
-    ActivityList.innerHTML = allItems.map((it, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${it.activity || ""}</td>
-        <td>${it.timeMin || ""}</td>
-        <td>${it.evaluation || 0}</td>
-        <td>${it.note || ""}</td>
-        <td>${it.date || ""}</td>
-        <td>${it.kidName}</td>
-      </tr>
-    `).join("");
-
-    attachStarListeners(allItems);
-    updateStarsForClass(classId); // Update class stars box
+    // Always update class stars box (all dates)
+    updateStarsForClass(classId);
 
   } catch (err) {
     console.error("❌ Load failed:", err);
-    alert("⚠️ Could not load activities.");
+    ActivityList.innerHTML = `<tr><td colspan="7" style="text-align:center;">Error loading data ⚠️</td></tr>`;
     updateStarsDisplay(0);
   }
 }
 
 // ----------------------
-// Update Stars Box: sum all evaluations for a class
+// Update Stars Box: sum all evaluations for a class (ignore date)
 // ----------------------
 async function updateStarsForClass(classId) {
   if (!classId) return;
 
   try {
-    const res = await fetch(`${API}/sch-activities?classId=${classId}`);
+    // Backend endpoint to get ALL activities for this class
+    const res = await fetch(`${API}/sch-activities/class/${classId}`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
-    // Sum all evaluations for all members
+    // Sum all evaluations
     const totalStars = data.reduce((total, doc) => {
       const sum = (doc.items || []).reduce((s, it) => s + (Number(it.evaluation) || 0), 0);
       return total + sum;
@@ -648,13 +651,12 @@ async function updateStarsForClass(classId) {
 }
 
 // ----------------------
-// Attach change listeners to stars inputs
+// Attach change listeners to stars inputs (if any)
 // ----------------------
 function attachStarListeners(items) {
   document.querySelectorAll(".starInput").forEach(input => {
     input.addEventListener("change", async e => {
       if (currentRole !== "parent") return;
-
       const box = e.target;
       const newEval = Number(box.value);
 
@@ -674,7 +676,7 @@ function attachStarListeners(items) {
         const result = await res.json();
         if (!result.success) throw new Error(result.error || "Update failed");
 
-        loadActivities(); // reload table and update class stars
+        loadActivities(); // reload table + stars
         showToast("✨ Stars updated!");
       } catch (err) {
         console.error("❌ Star update failed:", err);
@@ -685,11 +687,12 @@ function attachStarListeners(items) {
 }
 
 // ----------------------
-// Auto-load today's activities after DOM ready
+// Auto-load today's activities if class selected
 // ----------------------
 window.addEventListener("DOMContentLoaded", () => {
   if (window.selectedClass) loadActivities();
 });
+
 </script>
 
 
