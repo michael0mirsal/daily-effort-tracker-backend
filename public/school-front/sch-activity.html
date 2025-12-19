@@ -244,12 +244,8 @@ const API ="http://localhost:3000/api";
 const currentUser = localStorage.getItem("currentUser") || "Guest";
   document.getElementById("userName").textContent = currentUser;
 
-  const selectedClass = window.selectedClassName || localStorage.getItem("selectedClassName");
-  const selectedClassEl = document.getElementById("selectedClassName");
-  if (selectedClass) {
-    selectedClassEl.textContent = `| Class: ${selectedClass}`;
-  }
-
+  
+  
 let CLASS_MEMBERS = [];                   // all members in selected class
 
   // Utility: create option list HTML
@@ -312,13 +308,32 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // Handle class selection
 document.getElementById("classSelectBtn").onclick = async () => {
-  const selectedClass = document.getElementById("classSelect").value;
-  if (!selectedClass) {
+  const classSelectEl = document.getElementById("classSelect");
+  const selectedClassId = classSelectEl.value;
+  const selectedClassName = classSelectEl.options[classSelectEl.selectedIndex].text;
+
+  if (!selectedClassId) {
     alert("Please select a class!");
     return;
   }
 
-  window.selectedClass = selectedClass;
+  // Save selected class id & name
+  window.selectedClass = selectedClassId;
+  window.selectedClassName = selectedClassName;
+  localStorage.setItem("selectedClassId", selectedClassId);
+  localStorage.setItem("selectedClassName", selectedClassName);
+
+  document.getElementById("classPopup").style.display = "none";
+
+  await loadMembersIntoSelector(selectedClassId);
+  updateStarsForClass(selectedClassId);
+
+  // Update header
+  const selectedClassEl = document.getElementById("selectedClassName");
+  selectedClassEl.textContent = `| Class: ${selectedClassName}`;
+
+  console.log("Loaded class:", selectedClassName, selectedClassId);
+
 
   // Optional: store in hidden field
   const classShow = document.getElementById("classShow");
