@@ -634,7 +634,7 @@ async function updateStarsForClass(classId) {
 
   try {
     // Backend endpoint to get ALL activities for this class
-    const res = await fetch(`${API}/sch-activities/class/${classId}`);
+    const res = await fetch(`${API}/sch-activities?classId=${classId}`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
