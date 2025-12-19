@@ -169,7 +169,9 @@
 
 <div class="header">
   <h1>🌈 My Daily Activities Tracker</h1>
-  <h2>Welcome, <span id="userName"></span>!</h2>
+  <h2>Welcome, <span id="userName"></span>.
+     <span id="selectedClassName"></span>
+  </h2>
    <div class="header-buttons">
     <button id="backBtn">⬅️ Back</button>
     <button onclick="logout()">🚪 Logout</button>
@@ -238,6 +240,15 @@
 
 <script>
 const API ="http://localhost:3000/api";
+
+const currentUser = localStorage.getItem("currentUser") || "Guest";
+  document.getElementById("userName").textContent = currentUser;
+
+  const selectedClass = window.selectedClassName || localStorage.getItem("selectedClassName");
+  const selectedClassEl = document.getElementById("selectedClassName");
+  if (selectedClass) {
+    selectedClassEl.textContent = `| Class: ${selectedClass}`;
+  }
 
 let CLASS_MEMBERS = [];                   // all members in selected class
 
