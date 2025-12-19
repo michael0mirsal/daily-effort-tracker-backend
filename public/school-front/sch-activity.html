@@ -549,11 +549,28 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 // ----------------------
 document.getElementById("showBtn").addEventListener("click", loadActivities);
 
+
+// ----------------------
+// Update total stars display safely
+// ----------------------
+function updateStarsFromItems(items) {
+  const totalStarsEl = document.getElementById("checkedStarsDisplay");
+  if (!totalStarsEl) return; // Prevent error if element is missing
+
+  const total = items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
+  totalStarsEl.textContent = `${total}⭐`;
+}
+
 // ----------------------
 // Load activities for selected class and date
 // ----------------------
 async function loadActivities() {
-  const date = document.getElementById("filterDate").value;
+  const dateEl = document.getElementById("filterDate");
+  const ActivityList = document.getElementById("ActivityList");
+
+  if (!dateEl || !ActivityList) return; // Safety check
+
+  const date = dateEl.value;
   const classId = window.selectedClass;
 
   if (!classId) {
@@ -562,33 +579,30 @@ async function loadActivities() {
   }
 
   try {
-    // Fetch activities for selected class and date
     const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
     const data = await res.json();
-    const ActivityList = document.getElementById("ActivityList");
 
     if (!data.length) {
       ActivityList.innerHTML = `<tr><td colspan="7" style="text-align:center;">No records found 💬</td></tr>`;
-      document.getElementById("checkedStarsDisplay").textContent = "0⭐";
+      updateStarsFromItems([]); // Reset total stars
       return;
     }
 
-    // Flatten items for all members and safely handle null kidmember
+    // Flatten items for all members and use backend fields safely
     const allItems = data.flatMap(doc =>
       (doc.items || []).map((it, i) => ({
         ...it,
-        date: doc.date,
-        kidmember: doc.schoolMemberId || null, // use schoolMemberId from backend
-        kidName: doc.kidName || "Unknown",     // use kidName from backend
+        date: doc.date || "",
+        kidmember: doc.schoolMemberId || null,
+        kidName: doc.kidName || "Unknown",
         index: i,
-        memberId: doc.schoolMemberId
+        memberId: doc.schoolMemberId || null
       }))
     );
 
-
-    // Render table
+    // Render table safely
     ActivityList.innerHTML = allItems.map((it, i) => `
       <tr>
         <td>${i + 1}</td>
@@ -607,6 +621,7 @@ async function loadActivities() {
   } catch (err) {
     console.error("❌ Load failed:", err);
     alert("⚠️ Could not load activities.");
+    updateStarsFromItems([]); // Ensure stars reset on error
   }
 }
 
@@ -621,7 +636,6 @@ function attachStarListeners(items) {
       const box = e.target;
       const newEval = Number(box.value);
 
-      // Use memberId safely
       const saveData = {
         member: box.dataset.member || null,
         date: box.dataset.date,
@@ -639,7 +653,7 @@ function attachStarListeners(items) {
         const result = await res.json();
         if (!result.success) throw new Error(result.error || "Update failed");
 
-        loadActivities();
+        loadActivities(); // Reload after update
         showToast("✨ Stars updated!");
       } catch (err) {
         console.error("❌ Star update failed:", err);
@@ -649,36 +663,14 @@ function attachStarListeners(items) {
   });
 }
 
+// ----------------------
+// Auto-load today's activities safely
+// ----------------------
+window.addEventListener("DOMContentLoaded", () => {
+  loadActivities();
+});
+</script>
 
-// ----------------------
-// Update total stars display
-// ----------------------
-function updateStarsFromItems(items) {
-  const total = items.reduce((sum, it) => sum + (Number(it.evaluation) || 0), 0);
-  document.getElementById("checkedStarsDisplay").textContent = `${total}⭐`;
-}
-
-// ----------------------
-// Toast notification
-// ----------------------
-function showToast(msg = "✨ Saved!") {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2000);
-}
-
-// ----------------------
-// Back button
-// ----------------------
-document.getElementById("backBtn").onclick = () => { 
-  window.location.href = "sch-choose.html"; 
-};
-
-// ----------------------
-// Auto-load today's saved activities
-// ----------------------
-loadActivities();
 
 
 
