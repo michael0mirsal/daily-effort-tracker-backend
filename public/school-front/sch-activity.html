@@ -360,10 +360,10 @@ async function loadMembersIntoSelector(classId) {
     // Ensure array and fallback for undefined member
     window.classMembersList = Array.isArray(members)
   ? members
-      .filter(m => m.member && m.member._id)   // safety
+      .filter(m => m.member && schoolMember._id)   // safety
       .map(m => ({
-        id: m.member._id,                      // ✅ SchoolMember ONLY
-        name: m.member.name
+        id: schoolMember._id,                      // ✅ SchoolMember ONLY
+        name: schoolMember.name
       }))
   : [];
 
