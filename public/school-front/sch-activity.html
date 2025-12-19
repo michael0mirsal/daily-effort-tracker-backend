@@ -505,7 +505,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     // ⚡ Important change: send kidId instead of kidmember
     const payload = {
       classId,
-      kidId: memberId,      // <-- this matches backend expectation
+      schoolMemberId: memberId,      // <-- this matches backend expectation
       date: items[0].date,
       items
     };
