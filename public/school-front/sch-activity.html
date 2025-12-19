@@ -246,16 +246,19 @@ let currentUser = "Guest";
 const storedUser = localStorage.getItem("currentUser");
 if (storedUser) {
   try {
-    const userObj = JSON.parse(storedUser);  // parse JSON
-    if (userObj.name) currentUser = userObj.name;
+    const userObj = JSON.parse(storedUser);
+    if (userObj && userObj.name) currentUser = userObj.name;
+    else currentUser = storedUser;  // fallback if not JSON
   } catch {
-    // fallback if not JSON
-    currentUser = storedUser;
+    currentUser = storedUser; // fallback if parsing fails
   }
 }
 
 document.getElementById("userName").textContent = currentUser;
 
+// Set selected class
+  const selectedClass = localStorage.getItem("selectedClassName") || "None";
+  document.getElementById("selectedClassName").textContent = `| Class: ${selectedClass}`;
 
   
   
