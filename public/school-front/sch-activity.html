@@ -338,15 +338,14 @@ function fillAllMemberSelects() {
   const memberSelect = document.getElementById("memberSelect");
   if (!memberSelect) return;
 
-  // Clear previous options
   memberSelect.innerHTML = '<option value="">Select Member</option>';
 
-  // Add current members
   window.classMembersList.forEach(m => {
-    const option = new Option(m.name, m.id);
+    const option = new Option(m.name, m.id); // name + SchoolMember ID
     memberSelect.appendChild(option);
   });
 }
+
 
 
 
@@ -357,24 +356,26 @@ async function loadMembersIntoSelector(classId) {
 
     const members = await res.json();
 
-    // Ensure array and fallback for undefined member
+    // members[] = SchoolMember docs
     window.classMembersList = Array.isArray(members)
-  ? members
-      .filter(m => m.member && schoolMember._id)   // safety
-      .map(m => ({
-        id: schoolMember._id,                      // ✅ SchoolMember ONLY
-        name: schoolMember.name
-      }))
-  : [];
-
+      ? members
+          .filter(sm => sm._id && sm.member)   // safety
+          .map(sm => ({
+            id: sm._id,                        // ✅ SchoolMember ID
+            name: sm.member.name               // ✅ real kid name
+          }))
+      : [];
 
     fillAllMemberSelects();
+    fillMemberTagsOnLoad();
 
   } catch (err) {
     console.error("Error loading members:", err);
+    window.classMembersList = [];
     fillAllMemberSelects();
   }
 }
+
 
 
 //if(!currentUser){ window.location.href="login.html"; }
