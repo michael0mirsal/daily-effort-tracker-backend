@@ -15,5 +15,14 @@ schoolMember: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember", requi
   ],
   checkedData: Number,
 });
+/* 🔐 INDEXES — HERE IS THE ANSWER */
+activitySchema.index(
+  { schoolMember: 1, date: 1 },
+  { unique: true }              // prevent duplicate day records per kid
+);
+
+activitySchema.index(
+  { classId: 1, date: 1 }       // fast load by class + date
+);
 
 export default mongoose.model("sch-Activity", activitySchema);
