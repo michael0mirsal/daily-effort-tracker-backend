@@ -247,20 +247,25 @@ const storedUser = localStorage.getItem("currentUser");
 if (storedUser) {
   try {
     const userObj = JSON.parse(storedUser);
-    if (userObj && userObj.name) currentUser = userObj.name;
-    else currentUser = storedUser;  // fallback if not JSON
+    // If stored as JSON object with name
+    if (userObj && userObj.name) {
+      currentUser = userObj.name;
+    } else {
+      // stored as plain string
+      currentUser = storedUser.replace(/"/g, ""); // remove quotes if any
+    }
   } catch {
-    currentUser = storedUser; // fallback if parsing fails
+    // stored as plain string
+    currentUser = storedUser.replace(/"/g, "");
   }
 }
 
 document.getElementById("userName").textContent = currentUser;
 
 // Set selected class
-  const selectedClass = localStorage.getItem("selectedClassName") || "None";
-  document.getElementById("selectedClassName").textContent = `| Class: ${selectedClass}`;
+const selectedClass = localStorage.getItem("selectedClassName") || "None";
+document.getElementById("selectedClassName").textContent = `| Class: ${selectedClass}`;
 
-  
   
 let CLASS_MEMBERS = [];                   // all members in selected class
 
