@@ -128,8 +128,8 @@
   // Menu items by role
   const menuItems = {
     parent: [
-      { label: "Class Kids", page: "/sch-class-kids.html" },
-      { label: "Class Activities", page: "/sch-class-activities.html" },
+      { label: "Class Kids", page: "/sch-member.html" },
+      { label: "Class Activities", page: "/sch-activity.html" },
       { label: "Class Routines", page: "/sch-routine.html" }
     ],
 
@@ -175,7 +175,7 @@
   // Logout
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("user");
-    window.location.href = "/signin.html";
+    window.location.href = "/sch-signin.html";
   };
 
   // Back
