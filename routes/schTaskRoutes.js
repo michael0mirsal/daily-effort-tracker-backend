@@ -102,28 +102,28 @@ router.get("/sch-routine/load", async (req, res) => {
 // POST /api/sch-activities
 router.post("/sch-activities", async (req, res) => {
   try {
-    const { classId, kidId, date, items } = req.body; // use same key as sch-routine
+    const { classId, schoolMemberId, date, items } = req.body;
 
-    if (!classId || !kidId || !date || !Array.isArray(items)) {
+    if (!classId || !schoolMemberId || !date || !Array.isArray(items)) {
       return res.status(400).json({ success: false, error: "Missing or invalid data" });
     }
 
-    // Validate kidId
-    if (!mongoose.Types.ObjectId.isValid(kidId)) {
-      return res.status(400).json({ success: false, error: "Invalid kidmember ID" });
+    if (!mongoose.Types.ObjectId.isValid(schoolMemberId)) {
+      return res.status(400).json({ success: false, error: "Invalid schoolMember ID" });
     }
 
-    // Make sure the member exists
-    const memberDoc = await SchoolMember.findById(kidId);
-    if (!memberDoc) {
-      return res.status(404).json({ success: false, error: "Kid member not found" });
+    const schoolMember = await SchoolMember.findById(schoolMemberId);
+    if (!schoolMember) {
+      return res.status(404).json({ success: false, error: "School member not found" });
     }
 
-    // Check if an activity already exists for this class, kid, and date
-    let existing = await schActivity.findOne({ classId, kidmember: kidId, date });
+    let existing = await schActivity.findOne({
+      classId,
+      schoolMember: schoolMemberId,
+      date
+    });
 
     if (existing) {
-      // Avoid duplicating items
       const existingKeys = existing.items
         .filter(i => i.activity && i.timeMin !== undefined)
         .map(i => `${i.activity.toLowerCase()}_${i.timeMin}`);
@@ -135,19 +135,26 @@ router.post("/sch-activities", async (req, res) => {
       });
 
       await existing.save();
-      await existing.populate("kidmember", "name"); // populate before sending
+      await existing.populate({
+        path: "schoolMember",
+        populate: { path: "member", select: "name" }
+      });
+
       return res.json({ success: true, message: "Activity updated successfully!", data: existing });
     }
 
-    // Create new activity
     const doc = await schActivity.create({
       classId,
-      kidmember: memberDoc._id, // ✅ store valid ObjectId
+      schoolMember: schoolMemberId,
       date,
       items
     });
 
-    await doc.populate("kidmember", "name"); // populate for frontend
+    await doc.populate({
+      path: "schoolMember",
+      populate: { path: "member", select: "name" }
+    });
+
     res.status(201).json({ success: true, message: "Activity saved successfully!", data: doc });
 
   } catch (err) {
@@ -155,6 +162,7 @@ router.post("/sch-activities", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 // GET /api/sch-activities?classId=...&date=YYYY-MM-DD
@@ -166,20 +174,21 @@ router.get("/sch-activities", async (req, res) => {
   }
 
   try {
-    // Validate classId
     if (!mongoose.Types.ObjectId.isValid(classId)) {
       return res.status(400).json({ success: false, error: "Invalid classId" });
     }
-    const classObjId = new mongoose.Types.ObjectId(classId);
 
     const activities = await schActivity.find({ classId, date })
-  .populate("kidmember", "name"); // now works, returns Member's name
+      .populate({
+        path: "schoolMember",
+        populate: { path: "member", select: "name" }
+      });
 
     const normalized = activities.map(a => ({
       _id: a._id,
       classId: a.classId,
-      kidmember: a.kidmember?._id ? String(a.kidmember._id) : null,
-      kidName: a.kidmember?.name || "Unknown",
+      schoolMemberId: a.schoolMember?._id || null,
+      kidName: a.schoolMember?.member?.name || "Unknown",
       date: a.date,
       items: a.items || []
     }));
