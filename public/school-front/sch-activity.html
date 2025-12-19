@@ -169,7 +169,7 @@
 
 <div class="header">
   <h1>🌈 My Daily Activities Tracker</h1>
-  <h2>Welcome, <span id="userName"></span>.
+  <h2>Welcome <span id="userName"></span>.
      <span id="selectedClassName"></span>
   </h2>
    <div class="header-buttons">
@@ -241,8 +241,21 @@
 <script>
 const API ="http://localhost:3000/api";
 
-const currentUser = localStorage.getItem("currentUser") || "Guest";
-  document.getElementById("userName").textContent = currentUser;
+let currentUser = "Guest";
+
+const storedUser = localStorage.getItem("currentUser");
+if (storedUser) {
+  try {
+    const userObj = JSON.parse(storedUser);  // parse JSON
+    if (userObj.name) currentUser = userObj.name;
+  } catch {
+    // fallback if not JSON
+    currentUser = storedUser;
+  }
+}
+
+document.getElementById("userName").textContent = currentUser;
+
 
   
   
@@ -323,8 +336,10 @@ document.getElementById("classSelectBtn").onclick = async () => {
   localStorage.setItem("selectedClassId", selectedClassId);
   localStorage.setItem("selectedClassName", selectedClassName);
 
+  // Hide popup
   document.getElementById("classPopup").style.display = "none";
 
+  // Load members and update stars
   await loadMembersIntoSelector(selectedClassId);
   updateStarsForClass(selectedClassId);
 
@@ -332,22 +347,13 @@ document.getElementById("classSelectBtn").onclick = async () => {
   const selectedClassEl = document.getElementById("selectedClassName");
   selectedClassEl.textContent = `| Class: ${selectedClassName}`;
 
-  console.log("Loaded class:", selectedClassName, selectedClassId);
-
-
   // Optional: store in hidden field
   const classShow = document.getElementById("classShow");
-  if (classShow) classShow.value = selectedClass;
+  if (classShow) classShow.value = selectedClassId;
 
-  document.getElementById("classPopup").style.display = "none";
-
-  await loadMembersIntoSelector(selectedClass);
-        updateStarsForClass(selectedClass);  // <-- this calculates total stars
-
-  
-
-  console.log("Loaded class:", selectedClass);
+  console.log("Loaded class:", selectedClassName, selectedClassId);
 };
+
 
 function fillMemberTagsOnLoad() {
   const container = document.getElementById("checkedStarsBox"); // or another container
