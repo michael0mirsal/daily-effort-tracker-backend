@@ -156,7 +156,7 @@ router.post("/school/signin", async (req, res) => {
         nurseryName: user.nursery.name
       };
     } 
-    else if (role === "parent") {
+    else if (role === "supervisor") {
       // Parent → check nursery passKey via family
       user = await SchoolMember.findOne({ fullName: name }).populate("family.nursery", "name passKey");
       if (!user || !user.family.nursery || user.family.nursery.name !== nurseryName || user.family.nursery.passKey !== passKey) {
