@@ -193,6 +193,8 @@ async function loadClassMembers(cls) {
     const res = await fetch(`${API}/sch-members?ids=${cls.members.join(",")}`);
     const members = await res.json();
 
+    // Do NOT overwrite MEMBERS_MAP entirely here!
+    // Keep existing data for all classes
     members.forEach(sm => {
       if (sm._id && sm.name) {
         MEMBERS_MAP[sm._id] = sm.name;
@@ -202,6 +204,7 @@ async function loadClassMembers(cls) {
     console.error("❌ Failed to load class members", err);
   }
 }
+
 
 /* =====================================
    LOAD ALL TEACHERS OF CLASS
@@ -275,6 +278,15 @@ function buildTree() {
           childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${TEACHERS_MAP[tid] || "Teacher"}</div>`;
         });
       }
+
+      // Show members
+      if (cls.members && cls.members.length > 0) {
+          cls.members.forEach(mid => {
+          childBox.innerHTML += `<div class="member-box">🧒 ${MEMBERS_MAP[mid] || "Kid"}</div>`;
+        });
+      }
+
+
 
       showTreeReport(cls);
     };
