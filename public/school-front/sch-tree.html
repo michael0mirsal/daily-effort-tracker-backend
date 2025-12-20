@@ -274,8 +274,8 @@ function buildTree() {
       if (!cls.teachers || cls.teachers.length === 0) {
         childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
       } else {
-        cls.teachers.forEach(tid => {
-          childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${TEACHERS_MAP[tid] || "Teacher"}</div>`;
+        cls.teachers.forEach(t => {
+        childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${t.name}</div>`;
         });
       }
 
