@@ -258,6 +258,22 @@ router.get("/sch-members", async (req, res) => {
   }
 });
 
+// GET /api/teachers?ids=...
+router.get("/teachers", async (req, res) => {
+  try {
+    const { ids } = req.query;
+    if (!ids) return res.status(400).json({ error: "Missing ids" });
+
+    const idArray = ids.split(",").filter(id => mongoose.Types.ObjectId.isValid(id));
+
+    const teachers = await Teacher.find({ _id: { $in: idArray } }).lean();
+
+    res.json(teachers); // each teacher has at least _id and name
+  } catch (err) {
+    console.error("❌ Failed to load teachers", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 
 
