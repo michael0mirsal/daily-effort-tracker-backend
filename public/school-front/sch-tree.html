@@ -163,16 +163,16 @@ let reports = [];        // routines / activities
 async function loadData() {
   try {
     // Load classes
-    const classRes = await fetch("/api/class");
+    const classRes = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
     classes = await classRes.json();
 
     // Load members (kids + teachers if same collection)
-    const memberRes = await fetch("/api/sch-members");
+    const memberRes = await fetch(`${API}/members/class/${classId}`);
     const members = await memberRes.json();
     members.forEach(m => membersMap[m._id] = m.name);
 
     // Load reports (activities / routines)
-    const reportRes = await fetch("/api/sch-activities");
+    const reportRes = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
     reports = await reportRes.json();
 
     loadTree();
