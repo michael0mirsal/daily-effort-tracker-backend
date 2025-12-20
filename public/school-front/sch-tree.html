@@ -152,34 +152,17 @@ button {
 
  const API ="http://localhost:3000/api";  
 
+
 /* =====================================
    GLOBAL STATE
 ===================================== */
 let TREE_CLASSES = [];
-let TEACHERS_MAP = {};     // teacherId -> name
-let MEMBERS_MAP = {};      // schoolMemberId -> member name
+let MEMBERS_MAP = {};     // schoolMemberId -> name
 let TREE_REPORTS = [];
 
 
 /* =====================================
-   LOAD TEACHERS (ONCE)
-===================================== */
-async function loadTeachers() {
-  try {
-    const res = await fetch(`${API}/teachers`);
-    const teachers = await res.json();
-
-    teachers.forEach(t => {
-      TEACHERS_MAP[t._id] = t.name;
-    });
-  } catch (err) {
-    console.error("❌ Failed to load teachers", err);
-  }
-}
-
-
-/* =====================================
-   LOAD CLASSES (BY USER ROLE)
+   LOAD CLASSES
 ===================================== */
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -188,7 +171,7 @@ async function loadTreeClasses() {
   try {
     let res;
 
-    if (user.role?.toLowerCase() === "teacher") {
+    if (user.role?.toLowerCase() === "supervisor") {
       res = await fetch(`${API}/teachers/${user._id}/classes`);
       const data = await res.json();
       TREE_CLASSES = data.classes || [];
@@ -206,7 +189,7 @@ async function loadTreeClasses() {
 
 
 /* =====================================
-   LOAD MEMBERS FOR CLASS (ALL KIDS)
+   LOAD ALL MEMBERS OF CLASS
 ===================================== */
 async function loadClassMembers(classId) {
   MEMBERS_MAP = {};
@@ -227,19 +210,22 @@ async function loadClassMembers(classId) {
 
 
 /* =====================================
-   LOAD REPORTS (CLASS + OPTIONAL DATE)
+   LOAD REPORTS (DATE REQUIRED)
 ===================================== */
 async function loadClassReports(classId) {
   TREE_REPORTS = [];
 
   const dateInput = document.getElementById("filterDate");
-  const dateQuery =
-    dateInput && dateInput.value ? `&date=${dateInput.value}` : "";
+  const date =
+    dateInput && dateInput.value
+      ? dateInput.value
+      : new Date().toISOString().slice(0, 10); // TODAY
 
   try {
     const res = await fetch(
-      `${API}/sch-activities?classId=${classId}${dateQuery}`
+      `${API}/sch-activities?classId=${classId}&date=${date}`
     );
+
     TREE_REPORTS = await res.json();
   } catch (err) {
     console.error("❌ Failed to load reports", err);
@@ -248,7 +234,7 @@ async function loadClassReports(classId) {
 
 
 /* =====================================
-   BUILD TREE UI
+   BUILD TREE
 ===================================== */
 function buildTree() {
   const tree = document.getElementById("classTree");
@@ -274,13 +260,13 @@ function buildTree() {
       cls.teachers.forEach(tid => {
         childBox.innerHTML += `
           <div class="teacher-box">
-            👩‍🏫 ${TEACHERS_MAP[tid] || "Unknown Teacher"}
+            👩‍🏫 ${MEMBERS_MAP[tid] || "Teacher"}
           </div>
         `;
       });
     }
 
-    /* ---------- CLICK HANDLER ---------- */
+    /* ---------- CLICK ---------- */
     classDiv.onclick = async () => {
       childBox.style.display =
         childBox.style.display === "block" ? "none" : "block";
@@ -297,7 +283,7 @@ function buildTree() {
 
 
 /* =====================================
-   SHOW REPORT (RIGHT PANEL)
+   SHOW REPORT
 ===================================== */
 function showTreeReport(cls) {
   const area = document.getElementById("reportContent");
@@ -341,10 +327,7 @@ function showTreeReport(cls) {
 /* =====================================
    INIT
 ===================================== */
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadTeachers();
-  await loadTreeClasses();
-});
+window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
 
 
