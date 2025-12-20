@@ -150,173 +150,166 @@ button {
 
 <script>
 /* ===============================
-   GLOBAL DATA (DYNAMIC)
+   TREE + REPORT (SAFE VERSION)
 ================================ */
-let classes = [];        // classes from DB
-let membersMap = {};     // memberId -> member name
-let reports = [];        // routines / activities
+
+let TREE_CLASSES = [];
+let TREE_MEMBERS = {};   // schoolMemberId → name
+let TREE_REPORTS = [];
 
 
 /* ===============================
-   LOAD ALL DATA FROM BACKEND
+   LOAD CLASSES (BY USER ROLE)
 ================================ */
-async function loadData() {
+async function loadTreeClasses() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
   try {
-    // Load classes
-    const classRes = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-    classes = await classRes.json();
+    let res;
 
-    // Load members (kids + teachers if same collection)
-    const memberRes = await fetch(`${API}/members/class/${classId}`);
-    const members = await memberRes.json();
-    members.forEach(m => membersMap[m._id] = m.name);
+    if (user.role?.toLowerCase() === "teacher") {
+      res = await fetch(`${API}/teachers/${user._id}/classes`);
+      const data = await res.json();
+      TREE_CLASSES = data.classes || [];
+    } else {
+      res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+      const data = await res.json();
+      TREE_CLASSES = data.classes || [];
+    }
 
-    // Load reports (activities / routines)
-    const reportRes = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
-    reports = await reportRes.json();
-
-    loadTree();
+    buildTree();
   } catch (err) {
-    console.error("Failed to load data", err);
+    console.error("❌ Failed to load tree classes", err);
   }
 }
 
 
 /* ===============================
-   BUILD TREE (CLASSES → TEACHERS → KIDS)
+   LOAD MEMBERS FOR CLASS
 ================================ */
-function loadTree() {
+async function loadTreeMembers(classId) {
+  TREE_MEMBERS = {};
+
+  try {
+    const res = await fetch(`${API}/members/class/${classId}`);
+    const members = await res.json();
+
+    members.forEach(sm => {
+      if (sm._id && sm.member?.name) {
+        TREE_MEMBERS[sm._id] = sm.member.name;
+      }
+    });
+  } catch (err) {
+    console.error("❌ Failed to load tree members", err);
+  }
+}
+
+
+/* ===============================
+   LOAD REPORTS FOR CLASS + DATE
+================================ */
+async function loadTreeReports(classId) {
+  TREE_REPORTS = [];
+  const date = document.getElementById("filterDate")?.value;
+
+  try {
+    const res = await fetch(
+      `${API}/sch-activities?classId=${classId}&date=${date}`
+    );
+    TREE_REPORTS = await res.json();
+  } catch (err) {
+    console.error("❌ Failed to load reports", err);
+  }
+}
+
+
+/* ===============================
+   BUILD TREE UI
+================================ */
+function buildTree() {
   const tree = document.getElementById("classTree");
+  if (!tree) return;
+
   tree.innerHTML = "";
 
-  classes.forEach(cls => {
+  TREE_CLASSES.forEach(cls => {
     const classDiv = document.createElement("div");
     classDiv.className = "class-branch";
     classDiv.textContent = cls.name;
 
-    const childContainer = document.createElement("div");
-    childContainer.className = "child-items";
+    const childBox = document.createElement("div");
+    childBox.className = "child-items";
+    childBox.style.display = "none";
 
-    /* -------- Teachers -------- */
-    if (!cls.teachers || cls.teachers.length === 0) {
-      const tDiv = document.createElement("div");
-      tDiv.className = "teacher-box";
-      tDiv.textContent = "👩‍🏫 No teacher assigned";
-      childContainer.appendChild(tDiv);
+    // Teachers
+    if (!cls.teachers?.length) {
+      childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
     } else {
-      cls.teachers.forEach(tid => {
-        const tDiv = document.createElement("div");
-        tDiv.className = "teacher-box";
-        tDiv.textContent = "👩‍🏫 " + (membersMap[tid] || tid);
-        childContainer.appendChild(tDiv);
+      cls.teachers.forEach(() => {
+        childBox.innerHTML += `<div class="teacher-box">👩‍🏫 Teacher</div>`;
       });
     }
 
-    /* -------- Kids -------- */
-    if (!cls.members || cls.members.length === 0) {
-      const kDiv = document.createElement("div");
-      kDiv.className = "kid-box";
-      kDiv.textContent = "🧒 No kids yet";
-      childContainer.appendChild(kDiv);
-    } else {
-      cls.members.forEach(mid => {
-        const kidDiv = document.createElement("div");
-        kidDiv.className = "kid-box";
-        kidDiv.textContent = "🧒 " + (membersMap[mid] || mid);
-        childContainer.appendChild(kidDiv);
-      });
-    }
+    classDiv.onclick = async () => {
+      childBox.style.display =
+        childBox.style.display === "block" ? "none" : "block";
 
-    /* -------- Toggle + Report -------- */
-    classDiv.onclick = () => {
-      childContainer.style.display =
-        childContainer.style.display === "block" ? "none" : "block";
-      showReport(cls);
+      await loadTreeMembers(cls._id);
+      await loadTreeReports(cls._id);
+      showTreeReport(cls);
     };
 
     tree.appendChild(classDiv);
-    tree.appendChild(childContainer);
+    tree.appendChild(childBox);
   });
 }
 
 
 /* ===============================
    SHOW REPORT (RIGHT PANEL)
-   (Merged with original logic)
 ================================ */
-function showReport(cls) {
-  const reportArea = document.getElementById("reportContent");
+function showTreeReport(cls) {
+  const area = document.getElementById("reportContent");
+  if (!area) return;
 
-  let html = `<h2>${cls.name} Full Report</h2>`;
+  let html = `<h2>${cls.name} – Daily Report</h2>`;
 
-  // Filter reports by classId
-  const classReports = reports.filter(r => r.classId === cls._id);
-
-  if (classReports.length === 0) {
-    html += "<p>No activities or routines saved yet.</p>";
-    reportArea.innerHTML = html;
+  if (!TREE_REPORTS.length) {
+    area.innerHTML = html + "<p>No records found.</p>";
     return;
   }
 
-  // Group reports by date
-  const reportByDate = {};
-  classReports.forEach(r => {
-    if (!reportByDate[r.date]) reportByDate[r.date] = [];
-    reportByDate[r.date].push(r);
-  });
-
   html += "<ul>";
 
-  Object.keys(reportByDate).forEach(date => {
-    html += `<li><strong>📅 ${date}</strong><ul>`;
+  TREE_REPORTS.forEach(doc => {
+    html += `<li><b>🧒 ${TREE_MEMBERS[doc.schoolMemberId] || "Unknown"}</b><ul>`;
 
-    reportByDate[date].forEach(r => {
-      html += `<li><b>🧒 ${membersMap[r.kidmember] || r.kidmember}</b><ul>`;
-
-      r.items.forEach(item => {
-        html += `
-          <li>
-            🎯 ${item.activity || "Activity"}
-            | ⏱ ${item.timeMin || 0} min
-            | ⭐ ${item.evaluation || "-"}
-            <br>📝 ${item.note || ""}
-          </li>
-        `;
-      });
-
-      html += "</ul></li>";
+    doc.items.forEach(it => {
+      html += `
+        <li>
+          🎯 ${it.activity}
+          | ⏱ ${it.timeMin} min
+          | ⭐ ${it.evaluation}
+          <br>📝 ${it.note || ""}
+        </li>
+      `;
     });
 
     html += "</ul></li>";
   });
 
   html += "</ul>";
-  reportArea.innerHTML = html;
+  area.innerHTML = html;
 }
-
-
-/* ===============================
-   BACK BUTTON
-================================ */
-document.getElementById("backBtn").onclick = () => {
-  document.getElementById("reportContent").innerHTML =
-    "<p>Select a class to view full report</p>";
-};
-
-
-/* ===============================
-   LOGOUT BUTTON
-================================ */
-document.getElementById("logoutBtn").onclick = () => {
-  alert("Logging out...");
-};
 
 
 /* ===============================
    INIT
 ================================ */
-loadData();
+window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
+
 
 
 </body>
