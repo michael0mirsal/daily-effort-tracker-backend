@@ -171,15 +171,11 @@ async function loadTreeClasses() {
   try {
     let res;
 
-    if (user.role?.toLowerCase() === "supervisor") {
-      res = await fetch(`${API}/teachers/${user._id}/classes`);
-      const data = await res.json();
-      TREE_CLASSES = data.classes || [];
-    } else {
+    
       res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
       const data = await res.json();
       TREE_CLASSES = data.classes || [];
-    }
+    
 
     buildTree();
   } catch (err) {
