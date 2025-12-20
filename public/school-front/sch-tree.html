@@ -155,7 +155,8 @@ const API = "http://localhost:3000/api";
    GLOBAL STATE
 ===================================== */
 let TREE_CLASSES = [];
-let MEMBERS_MAP = {};     // schoolMemberId -> name
+let MEMBERS_MAP = {};       // kidId -> name
+let TEACHERS_MAP = {};      // teacherId -> name
 let TREE_REPORTS = [];
 
 /* =====================================
@@ -170,20 +171,20 @@ async function loadTreeClasses() {
     const data = await res.json();
     TREE_CLASSES = data.classes || [];
 
-    // Load members for each class
+    // Load all members and teachers for each class
     for (const cls of TREE_CLASSES) {
-      await loadClassMembers(cls);  // <-- await here!
+      await loadClassMembers(cls);
+      await loadClassTeachers(cls);
     }
 
-    buildTree(); // now MEMBERS_MAP is populated
+    buildTree();
   } catch (err) {
     console.error("❌ Failed to load tree classes", err);
   }
 }
 
-
 /* =====================================
-   LOAD ALL MEMBERS OF CLASS
+   LOAD ALL MEMBERS (kids) OF CLASS
 ===================================== */
 async function loadClassMembers(cls) {
   if (!cls.members || cls.members.length === 0) return;
@@ -191,9 +192,6 @@ async function loadClassMembers(cls) {
   try {
     const res = await fetch(`${API}/sch-members?ids=${cls.members.join(",")}`);
     const members = await res.json();
-
-    // Initialize MEMBERS_MAP if undefined
-    if (!window.MEMBERS_MAP) window.MEMBERS_MAP = {};
 
     members.forEach(sm => {
       if (sm._id && sm.name) {
@@ -205,6 +203,25 @@ async function loadClassMembers(cls) {
   }
 }
 
+/* =====================================
+   LOAD ALL TEACHERS OF CLASS
+===================================== */
+async function loadClassTeachers(cls) {
+  if (!cls.teachers || cls.teachers.length === 0) return;
+
+  try {
+    const res = await fetch(`${API}/teachers?ids=${cls.teachers.join(",")}`);
+    const teachers = await res.json();
+
+    teachers.forEach(t => {
+      if (t._id && t.name) {
+        TEACHERS_MAP[t._id] = t.name;
+      }
+    });
+  } catch (err) {
+    console.error("❌ Failed to load class teachers", err);
+  }
+}
 
 /* =====================================
    LOAD REPORTS (DATE REQUIRED)
@@ -215,7 +232,7 @@ async function loadClassReports(classId) {
   const dateInput = document.getElementById("filterDate");
   const date = dateInput && dateInput.value
     ? dateInput.value
-    : new Date().toISOString().slice(0, 10); // TODAY
+    : new Date().toISOString().slice(0, 10);
 
   try {
     const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
@@ -243,13 +260,11 @@ function buildTree() {
     childBox.className = "child-items";
     childBox.style.display = "none";
 
-    // ---------- CLICK ----------
     classDiv.onclick = async () => {
-      childBox.style.display =
-        childBox.style.display === "block" ? "none" : "block";
+      childBox.style.display = childBox.style.display === "block" ? "none" : "block";
 
-      // Load members first
-      await loadClassMembers(cls);
+      // Load reports for this class
+      await loadClassReports(cls._id);
 
       // Show teachers
       childBox.innerHTML = "";
@@ -257,16 +272,10 @@ function buildTree() {
         childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
       } else {
         cls.teachers.forEach(tid => {
-          childBox.innerHTML += `
-            <div class="teacher-box">
-              👩‍🏫 ${MEMBERS_MAP[tid] || "Teacher"}
-            </div>
-          `;
+          childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${TEACHERS_MAP[tid] || "Teacher"}</div>`;
         });
       }
 
-      // Load reports
-      await loadClassReports(cls._id);
       showTreeReport(cls);
     };
 
@@ -294,7 +303,7 @@ function showTreeReport(cls) {
   TREE_REPORTS.forEach(doc => {
     html += `
       <li>
-        <b>🧒 ${doc.kidName || "Unknown Kid"}</b>
+        <b>🧒 ${doc.kidName || MEMBERS_MAP[doc.kidmember] || "Unknown Kid"}</b>
         <ul>
     `;
 
@@ -321,6 +330,7 @@ function showTreeReport(cls) {
 ===================================== */
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
+
 
 
 
