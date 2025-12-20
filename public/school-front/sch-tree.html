@@ -169,23 +169,31 @@ async function loadTreeClasses() {
     const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
     const data = await res.json();
     TREE_CLASSES = data.classes || [];
-    buildTree();
+
+    // Load members for each class
+    for (const cls of TREE_CLASSES) {
+      await loadClassMembers(cls);  // <-- await here!
+    }
+
+    buildTree(); // now MEMBERS_MAP is populated
   } catch (err) {
     console.error("❌ Failed to load tree classes", err);
   }
 }
 
+
 /* =====================================
    LOAD ALL MEMBERS OF CLASS
 ===================================== */
 async function loadClassMembers(cls) {
-  MEMBERS_MAP = {};
-
   if (!cls.members || cls.members.length === 0) return;
 
   try {
     const res = await fetch(`${API}/sch-members?ids=${cls.members.join(",")}`);
     const members = await res.json();
+
+    // Initialize MEMBERS_MAP if undefined
+    if (!window.MEMBERS_MAP) window.MEMBERS_MAP = {};
 
     members.forEach(sm => {
       if (sm._id && sm.name) {
@@ -196,6 +204,7 @@ async function loadClassMembers(cls) {
     console.error("❌ Failed to load class members", err);
   }
 }
+
 
 /* =====================================
    LOAD REPORTS (DATE REQUIRED)
