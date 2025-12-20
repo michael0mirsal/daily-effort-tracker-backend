@@ -158,16 +158,17 @@ router.post("/school/signin", async (req, res) => {
     } 
     else if (role === "supervisor") {
       // Parent → check nursery passKey via family
-      user = await SchoolMember.findOne({ fullName: name }).populate("family.nursery", "name passKey");
-      if (!user || !user.family.nursery || user.family.nursery.name !== nurseryName || user.family.nursery.passKey !== passKey) {
-        return res.status(401).json({ success: false, message: "Invalid parent credentials" });
+      user = await Teacher.findOne({ name }).populate("nursery", "name passKey");
+      if (!user || user.nursery.name !== nurseryName || user.nursery.passKey !== passKey) {
+        return res.status(401).json({ success: false, message: "Invalid teacher credentials" });
       }
 
       user = {
-        name: user.fullName,
+        _id: user._id,
+        name: user.name,
         role,
-        nurseryId: user.family.nursery._id,
-        nurseryName: user.family.nursery.name
+        nurseryId: user.nursery._id,
+        nurseryName: user.nursery.name
       };
     } 
     else {
