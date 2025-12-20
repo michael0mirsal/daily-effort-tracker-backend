@@ -236,16 +236,16 @@ router.patch("/sch-activities/updateEvaluation", async (req, res) => {
 
 // GET /api/sch-members?ids=id1,id2,id3
 router.get("/sch-members", async (req, res) => {
-  const ids = req.query.ids;
-  if (!ids) return res.status(400).json({ error: "Missing ids parameter" });
-
   try {
-    const idArray = ids.split(",").map(id => mongoose.Types.ObjectId(id));
+    const { ids } = req.query;
+    if (!ids) return res.status(400).json({ error: "Missing ids" });
+
+    const idArray = ids.split(",").filter(id => mongoose.isValidObjectId(id));
+
     const members = await SchoolMember.find({ _id: { $in: idArray } })
       .populate("member", "name")
       .lean();
 
-    // Normalize
     const result = members.map(m => ({
       _id: m._id,
       name: m.member?.name || "Unknown"
@@ -253,7 +253,7 @@ router.get("/sch-members", async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    console.error("❌ Failed to fetch school members", err);
+    console.error("❌ /sch-members error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
