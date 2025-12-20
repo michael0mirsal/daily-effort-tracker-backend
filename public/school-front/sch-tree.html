@@ -187,22 +187,25 @@ async function loadTreeClasses() {
 /* =====================================
    LOAD ALL MEMBERS OF CLASS
 ===================================== */
-async function loadClassMembers(classId) {
+async function loadClassMembers(cls) {
   MEMBERS_MAP = {};
 
+  if (!cls.members || cls.members.length === 0) return;
+
   try {
-    const res = await fetch(`${API}/members/class/${classId}`);
+    const res = await fetch(
+      `${API}/sch-members?ids=${cls.members.join(",")}`
+    );
     const members = await res.json();
 
     members.forEach(sm => {
-      if (sm._id && sm.member?.name) {
-        MEMBERS_MAP[sm._id] = sm.member.name;
-      }
+      MEMBERS_MAP[sm._id] = sm.name;
     });
   } catch (err) {
     console.error("❌ Failed to load class members", err);
   }
 }
+
 
 
 /* =====================================
@@ -267,8 +270,8 @@ function buildTree() {
       childBox.style.display =
         childBox.style.display === "block" ? "none" : "block";
 
-      await loadClassMembers(cls._id);
-      await loadClassReports(cls._id);
+      
+      await loadClassReports(cls);
       showTreeReport(cls);
     };
 
