@@ -149,109 +149,175 @@ button {
 </div>
 
 <script>
-/* STATIC DATA */
-const classes = [
-    {
-        name: "Class 1",
-        teacher: "Teacher A",
-        kids: ["Alice", "Bob", "Charlie"],
-        report: {
-            "2025-12-01": {
-                activities: ["Drawing", "Math practice"],
-                routines: ["Morning circle", "Snack time"]
-            },
-            "2025-12-02": {
-                activities: ["Story telling"],
-                routines: ["Outdoor play"]
-            }
-        }
-    },
-    {
-        name: "Class 2",
-        teacher: "Teacher B",
-        kids: ["Daisy", "Ethan"],
-        report: {
-            "2025-12-01": {
-                activities: ["Painting"],
-                routines: ["Clean-up time"]
-            }
-        }
-    },
-    {
-        name: "Class 3",
-        teacher: "Teacher C",
-        kids: ["Fiona", "George", "Hannah"],
-        report: {}
-    }
-];
+/* ===============================
+   GLOBAL DATA (DYNAMIC)
+================================ */
+let classes = [];        // classes from DB
+let membersMap = {};     // memberId -> member name
+let reports = [];        // routines / activities
 
-/* BUILD TREE WITH COLLAPSIBLE CHILD ITEMS */
+
+/* ===============================
+   LOAD ALL DATA FROM BACKEND
+================================ */
+async function loadData() {
+  try {
+    // Load classes
+    const classRes = await fetch("/api/class");
+    classes = await classRes.json();
+
+    // Load members (kids + teachers if same collection)
+    const memberRes = await fetch("/api/sch-members");
+    const members = await memberRes.json();
+    members.forEach(m => membersMap[m._id] = m.name);
+
+    // Load reports (activities / routines)
+    const reportRes = await fetch("/api/sch-activities");
+    reports = await reportRes.json();
+
+    loadTree();
+  } catch (err) {
+    console.error("Failed to load data", err);
+  }
+}
+
+
+/* ===============================
+   BUILD TREE (CLASSES → TEACHERS → KIDS)
+================================ */
 function loadTree() {
-    const tree = document.getElementById("classTree");
-    tree.innerHTML = "";
+  const tree = document.getElementById("classTree");
+  tree.innerHTML = "";
 
-    classes.forEach(cls => {
-        const classDiv = document.createElement("div");
-        classDiv.className = "class-branch";
-        classDiv.textContent = cls.name;
+  classes.forEach(cls => {
+    const classDiv = document.createElement("div");
+    classDiv.className = "class-branch";
+    classDiv.textContent = cls.name;
 
-        const childContainer = document.createElement("div");
-        childContainer.className = "child-items";
+    const childContainer = document.createElement("div");
+    childContainer.className = "child-items";
 
-        const teacherDiv = document.createElement("div");
-        teacherDiv.className = "teacher-box";
-        teacherDiv.textContent = "👩‍🏫 " + cls.teacher;
-        childContainer.appendChild(teacherDiv);
-
-        cls.kids.forEach(k => {
-            const kidDiv = document.createElement("div");
-            kidDiv.className = "kid-box";
-            kidDiv.textContent = "🧒 " + k;
-            childContainer.appendChild(kidDiv);
-        });
-
-        // Toggle child items on click
-        classDiv.onclick = () => {
-            childContainer.style.display = childContainer.style.display === "block" ? "none" : "block";
-            showReport(cls); // optional: also update right panel
-        };
-
-        tree.appendChild(classDiv);
-        tree.appendChild(childContainer);
-    });
-}
-
-/* SHOW REPORT ON RIGHT PANEL */
-function showReport(cls) {
-    const reportArea = document.getElementById("reportContent");
-    let html = `<h2>${cls.name} Full Report</h2>`;
-
-    if(!cls.report || Object.keys(cls.report).length===0){
-        html += "<p>No activities or routines saved yet.</p>";
+    /* -------- Teachers -------- */
+    if (!cls.teachers || cls.teachers.length === 0) {
+      const tDiv = document.createElement("div");
+      tDiv.className = "teacher-box";
+      tDiv.textContent = "👩‍🏫 No teacher assigned";
+      childContainer.appendChild(tDiv);
     } else {
-        html += "<ul>";
-        Object.keys(cls.report).forEach(date=>{
-            html += `<li><strong>${date}</strong><ul>`;
-            cls.report[date].activities.forEach(a => html += `<li>🎨 ${a}</li>`);
-            cls.report[date].routines.forEach(r => html += `<li>🔁 ${r}</li>`);
-            html += "</ul></li>";
-        });
-        html += "</ul>";
+      cls.teachers.forEach(tid => {
+        const tDiv = document.createElement("div");
+        tDiv.className = "teacher-box";
+        tDiv.textContent = "👩‍🏫 " + (membersMap[tid] || tid);
+        childContainer.appendChild(tDiv);
+      });
     }
 
-    reportArea.innerHTML = html;
+    /* -------- Kids -------- */
+    if (!cls.members || cls.members.length === 0) {
+      const kDiv = document.createElement("div");
+      kDiv.className = "kid-box";
+      kDiv.textContent = "🧒 No kids yet";
+      childContainer.appendChild(kDiv);
+    } else {
+      cls.members.forEach(mid => {
+        const kidDiv = document.createElement("div");
+        kidDiv.className = "kid-box";
+        kidDiv.textContent = "🧒 " + (membersMap[mid] || mid);
+        childContainer.appendChild(kidDiv);
+      });
+    }
+
+    /* -------- Toggle + Report -------- */
+    classDiv.onclick = () => {
+      childContainer.style.display =
+        childContainer.style.display === "block" ? "none" : "block";
+      showReport(cls);
+    };
+
+    tree.appendChild(classDiv);
+    tree.appendChild(childContainer);
+  });
 }
 
-/* BACK BUTTON */
+
+/* ===============================
+   SHOW REPORT (RIGHT PANEL)
+   (Merged with original logic)
+================================ */
+function showReport(cls) {
+  const reportArea = document.getElementById("reportContent");
+
+  let html = `<h2>${cls.name} Full Report</h2>`;
+
+  // Filter reports by classId
+  const classReports = reports.filter(r => r.classId === cls._id);
+
+  if (classReports.length === 0) {
+    html += "<p>No activities or routines saved yet.</p>";
+    reportArea.innerHTML = html;
+    return;
+  }
+
+  // Group reports by date
+  const reportByDate = {};
+  classReports.forEach(r => {
+    if (!reportByDate[r.date]) reportByDate[r.date] = [];
+    reportByDate[r.date].push(r);
+  });
+
+  html += "<ul>";
+
+  Object.keys(reportByDate).forEach(date => {
+    html += `<li><strong>📅 ${date}</strong><ul>`;
+
+    reportByDate[date].forEach(r => {
+      html += `<li><b>🧒 ${membersMap[r.kidmember] || r.kidmember}</b><ul>`;
+
+      r.items.forEach(item => {
+        html += `
+          <li>
+            🎯 ${item.activity || "Activity"}
+            | ⏱ ${item.timeMin || 0} min
+            | ⭐ ${item.evaluation || "-"}
+            <br>📝 ${item.note || ""}
+          </li>
+        `;
+      });
+
+      html += "</ul></li>";
+    });
+
+    html += "</ul></li>";
+  });
+
+  html += "</ul>";
+  reportArea.innerHTML = html;
+}
+
+
+/* ===============================
+   BACK BUTTON
+================================ */
 document.getElementById("backBtn").onclick = () => {
-    document.getElementById("reportContent").innerHTML = "<p>Select a class to view full report</p>";
+  document.getElementById("reportContent").innerHTML =
+    "<p>Select a class to view full report</p>";
 };
 
-/* LOGOUT BUTTON */
-document.getElementById("logoutBtn").onclick = () => alert("Logging out...");
 
-loadTree();
+/* ===============================
+   LOGOUT BUTTON
+================================ */
+document.getElementById("logoutBtn").onclick = () => {
+  alert("Logging out...");
+};
+
+
+/* ===============================
+   INIT
+================================ */
+loadData();
 </script>
+
 
 </body>
 </html>
