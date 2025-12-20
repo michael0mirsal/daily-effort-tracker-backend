@@ -149,9 +149,7 @@ button {
 </div>
 
 <script>
-
- const API ="http://localhost:3000/api";  
-
+const API = "http://localhost:3000/api";
 
 /* =====================================
    GLOBAL STATE
@@ -159,7 +157,6 @@ button {
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};     // schoolMemberId -> name
 let TREE_REPORTS = [];
-
 
 /* =====================================
    LOAD CLASSES
@@ -169,20 +166,14 @@ async function loadTreeClasses() {
   if (!user) return;
 
   try {
-    let res;
-
-    
-      res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-      const data = await res.json();
-      TREE_CLASSES = data.classes || [];
-    
-
+    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+    const data = await res.json();
+    TREE_CLASSES = data.classes || [];
     buildTree();
   } catch (err) {
     console.error("❌ Failed to load tree classes", err);
   }
 }
-
 
 /* =====================================
    LOAD ALL MEMBERS OF CLASS
@@ -193,20 +184,18 @@ async function loadClassMembers(cls) {
   if (!cls.members || cls.members.length === 0) return;
 
   try {
-    const res = await fetch(
-      `${API}/sch-members?ids=${cls.members.join(",")}`
-    );
+    const res = await fetch(`${API}/sch-members?ids=${cls.members.join(",")}`);
     const members = await res.json();
 
     members.forEach(sm => {
-      MEMBERS_MAP[sm._id] = sm.name;
+      if (sm._id && sm.name) {
+        MEMBERS_MAP[sm._id] = sm.name;
+      }
     });
   } catch (err) {
     console.error("❌ Failed to load class members", err);
   }
 }
-
-
 
 /* =====================================
    LOAD REPORTS (DATE REQUIRED)
@@ -215,22 +204,17 @@ async function loadClassReports(classId) {
   TREE_REPORTS = [];
 
   const dateInput = document.getElementById("filterDate");
-  const date =
-    dateInput && dateInput.value
-      ? dateInput.value
-      : new Date().toISOString().slice(0, 10); // TODAY
+  const date = dateInput && dateInput.value
+    ? dateInput.value
+    : new Date().toISOString().slice(0, 10); // TODAY
 
   try {
-    const res = await fetch(
-      `${API}/sch-activities?classId=${classId}&date=${date}`
-    );
-
+    const res = await fetch(`${API}/sch-activities?classId=${classId}&date=${date}`);
     TREE_REPORTS = await res.json();
   } catch (err) {
     console.error("❌ Failed to load reports", err);
   }
 }
-
 
 /* =====================================
    BUILD TREE
@@ -250,28 +234,30 @@ function buildTree() {
     childBox.className = "child-items";
     childBox.style.display = "none";
 
-    /* ---------- TEACHERS ---------- */
-    if (!cls.teachers || cls.teachers.length === 0) {
-      childBox.innerHTML += `
-        <div class="teacher-box">👩‍🏫 No teacher</div>
-      `;
-    } else {
-      cls.teachers.forEach(tid => {
-        childBox.innerHTML += `
-          <div class="teacher-box">
-            👩‍🏫 ${MEMBERS_MAP[tid] || "Teacher"}
-          </div>
-        `;
-      });
-    }
-
-    /* ---------- CLICK ---------- */
+    // ---------- CLICK ----------
     classDiv.onclick = async () => {
       childBox.style.display =
         childBox.style.display === "block" ? "none" : "block";
 
-      
-      await loadClassReports(cls);
+      // Load members first
+      await loadClassMembers(cls);
+
+      // Show teachers
+      childBox.innerHTML = "";
+      if (!cls.teachers || cls.teachers.length === 0) {
+        childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
+      } else {
+        cls.teachers.forEach(tid => {
+          childBox.innerHTML += `
+            <div class="teacher-box">
+              👩‍🏫 ${MEMBERS_MAP[tid] || "Teacher"}
+            </div>
+          `;
+        });
+      }
+
+      // Load reports
+      await loadClassReports(cls._id);
       showTreeReport(cls);
     };
 
@@ -279,7 +265,6 @@ function buildTree() {
     tree.appendChild(childBox);
   });
 }
-
 
 /* =====================================
    SHOW REPORT
@@ -300,16 +285,16 @@ function showTreeReport(cls) {
   TREE_REPORTS.forEach(doc => {
     html += `
       <li>
-        <b>🧒 ${MEMBERS_MAP[doc.kidmember] || "Unknown Kid"}</b>
+        <b>🧒 ${doc.kidName || "Unknown Kid"}</b>
         <ul>
     `;
 
     doc.items.forEach(item => {
       html += `
         <li>
-          🎯 ${item.activity}
-          | ⏱ ${item.timeMin} min
-          | ⭐ ${item.evaluation}
+          🎯 ${item.activity || ""}
+          | ⏱ ${item.timeMin || 0} min
+          | ⭐ ${item.evaluation || 0}
           <br>📝 ${item.note || ""}
         </li>
       `;
@@ -321,7 +306,6 @@ function showTreeReport(cls) {
   html += "</ul>";
   area.innerHTML = html;
 }
-
 
 /* =====================================
    INIT
