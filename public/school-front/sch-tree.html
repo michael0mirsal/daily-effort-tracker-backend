@@ -150,21 +150,37 @@ button {
 
 <script>
 
-const API = "http://localhost:3000/api";
+ const API ="http://localhost:3000/api";  
 
-
-/* ===============================
-   TREE + REPORT (SAFE VERSION)
-================================ */
-
+/* =====================================
+   GLOBAL STATE
+===================================== */
 let TREE_CLASSES = [];
-let TREE_MEMBERS = {};   // schoolMemberId → name
+let TEACHERS_MAP = {};     // teacherId -> name
+let MEMBERS_MAP = {};      // schoolMemberId -> member name
 let TREE_REPORTS = [];
 
 
-/* ===============================
+/* =====================================
+   LOAD TEACHERS (ONCE)
+===================================== */
+async function loadTeachers() {
+  try {
+    const res = await fetch(`${API}/teachers`);
+    const teachers = await res.json();
+
+    teachers.forEach(t => {
+      TEACHERS_MAP[t._id] = t.name;
+    });
+  } catch (err) {
+    console.error("❌ Failed to load teachers", err);
+  }
+}
+
+
+/* =====================================
    LOAD CLASSES (BY USER ROLE)
-================================ */
+===================================== */
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
@@ -189,11 +205,11 @@ async function loadTreeClasses() {
 }
 
 
-/* ===============================
-   LOAD MEMBERS FOR CLASS
-================================ */
-async function loadTreeMembers(classId) {
-  TREE_MEMBERS = {};
+/* =====================================
+   LOAD MEMBERS FOR CLASS (ALL KIDS)
+===================================== */
+async function loadClassMembers(classId) {
+  MEMBERS_MAP = {};
 
   try {
     const res = await fetch(`${API}/members/class/${classId}`);
@@ -201,25 +217,28 @@ async function loadTreeMembers(classId) {
 
     members.forEach(sm => {
       if (sm._id && sm.member?.name) {
-        TREE_MEMBERS[sm._id] = sm.member.name;
+        MEMBERS_MAP[sm._id] = sm.member.name;
       }
     });
   } catch (err) {
-    console.error("❌ Failed to load tree members", err);
+    console.error("❌ Failed to load class members", err);
   }
 }
 
 
-/* ===============================
-   LOAD REPORTS FOR CLASS + DATE
-================================ */
-async function loadTreeReports(classId) {
+/* =====================================
+   LOAD REPORTS (CLASS + OPTIONAL DATE)
+===================================== */
+async function loadClassReports(classId) {
   TREE_REPORTS = [];
-  const date = document.getElementById("filterDate")?.value;
+
+  const dateInput = document.getElementById("filterDate");
+  const dateQuery =
+    dateInput && dateInput.value ? `&date=${dateInput.value}` : "";
 
   try {
     const res = await fetch(
-      `${API}/sch-activities?classId=${classId}&date=${date}`
+      `${API}/sch-activities?classId=${classId}${dateQuery}`
     );
     TREE_REPORTS = await res.json();
   } catch (err) {
@@ -228,9 +247,9 @@ async function loadTreeReports(classId) {
 }
 
 
-/* ===============================
+/* =====================================
    BUILD TREE UI
-================================ */
+===================================== */
 function buildTree() {
   const tree = document.getElementById("classTree");
   if (!tree) return;
@@ -246,21 +265,28 @@ function buildTree() {
     childBox.className = "child-items";
     childBox.style.display = "none";
 
-    // Teachers
-    if (!cls.teachers?.length) {
-      childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
+    /* ---------- TEACHERS ---------- */
+    if (!cls.teachers || cls.teachers.length === 0) {
+      childBox.innerHTML += `
+        <div class="teacher-box">👩‍🏫 No teacher</div>
+      `;
     } else {
-      cls.teachers.forEach(() => {
-        childBox.innerHTML += `<div class="teacher-box">👩‍🏫 Teacher</div>`;
+      cls.teachers.forEach(tid => {
+        childBox.innerHTML += `
+          <div class="teacher-box">
+            👩‍🏫 ${TEACHERS_MAP[tid] || "Unknown Teacher"}
+          </div>
+        `;
       });
     }
 
+    /* ---------- CLICK HANDLER ---------- */
     classDiv.onclick = async () => {
       childBox.style.display =
         childBox.style.display === "block" ? "none" : "block";
 
-      await loadTreeMembers(cls._id);
-      await loadTreeReports(cls._id);
+      await loadClassMembers(cls._id);
+      await loadClassReports(cls._id);
       showTreeReport(cls);
     };
 
@@ -270,9 +296,9 @@ function buildTree() {
 }
 
 
-/* ===============================
+/* =====================================
    SHOW REPORT (RIGHT PANEL)
-================================ */
+===================================== */
 function showTreeReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) return;
@@ -287,15 +313,19 @@ function showTreeReport(cls) {
   html += "<ul>";
 
   TREE_REPORTS.forEach(doc => {
-    html += `<li><b>🧒 ${TREE_MEMBERS[doc.schoolMemberId] || "Unknown"}</b><ul>`;
+    html += `
+      <li>
+        <b>🧒 ${MEMBERS_MAP[doc.kidmember] || "Unknown Kid"}</b>
+        <ul>
+    `;
 
-    doc.items.forEach(it => {
+    doc.items.forEach(item => {
       html += `
         <li>
-          🎯 ${it.activity}
-          | ⏱ ${it.timeMin} min
-          | ⭐ ${it.evaluation}
-          <br>📝 ${it.note || ""}
+          🎯 ${item.activity}
+          | ⏱ ${item.timeMin} min
+          | ⭐ ${item.evaluation}
+          <br>📝 ${item.note || ""}
         </li>
       `;
     });
@@ -308,11 +338,15 @@ function showTreeReport(cls) {
 }
 
 
-/* ===============================
+/* =====================================
    INIT
-================================ */
-window.addEventListener("DOMContentLoaded", loadTreeClasses);
+===================================== */
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadTeachers();
+  await loadTreeClasses();
+});
 </script>
+
 
 
 
