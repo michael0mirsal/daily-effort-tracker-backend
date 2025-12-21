@@ -152,6 +152,7 @@
     <button class="btn btn-login" onclick="chooseOption('login')">Existing Nursery</button>
     <button class="btn btn-signup" onclick="chooseOption('signup')">New Nursery</button>
   </div>
+<button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 
   <div class="card hidden" id="license-card">
   <h1>Nursery Signup 🏫</h1>
@@ -162,7 +163,7 @@
   <p id="license-error" class="error-msg"></p>
   <button class="continue-btn" onclick="validateLicense()">Continue</button>
 </div>
-<button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
+
 <script>
 
 function goHome() { window.location.href = "welcome.html"; }
