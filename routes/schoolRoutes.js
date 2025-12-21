@@ -312,11 +312,11 @@ router.get("/nurseries/:id/classes", async (req, res) => {
 router.get("/nurseries/:id/classes", async (req, res) => {
   try {
     const classes = await ClassModel.find({ nursery: req.params.id })
-      .populate("teachers", "name")      // teacher names
-      .populate("members", "name")       // member names
-      .lean();
+  .populate("teachers", "name")
+  .populate("members", "name")
+  .lean();
+res.json({ success: true, classes });
 
-    res.json({ success: true, classes });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
