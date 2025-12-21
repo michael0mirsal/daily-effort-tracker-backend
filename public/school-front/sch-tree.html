@@ -263,7 +263,6 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
-    // Fetch routines and activities
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -272,7 +271,9 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // Initialize kids map
+    // =========================
+    // INIT MEMBERS (normalize IDs)
+    // =========================
     const kids = {};
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
@@ -286,7 +287,9 @@ async function loadCombinedClassReport(cls) {
       };
     });
 
-    // Merge activities
+    // =========================
+    // MERGE ACTIVITIES
+    // =========================
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
       if (!kids[kidId]) return;
@@ -298,35 +301,32 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // Merge routines
+    // =========================
+    // MERGE ROUTINES
+    // =========================
     routines.forEach(r => {
       const kidId = String(r.kidmember);
-      if (!kids[kidId]) return;
+      if (!kids[kidId]) return; // skip outsiders
 
       (r.items || []).forEach(it => {
         kids[kidId].routines.push(it); // include all, mark done inside
       });
     });
 
-    // Render all members
+    // =========================
+    // RENDER
+    // =========================
     Object.values(kids).forEach(k => {
-      const totalStars = k.stars.length > 0
-        ? k.stars.reduce((a, b) => a + b, 0)
-        : 0;
+      const totalStars = k.stars.length ? k.stars.reduce((a,b)=>a+b,0) : 0;
 
       const routinesHtml = k.routines.length
-        ? `<ul>${k.routines.map(r => {
-            const doneMark = r.done ? "✅" : "❌";
-            return `<li>${doneMark} ${r.task}</li>`;
-          }).join("")}</ul>`
+        ? `<ul>${k.routines.map(r=>`<li>${r.done ? "✅" : "❌"} ${r.task}</li>`).join("")}</ul>`
         : "<p>None</p>";
 
       const activitiesHtml = k.activities.length
-        ? `<ul>${k.activities.map(a => `
-            <li>
-              🎯 ${a.activity} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
-              <br>📝 ${a.note || ""}
-            </li>`).join("")}</ul>`
+        ? `<ul>${k.activities.map(a=>`
+            <li>🎯 ${a.activity} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
+            <br>📝 ${a.note || ""}</li>`).join("")}</ul>`
         : "<p>None</p>";
 
       area.innerHTML += `
@@ -344,15 +344,12 @@ async function loadCombinedClassReport(cls) {
       `;
     });
 
-    if (!Object.values(kids).some(k => k.activities.length || k.routines.length)) {
-      area.innerHTML += "<p>No routines or activities for this date.</p>";
-    }
-
-  } catch (err) {
-    console.error("Combined report error:", err);
+  } catch(err) {
+    console.error(err);
     area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
   }
 }
+
 
 
 
