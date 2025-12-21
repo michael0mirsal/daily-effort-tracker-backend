@@ -273,17 +273,18 @@ function buildTree() {
     // Load reports for this class
     await loadClassReports(cls._id);
 
-    // Show teachers
-    cls.teachers.forEach(t => {
-      const name = t.name || "Teacher";
-      childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${name}</div>`;
-    });
+   // Teachers
+cls.teachers.forEach(tid => {
+  const name = TEACHERS_MAP[tid] || "Teacher";
+  childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${name}</div>`;
+});
 
-    // Show members
-    cls.members.forEach(m => {
-      const name = m.name || m.member?.name || "Kid";
-      childBox.innerHTML += `<div class="member-box">🧒 ${name}</div>`;
-    });
+// Members
+cls.members.forEach(mid => {
+  const name = MEMBERS_MAP[mid] || "Kid";
+  childBox.innerHTML += `<div class="member-box">🧒 ${name}</div>`;
+});
+
 
     showTreeReport(cls);
   }
