@@ -262,6 +262,7 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
+    // 1) Fetch routines + activities
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -270,11 +271,8 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    /* =========================
-       1) INIT FROM CLASS MEMBERS
-       ========================= */
+    // 2) Initialize kids map from class members
     const kids = {};
-
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
       kids[id] = {
@@ -287,49 +285,36 @@ async function loadCombinedClassReport(cls) {
       };
     });
 
-    /* =========================
-       2) MERGE ACTIVITIES
-       ========================= */
-    activities.forEach(doc => {
-      const kidId = String(
-        doc.schoolMember || doc.schoolMemberId || doc.kidmember
-      );
-      if (!kids[kidId]) return; // ❌ ignore outsiders
-
-      (doc.items || []).forEach(it => {
+    // 3) Merge routines (done only)
+    routines.forEach(r => {
+      const kidId = String(r.kidmember);
+      if (!kids[kidId]) return;
+      (r.items || []).filter(it => it.done === true).forEach(it => {
+        kids[kidId].routines.push(it);
+        // Add time/evaluation to summary
         kids[kidId].time += Number(it.timeMin || 0);
-        kids[kidId].stars.push(Number(it.evaluation || 0));
-        kids[kidId].activities.push(it);
+        if (it.evaluation !== undefined) kids[kidId].stars.push(Number(it.evaluation));
       });
     });
 
-    /* =========================
-       3) MERGE ROUTINES (done only)
-       ========================= */
-    routines.forEach(r => {
-      const kidId = String(r.kidmember);
-      if (!kids[kidId]) return; // ❌ ignore outsiders
-
-      (r.items || [])
-        .filter(it => it.done === true)
-        .forEach(it => kids[kidId].routines.push(it));
+    // 4) Merge activities
+    activities.forEach(doc => {
+      const kidId = String(doc.schoolMember || doc.kidmember);
+      if (!kids[kidId]) return;
+      (doc.items || []).forEach(it => {
+        kids[kidId].activities.push(it);
+        kids[kidId].time += Number(it.timeMin || 0);
+        if (it.evaluation !== undefined) kids[kidId].stars.push(Number(it.evaluation));
+      });
     });
 
-    /* =========================
-       4) RENDER ONLY REAL MEMBERS
-       ========================= */
-    let hasAnyData = false;
-
+    // 5) Render
     Object.values(kids).forEach(k => {
-    if (!k.activities.length && !k.routines.length) return;
-
-    hasAnyData = true;
-
-    const totalStars = k.stars.length > 0
-        ? k.stars.reduce((a, b) => a + b, 0)
+      const totalStars = k.stars.length > 0
+        ? k.stars.reduce((a,b)=>a+b,0)
         : 0;
 
-    area.innerHTML += `
+      area.innerHTML += `
         <hr>
         <h3>🧒 ${k.name}</h3>
         <p>⏱ Total Time: ${k.time} min | ⭐ Collected: ${totalStars} ⭐</p>
@@ -337,33 +322,29 @@ async function loadCombinedClassReport(cls) {
         <h4>✅ Completed Routines</h4>
         ${
           k.routines.length
-            ? `<ul>${k.routines.map(r => `<li>${r.task}</li>`).join("")}</ul>`
+            ? `<ul>${k.routines.map(r=>`<li>${r.task}</li>`).join("")}</ul>`
             : "<p>None</p>"
         }
 
         <h4>📊 Activities</h4>
         ${
           k.activities.length
-            ? `<ul>${k.activities.map(a => `
+            ? `<ul>${k.activities.map(a=>`
                 <li>
-                  🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
+                  🎯 ${a.activity} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
                   <br>📝 ${a.note || ""}
                 </li>`).join("")}</ul>`
             : "<p>None</p>"
         }
-    `;
-});
+      `;
+    });
 
-
-    if (!hasAnyData) {
-      area.innerHTML += "<p>No completed routines or activities.</p>";
-    }
-
-  } catch (err) {
+  } catch(err) {
     console.error(err);
     area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
   }
 }
+
 
 /* =====================================
    INIT
