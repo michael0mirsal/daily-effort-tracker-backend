@@ -155,12 +155,12 @@ const API = "http://localhost:3000/api";
    GLOBAL STATE
 ===================================== */
 let TREE_CLASSES = [];
-let MEMBERS_MAP = {};       // kidId -> name
-let TEACHERS_MAP = {};      // teacherId -> name
+let MEMBERS_MAP = {};   // kidId -> name
+let TEACHERS_MAP = {};  // teacherId -> name
 let TREE_REPORTS = [];
 
 /* =====================================
-   LOAD CLASSES
+   LOAD CLASSES + MEMBERS + TEACHERS
 ===================================== */
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -171,60 +171,35 @@ async function loadTreeClasses() {
     const data = await res.json();
     TREE_CLASSES = data.classes || [];
 
-    // Load all members and teachers for each class
-    for (const cls of TREE_CLASSES) {
-      await loadClassMembers(cls);   // wait for members
-      await loadClassTeachers(cls);  // wait for teachers
+    // Extract all member and teacher IDs to batch load
+    let allMemberIds = [];
+    let allTeacherIds = [];
+    TREE_CLASSES.forEach(cls => {
+      allMemberIds.push(...cls.members.map(m => m._id || m));
+      allTeacherIds.push(...cls.teachers.map(t => t._id || t));
+    });
+
+    // Remove duplicates
+    allMemberIds = [...new Set(allMemberIds)];
+    allTeacherIds = [...new Set(allTeacherIds)];
+
+    // Load members
+    if (allMemberIds.length > 0) {
+      const memRes = await fetch(`${API}/sch-members?ids=${allMemberIds.join(",")}`);
+      const members = await memRes.json();
+      members.forEach(m => MEMBERS_MAP[m._id] = m.name);
     }
 
-    // Now maps are filled → safe to build tree
+    // Load teachers
+    if (allTeacherIds.length > 0) {
+      const teachRes = await fetch(`${API}/teachers?ids=${allTeacherIds.join(",")}`);
+      const teachers = await teachRes.json();
+      teachers.forEach(t => TEACHERS_MAP[t._id] = t.name);
+    }
+
     buildTree();
   } catch (err) {
     console.error("❌ Failed to load tree classes", err);
-  }
-}
-
-
-/* =====================================
-   LOAD ALL MEMBERS (kids) OF CLASS
-===================================== */
-async function loadClassMembers(cls) {
-  if (!cls.members || cls.members.length === 0) return;
-
-  try {
-    const res = await fetch(`${API}/sch-members?ids=${cls.members.join(",")}`);
-    const members = await res.json();
-
-    // Do NOT overwrite MEMBERS_MAP entirely here!
-    // Keep existing data for all classes
-    members.forEach(sm => {
-      if (sm._id && sm.name) {
-        MEMBERS_MAP[sm._id] = sm.name;
-      }
-    });
-  } catch (err) {
-    console.error("❌ Failed to load class members", err);
-  }
-}
-
-
-/* =====================================
-   LOAD ALL TEACHERS OF CLASS
-===================================== */
-async function loadClassTeachers(cls) {
-  if (!cls.teachers || cls.teachers.length === 0) return;
-
-  try {
-    const res = await fetch(`${API}/teachers?ids=${cls.teachers.join(",")}`);
-    const teachers = await res.json();
-
-    teachers.forEach(t => {
-      if (t._id && t.name) {
-        TEACHERS_MAP[t._id] = t.name;
-      }
-    });
-  } catch (err) {
-    console.error("❌ Failed to load class teachers", err);
   }
 }
 
@@ -266,32 +241,35 @@ function buildTree() {
     childBox.style.display = "none";
 
     classDiv.onclick = async () => {
-  childBox.style.display = childBox.style.display === "block" ? "none" : "block";
+      childBox.style.display = childBox.style.display === "block" ? "none" : "block";
 
-  if (childBox.style.display === "block") {
-    // Clear previous content to avoid duplicates
-    childBox.innerHTML = "";
+      if (childBox.style.display === "block") {
+        childBox.innerHTML = ""; // clear previous content
 
-    // Load reports for this class
-    await loadClassReports(cls._id);
+        // Load reports for this class
+        await loadClassReports(cls._id);
 
-   // Teachers
-cls.teachers.forEach(tid => {
-  const name = TEACHERS_MAP[tid] || "Teacher";
-  childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${name}</div>`;
-});
+        // Display teachers
+        if (cls.teachers && cls.teachers.length > 0) {
+          cls.teachers.forEach(tid => {
+            const name = TEACHERS_MAP[tid._id || tid] || "Teacher";
+            childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${name}</div>`;
+          });
+        } else {
+          childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
+        }
 
-// Members
-cls.members.forEach(mid => {
-  const name = MEMBERS_MAP[mid] || "Kid";
-  childBox.innerHTML += `<div class="member-box">🧒 ${name}</div>`;
-});
+        // Display members
+        if (cls.members && cls.members.length > 0) {
+          cls.members.forEach(mid => {
+            const name = MEMBERS_MAP[mid._id || mid] || "Kid";
+            childBox.innerHTML += `<div class="member-box">🧒 ${name}</div>`;
+          });
+        }
 
-
-    showTreeReport(cls);
-  }
-};
-
+        showTreeReport(cls);
+      }
+    };
 
     tree.appendChild(classDiv);
     tree.appendChild(childBox);
@@ -320,7 +298,6 @@ function showTreeReport(cls) {
         <b>🧒 ${doc.kidName || MEMBERS_MAP[doc.kidmember] || "Unknown Kid"}</b>
         <ul>
     `;
-
     doc.items.forEach(item => {
       html += `
         <li>
@@ -331,7 +308,6 @@ function showTreeReport(cls) {
         </li>
       `;
     });
-
     html += "</ul></li>";
   });
 
