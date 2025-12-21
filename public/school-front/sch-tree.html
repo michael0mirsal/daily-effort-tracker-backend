@@ -300,20 +300,21 @@ async function loadCombinedClassReport(cls) {
 
     // Merge routines (all tasks, mark done/not done)
     routines.forEach(r => {
-      const kidId = String(r.kidmember);
-      if (!kids[kidId]) {
-        console.warn("Routine ignored, kid not found:", kidId);
-        return;
-      }
+  const kidId = String(r.kidmember || r.kidMember || r.kidId);
+  if (!kids[kidId]) {
+    console.warn("Routine ignored, kid not found:", kidId, r.kidName);
+    return;
+  }
 
-      (r.items || []).forEach(it => {
-        kids[kidId].routines.push({
-          task: it.task,
-          section: it.section,
-          done: it.done === true
-        });
-      });
+  (r.items || []).forEach(it => {
+    kids[kidId].routines.push({
+      task: it.task,
+      section: it.section,
+      done: it.done === true
     });
+  });
+});
+
 
     // Render each kid
     Object.values(kids).forEach(k => {
