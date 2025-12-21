@@ -104,12 +104,16 @@
     function chooseType(type) {
       localStorage.setItem("userType", type);
 
-      if (type === "Nursery") {
+      if (type === "nursery") {
         window.location.href = "/sch-login.html";
-      } else {
+       }
+    
+    if (type === "family") {
         window.location.href = "/login.html";
-      }
+       }
     }
+        
+     
   </script>
 
 </body>
