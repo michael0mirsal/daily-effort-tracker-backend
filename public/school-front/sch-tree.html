@@ -263,7 +263,7 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
-    // Fetch both routines and activities
+    // Fetch routines and activities
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -272,7 +272,7 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // Initialize kids map from class members
+    // Initialize kids map
     const kids = {};
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
@@ -298,10 +298,13 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // Merge routines (all items, mark done or not)
+    // Merge routines (all tasks, mark done/not done)
     routines.forEach(r => {
       const kidId = String(r.kidmember);
-      if (!kids[kidId]) return;
+      if (!kids[kidId]) {
+        console.warn("Routine ignored, kid not found:", kidId);
+        return;
+      }
 
       (r.items || []).forEach(it => {
         kids[kidId].routines.push({
@@ -312,11 +315,18 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // Render all kids
+    // Render each kid
     Object.values(kids).forEach(k => {
       const totalStars = k.stars.length > 0
         ? k.stars.reduce((a, b) => a + b, 0)
         : 0;
+
+      // Group routines by section
+      const groupedRoutines = {};
+      k.routines.forEach(r => {
+        if (!groupedRoutines[r.section]) groupedRoutines[r.section] = [];
+        groupedRoutines[r.section].push(r);
+      });
 
       area.innerHTML += `
         <hr>
@@ -326,7 +336,12 @@ async function loadCombinedClassReport(cls) {
         <h4>✅ Routines</h4>
         ${
           k.routines.length
-            ? `<ul>${k.routines.map(r => `<li>${r.task} ${r.done ? '✅' : '❌'}</li>`).join("")}</ul>`
+            ? Object.entries(groupedRoutines).map(([section, items]) => `
+                <strong>${section.charAt(0).toUpperCase() + section.slice(1)}</strong>
+                <ul>
+                  ${items.map(t => `<li>${t.task} ${t.done ? '✅' : '❌'}</li>`).join("")}
+                </ul>
+              `).join("")
             : "<p>None</p>"
         }
 
@@ -334,10 +349,10 @@ async function loadCombinedClassReport(cls) {
         ${
           k.activities.length
             ? `<ul>${k.activities.map(a => `
-              <li>
-                🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
-                <br>📝 ${a.note || ""}
-              </li>`).join("")}</ul>`
+                <li>
+                  🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
+                  <br>📝 ${a.note || ""}
+                </li>`).join("")}</ul>`
             : "<p>None</p>"
         }
       `;
