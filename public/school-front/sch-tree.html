@@ -173,15 +173,17 @@ async function loadTreeClasses() {
 
     // Load all members and teachers for each class
     for (const cls of TREE_CLASSES) {
-      await loadClassMembers(cls);
-      await loadClassTeachers(cls);
+      await loadClassMembers(cls);   // wait for members
+      await loadClassTeachers(cls);  // wait for teachers
     }
 
+    // Now maps are filled → safe to build tree
     buildTree();
   } catch (err) {
     console.error("❌ Failed to load tree classes", err);
   }
 }
+
 
 /* =====================================
    LOAD ALL MEMBERS (kids) OF CLASS
