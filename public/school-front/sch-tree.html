@@ -289,7 +289,6 @@ async function showTreeReport(cls) {
     : new Date().toISOString().slice(0, 10);
 
   try {
-    // Fetch all routines/activities for this class and date
     const res = await fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const routines = await res.json();
@@ -301,10 +300,10 @@ async function showTreeReport(cls) {
       return;
     }
 
-    // Flatten items by kid
+    // Flatten all items (no done filter)
     const allItems = routines.flatMap(doc => {
       const kidName = doc.kidName || MEMBERS_MAP[doc.kidmember] || "Unknown Kid";
-      return (doc.items || []).filter(i => i.done === true).map(item => ({
+      return (doc.items || []).map(item => ({
         ...item,
         kidName,
         kidId: doc.kidmember
@@ -312,7 +311,7 @@ async function showTreeReport(cls) {
     });
 
     if (!allItems.length) {
-      area.innerHTML = html + "<p>No completed activities.</p>";
+      area.innerHTML = html + "<p>No activities.</p>";
       return;
     }
 
@@ -346,6 +345,7 @@ async function showTreeReport(cls) {
     area.innerHTML = "<p>Error loading report ⚠️</p>";
   }
 }
+
 
 
 /* =====================================
