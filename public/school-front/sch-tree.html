@@ -28,6 +28,7 @@ html, body {
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
+  overflow: hidden;
 }
 
 /* ================= ZOOM WRAPPER ================= */
@@ -46,6 +47,7 @@ html, body {
   min-height: calc(100% / 0.75);    /* prevent blank space */
   display: flex;
   height: auto;
+  align-items: flex-start;
 }
 
 /* ================= LEFT TREE PANEL ================= */
@@ -257,7 +259,8 @@ tr:hover td { background: #eef4ff; }
   <div id="container">
     <!-- LEFT TREE -->
     <div id="treePanel">
-      <h2 id="nurseryTitle">Happy Kids Nursery</h2>
+      <h2 id="nurseryTitle">Loading...</h2>
+      <p id="userName" style="text-align:center; margin-bottom: 15px; font-weight:600; color:var(--secondary);">Hello, User</p>
       <div id="classTree"></div>
     </div>
 
@@ -283,6 +286,9 @@ const API = "http://localhost:3000/api";
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};   // kidId -> name
 let TEACHERS_MAP = {};  // teacherId -> name
+
+
+
 
 /* =====================================
    DATE HELPER (ALWAYS TODAY)
@@ -591,10 +597,24 @@ function getSelectedDate() {
    INIT
 ===================================== */
 window.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // Set nursery name
+  const nurseryTitle = document.getElementById("nurseryTitle");
+  nurseryTitle.textContent = user?.nurseryName || "Happy Kids Nursery";
+
+  // Set user name
+  const userNameEl = document.getElementById("userName");
+  userNameEl.textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
+
+  // Set default date if any
   const d = document.getElementById("filterDate");
   if (d && !d.value) d.value = getSelectedDate();
+
+  // Load tree
   loadTreeClasses();
 });
+
 
 /* BACK + LOGOUT */
 document.getElementById("backBtn").onclick = () => {
