@@ -102,7 +102,7 @@
   <button id="startBtn">🚀 Start / Login</button>
 
   <script>
-    const API_URL = "https://daily-effort-tracker-backend-production-2184.up.railway.app"; // or 3000 if you use that
+    const API_URL = "http://localhost:3000/api";// or 3000 if you use that
     // ✅ Redirect if already logged in
     const user = localStorage.getItem("currentUser");
     if (user) {
@@ -110,7 +110,7 @@
     }
 
     document.getElementById("startBtn").addEventListener("click", () => {
-      window.location.href = "login.html";
+      window.location.href = "ask-user.html";
     });
 
     // ✨ Rotating motivational messages
