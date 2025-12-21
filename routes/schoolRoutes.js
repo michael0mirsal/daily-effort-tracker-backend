@@ -299,9 +299,23 @@ router.post("/nurseries", async (req, res) => {
 /*
 CLASSES (nested under nursery)
 --------------------- */
+/* tested run but for tree family not fetch m and t
 router.get("/nurseries/:id/classes", async (req, res) => {
   try {
     const classes = await ClassModel.find({ nursery: req.params.id });
+    res.json({ success: true, classes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+*/
+router.get("/nurseries/:id/classes", async (req, res) => {
+  try {
+    const classes = await ClassModel.find({ nursery: req.params.id })
+      .populate("teachers", "name")      // teacher names
+      .populate("members", "name")       // member names
+      .lean();
+
     res.json({ success: true, classes });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
