@@ -278,7 +278,7 @@ async function loadCombinedClassReport(cls) {
        2) Init kids (ONCE)
     ========================= */
     const kids = {};
-    const kidsByName = {}; // lookup only
+    const kidsByName = {};
 
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
@@ -287,10 +287,17 @@ async function loadCombinedClassReport(cls) {
       kids[id] = {
         id,
         name,
-        time: 0,
-        stars: [],
-        activities: [],
-        routines: []
+
+        // ⏱ time
+        totalTime: 0,
+
+        // ⭐ stars (SEPARATED)
+        routineStars: 0,
+        activityStars: 0,
+
+        // data
+        routines: [],
+        activities: []
       };
 
       kidsByName[name.toLowerCase()] = kids[id];
@@ -300,63 +307,79 @@ async function loadCombinedClassReport(cls) {
        3) Merge activities
     ========================= */
     activities.forEach(doc => {
-      const id = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      const kid = kids[id];
+      const kidId = String(
+        doc.schoolMember ||
+        doc.schoolMemberId ||
+        doc.kidmember
+      );
+
+      const kid = kids[kidId];
       if (!kid) return;
 
       (doc.items || []).forEach(it => {
-        kid.time += Number(it.timeMin || 0);
-        kid.stars.push(Number(it.evaluation || 0));
+        const time = Number(it.timeMin || 0);
+        const stars = Number(it.evaluation || 0);
+
+        kid.totalTime += time;
+        kid.activityStars += stars;
+
         kid.activities.push(it);
       });
     });
 
     /* =========================
-       4) Merge routines (SAFE)
+       4) Merge routines (ONLY done === true)
     ========================= */
     routines.forEach(r => {
-      const id = String(r.kidmember || r.kidId);
-      const name = (r.kidName || "").toLowerCase();
+      const kidId = String(r.kidmember || r.kidId);
+      const nameKey = (r.kidName || "").toLowerCase();
 
-      const kid = kids[id] || kidsByName[name];
+      const kid = kids[kidId] || kidsByName[nameKey];
       if (!kid) return;
 
       (r.items || []).forEach(it => {
+        if (it.done !== true) return; // 🔒 strict rule
+
+        kid.routineStars += 1; // ⭐ 1 star per completed routine
+
         kid.routines.push({
           task: it.task,
-          section: it.section,
-          done: it.done === true
+          section: it.section
         });
       });
     });
 
     /* =========================
-       5) Render (NO duplicates)
+       5) Render (NO duplication)
     ========================= */
     Object.values(kids).forEach(k => {
-      const totalStars = k.stars.reduce((a, b) => a + b, 0);
+      const totalStars = k.routineStars + k.activityStars;
 
       // group routines by section
       const grouped = {};
       k.routines.forEach(r => {
         if (!grouped[r.section]) grouped[r.section] = [];
-        grouped[r.section].push(r);
+        grouped[r.section].push(r.task);
       });
 
       area.innerHTML += `
         <hr>
         <h3>🧒 ${k.name}</h3>
-        <p>⏱ Total Time: ${k.time} min | ⭐ Collected: ${totalStars} ⭐</p>
 
-        <h4>✅ Routines</h4>
+        <p>
+          ⏱ Total Time: ${k.totalTime} min<br>
+          ⭐ Routine Stars: ${k.routineStars}<br>
+          ⭐ Activity Stars: ${k.activityStars}<br>
+          ⭐ <strong>Total Stars: ${totalStars}</strong>
+        </p>
+
+        <h4>✅ Completed Routines</h4>
         ${
           k.routines.length
-            ? Object.entries(grouped).map(([section, items]) => `
+            ? Object.entries(grouped).map(([section, tasks]) => `
                 <strong>${section.charAt(0).toUpperCase() + section.slice(1)}</strong>
                 <ul>
-                  ${items.map(t =>
-                    `<li>${t.task} ${t.done ? "✅" : "❌"}</li>`
-                  ).join("")}
+                  ${tasks.map(t => `<li>${t} ✅</li>`).join("")}
                 </ul>
               `).join("")
             : "<p>None</p>"
@@ -368,7 +391,9 @@ async function loadCombinedClassReport(cls) {
             ? `<ul>
                 ${k.activities.map(a => `
                   <li>
-                    🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
+                    🎯 ${a.activity}
+                    | ⏱ ${a.timeMin} min
+                    | ⭐ ${a.evaluation}
                     <br>📝 ${a.note || ""}
                   </li>
                 `).join("")}
