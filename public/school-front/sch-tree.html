@@ -270,22 +270,31 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
+    /* =========================
+       1) INIT FROM CLASS MEMBERS
+       ========================= */
     const kids = {};
 
-    /* ACTIVITIES */
-    activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      if (!kidId) return;
+    cls.members.forEach(mid => {
+      const id = String(mid._id || mid);
+      kids[id] = {
+        id,
+        name: MEMBERS_MAP[id] || "Unknown",
+        time: 0,
+        stars: [],
+        activities: [],
+        routines: []
+      };
+    });
 
-      if (!kids[kidId]) {
-        kids[kidId] = {
-          name: doc.kidName || MEMBERS_MAP[kidId] || "Unknown",
-          time: 0,
-          stars: [],
-          activities: [],
-          routines: []
-        };
-      }
+    /* =========================
+       2) MERGE ACTIVITIES
+       ========================= */
+    activities.forEach(doc => {
+      const kidId = String(
+        doc.schoolMember || doc.schoolMemberId || doc.kidmember
+      );
+      if (!kids[kidId]) return; // ❌ ignore outsiders
 
       (doc.items || []).forEach(it => {
         kids[kidId].time += Number(it.timeMin || 0);
@@ -294,34 +303,28 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    /* ROUTINES (ONLY done=true) */
+    /* =========================
+       3) MERGE ROUTINES (done only)
+       ========================= */
     routines.forEach(r => {
       const kidId = String(r.kidmember);
-      if (!kidId) return;
+      if (!kids[kidId]) return; // ❌ ignore outsiders
 
       (r.items || [])
         .filter(it => it.done === true)
-        .forEach(it => {
-          if (!kids[kidId]) {
-            kids[kidId] = {
-              name: MEMBERS_MAP[kidId] || "Unknown",
-              time: 0,
-              stars: [],
-              activities: [],
-              routines: []
-            };
-          }
-          kids[kidId].routines.push(it);
-        });
+        .forEach(it => kids[kidId].routines.push(it));
     });
 
-    if (!Object.keys(kids).length) {
-      area.innerHTML += "<p>No completed activities.</p>";
-      return;
-    }
+    /* =========================
+       4) RENDER ONLY REAL MEMBERS
+       ========================= */
+    let hasAnyData = false;
 
-    /* RENDER */
     Object.values(kids).forEach(k => {
+      if (!k.activities.length && !k.routines.length) return;
+
+      hasAnyData = true;
+
       const avg = k.stars.length
         ? (k.stars.reduce((a,b)=>a+b,0)/k.stars.length).toFixed(1)
         : "0";
@@ -332,20 +335,28 @@ async function loadCombinedClassReport(cls) {
         <p>⏱ ${k.time} min | ⭐ Avg ${avg}</p>
 
         <h4>✅ Completed Routines</h4>
-        ${k.routines.length
-          ? `<ul>${k.routines.map(r=>`<li>${r.task}</li>`).join("")}</ul>`
-          : "<p>None</p>"}
+        ${
+          k.routines.length
+            ? `<ul>${k.routines.map(r=>`<li>${r.task}</li>`).join("")}</ul>`
+            : "<p>None</p>"
+        }
 
         <h4>📊 Activities</h4>
-        ${k.activities.length
-          ? `<ul>${k.activities.map(a=>`
-              <li>
-                🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
-                <br>📝 ${a.note || ""}
-              </li>`).join("")}</ul>`
-          : "<p>None</p>"}
+        ${
+          k.activities.length
+            ? `<ul>${k.activities.map(a=>`
+                <li>
+                  🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
+                  <br>📝 ${a.note || ""}
+                </li>`).join("")}</ul>`
+            : "<p>None</p>"
+        }
       `;
     });
+
+    if (!hasAnyData) {
+      area.innerHTML += "<p>No completed routines or activities.</p>";
+    }
 
   } catch (err) {
     console.error(err);
