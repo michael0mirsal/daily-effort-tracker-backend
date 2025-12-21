@@ -224,7 +224,7 @@
         const user = resData.user;
 
         if (!res.ok) {
-          signinMsg.textContent = resData.error || "Sign-in failed";
+          signinMsg.textContent = resData.message || "Sign-in failed";
           return;
         }
         // Save user & nurseryId
