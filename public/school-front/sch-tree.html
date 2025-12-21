@@ -325,14 +325,15 @@ async function loadCombinedClassReport(cls) {
 
       hasAnyData = true;
 
-      const avg = k.stars.length
-        ? (k.stars.reduce((a,b)=>a+b,0)/k.stars.length).toFixed(1)
-        : "0";
+      const totalStars = kid.stars.length > 0
+       ? kid.stars.reduce((a, b) => a + b, 0)
+       : 0;
+
 
       area.innerHTML += `
         <hr>
         <h3>🧒 ${k.name}</h3>
-        <p>⏱ ${k.time} min | ⭐ Avg ${avg}</p>
+        <p>⏱ Total Time: ${kid.time} min | ⭐ Collected: ${totalStars} ⭐</p>
 
         <h4>✅ Completed Routines</h4>
         ${
