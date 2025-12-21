@@ -263,6 +263,7 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
+    // Fetch routines and activities for the class & date
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -271,7 +272,7 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // 1) INIT kids map from class members
+    // Initialize member map
     const kids = {};
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
@@ -285,67 +286,68 @@ async function loadCombinedClassReport(cls) {
       };
     });
 
-    // 2) Merge activities
+    // Merge activities per member
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      const kidKey = kids[kidId] ? kidId : "unknown_" + kidId;
-
-      if (!kids[kidKey]) {
-        kids[kidKey] = {
-          id: kidId,
-          name: MEMBERS_MAP[kidId] || "Unknown",
-          time: 0,
-          stars: [],
-          activities: [],
-          routines: []
-        };
-      }
+      if (!kids[kidId]) return; // skip outsiders
 
       (doc.items || []).forEach(it => {
-        kids[kidKey].time += Number(it.timeMin || 0);
-        kids[kidKey].stars.push(Number(it.evaluation || 0));
-        kids[kidKey].activities.push(it);
+        kids[kidId].time += Number(it.timeMin || 0);
+        if (it.evaluation) kids[kidId].stars.push(Number(it.evaluation));
+        kids[kidId].activities.push(it);
       });
     });
 
-    // 3) Merge routines (ALL, not just done)
+    // Merge routines per member (done and not done)
     routines.forEach(r => {
       const kidId = String(r.kidmember);
       if (!kids[kidId]) return;
 
       (r.items || []).forEach(it => {
         kids[kidId].routines.push(it);
-        if (it.timeMin) kids[kidId].time += Number(it.timeMin);
       });
     });
 
-    // 4) Render
-    Object.values(kids).forEach(kid => {
-      const totalStars = kid.stars.reduce((a, b) => a + b, 0);
+    // Render all members
+    Object.values(kids).forEach(k => {
+      const totalStars = k.stars.length > 0
+        ? k.stars.reduce((a, b) => a + b, 0)
+        : 0;
+
+      const routinesHtml = k.routines.length
+        ? `<ul>${k.routines.map(r => {
+            const doneMark = r.done ? "✅" : "❌";
+            return `<li>${doneMark} ${r.task}</li>`;
+          }).join("")}</ul>`
+        : "<p>None</p>";
+
+      const activitiesHtml = k.activities.length
+        ? `<ul>${k.activities.map(a => `
+            <li>
+              🎯 ${a.activity} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
+              <br>📝 ${a.note || ""}
+            </li>`).join("")}</ul>`
+        : "<p>None</p>";
+
       area.innerHTML += `
         <hr>
-        <h3>🧒 ${kid.name}</h3>
-        <p>⏱ Total Time: ${kid.time} min | ⭐ Collected: ${totalStars} ⭐</p>
+        <div class="kid-report">
+          <h3>🧒 ${k.name}</h3>
+          <p>⏱ Total Time: ${k.time} min | ⭐ Collected: ${totalStars} ⭐</p>
 
-        <h4>✅ Routines</h4>
-        ${
-          kid.routines.length
-            ? `<ul>${kid.routines.map(r => `<li>${r.task} ${r.done ? "✅" : "❌"}</li>`).join("")}</ul>`
-            : "<p>None</p>"
-        }
+          <h4>✅ Routines</h4>
+          ${routinesHtml}
 
-        <h4>📊 Activities</h4>
-        ${
-          kid.activities.length
-            ? `<ul>${kid.activities.map(a => `
-                <li>
-                  🎯 ${a.activity || ""} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
-                  <br>📝 ${a.note || ""}
-                </li>`).join("")}</ul>`
-            : "<p>None</p>"
-        }
+          <h4>📊 Activities</h4>
+          ${activitiesHtml}
+        </div>
       `;
     });
+
+    // If no members or data
+    if (!Object.values(kids).some(k => k.activities.length || k.routines.length)) {
+      area.innerHTML += "<p>No routines or activities for this date.</p>";
+    }
 
   } catch (err) {
     console.error("Combined report error:", err);
