@@ -145,7 +145,7 @@
 <body>
 
 <div class="top-buttons">
-  <button class="btn" id="logoutBtn">Home</button>
+ 
 </div>
 
   <div class="card">
@@ -186,6 +186,7 @@
   </div>
 
   <button type="submit">Sign In</button>
+  <button class="btn" id="logoutBtn">Home</button>
 </form>
 
   </div>
@@ -261,7 +262,7 @@
     // Logout
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("user");
-    window.location.href = "/sch-signin.html";
+    window.location.href = "/welcome.html";
   };
 
   </script>
