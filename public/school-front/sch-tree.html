@@ -259,7 +259,7 @@ async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) return;
 
-  const date = getSelectedDate(); 
+  const date = getSelectedDate();
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
@@ -271,32 +271,54 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // 1) Build kids map from class members (string IDs)
+    // 1) INIT kids map from class members (string IDs)
     const kids = {};
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
-      kids[id] = { id, name: MEMBERS_MAP[id] || "Unknown", time: 0, stars: [], activities: [], routines: [] };
+      kids[id] = {
+        id,
+        name: MEMBERS_MAP[id] || "Unknown",
+        time: 0,
+        stars: [],
+        activities: [],
+        routines: []
+      };
     });
 
     // 2) Merge activities
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      if (!kids[kidId]) return; 
+      const kidKey = kids[kidId] ? kidId : "unknown_" + kidId; // allow unknown kids
+
+      if (!kids[kidKey]) {
+        kids[kidKey] = {
+          id: kidId,
+          name: MEMBERS_MAP[kidId] || "Unknown",
+          time: 0,
+          stars: [],
+          activities: [],
+          routines: []
+        };
+      }
+
       (doc.items || []).forEach(it => {
-        kids[kidId].time += Number(it.timeMin || 0);
-        kids[kidId].stars.push(Number(it.evaluation || 0));
-        kids[kidId].activities.push(it);
+        kids[kidKey].time += Number(it.timeMin || 0);
+        kids[kidKey].stars.push(Number(it.evaluation || 0));
+        kids[kidKey].activities.push(it);
       });
     });
 
-    // 3) Merge routines (done only)
+    // 3) Merge routines (only done)
     routines.forEach(r => {
       const kidId = String(r.kidmember);
-      if (!kids[kidId]) return; 
-      (r.items || []).filter(it => it.done === true).forEach(it => kids[kidId].routines.push(it));
+      if (!kids[kidId]) return; // ignore outsiders
+
+      (r.items || [])
+        .filter(it => it.done === true)
+        .forEach(it => kids[kidId].routines.push(it));
     });
 
-    // 4) Render ALL class members
+    // 4) Render all members
     Object.values(kids).forEach(kid => {
       const totalStars = kid.stars.reduce((a, b) => a + b, 0);
       area.innerHTML += `
@@ -307,16 +329,16 @@ async function loadCombinedClassReport(cls) {
         <h4>✅ Completed Routines</h4>
         ${
           kid.routines.length
-            ? `<ul>${kid.routines.map(r=>`<li>${r.task}</li>`).join("")}</ul>`
+            ? `<ul>${kid.routines.map(r => `<li>${r.task}</li>`).join("")}</ul>`
             : "<p>None</p>"
         }
 
         <h4>📊 Activities</h4>
         ${
           kid.activities.length
-            ? `<ul>${kid.activities.map(a=>`
+            ? `<ul>${kid.activities.map(a => `
                 <li>
-                  🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
+                  🎯 ${a.activity || ""} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
                   <br>📝 ${a.note || ""}
                 </li>`).join("")}</ul>`
             : "<p>None</p>"
@@ -326,9 +348,13 @@ async function loadCombinedClassReport(cls) {
 
   } catch (err) {
     console.error("Combined report error:", err);
-    area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`;
+    area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
   }
 }
+
+
+
+
 
 // Helper to get selected date or default to today
 function getSelectedDate() {
