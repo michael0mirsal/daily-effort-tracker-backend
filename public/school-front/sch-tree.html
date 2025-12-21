@@ -263,7 +263,7 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
-    // Fetch routines and activities for the class & date
+    // Fetch routines and activities
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -272,7 +272,7 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // Initialize member map
+    // Initialize kids map
     const kids = {};
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
@@ -286,10 +286,10 @@ async function loadCombinedClassReport(cls) {
       };
     });
 
-    // Merge activities per member
+    // Merge activities
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      if (!kids[kidId]) return; // skip outsiders
+      if (!kids[kidId]) return;
 
       (doc.items || []).forEach(it => {
         kids[kidId].time += Number(it.timeMin || 0);
@@ -298,13 +298,13 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // Merge routines per member (done and not done)
+    // Merge routines
     routines.forEach(r => {
       const kidId = String(r.kidmember);
       if (!kids[kidId]) return;
 
       (r.items || []).forEach(it => {
-        kids[kidId].routines.push(it);
+        kids[kidId].routines.push(it); // include all, mark done inside
       });
     });
 
@@ -344,7 +344,6 @@ async function loadCombinedClassReport(cls) {
       `;
     });
 
-    // If no members or data
     if (!Object.values(kids).some(k => k.activities.length || k.routines.length)) {
       area.innerHTML += "<p>No routines or activities for this date.</p>";
     }
