@@ -263,6 +263,7 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
+    // Fetch both routines and activities
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -272,7 +273,7 @@ async function loadCombinedClassReport(cls) {
     const activities = aRes.ok ? await aRes.json() : [];
 
     // =========================
-    // INIT MEMBERS (normalize IDs)
+    // 1) Initialize members map
     // =========================
     const kids = {};
     cls.members.forEach(mid => {
@@ -280,51 +281,53 @@ async function loadCombinedClassReport(cls) {
       kids[id] = {
         id,
         name: MEMBERS_MAP[id] || "Unknown",
-        time: 0,
-        stars: [],
+        routines: [],
         activities: [],
-        routines: []
+        time: 0,
+        stars: []
       };
     });
 
     // =========================
-    // MERGE ACTIVITIES
-    // =========================
-    activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      if (!kids[kidId]) return;
-
-      (doc.items || []).forEach(it => {
-        kids[kidId].time += Number(it.timeMin || 0);
-        if (it.evaluation) kids[kidId].stars.push(Number(it.evaluation));
-        kids[kidId].activities.push(it);
-      });
-    });
-
-    // =========================
-    // MERGE ROUTINES
+    // 2) Merge routines (all items)
     // =========================
     routines.forEach(r => {
       const kidId = String(r.kidmember);
-      if (!kids[kidId]) return; // skip outsiders
+      if (!kids[kidId]) return;
 
       (r.items || []).forEach(it => {
-        kids[kidId].routines.push(it); // include all, mark done inside
+        kids[kidId].routines.push(it);
       });
     });
 
     // =========================
-    // RENDER
+    // 3) Merge activities
+    // =========================
+    activities.forEach(a => {
+      const kidId = String(a.schoolMember || a.schoolMemberId || a.kidmember);
+      if (!kids[kidId]) return;
+
+      (a.items || []).forEach(it => {
+        kids[kidId].activities.push(it);
+        kids[kidId].time += Number(it.timeMin || 0);
+        if (it.evaluation) kids[kidId].stars.push(Number(it.evaluation));
+      });
+    });
+
+    // =========================
+    // 4) Render report per kid
     // =========================
     Object.values(kids).forEach(k => {
-      const totalStars = k.stars.length ? k.stars.reduce((a,b)=>a+b,0) : 0;
+      const totalStars = k.stars.length > 0
+        ? k.stars.reduce((a, b) => a + b, 0)
+        : 0;
 
       const routinesHtml = k.routines.length
-        ? `<ul>${k.routines.map(r=>`<li>${r.done ? "✅" : "❌"} ${r.task}</li>`).join("")}</ul>`
+        ? `<ul>${k.routines.map(r => `<li>${r.done ? "✅" : "❌"} ${r.task}</li>`).join("")}</ul>`
         : "<p>None</p>";
 
       const activitiesHtml = k.activities.length
-        ? `<ul>${k.activities.map(a=>`
+        ? `<ul>${k.activities.map(a => `
             <li>🎯 ${a.activity} | ⏱ ${a.timeMin || 0} min | ⭐ ${a.evaluation || 0}
             <br>📝 ${a.note || ""}</li>`).join("")}</ul>`
         : "<p>None</p>";
@@ -344,9 +347,9 @@ async function loadCombinedClassReport(cls) {
       `;
     });
 
-  } catch(err) {
-    console.error(err);
-    area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
+  } catch (err) {
+    console.error("Error loading combined report:", err);
+    area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`;
   }
 }
 
