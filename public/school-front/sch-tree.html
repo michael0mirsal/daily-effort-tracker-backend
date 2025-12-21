@@ -271,7 +271,7 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // 1) INIT kids map from class members (string IDs)
+    // 1) INIT kids map from class members
     const kids = {};
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
@@ -288,7 +288,7 @@ async function loadCombinedClassReport(cls) {
     // 2) Merge activities
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      const kidKey = kids[kidId] ? kidId : "unknown_" + kidId; // allow unknown kids
+      const kidKey = kids[kidId] ? kidId : "unknown_" + kidId;
 
       if (!kids[kidKey]) {
         kids[kidKey] = {
@@ -308,17 +308,18 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // 3) Merge routines (only done)
+    // 3) Merge routines (ALL, not just done)
     routines.forEach(r => {
       const kidId = String(r.kidmember);
-      if (!kids[kidId]) return; // ignore outsiders
+      if (!kids[kidId]) return;
 
-      (r.items || [])
-        .filter(it => it.done === true)
-        .forEach(it => kids[kidId].routines.push(it));
+      (r.items || []).forEach(it => {
+        kids[kidId].routines.push(it);
+        if (it.timeMin) kids[kidId].time += Number(it.timeMin);
+      });
     });
 
-    // 4) Render all members
+    // 4) Render
     Object.values(kids).forEach(kid => {
       const totalStars = kid.stars.reduce((a, b) => a + b, 0);
       area.innerHTML += `
@@ -326,10 +327,10 @@ async function loadCombinedClassReport(cls) {
         <h3>🧒 ${kid.name}</h3>
         <p>⏱ Total Time: ${kid.time} min | ⭐ Collected: ${totalStars} ⭐</p>
 
-        <h4>✅ Completed Routines</h4>
+        <h4>✅ Routines</h4>
         ${
           kid.routines.length
-            ? `<ul>${kid.routines.map(r => `<li>${r.task}</li>`).join("")}</ul>`
+            ? `<ul>${kid.routines.map(r => `<li>${r.task} ${r.done ? "✅" : "❌"}</li>`).join("")}</ul>`
             : "<p>None</p>"
         }
 
