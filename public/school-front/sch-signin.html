@@ -201,7 +201,7 @@
       const data = {
         name: document.getElementById("name").value.trim(),
         nurseryName: document.getElementById("nurseryName").value.trim(),
-        role: document.getElementById("role").value.trim(),
+        
         passKey: document.getElementById("passKey").value.trim(),
       };
 
@@ -246,7 +246,7 @@
     // ✅ Save user info
 
 
-        if (data.role === "admin") {
+        if (user.role === "admin") {
           window.location.href = "/sch-choose.html";
         } else if (data.role === "teacher") {
           window.location.href = "/sch-choose.html";
