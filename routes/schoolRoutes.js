@@ -126,7 +126,7 @@ router.post("/school/signin", async (req, res) => {
     let user;
 
     // 2️⃣ Role-based authentication
-    if (role === "admin" || role === "manager") {
+    if ( role === "manager") {
 
       // 🔍 Find nursery
       const nursery = await Nursery.findOne({ name: nurseryName });
