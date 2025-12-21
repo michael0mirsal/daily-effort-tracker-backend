@@ -137,26 +137,23 @@ router.post("/school/signin", async (req, res) => {
         });
       }
 
-      // ✅ STRICT MANAGER VALIDATION (MERGED FIX)
-      if (
-        name !== nursery.manager ||
-        passKey !== nursery.managerPassKey
-      ) {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid manager/admin credentials"
-        });
-      }
+       // ✅ STRICT MANAGER VALIDATION
+  if (name !== nursery.manager || passKey !== nursery.managerPassKey) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid manager credentials"
+    });
+  }
 
-      // ✅ Keep original user structure (minus sensitive data)
-      user = {
-        _id: nursery._id,
-        name: nursery.manager,
-        role: role, // keep requested role (admin/manager)
-        nurseryId: nursery._id,
-        nurseryName: nursery.name
-      };
-    }
+  // ✅ Normalize role to 'manager'
+  user = {
+    _id: nursery._id,
+    name: nursery.manager,
+    role: "manager", // always manager
+    nurseryId: nursery._id,
+    nurseryName: nursery.name
+  };
+}
 
     else if (role === "teacher") {
       // Teacher → check nursery passKey
