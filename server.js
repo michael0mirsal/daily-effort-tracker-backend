@@ -33,6 +33,7 @@ const PORT = process.env.PORT || 3000; // Railway prefers 8080
 // ======================================================
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "public/school-front")));
 app.use("/api", schoolRoutes);
 app.use("/api", schTaskRoutes);
