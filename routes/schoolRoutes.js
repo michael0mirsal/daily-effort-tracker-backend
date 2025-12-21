@@ -117,72 +117,121 @@ router.post("/school/signin", async (req, res) => {
 
     // 1️⃣ Check required fields
     if (!name || !nurseryName || !role || !passKey) {
-      return res.status(400).json({ success: false, message: "Missing fields" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing fields"
+      });
     }
 
     let user;
 
     // 2️⃣ Role-based authentication
     if (role === "admin" || role === "manager") {
-      // Admin/Manager → check managerPassKey in nursery
-      const nursery = await Nursery.findOne({ name: nurseryName });
-      if (!nursery) return res.status(404).json({ success: false, message: "Nursery not found" });
 
-      if (passKey !== nursery.managerPassKey) {
-        return res.status(401).json({ success: false, message: "Invalid manager/admin credentials" });
+      // 🔍 Find nursery
+      const nursery = await Nursery.findOne({ name: nurseryName });
+      if (!nursery) {
+        return res.status(404).json({
+          success: false,
+          message: "Nursery not found"
+        });
       }
 
+      // ✅ STRICT MANAGER VALIDATION (MERGED FIX)
+      if (
+        name !== nursery.manager ||
+        passKey !== nursery.managerPassKey
+      ) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid manager/admin credentials"
+        });
+      }
+
+      // ✅ Keep original user structure (minus sensitive data)
       user = {
-        name,
-        role,
+        _id: nursery._id,
+        name: nursery.manager,
+        role: role, // keep requested role (admin/manager)
         nurseryId: nursery._id,
-        nurseryName: nursery.name,
-        manager: nursery.manager,
-        managerPassKey: nursery.managerPassKey
+        nurseryName: nursery.name
       };
-    } 
+    }
+
     else if (role === "teacher") {
       // Teacher → check nursery passKey
-      user = await Teacher.findOne({ name }).populate("nursery", "name passKey");
-      if (!user || user.nursery.name !== nurseryName || user.nursery.passKey !== passKey) {
-        return res.status(401).json({ success: false, message: "Invalid teacher credentials" });
+      const teacher = await Teacher
+        .findOne({ name })
+        .populate("nursery", "name passKey");
+
+      if (
+        !teacher ||
+        teacher.nursery.name !== nurseryName ||
+        teacher.nursery.passKey !== passKey
+      ) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid teacher credentials"
+        });
       }
 
       user = {
-        _id: user._id,
-        name: user.name,
+        _id: teacher._id,
+        name: teacher.name,
         role,
-        nurseryId: user.nursery._id,
-        nurseryName: user.nursery.name
+        nurseryId: teacher.nursery._id,
+        nurseryName: teacher.nursery.name
       };
-    } 
+    }
+
     else if (role === "supervisor") {
-      // Parent → check nursery passKey via family
-      user = await Teacher.findOne({ name }).populate("nursery", "name passKey");
-      if (!user || user.nursery.name !== nurseryName || user.nursery.passKey !== passKey) {
-        return res.status(401).json({ success: false, message: "Invalid teacher credentials" });
+      // Supervisor → same validation logic as teacher
+      const supervisor = await Teacher
+        .findOne({ name })
+        .populate("nursery", "name passKey");
+
+      if (
+        !supervisor ||
+        supervisor.nursery.name !== nurseryName ||
+        supervisor.nursery.passKey !== passKey
+      ) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid supervisor credentials"
+        });
       }
 
       user = {
-        _id: user._id,
-        name: user.name,
+        _id: supervisor._id,
+        name: supervisor.name,
         role,
-        nurseryId: user.nursery._id,
-        nurseryName: user.nursery.name
+        nurseryId: supervisor.nursery._id,
+        nurseryName: supervisor.nursery.name
       };
-    } 
+    }
+
     else {
-      return res.status(400).json({ success: false, message: "Invalid role" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role"
+      });
     }
 
     // 3️⃣ Return user info
-    return res.json({ success: true, user });
+    return res.json({
+      success: true,
+      user
+    });
 
   } catch (err) {
     console.error("Sign-in error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
   }
 });
+
 
 
 
