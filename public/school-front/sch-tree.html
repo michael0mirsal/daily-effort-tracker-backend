@@ -264,29 +264,31 @@ function buildTree() {
     childBox.style.display = "none";
 
     classDiv.onclick = async () => {
-      childBox.style.display = childBox.style.display === "block" ? "none" : "block";
+  childBox.style.display = childBox.style.display === "block" ? "none" : "block";
 
-      // Load reports for this class
-      await loadClassReports(cls._id);
+  if (childBox.style.display === "block") {
+    // Clear previous content to avoid duplicates
+    childBox.innerHTML = "";
 
-      // Show teachers
-      // Teachers
-         cls.teachers.forEach(t => {
-         const name = t.name || "Teacher";
-         childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${name}</div>`;
-         });
+    // Load reports for this class
+    await loadClassReports(cls._id);
 
-// Members
-          cls.members.forEach(m => {
-          const name = m.name || m.member?.name || "Kid";
-         childBox.innerHTML += `<div class="member-box">🧒 ${name}</div>`;
-        });
+    // Show teachers
+    cls.teachers.forEach(t => {
+      const name = t.name || "Teacher";
+      childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${name}</div>`;
+    });
 
+    // Show members
+    cls.members.forEach(m => {
+      const name = m.name || m.member?.name || "Kid";
+      childBox.innerHTML += `<div class="member-box">🧒 ${name}</div>`;
+    });
 
+    showTreeReport(cls);
+  }
+};
 
-
-      showTreeReport(cls);
-    };
 
     tree.appendChild(classDiv);
     tree.appendChild(childBox);
