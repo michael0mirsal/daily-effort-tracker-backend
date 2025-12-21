@@ -15,17 +15,110 @@
   --text: #2d3436;
 }
 
+/* RESET */
+* {
+  box-sizing: border-box;
+}
+
 body {
+  margin: 0;
+  height: 100vh;
   background: var(--bg);
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
   color: var(--text);
+  overflow: hidden;
+}
+
+/* ================= APP LAYOUT ================= */
+#container {
+  display: flex;
+  height: 100vh;
+}
+
+/* ================= LEFT TREE PANEL ================= */
+#treePanel {
+  width: 320px;
+  background: linear-gradient(180deg, #ffffff, #f1f3f6);
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  overflow-y: auto;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+}
+
+#nurseryTitle {
+  text-align: center;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* CLASS NODE */
+.class-branch {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  transition: 0.25s;
+}
+
+.class-branch:hover {
+  background: #f0f6ff;
+  transform: translateX(4px);
+}
+
+/* CHILD LIST */
+.child-items {
+  margin: 8px 0 15px 15px;
+}
+
+.teacher-box,
+.member-box {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+/* ================= RIGHT REPORT PANEL ================= */
+#rightPanel {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+/* TOP BAR */
+#topButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#backBtn {
+  background: #ecf0f1;
+}
+
+#logoutBtn {
+  background: var(--danger);
+  color: white;
 }
 
 /* ================= REPORT ================= */
-#reportContent {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
+#classReport h2 {
+  margin-top: 0;
 }
 
 /* HEADER */
@@ -42,10 +135,6 @@ body {
   font-size: 1.8rem;
 }
 
-.report-header span {
-  opacity: 0.85;
-}
-
 /* CHILD CARD */
 .child-card {
   background: var(--card);
@@ -55,7 +144,7 @@ body {
   box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
-/* CHILD TITLE */
+/* TITLE */
 .child-title {
   display: flex;
   justify-content: space-between;
@@ -67,13 +156,12 @@ body {
 
 .child-title h3 {
   margin: 0;
-  font-size: 1.4rem;
 }
 
-/* KPI GRID */
+/* KPI */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 15px;
   margin: 20px 0;
 }
@@ -85,19 +173,7 @@ body {
   text-align: center;
 }
 
-.kpi h4 {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #777;
-}
-
-.kpi strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 1.4rem;
-}
-
-/* SECTION TITLE */
+/* SECTION */
 .section-title {
   margin-top: 25px;
   margin-bottom: 10px;
@@ -111,21 +187,18 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
 
 th, td {
-  padding: 10px 12px;
+  padding: 10px;
   border-bottom: 1px solid #eee;
-  font-size: 0.95rem;
 }
 
 th {
   background: #f2f4f6;
-  text-align: left;
-  font-weight: 600;
 }
 
+/* BADGE */
 .badge {
   padding: 4px 10px;
   border-radius: 20px;
@@ -134,7 +207,6 @@ th {
 }
 
 .badge-success { background: var(--success); }
-.badge-warning { background: var(--warning); }
 .badge-primary { background: var(--secondary); }
 
 /* EMPTY */
@@ -143,6 +215,7 @@ th {
   font-style: italic;
 }
 </style>
+
 
 </head>
 <body>
