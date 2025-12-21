@@ -138,12 +138,15 @@ router.post("/school/signin", async (req, res) => {
       }
 
        // ✅ STRICT MANAGER VALIDATION
-  if (name !== nursery.manager || passKey !== nursery.managerPassKey) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid manager credentials"
-    });
-  }
+  if (
+  name.trim().toLowerCase() !== nursery.manager.trim().toLowerCase() ||
+  passKey !== nursery.managerPassKey
+) {
+  return res.status(401).json({
+    success: false,
+    message: "Invalid manager credentials"
+  });
+}
 
   // ✅ Normalize role to 'manager'
   user = {
