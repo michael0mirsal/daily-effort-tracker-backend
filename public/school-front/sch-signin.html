@@ -199,11 +199,11 @@
       e.preventDefault();
 
       const data = {
-        name: document.getElementById("name").value.trim(),
-        nurseryName: document.getElementById("nurseryName").value.trim(),
-        
-        passKey: document.getElementById("passKey").value.trim(),
-      };
+    name: document.getElementById("name").value.trim(),
+    nurseryName: document.getElementById("nurseryName").value.trim(),
+    role: document.getElementById("role").value.trim(),
+    passKey: document.getElementById("passKey").value.trim(),
+  };
 
         // Check all fields
       for (let k in data) {
@@ -246,13 +246,23 @@
     // ✅ Save user info
 
 
-        if (user.role === "admin") {
-          window.location.href = "/sch-choose.html";
-        } else if (data.role === "teacher") {
-          window.location.href = "/sch-choose.html";
-        } else {
-          window.location.href = "/sch-choose.html";
-        }
+         // 4️⃣ Redirect by role (CLEAR & MEANINGFUL)
+    switch (user.role) {
+      case "admin":
+        window.location.href = "/sch-choose.html";
+        break;
+
+      case "teacher":
+        window.location.href = "/teacher-dashboard.html";
+        break;
+
+      case "supervisor":
+        window.location.href = "/supervisor-dashboard.html";
+        break;
+
+      default:
+        signinMsg.textContent = "Unknown role";
+    }
 
       } catch (err) {
         signinMsg.textContent = "Server error, try again later.";
