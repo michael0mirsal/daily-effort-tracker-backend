@@ -27,8 +27,9 @@ body {
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
   color: var(--text);
   overflow: hidden;
-  zoom: 0.5; /* 50% scale */
-  transform-origin: top left; 
+  zoom: 0.5; /* Chrome, Edge, IE */
+  transform: scale(0.5); /* Firefox fallback */
+  transform-origin: top left;
 }
 
 /* ================= APP LAYOUT ================= */
