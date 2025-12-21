@@ -279,41 +279,74 @@ function buildTree() {
 /* =====================================
    SHOW REPORT
 ===================================== */
-function showTreeReport(cls) {
+async function showTreeReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) return;
 
-  let html = `<h2>${cls.name} – Daily Report</h2>`;
+  const dateInput = document.getElementById("filterDate");
+  const date = dateInput && dateInput.value
+    ? dateInput.value
+    : new Date().toISOString().slice(0, 10);
 
-  if (!TREE_REPORTS.length) {
-    area.innerHTML = html + "<p>No records found.</p>";
-    return;
-  }
+  try {
+    // Fetch all routines/activities for this class and date
+    const res = await fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const routines = await res.json();
 
-  html += "<ul>";
+    let html = `<h2>${cls.name} – Daily Report (${date})</h2>`;
 
-  TREE_REPORTS.forEach(doc => {
-    html += `
-      <li>
-        <b>🧒 ${doc.kidName || MEMBERS_MAP[doc.kidmember] || "Unknown Kid"}</b>
-        <ul>
-    `;
-    doc.items.forEach(item => {
-      html += `
-        <li>
+    if (!routines.length) {
+      area.innerHTML = html + "<p>No records found.</p>";
+      return;
+    }
+
+    // Flatten items by kid
+    const allItems = routines.flatMap(doc => {
+      const kidName = doc.kidName || MEMBERS_MAP[doc.kidmember] || "Unknown Kid";
+      return (doc.items || []).filter(i => i.done === true).map(item => ({
+        ...item,
+        kidName,
+        kidId: doc.kidmember
+      }));
+    });
+
+    if (!allItems.length) {
+      area.innerHTML = html + "<p>No completed activities.</p>";
+      return;
+    }
+
+    // Group by kid
+    const groupedByKid = {};
+    allItems.forEach(it => {
+      if (!groupedByKid[it.kidName]) groupedByKid[it.kidName] = [];
+      groupedByKid[it.kidName].push(it);
+    });
+
+    html += "<ul>";
+
+    Object.entries(groupedByKid).forEach(([kidName, items]) => {
+      html += `<li><b>🧒 ${kidName}</b><ul>`;
+      items.forEach(item => {
+        html += `<li>
           🎯 ${item.activity || ""}
           | ⏱ ${item.timeMin || 0} min
           | ⭐ ${item.evaluation || 0}
           <br>📝 ${item.note || ""}
-        </li>
-      `;
+        </li>`;
+      });
+      html += "</ul></li>";
     });
-    html += "</ul></li>";
-  });
 
-  html += "</ul>";
-  area.innerHTML = html;
+    html += "</ul>";
+    area.innerHTML = html;
+
+  } catch (err) {
+    console.error("❌ Failed to show report:", err);
+    area.innerHTML = "<p>Error loading report ⚠️</p>";
+  }
 }
+
 
 /* =====================================
    INIT
