@@ -173,7 +173,7 @@
     <i class="fa-solid fa-users"></i>
     <select id="role" required>
       <option value="">Choose role...</option>
-      <option value="admin">Nursery Manager</option>
+      <option value="manager">Nursery Manager</option>
       <option value="teacher">Teacher</option>
       <option value="supervisor">supervisor</option>
     </select>
@@ -249,6 +249,7 @@
          // 4️⃣ Redirect by role (CLEAR & MEANINGFUL)
     switch (user.role) {
       case "admin":
+      case "manager":
         window.location.href = "/sch-choose.html";
         break;
 
