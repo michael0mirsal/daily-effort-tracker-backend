@@ -279,85 +279,140 @@ function buildTree() {
 /* =====================================
    SHOW REPORT
 ===================================== */
-async function showTreeReport(cls) {
+async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) return;
 
   const dateInput = document.getElementById("filterDate");
-  const date = dateInput && dateInput.value
-    ? dateInput.value
-    : new Date().toISOString().slice(0, 10);
+  const date = dateInput?.value || new Date().toISOString().slice(0, 10);
+
+  area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
-    const res = await fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const routines = await res.json();
+    /* =========================
+       1) Load ACTIVITIES
+       ========================= */
+    const actRes = await fetch(
+      `${API}/sch-activities?classId=${cls._id}&date=${date}`
+    );
+    const activities = actRes.ok ? await actRes.json() : [];
 
-    let html = `<h2>${cls.name} – Daily Report (${date})</h2>`;
+    /* =========================
+       2) Load ROUTINES
+       ========================= */
+    const rtRes = await fetch(
+      `${API}/sch-routine/load?classId=${cls._id}&date=${date}`
+    );
+    const routines = rtRes.ok ? await rtRes.json() : [];
 
-    if (!routines.length) {
-      area.innerHTML = html + "<p>No records found.</p>";
-      return;
-    }
+    /* =========================
+       3) Normalize by kid
+       ========================= */
+    const kids = {};
 
-    // Flatten all items (no done filter)
-    const allItems = routines.flatMap(doc => {
-      const kidName = doc.kidName || MEMBERS_MAP[doc.kidmember] || "Unknown Kid";
-      return (doc.items || []).map(item => ({
-        ...item,
-        kidName,
-        kidId: doc.kidmember
-      }));
-    });
+    // --- Activities ---
+    activities.forEach(doc => {
+      const kidId = String(doc.schoolMember || doc.kidmember);
+      const kidName =
+        doc.kidName || MEMBERS_MAP[kidId] || "Unknown Kid";
 
-    if (!allItems.length) {
-      area.innerHTML = html + "<p>No activities.</p>";
-      return;
-    }
+      if (!kids[kidId]) {
+        kids[kidId] = {
+          id: kidId,
+          name: kidName,
+          activities: [],
+          routines: [],
+          totalTime: 0,
+          totalStars: 0,
+          starCount: 0
+        };
+      }
 
-    // Group by kid
-    const groupedByKid = {};
-    allItems.forEach(it => {
-      if (!groupedByKid[it.kidName]) groupedByKid[it.kidName] = [];
-      groupedByKid[it.kidName].push(it);
-    });
-
-    html += "<ul>";
-
-    Object.entries(groupedByKid).forEach(([kidName, items]) => {
-      html += `<li><b>🧒 ${kidName}</b><ul>`;
-      items.forEach(item => {
-        html += `<li>
-          🎯 ${item.activity || ""}
-          | ⏱ ${item.timeMin || 0} min
-          | ⭐ ${item.evaluation || 0}
-          <br>📝 ${item.note || ""}
-        </li>`;
+      (doc.items || []).forEach(it => {
+        kids[kidId].activities.push(it);
+        kids[kidId].totalTime += Number(it.timeMin || 0);
+        kids[kidId].totalStars += Number(it.evaluation || 0);
+        kids[kidId].starCount += 1;
       });
-      html += "</ul></li>";
+    });
+
+    // --- Routines (ONLY completed) ---
+    routines.forEach(r => {
+      const kidId = String(r.kidmember);
+      if (!kids[kidId]) return;
+
+      (r.items || []).forEach(it => {
+        if (it.done === true) {
+          kids[kidId].routines.push(it);
+        }
+      });
+    });
+
+    /* =========================
+       4) Render
+       ========================= */
+    if (!Object.keys(kids).length) {
+      area.innerHTML += "<p>No data for this date.</p>";
+      return;
+    }
+
+    let html = "<ul>";
+
+    Object.values(kids).forEach(kid => {
+      const avgStars = kid.starCount
+        ? (kid.totalStars / kid.starCount).toFixed(1)
+        : 0;
+
+      html += `
+        <li>
+          <h3>🧒 ${kid.name}</h3>
+          <p>
+            ⏱ Total Time: <b>${kid.totalTime} min</b> |
+            ⭐ Avg Stars: <b>${avgStars}</b>
+          </p>
+
+          <b>✅ Completed Routines</b>
+          <ul>
+            ${
+              kid.routines.length
+                ? kid.routines.map(r =>
+                    `<li>${r.task} (${r.section})</li>`
+                  ).join("")
+                : "<li>None</li>"
+            }
+          </ul>
+
+          <b>📊 Activities</b>
+          <ul>
+            ${
+              kid.activities.length
+                ? kid.activities.map(a => `
+                    <li>
+                      🎯 ${a.activity}
+                      | ⏱ ${a.timeMin} min
+                      | ⭐ ${a.evaluation}
+                      <br>📝 ${a.note || ""}
+                    </li>
+                  `).join("")
+                : "<li>No activities</li>"
+            }
+          </ul>
+        </li>
+      `;
     });
 
     html += "</ul>";
-    area.innerHTML = html;
+    area.innerHTML += html;
+
+    // Enable PDF export
+    addExportPDFButton();
 
   } catch (err) {
-    console.error("❌ Failed to show report:", err);
-    area.innerHTML = "<p>Error loading report ⚠️</p>";
+    console.error("❌ Combined report error:", err);
+    area.innerHTML += "<p>Error loading combined report ⚠️</p>";
   }
 }
 
-
-
-/* =====================================
-   INIT
-===================================== */
-window.addEventListener("DOMContentLoaded", loadTreeClasses);
-
-// Back button
-// ----------------------
-document.getElementById("backBtn").onclick = () => { 
-  window.location.href = "sch-choose.html"; 
-};
 // Logout
 // ----------------------
 function logout(){ localStorage.removeItem("currentUser"); window.location.href="sch-signin.html"; }
