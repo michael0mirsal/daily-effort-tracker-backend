@@ -289,135 +289,132 @@ async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) return;
 
-  const dateInput = document.getElementById("filterDate");
-  const date = dateInput?.value || new Date().toISOString().slice(0, 10);
+  const date = document.getElementById("filterDate")?.value;
+  if (!date) {
+    area.innerHTML = "<p>Please select a date.</p>";
+    return;
+  }
 
   area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
 
   try {
     /* =========================
-       1) Load ACTIVITIES
+       Fetch BOTH sources safely
        ========================= */
-    const actRes = await fetch(
-      `${API}/sch-activities?classId=${cls._id}&date=${date}`
-    );
-    const activities = actRes.ok ? await actRes.json() : [];
+    const [routineRes, activityRes] = await Promise.all([
+      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+    ]);
+
+    const routines = routineRes.ok ? await routineRes.json() : [];
+    const activities = activityRes.ok ? await activityRes.json() : [];
 
     /* =========================
-       2) Load ROUTINES
+       Normalize
        ========================= */
-    const rtRes = await fetch(
-      `${API}/sch-routine/load?classId=${cls._id}&date=${date}`
-    );
-    const routines = rtRes.ok ? await rtRes.json() : [];
+    const routineDocs = Array.isArray(routines) ? routines : [];
+    const activityDocs = Array.isArray(activities) ? activities : [];
 
-    /* =========================
-       3) Normalize by kid
-       ========================= */
-    const kids = {};
-
-    // --- Activities ---
-    activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.kidmember);
-      const kidName =
-        doc.kidName || MEMBERS_MAP[kidId] || "Unknown Kid";
-
-      if (!kids[kidId]) {
-        kids[kidId] = {
-          id: kidId,
-          name: kidName,
-          activities: [],
-          routines: [],
-          totalTime: 0,
-          totalStars: 0,
-          starCount: 0
-        };
-      }
-
-      (doc.items || []).forEach(it => {
-        kids[kidId].activities.push(it);
-        kids[kidId].totalTime += Number(it.timeMin || 0);
-        kids[kidId].totalStars += Number(it.evaluation || 0);
-        kids[kidId].starCount += 1;
-      });
-    });
-
-    // --- Routines (ONLY completed) ---
-    routines.forEach(r => {
-      const kidId = String(r.kidmember);
-      if (!kids[kidId]) return;
-
-      (r.items || []).forEach(it => {
-        if (it.done === true) {
-          kids[kidId].routines.push(it);
-        }
-      });
-    });
-
-    /* =========================
-       4) Render
-       ========================= */
-    if (!Object.keys(kids).length) {
-      area.innerHTML += "<p>No data for this date.</p>";
+    if (!routineDocs.length && !activityDocs.length) {
+      area.innerHTML += "<p>No completed activities.</p>";
       return;
     }
 
-    let html = "<ul>";
+    /* =========================
+       Build kid map
+       ========================= */
+    const kids = {};
 
+    // Activities
+    activityDocs.forEach(doc => {
+      const kidId = doc.schoolMember || doc.schoolMemberId;
+      if (!kidId) return;
+
+      if (!kids[kidId]) {
+        kids[kidId] = {
+          name: doc.kidName || MEMBERS_MAP[kidId] || "Unknown",
+          time: 0,
+          stars: [],
+          activities: [],
+          routines: []
+        };
+      }
+
+      doc.items.forEach(it => {
+        kids[kidId].time += Number(it.timeMin || 0);
+        kids[kidId].stars.push(Number(it.evaluation || 0));
+        kids[kidId].activities.push(it);
+      });
+    });
+
+    // Routines (ONLY completed)
+    routineDocs.forEach(r => {
+      if (!Array.isArray(r.items)) return;
+
+      r.items
+        .filter(it => it.done === true)
+        .forEach(it => {
+          const kidId = String(r.kidmember);
+          if (!kids[kidId]) {
+            kids[kidId] = {
+              name: MEMBERS_MAP[kidId] || "Unknown",
+              time: 0,
+              stars: [],
+              activities: [],
+              routines: []
+            };
+          }
+          kids[kidId].routines.push(it);
+        });
+    });
+
+    /* =========================
+       Render
+       ========================= */
     Object.values(kids).forEach(kid => {
-      const avgStars = kid.starCount
-        ? (kid.totalStars / kid.starCount).toFixed(1)
-        : 0;
+      const avg =
+        kid.stars.length > 0
+          ? (kid.stars.reduce((a, b) => a + b, 0) / kid.stars.length).toFixed(1)
+          : "0";
 
-      html += `
-        <li>
+      area.innerHTML += `
+        <div class="kid-report">
           <h3>🧒 ${kid.name}</h3>
-          <p>
-            ⏱ Total Time: <b>${kid.totalTime} min</b> |
-            ⭐ Avg Stars: <b>${avgStars}</b>
-          </p>
+          <p>⏱ Total Time: ${kid.time} min | ⭐ Avg Stars: ${avg}</p>
 
-          <b>✅ Completed Routines</b>
-          <ul>
-            ${
-              kid.routines.length
-                ? kid.routines.map(r =>
-                    `<li>${r.task} (${r.section})</li>`
-                  ).join("")
-                : "<li>None</li>"
-            }
-          </ul>
+          <h4>✅ Completed Routines</h4>
+          ${
+            kid.routines.length
+              ? `<ul>${kid.routines
+                  .map(r => `<li>${r.task}</li>`)
+                  .join("")}</ul>`
+              : "<p>None</p>"
+          }
 
-          <b>📊 Activities</b>
-          <ul>
-            ${
-              kid.activities.length
-                ? kid.activities.map(a => `
+          <h4>📊 Activities</h4>
+          ${
+            kid.activities.length
+              ? `<ul>${kid.activities
+                  .map(
+                    a => `
                     <li>
-                      🎯 ${a.activity}
-                      | ⏱ ${a.timeMin} min
-                      | ⭐ ${a.evaluation}
+                      🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
                       <br>📝 ${a.note || ""}
-                    </li>
-                  `).join("")
-                : "<li>No activities</li>"
-            }
-          </ul>
-        </li>
+                    </li>`
+                  )
+                  .join("")}</ul>`
+              : "<p>None</p>"
+          }
+        </div>
       `;
     });
 
-    html += "</ul>";
-    area.innerHTML += html;
-
-    // Enable PDF export
-    addExportPDFButton();
-
   } catch (err) {
-    console.error("❌ Combined report error:", err);
-    area.innerHTML += "<p>Error loading combined report ⚠️</p>";
+    console.error("Combined report error:", err);
+    area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`;
   }
 }
+
 
 
 
