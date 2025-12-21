@@ -321,39 +321,39 @@ async function loadCombinedClassReport(cls) {
     let hasAnyData = false;
 
     Object.values(kids).forEach(k => {
-      if (!k.activities.length && !k.routines.length) return;
+    if (!k.activities.length && !k.routines.length) return;
 
-      hasAnyData = true;
+    hasAnyData = true;
 
-      const totalStars = kid.stars.length > 0
-       ? kid.stars.reduce((a, b) => a + b, 0)
-       : 0;
+    const totalStars = k.stars.length > 0
+        ? k.stars.reduce((a, b) => a + b, 0)
+        : 0;
 
-
-      area.innerHTML += `
+    area.innerHTML += `
         <hr>
         <h3>🧒 ${k.name}</h3>
-        <p>⏱ Total Time: ${kids.time} min | ⭐ Collected: ${totalStars} ⭐</p>
+        <p>⏱ Total Time: ${k.time} min | ⭐ Collected: ${totalStars} ⭐</p>
 
         <h4>✅ Completed Routines</h4>
         ${
           k.routines.length
-            ? `<ul>${k.routines.map(r=>`<li>${r.task}</li>`).join("")}</ul>`
+            ? `<ul>${k.routines.map(r => `<li>${r.task}</li>`).join("")}</ul>`
             : "<p>None</p>"
         }
 
         <h4>📊 Activities</h4>
         ${
           k.activities.length
-            ? `<ul>${k.activities.map(a=>`
+            ? `<ul>${k.activities.map(a => `
                 <li>
                   🎯 ${a.activity} | ⏱ ${a.timeMin} min | ⭐ ${a.evaluation}
                   <br>📝 ${a.note || ""}
                 </li>`).join("")}</ul>`
             : "<p>None</p>"
         }
-      `;
-    });
+    `;
+});
+
 
     if (!hasAnyData) {
       area.innerHTML += "<p>No completed routines or activities.</p>";
