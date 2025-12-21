@@ -18,41 +18,34 @@
 /* RESET */
 * {
   box-sizing: border-box;
-}
-
-body {
   margin: 0;
-  height: 100vh;
-  background: var(--bg);
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  color: var(--text);
-  overflow: hidden;
+  padding: 0;
 }
 
 html, body {
   height: 100%;
-  overflow: hidden; /* hide default scroll */
+  overflow: hidden;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
 
-#zoomContainer {
-  transform: scale(0.75);
-  transform-origin: top left;
-  width: calc(100% / 0.75);  /* compensate for scale */
-  height: auto;              /* let content height decide */
-  overflow: auto;
+/* ================= ZOOM WRAPPER ================= */
+#zoomWrapper {
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* allow scrolling */
   padding: 20px;
 }
 
-
-#zoomContainer {
-  padding: 20px;
-}
-
-
-/* ================= APP LAYOUT ================= */
+/* ================= SCALED CONTAINER ================= */
 #container {
+  transform: scale(0.75);           /* zoom out 75% */
+  transform-origin: top left;       /* scale from top-left */
+  width: calc(100% / 0.75);         /* compensate width */
+  min-height: calc(100% / 0.75);    /* prevent blank space */
   display: flex;
-  height: 100vh;
+  height: auto;
 }
 
 /* ================= LEFT TREE PANEL ================= */
@@ -73,7 +66,6 @@ html, body {
   font-weight: 700;
 }
 
-/* CLASS NODE */
 .class-branch {
   background: #fff;
   border-radius: 14px;
@@ -90,12 +82,10 @@ html, body {
   transform: translateX(4px);
 }
 
-/* CHILD ITEMS WITH GRADUAL SECTIONS */
 .child-items {
   margin: 8px 0 15px 15px;
 }
 
-/* TREE SECTIONS */
 .tree-section {
   margin-top: 10px;
   margin-left: 12px;
@@ -152,21 +142,12 @@ button {
   font-weight: 600;
 }
 
-#backBtn {
-  background: #ecf0f1;
-}
-
-#logoutBtn {
-  background: var(--danger);
-  color: white;
-}
+#backBtn { background: #ecf0f1; }
+#logoutBtn { background: var(--danger); color: white; }
 
 /* ================= REPORT ================= */
-#classReport h2 {
-  margin-top: 0;
-}
+#classReport h2 { margin-top: 0; }
 
-/* REPORT HEADER */
 .report-header {
   background: linear-gradient(135deg, var(--primary), #1f2d3a);
   color: white;
@@ -175,12 +156,8 @@ button {
   margin-bottom: 25px;
 }
 
-.report-header h2 {
-  margin: 0;
-  font-size: 1.8rem;
-}
+.report-header h2 { margin: 0; font-size: 1.8rem; }
 
-/* CHILD CARD */
 .child-card {
   background: var(--card);
   border-radius: 18px;
@@ -189,7 +166,6 @@ button {
   box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
-/* TITLE */
 .child-title {
   display: flex;
   justify-content: space-between;
@@ -199,11 +175,8 @@ button {
   margin-bottom: 15px;
 }
 
-.child-title h3 {
-  margin: 0;
-}
+.child-title h3 { margin: 0; }
 
-/* KPI */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -230,7 +203,6 @@ button {
   font-size: 1.4rem;
 }
 
-/* SECTION */
 .section-title {
   margin-top: 25px;
   margin-bottom: 10px;
@@ -240,7 +212,6 @@ button {
   padding-left: 10px;
 }
 
-/* ACTIVITY TABLE – STRONG BORDERS */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -262,20 +233,10 @@ th, td {
   border-right: 1px solid #e0e0e0;
 }
 
-tr td:last-child,
-tr th:last-child {
-  border-right: none;
-}
+tr td:last-child, tr th:last-child { border-right: none; }
+tr:nth-child(even) td { background: #fafbfc; }
+tr:hover td { background: #eef4ff; }
 
-tr:nth-child(even) td {
-  background: #fafbfc;
-}
-
-tr:hover td {
-  background: #eef4ff;
-}
-
-/* BADGE */
 .badge {
   padding: 4px 10px;
   border-radius: 20px;
@@ -286,42 +247,33 @@ tr:hover td {
 .badge-success { background: var(--success); }
 .badge-primary { background: var(--secondary); }
 
-/* EMPTY */
-.empty {
-  color: #888;
-  font-style: italic;
-}
+.empty { color: #888; font-style: italic; }
+
 </style>
-
-
-
 </head>
 <body>
-<body>
-  <div id="zoomContainer">
-    <!-- All your existing #container and content goes here -->
-    
-<div id="container">
+
+<div id="zoomWrapper">
+  <div id="container">
     <!-- LEFT TREE -->
     <div id="treePanel">
-        <h2 id="nurseryTitle">Happy Kids Nursery</h2>
-        <div id="classTree"></div>
+      <h2 id="nurseryTitle">Happy Kids Nursery</h2>
+      <div id="classTree"></div>
     </div>
 
     <!-- RIGHT PANEL -->
     <div id="rightPanel">
-        <div id="topButtons">
-            <button id="backBtn">⬅ Back</button>
-            <button id="logoutBtn">Logout</button>
-        </div>
-
-        <div id="classReport">
-            <h2>Select a class to view full report</h2>
-            <div id="reportContent"></div>
-        </div>
+      <div id="topButtons">
+        <button id="backBtn">⬅ Back</button>
+        <button id="logoutBtn">Logout</button>
+      </div>
+      <div id="classReport">
+        <h2>Select a class to view full report</h2>
+        <div id="reportContent"></div>
+      </div>
     </div>
+  </div>
 </div>
-
 <script>
 const API = "http://localhost:3000/api";
 
