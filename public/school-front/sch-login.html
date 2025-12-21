@@ -111,6 +111,16 @@
   font-size: 14px;
   margin-top: 5px;
 }
+
+#homeBtn {
+      background-color: #6fcf97;
+      margin-top: 25px;
+    }
+
+    #homeBtn:hover {
+      background-color: #57b883;
+    }
+
 </style>
 
 </head>
@@ -133,8 +143,11 @@
   <p id="license-error" class="error-msg"></p>
   <button class="continue-btn" onclick="validateLicense()">Continue</button>
 </div>
-
+<button id="homeBtn" onclick="goHome()">🏠 Home Page</button>
 <script>
+
+function goHome() { window.location.href = "welcome.html"; }
+
 const accessCard = document.getElementById('access-card');
 const licenseCard = document.getElementById('license-card');
 const licenseError = document.getElementById('license-error');
