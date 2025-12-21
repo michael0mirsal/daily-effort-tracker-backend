@@ -270,21 +270,23 @@ function buildTree() {
       await loadClassReports(cls._id);
 
       // Show teachers
-      childBox.innerHTML = "";
-      if (!cls.teachers || cls.teachers.length === 0) {
-        childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
-      } else {
-        cls.teachers.forEach(t => {
-        childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${t.name}</div>`;
-        });
-      }
+if (!cls.teachers || cls.teachers.length === 0) {
+  childBox.innerHTML += `<div class="teacher-box">👩‍🏫 No teacher</div>`;
+} else {
+  cls.teachers.forEach(t => {
+    childBox.innerHTML += `<div class="teacher-box">👩‍🏫 ${t.name}</div>`;
+  });
+}
 
-      // Show members
-      if (cls.members && cls.members.length > 0) {
-          cls.members.forEach(mid => {
-          childBox.innerHTML += `<div class="member-box">🧒 ${MEMBERS_MAP[mid] || "Kid"}</div>`;
-        });
-      }
+// Show members
+if (!cls.members || cls.members.length === 0) {
+  childBox.innerHTML += `<div class="member-box">🧒 No members</div>`;
+} else {
+  cls.members.forEach(m => {
+    childBox.innerHTML += `<div class="member-box">🧒 ${m.name}</div>`;
+  });
+}
+
 
 
 
