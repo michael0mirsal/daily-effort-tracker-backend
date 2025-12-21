@@ -249,6 +249,12 @@ function buildTree() {
         // Load reports for this class
         await loadClassReports(cls._id);
 
+        if (typeof loadCombinedClassReport !== "function") {
+    console.error("loadCombinedClassReport not loaded");
+    alert("Report function missing");
+    return;
+  }
+
         // Display teachers
         if (cls.teachers && cls.teachers.length > 0) {
           cls.teachers.forEach(tid => {
@@ -267,7 +273,7 @@ function buildTree() {
           });
         }
 
-        showTreeReport(cls);
+        await loadCombinedClassReport(cls); 
       }
     };
 
