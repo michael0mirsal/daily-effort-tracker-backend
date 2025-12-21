@@ -32,6 +32,15 @@ body {
   transform-origin: top left;
 }
 
+/* ================= ZOOM OUT ================= */
+#zoomContainer {
+  transform: scale(0.5); /* 50% zoom */
+  transform-origin: top left; /* keep top-left aligned */
+  width: 200%; /* compensate for 50% scale */
+  height: 200%; /* optional if vertical scrolling needed */
+}
+
+
 /* ================= APP LAYOUT ================= */
 #container {
   display: flex;
@@ -280,7 +289,10 @@ tr:hover td {
 
 </head>
 <body>
-
+<body>
+  <div id="zoomContainer">
+    <!-- All your existing #container and content goes here -->
+    
 <div id="container">
     <!-- LEFT TREE -->
     <div id="treePanel">
