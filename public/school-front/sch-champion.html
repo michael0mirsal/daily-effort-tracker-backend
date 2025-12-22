@@ -12,6 +12,20 @@
     padding: 20px;
   }
 
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  #nurseryTitle {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+
   .layout {
     display: flex;
     gap: 20px;
@@ -86,7 +100,11 @@
 
 <body>
 
-<h2>🏆 Weekly Champion (Friday → Thursday)</h2>
+<!-- HEADER -->
+<div class="header">
+  <h2 id="nurseryTitle">Loading...</h2>
+  <h2>🏆 Weekly Champion (Friday → Thursday)</h2>
+</div>
 
 <div class="layout">
 
@@ -125,6 +143,10 @@ let SELECTED_CLASS = null;
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return alert("User not logged in");
+
+  /* SET NURSERY NAME */
+  const nurseryTitle = document.getElementById("nurseryTitle");
+  nurseryTitle.textContent = user?.nurseryName || "Happy Kids Nursery";
 
   try {
     const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
@@ -183,30 +205,26 @@ async function loadWeeklyClassReport(cls) {
   const kids = {};
   const kidsByName = {};
 
-  /* INIT KIDS */
   cls.members.forEach(m => {
-  const id = String(m._id || m);
-  const name = MEMBERS_MAP[id] || m.name || "Unknown";
+    const id = String(m._id || m);
+    const name = MEMBERS_MAP[id] || m.name || "Unknown";
 
-  kids[id] = {
-    id,
-    name,
-    routineStars: 0,
-    activityStars: 0
-  };
+    kids[id] = {
+      id,
+      name,
+      routineStars: 0,
+      activityStars: 0
+    };
 
-  kidsByName[name.toLowerCase()] = kids[id];
-});
+    kidsByName[name.toLowerCase()] = kids[id];
+  });
 
-
-  /* GET FRIDAY */
   const today = new Date();
-  const day = today.getDay(); // 0 Sun
+  const day = today.getDay();
   const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
-  /* LOOP 7 DAYS */
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
@@ -221,33 +239,19 @@ async function loadWeeklyClassReport(cls) {
     const activities = aRes.ok ? await aRes.json() : [];
 
     activities.forEach(doc => {
-  const kidId = String(
-    doc.schoolMember ||
-    doc.schoolMemberId ||
-    doc.kidmember
-  );
+      const kidId = String(doc.schoolMember || doc.kidmember);
+      const kid = kids[kidId];
+      if (!kid) return;
 
-  const kid = kids[kidId];
-
-  if (!kid) {
-    console.warn("⚠️ Activity without matching kid:", kidId);
-    return;
-  }
-
-  (doc.items || []).forEach(it => {
-    const stars = Number(it.evaluation);
-
-    if (!isNaN(stars)) {
-      kid.activityStars += stars;
-    }
-  });
-});
-
+      (doc.items || []).forEach(it => {
+        const stars = Number(it.evaluation);
+        if (!isNaN(stars)) kid.activityStars += stars;
+      });
+    });
 
     routines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
-      const kid =
-        kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
+      const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
       if (!kid) return;
 
       (r.items || []).forEach(it => {
@@ -267,30 +271,21 @@ function renderWeeklyReport(kids, friday) {
   const list = document.getElementById("weeklyKids");
   list.innerHTML = "";
 
-  /* =========================
-     NO KIDS SAFETY CHECK
-  ========================= */
   if (!kids.length) {
     champ.innerHTML = "⚠️ No kids found for this class";
     return;
   }
 
   kids.forEach(k => {
-    k.totalStars = (k.routineStars || 0) + (k.activityStars || 0);
+    k.totalStars = k.routineStars + k.activityStars;
   });
 
-  /* =========================
-     ALL ZERO STARS CHECK
-  ========================= */
-  const hasAnyStars = kids.some(k => k.totalStars > 0);
+  const hasStars = kids.some(k => k.totalStars > 0);
 
-  if (!hasAnyStars) {
+  if (!hasStars) {
     champ.innerHTML = "ℹ️ No activities or routines recorded this week";
   } else {
-    const winner = kids.reduce((best, current) =>
-      current.totalStars > best.totalStars ? current : best
-    );
-
+    const winner = kids.reduce((a, b) => b.totalStars > a.totalStars ? b : a);
     const end = new Date(friday);
     end.setDate(friday.getDate() + 6);
 
@@ -301,9 +296,6 @@ function renderWeeklyReport(kids, friday) {
     `;
   }
 
-  /* =========================
-     RENDER KIDS
-  ========================= */
   kids.forEach(k => {
     list.innerHTML += `
       <div class="kid-card">
@@ -316,10 +308,7 @@ function renderWeeklyReport(kids, friday) {
   });
 }
 
-
-/* =====================================
-   INIT
-===================================== */
+/* INIT */
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
 
