@@ -5,118 +5,185 @@
 <title>Weekly Champion Report</title>
 
 <style>
+/* --------------------- GLOBAL --------------------- */
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f4f8;
   margin: 0;
   padding: 20px;
+  color: #2c3e50;
 }
 
+/* --------------------- HEADER --------------------- */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 25px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 #nurseryTitle {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.header h2 {
   font-size: 22px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
+/* --------------------- LAYOUT --------------------- */
 .layout {
   display: flex;
   gap: 20px;
 }
 
+/* --------------------- LEFT PANEL --------------------- */
 .left {
-  width: 260px;
+  width: 280px;
   background: #fff;
-  border-radius: 10px;
-  padding: 15px;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+
+.left:hover {
+  transform: translateY(-3px);
+}
+
+.left h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #34495e;
 }
 
 .class-item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
   cursor: pointer;
+  transition: 0.25s;
+  background: #f9fafc;
+  font-weight: 600;
 }
 
-.class-item:hover { background: #f0f4ff; }
+.class-item:hover {
+  background: #3498db;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
 .class-item.active {
-  background: #3498db;
-  color: #fff;
-  font-weight: bold;
+  background: #2c3e50;
+  color: white;
 }
 
-.right { flex: 1; }
+/* --------------------- RIGHT PANEL --------------------- */
+.right {
+  flex: 1;
+}
 
+/* --------------------- CHAMPION CARD --------------------- */
 .champion-card {
-  background: linear-gradient(135deg, #ffd700, #fff2a8);
-  padding: 20px;
-  border-radius: 16px;
-  font-size: 20px;
+  background: linear-gradient(135deg, #ffd700, #fffa9e);
+  padding: 25px;
+  border-radius: 20px;
+  font-size: 22px;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  text-align: center;
+  color: #34495e;
 }
 
+/* --------------------- KIDS GRID --------------------- */
 .kids-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .kid-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  transition: 0.3s;
+  text-align: center;
+}
+
+.kid-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+.kid-card h3 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .rank {
   font-size: 22px;
-  margin-bottom: 6px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 .badge {
   display: inline-block;
-  padding: 5px 12px;
-  border-radius: 20px;
+  padding: 6px 16px;
+  border-radius: 25px;
   background: #3498db;
-  color: #fff;
-  font-size: 13px;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.p-stats {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin: 3px 0;
+}
+
+/* --------------------- RESPONSIVE --------------------- */
+@media(max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+  .left {
+    width: 100%;
+  }
 }
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <h2 id="nurseryTitle">Loading...</h2>
-
-  <div class="controls">
-    <label>📅 Week:</label>
-    <input type="date" id="weekPicker">
-  </div>
+  <h2>🏆 Weekly Champion (Friday → Thursday)</h2>
 </div>
 
 <div class="layout">
 
+  <!-- LEFT -->
   <div class="left">
     <h3>🏫 Classes</h3>
     <div id="classList"></div>
   </div>
 
+  <!-- RIGHT -->
   <div class="right">
     <div id="weeklyChampion" class="champion-card">
-      Select a class
+      Select a class to view report
     </div>
     <div id="weeklyKids" class="kids-grid"></div>
   </div>
@@ -124,189 +191,147 @@ body {
 </div>
 
 <script>
+// ================= CONFIG =================
 const API = "http://localhost:3000/api";
-
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
 let SELECTED_CLASS = null;
 
-/* =============================
-   DATE → FRIDAY
-============================= */
-function getFriday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day >= 5 ? day - 5 : day + 2;
-  d.setDate(d.getDate() - diff);
-  return d;
-}
-
-/* =============================
-   LOAD CLASSES
-============================= */
+// ================= LOAD CLASSES =================
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return alert("Not logged in");
+  if(!user) return alert("User not logged in");
 
   document.getElementById("nurseryTitle").textContent =
     user?.nurseryName || "Happy Kids Nursery";
 
-  const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-  const data = await res.json();
-  TREE_CLASSES = data.classes || [];
+  try {
+    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+    const data = await res.json();
+    TREE_CLASSES = data.classes || [];
 
-  const ids = new Set();
-  TREE_CLASSES.forEach(c =>
-    (c.members || []).forEach(m => ids.add(String(m._id || m)))
-  );
+    const memberIds = new Set();
+    TREE_CLASSES.forEach(cls => (cls.members || []).forEach(m => memberIds.add(String(m._id || m))));
 
-  if (ids.size) {
-    const r = await fetch(`${API}/sch-members?ids=${[...ids].join(",")}`);
-    const list = await r.json();
-    list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+    if(memberIds.size){
+      const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
+      const list = await r.json();
+      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+    }
+
+    buildClassList();
+  } catch(err) {
+    console.error(err);
   }
-
-  buildClassList();
 }
 
-/* =============================
-   BUILD CLASS LIST
-============================= */
-function buildClassList() {
+// ================= BUILD CLASS LIST =================
+function buildClassList(){
   const area = document.getElementById("classList");
   area.innerHTML = "";
 
-  TREE_CLASSES.forEach(cls => {
+  TREE_CLASSES.forEach(cls=>{
     const div = document.createElement("div");
     div.className = "class-item";
     div.textContent = cls.name;
 
-    div.onclick = () => {
-      document.querySelectorAll(".class-item")
-        .forEach(e => e.classList.remove("active"));
+    div.onclick = ()=>{
+      document.querySelectorAll(".class-item").forEach(e=>e.classList.remove("active"));
       div.classList.add("active");
-
       SELECTED_CLASS = cls;
       loadWeeklyClassReport();
-    };
+    }
 
     area.appendChild(div);
   });
 }
 
-/* =============================
-   WEEKLY REPORT
-============================= */
-async function loadWeeklyClassReport() {
-  if (!SELECTED_CLASS) return;
+// ================= WEEKLY REPORT =================
+async function loadWeeklyClassReport(){
+  if(!SELECTED_CLASS) return;
 
   const kids = {};
-  SELECTED_CLASS.members.forEach(m => {
+  SELECTED_CLASS.members.forEach(m=>{
     const id = String(m._id || m);
-    kids[id] = {
-      id,
-      name: MEMBERS_MAP[id] || "Unknown",
-      routineStars: 0,
-      activityStars: 0
-    };
+    kids[id] = { id, name: MEMBERS_MAP[id]||"Unknown", routineStars:0, activityStars:0 };
   });
 
-  const picker = document.getElementById("weekPicker");
-  const baseDate = picker.value || new Date().toISOString().slice(0,10);
-  const friday = getFriday(baseDate);
+  const today = new Date();
+  const day = today.getDay();
+  const diff = day>=5 ? day-5 : day+2;
+  const friday = new Date(today);
+  friday.setDate(today.getDate() - diff);
 
-  for (let i = 0; i < 7; i++) {
+  for(let i=0;i<7;i++){
     const d = new Date(friday);
-    d.setDate(friday.getDate() + i);
+    d.setDate(friday.getDate()+i);
     const date = d.toISOString().slice(0,10);
 
-    const [rRes, aRes] = await Promise.all([
+    const [rRes,aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${SELECTED_CLASS._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${SELECTED_CLASS._id}&date=${date}`)
     ]);
 
-    const routines = rRes.ok ? await rRes.json() : [];
-    const activities = aRes.ok ? await aRes.json() : [];
+    const routines = rRes.ok?await rRes.json():[];
+    const activities = aRes.ok?await aRes.json():[];
 
-    activities.forEach(doc => {
-      const kid = kids[String(doc.schoolMember || doc.kidmember)];
-      if (!kid) return;
-      (doc.items || []).forEach(it =>
-        kid.activityStars += Number(it.evaluation || 0)
-      );
+    activities.forEach(doc=>{
+      const kid = kids[String(doc.schoolMember||doc.kidmember)];
+      if(!kid) return;
+      (doc.items||[]).forEach(it=>kid.activityStars+=Number(it.evaluation||0));
     });
 
-    routines.forEach(r => {
-      const kid = kids[String(r.kidmember)];
-      if (!kid) return;
-      (r.items || []).forEach(it => {
-        if (it.done) kid.routineStars++;
-      });
+    routines.forEach(r=>{
+      const kid = kids[String(r.kidmember)] || kids[String(r.kidId)];
+      if(!kid) return;
+      (r.items||[]).forEach(it=>{ if(it.done) kid.routineStars++; });
     });
   }
 
   renderWeeklyReport(Object.values(kids), friday);
 }
 
-/* =============================
-   RENDER + TIES
-============================= */
-function renderWeeklyReport(kids, friday) {
+// ================= RENDER =================
+function renderWeeklyReport(kids, friday){
   const champ = document.getElementById("weeklyChampion");
   const list = document.getElementById("weeklyKids");
   list.innerHTML = "";
 
-  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars);
+  if(!kids.length){ champ.innerHTML="⚠️ No kids found"; return; }
 
-  kids.sort((a,b) => b.totalStars - a.totalStars);
+  kids.forEach(k=>k.totalStars=k.routineStars+k.activityStars);
 
-  let rank = 0;
-  let lastStars = null;
-  let medalRank = 0;
+  kids.sort((a,b)=>b.totalStars-a.totalStars);
 
-  kids.forEach((k, i) => {
-    if (k.totalStars !== lastStars) {
-      rank = i + 1;
-      medalRank++;
-    }
-    lastStars = k.totalStars;
-
-    let medal = "";
-    if (medalRank === 1) medal = "🥇";
-    else if (medalRank === 2) medal = "🥈";
-    else if (medalRank === 3) medal = "🥉";
-
-    list.innerHTML += `
-      <div class="kid-card">
-        <div class="rank">${medal} Rank ${rank}</div>
-        <h3>🧒 ${k.name}</h3>
-        <div class="badge">${k.totalStars} ⭐ Total</div>
-        <p>Routine: ${k.routineStars}</p>
-        <p>Activities: ${k.activityStars}</p>
-      </div>
-    `;
+  // MEDALS AND RANKS
+  let rank=0, lastStars=null, medalRank=0;
+  kids.forEach((k,i)=>{
+    if(k.totalStars!==lastStars){ rank=i+1; medalRank++; }
+    lastStars=k.totalStars;
+    let medal="";
+    if(medalRank===1) medal="🥇"; else if(medalRank===2) medal="🥈"; else if(medalRank===3) medal="🥉";
+    k.rankDisplay = `${medal} Rank ${rank}`;
   });
 
   const winner = kids[0];
-  const end = new Date(friday);
-  end.setDate(friday.getDate() + 6);
+  const end = new Date(friday); end.setDate(friday.getDate()+6);
+  champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
 
-  champ.innerHTML = `
-    👑 Champion: <strong>${winner.name}</strong><br>
-    ⭐ ${winner.totalStars} Stars<br>
-    📅 ${friday.toDateString()} → ${end.toDateString()}
-  `;
+  kids.forEach(k=>{
+    list.innerHTML+=`
+      <div class="kid-card">
+        <div class="rank">${k.rankDisplay}</div>
+        <h3>🧒 ${k.name}</h3>
+        <div class="badge">${k.totalStars} ⭐ Total</div>
+        <p class="p-stats">Routine: ${k.routineStars}</p>
+        <p class="p-stats">Activities: ${k.activityStars}</p>
+      </div>
+    `;
+  });
 }
 
-/* =============================
-   INIT
-============================= */
-window.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("weekPicker").addEventListener("change", () => {
-    if (SELECTED_CLASS) loadWeeklyClassReport();
-  });
-  loadTreeClasses();
-});
+// ================= INIT =================
+window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
 
 </body>
