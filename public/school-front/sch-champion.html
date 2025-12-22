@@ -103,7 +103,29 @@ body {
   color: #34495e;
   position: relative;
   z-index: 10;
-  transform: translateY(-20px); /* stage effect */
+  transform: translateY(-20px);
+  animation: float 2.5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(-20px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Trophy icon floating */
+.champion-card::before {
+  content: "🏆";
+  font-size: 48px;
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: trophy-bounce 2s infinite;
+}
+
+@keyframes trophy-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-10px); }
 }
 
 /* --------------------- KIDS GRID --------------------- */
@@ -111,7 +133,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
-  margin-top: -20px; /* overlaps slightly with champion card for stage effect */
+  margin-top: -20px;
 }
 
 .kid-card {
@@ -154,6 +176,24 @@ body {
   font-size: 14px;
   color: #7f8c8d;
   margin: 3px 0;
+}
+
+/* --------------------- STAR PROGRESS BAR --------------------- */
+.progress-container {
+  width: 100%;
+  background: #ecf0f1;
+  border-radius: 12px;
+  height: 14px;
+  margin: 6px 0 12px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f39c12, #f1c40f);
+  width: 0%;
+  transition: width 0.8s ease-in-out;
 }
 
 /* --------------------- TOP RANK HIGHLIGHT --------------------- */
@@ -235,7 +275,7 @@ async function loadTreeClasses() {
 
     buildClassList();
   } catch (err) {
-    console.error("❌ Load failed", err);
+    console.error(err);
   }
 }
 
@@ -332,21 +372,27 @@ function renderWeeklyReport(kids, friday) {
     if (medalRank === 1) medal = "🥇";
     else if (medalRank === 2) medal = "🥈";
     else if (medalRank === 3) medal = "🥉";
-    k.rankDisplay = `${medal} Hero ${rank}`;
+    k.rankDisplay = `${medal} Rank ${rank}`;
   });
 
   const winner = kids[0];
   const end = new Date(friday); end.setDate(friday.getDate() + 6);
   champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
 
-  // Render kids with champion highlight on top
+  // Render kids with progress bar
   kids.forEach((k, i) => {
+    const maxStars = Math.max(...kids.map(kk => kk.totalStars)) || 1;
+    const barPercent = (k.totalStars / maxStars) * 100;
+
     list.innerHTML += `
       <div class="kid-card ${i === 0 ? 'champion' : ''}">
-        <div class="Hero">${k.rankDisplay}</div>
+        <div class="rank">${k.rankDisplay}</div>
         <h3>🧒 ${k.name}</h3>
+        <div class="progress-container">
+          <div class="progress-bar" style="width:${barPercent}%"></div>
+        </div>
         <div class="badge">${k.totalStars} ⭐ Total</div>
-        <p class="p-stats">Routines: ${k.routineStars}</p>
+        <p class="p-stats">Routine: ${k.routineStars}</p>
         <p class="p-stats">Activities: ${k.activityStars}</p>
       </div>
     `;
