@@ -332,7 +332,7 @@ function renderWeeklyReport(kids, friday) {
     if (medalRank === 1) medal = "🥇";
     else if (medalRank === 2) medal = "🥈";
     else if (medalRank === 3) medal = "🥉";
-    k.rankDisplay = `${medal} Rank ${rank}`;
+    k.rankDisplay = `${medal} Hero ${rank}`;
   });
 
   const winner = kids[0];
@@ -343,10 +343,10 @@ function renderWeeklyReport(kids, friday) {
   kids.forEach((k, i) => {
     list.innerHTML += `
       <div class="kid-card ${i === 0 ? 'champion' : ''}">
-        <div class="rank">${k.rankDisplay}</div>
+        <div class="Hero">${k.rankDisplay}</div>
         <h3>🧒 ${k.name}</h3>
         <div class="badge">${k.totalStars} ⭐ Total</div>
-        <p class="p-stats">Routine: ${k.routineStars}</p>
+        <p class="p-stats">Routines: ${k.routineStars}</p>
         <p class="p-stats">Activities: ${k.activityStars}</p>
       </div>
     `;
