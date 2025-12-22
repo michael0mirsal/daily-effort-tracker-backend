@@ -184,19 +184,20 @@ async function loadWeeklyClassReport(cls) {
   const kidsByName = {};
 
   /* INIT KIDS */
-  cls.members.forEach(mid => {
-    const id = String(mid._id || mid);
-    const name = MEMBERS_MAP[id] || mid.name || "Unknown";
+  cls.members.forEach(m => {
+  const id = String(m._id || m);
+  const name = MEMBERS_MAP[id] || m.name || "Unknown";
 
-    kids[id] = {
-      id,
-      name,
-      routineStars: 0,
-      activityStars: 0
-    };
+  kids[id] = {
+    id,
+    name,
+    routineStars: 0,
+    activityStars: 0
+  };
 
-    kidsByName[name.toLowerCase()] = kids[id];
-  });
+  kidsByName[name.toLowerCase()] = kids[id];
+});
+
 
   /* GET FRIDAY */
   const today = new Date();
@@ -220,14 +221,28 @@ async function loadWeeklyClassReport(cls) {
     const activities = aRes.ok ? await aRes.json() : [];
 
     activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.kidmember);
-      const kid = kids[kidId];
-      if (!kid) return;
+  const kidId = String(
+    doc.schoolMember ||
+    doc.schoolMemberId ||
+    doc.kidmember
+  );
 
-      (doc.items || []).forEach(it => {
-        kid.activityStars += Number(it.evaluation || 0);
-      });
-    });
+  const kid = kids[kidId];
+
+  if (!kid) {
+    console.warn("⚠️ Activity without matching kid:", kidId);
+    return;
+  }
+
+  (doc.items || []).forEach(it => {
+    const stars = Number(it.evaluation);
+
+    if (!isNaN(stars)) {
+      kid.activityStars += stars;
+    }
+  });
+});
+
 
     routines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
