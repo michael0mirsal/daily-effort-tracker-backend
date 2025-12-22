@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weekly Class Report</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    padding: 20px;
+  }
+
+  h2 {
+    margin-bottom: 10px;
+  }
+
+  .champion-card {
+    background: linear-gradient(135deg, #ffd700, #fff2a8);
+    padding: 20px;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  .kids-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .kid-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .kid-card h3 {
+    margin: 0 0 10px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #3498db;
+    color: #fff;
+    font-size: 13px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>🏆 Weekly Class Performance (Friday → Thursday)</h2>
+
+<div id="weeklyChampion" class="champion-card"></div>
+<div id="weeklyKids" class="kids-grid"></div>
+
+<script>
+    const API = "http://localhost:3000/api";
+
+    async function loadWeeklyClassReport(cls) {
+  const kids = {};
+  const kidsByName = {};
+
+  /* =========================
+     1) INIT KIDS
+  ========================= */
+  cls.members.forEach(mid => {
+    const id = String(mid._id || mid);
+    const name = MEMBERS_MAP[id] || mid.name || "Unknown";
+
+    kids[id] = {
+      id,
+      name,
+      routineStars: 0,
+      activityStars: 0
+    };
+
+    kidsByName[name.toLowerCase()] = kids[id];
+  });
+
+  /* =========================
+     2) GET FRIDAY OF WEEK
+  ========================= */
+  const today = new Date();
+  const day = today.getDay(); // 0=Sun, 5=Fri
+  const diffToFriday = (day >= 5) ? day - 5 : day + 2;
+
+  const friday = new Date(today);
+  friday.setDate(today.getDate() - diffToFriday);
+
+  /* =========================
+     3) LOOP FRIDAY → THURSDAY
+  ========================= */
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(friday);
+    d.setDate(friday.getDate() + i);
+    const date = d.toISOString().slice(0, 10);
+
+    const [rRes, aRes] = await Promise.all([
+      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+    ]);
+
+    const routines = rRes.ok ? await rRes.json() : [];
+    const activities = aRes.ok ? await aRes.json() : [];
+
+    /* ===== Activities ===== */
+    activities.forEach(doc => {
+      const kidId = String(
+        doc.schoolMember ||
+        doc.schoolMemberId ||
+        doc.kidmember
+      );
+
+      const kid = kids[kidId];
+      if (!kid) return;
+
+      (doc.items || []).forEach(it => {
+        kid.activityStars += Number(it.evaluation || 0);
+      });
+    });
+
+    /* ===== Routines ===== */
+    routines.forEach(r => {
+      const kidId = String(r.kidmember || r.kidId);
+      const nameKey = (r.kidName || "").toLowerCase();
+
+      const kid = kids[kidId] || kidsByName[nameKey];
+      if (!kid) return;
+
+      (r.items || []).forEach(it => {
+        if (it.done === true) kid.routineStars += 1;
+      });
+    });
+  }
+
+  renderWeeklyReport(Object.values(kids), friday);
+}
+
+/* =========================
+   4) RENDER REPORT
+========================= */
+function renderWeeklyReport(kids, friday) {
+  const kidsArea = document.getElementById("weeklyKids");
+  const champArea = document.getElementById("weeklyChampion");
+
+  kidsArea.innerHTML = "";
+
+  kids.forEach(k => {
+    k.totalStars = k.routineStars + k.activityStars;
+  });
+
+  const champion = kids.reduce((a, b) =>
+    b.totalStars > a.totalStars ? b : a
+  );
+
+  const end = new Date(friday);
+  end.setDate(friday.getDate() + 6);
+
+  champArea.innerHTML = `
+    👑 Weekly Champion: <strong>${champion.name}</strong><br>
+    ⭐ ${champion.totalStars} Stars<br>
+    📅 ${friday.toDateString()} → ${end.toDateString()}
+  `;
+
+  kids.forEach(k => {
+    kidsArea.innerHTML += `
+      <div class="kid-card">
+        <h3>🧒 ${k.name}</h3>
+        <span class="badge">${k.totalStars} ⭐ Total</span>
+        <p>Routine Stars: ${k.routineStars} ⭐</p>
+        <p>Activity Stars: ${k.activityStars} ⭐</p>
+      </div>
+    `;
+  });
+}
+
+
+loadWeeklyClassReport(selectedClass);
+
+</script>
+</body>
+</html>
