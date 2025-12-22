@@ -200,7 +200,7 @@ let SELECTED_CLASS = null;
 // ================= LOAD CLASSES =================
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
-  if(!user) return alert("User not logged in");
+  if (!user) return alert("User not logged in");
 
   document.getElementById("nurseryTitle").textContent =
     user?.nurseryName || "Happy Kids Nursery";
@@ -211,80 +211,90 @@ async function loadTreeClasses() {
     TREE_CLASSES = data.classes || [];
 
     const memberIds = new Set();
-    TREE_CLASSES.forEach(cls => (cls.members || []).forEach(m => memberIds.add(String(m._id || m))));
+    TREE_CLASSES.forEach(cls =>
+      (cls.members || []).forEach(m => memberIds.add(String(m._id || m)))
+    );
 
-    if(memberIds.size){
+    if (memberIds.size) {
       const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
       const list = await r.json();
       list.forEach(m => MEMBERS_MAP[m._id] = m.name);
     }
 
     buildClassList();
-  } catch(err) {
-    console.error(err);
+  } catch (err) {
+    console.error("❌ Load failed", err);
   }
 }
 
 // ================= BUILD CLASS LIST =================
-function buildClassList(){
+function buildClassList() {
   const area = document.getElementById("classList");
   area.innerHTML = "";
 
-  TREE_CLASSES.forEach(cls=>{
+  TREE_CLASSES.forEach(cls => {
     const div = document.createElement("div");
     div.className = "class-item";
     div.textContent = cls.name;
 
-    div.onclick = ()=>{
-      document.querySelectorAll(".class-item").forEach(e=>e.classList.remove("active"));
+    div.onclick = () => {
+      document.querySelectorAll(".class-item").forEach(e => e.classList.remove("active"));
       div.classList.add("active");
       SELECTED_CLASS = cls;
-      loadWeeklyClassReport();
-    }
+      loadWeeklyClassReport(cls); // pass cls to avoid timing issues
+    };
 
     area.appendChild(div);
   });
 }
 
 // ================= WEEKLY REPORT =================
-async function loadWeeklyClassReport(){
-  if(!SELECTED_CLASS) return;
-
+async function loadWeeklyClassReport(cls) {
   const kids = {};
-  SELECTED_CLASS.members.forEach(m=>{
+  const kidsByName = {};
+
+  // INIT kids
+  (cls.members || []).forEach(m => {
     const id = String(m._id || m);
-    kids[id] = { id, name: MEMBERS_MAP[id]||"Unknown", routineStars:0, activityStars:0 };
+    const name = MEMBERS_MAP[id] || m.name || "Unknown";
+    kids[id] = { id, name, routineStars: 0, activityStars: 0 };
+    kidsByName[name.toLowerCase()] = kids[id]; // fallback for missing IDs
   });
 
   const today = new Date();
   const day = today.getDay();
-  const diff = day>=5 ? day-5 : day+2;
+  const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
-  for(let i=0;i<7;i++){
+  for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
-    d.setDate(friday.getDate()+i);
-    const date = d.toISOString().slice(0,10);
+    d.setDate(friday.getDate() + i);
+    const date = d.toISOString().slice(0, 10);
 
-    const [rRes,aRes] = await Promise.all([
-      fetch(`${API}/sch-routine/load?classId=${SELECTED_CLASS._id}&date=${date}`),
-      fetch(`${API}/sch-activities?classId=${SELECTED_CLASS._id}&date=${date}`)
+    const [rRes, aRes] = await Promise.all([
+      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
     ]);
 
-    const routines = rRes.ok?await rRes.json():[];
-    const activities = aRes.ok?await aRes.json():[];
+    const routines = rRes.ok ? await rRes.json() : [];
+    const activities = aRes.ok ? await aRes.json() : [];
 
-    activities.forEach(doc=>{
-      const kid = kids[String(doc.schoolMember||doc.kidmember)];
-      if(!kid) return;
-      (doc.items||[]).forEach(it=>kid.activityStars+=Number(it.evaluation||0));
+    // Activities
+    activities.forEach(doc => {
+      const kid = kids[String(doc.schoolMember || doc.kidmember)];
+      if (!kid) return;
+      (doc.items || []).forEach(it => {
+        kid.activityStars += Number(it.evaluation || 0);
+      });
     });
 
-    routines.forEach(r=>{
-      const kid = kids[String(r.kidmember)] || kids[String(r.kidId)];
-      if(!kid) return;
-      (r.items||[]).forEach(it=>{ if(it.done) kid.routineStars++; });
+    // Routines
+    routines.forEach(r => {
+      const kidId = String(r.kidmember || r.kidId);
+      const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()]; // fallback
+      if (!kid) return;
+      (r.items || []).forEach(it => { if (it.done) kid.routineStars++; });
     });
   }
 
@@ -292,33 +302,38 @@ async function loadWeeklyClassReport(){
 }
 
 // ================= RENDER =================
-function renderWeeklyReport(kids, friday){
+function renderWeeklyReport(kids, friday) {
   const champ = document.getElementById("weeklyChampion");
   const list = document.getElementById("weeklyKids");
   list.innerHTML = "";
 
-  if(!kids.length){ champ.innerHTML="⚠️ No kids found"; return; }
+  if (!kids.length) {
+    champ.innerHTML = "⚠️ No kids found";
+    return;
+  }
 
-  kids.forEach(k=>k.totalStars=k.routineStars+k.activityStars);
+  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars);
+  kids.sort((a, b) => b.totalStars - a.totalStars);
 
-  kids.sort((a,b)=>b.totalStars-a.totalStars);
-
-  // MEDALS AND RANKS
-  let rank=0, lastStars=null, medalRank=0;
-  kids.forEach((k,i)=>{
-    if(k.totalStars!==lastStars){ rank=i+1; medalRank++; }
-    lastStars=k.totalStars;
-    let medal="";
-    if(medalRank===1) medal="🥇"; else if(medalRank===2) medal="🥈"; else if(medalRank===3) medal="🥉";
+  // Ranks & Medals
+  let rank = 0, lastStars = null, medalRank = 0;
+  kids.forEach((k, i) => {
+    if (k.totalStars !== lastStars) { rank = i + 1; medalRank++; }
+    lastStars = k.totalStars;
+    let medal = "";
+    if (medalRank === 1) medal = "🥇";
+    else if (medalRank === 2) medal = "🥈";
+    else if (medalRank === 3) medal = "🥉";
     k.rankDisplay = `${medal} Rank ${rank}`;
   });
 
   const winner = kids[0];
-  const end = new Date(friday); end.setDate(friday.getDate()+6);
+  const end = new Date(friday); end.setDate(friday.getDate() + 6);
   champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
 
-  kids.forEach(k=>{
-    list.innerHTML+=`
+  // Render kids
+  kids.forEach(k => {
+    list.innerHTML += `
       <div class="kid-card">
         <div class="rank">${k.rankDisplay}</div>
         <h3>🧒 ${k.name}</h3>
