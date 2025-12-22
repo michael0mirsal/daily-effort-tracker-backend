@@ -281,21 +281,23 @@ async function loadWeeklyClassReport(cls) {
     const activities = aRes.ok ? await aRes.json() : [];
 
     // Activities
-    activities.forEach(doc => {
-      const kid = kids[String(doc.schoolMember || doc.kidmember)];
-      if (!kid) return;
-      (doc.items || []).forEach(it => {
-        kid.activityStars += Number(it.evaluation || 0);
-      });
-    });
+activities.forEach(doc => {
+  const kidId = String(doc.schoolMember || doc.kidmember);
+  const kid = kids[kidId] || kidsByName[(doc.kidName || "").toLowerCase()];
+  if (!kid) return;
+  (doc.items || []).forEach(it => {
+    kid.activityStars += Number(it.evaluation || 0);
+  });
+});
 
-    // Routines
-    routines.forEach(r => {
-      const kidId = String(r.kidmember || r.kidId);
-      const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()]; // fallback
-      if (!kid) return;
-      (r.items || []).forEach(it => { if (it.done) kid.routineStars++; });
-    });
+// Routines
+routines.forEach(r => {
+  const kidId = String(r.kidmember || r.kidId);
+  const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
+  if (!kid) return;
+  (r.items || []).forEach(it => { if(it.done) kid.routineStars++; });
+});
+
   }
 
   renderWeeklyReport(Object.values(kids), friday);
