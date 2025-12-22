@@ -2,17 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Weekly Class Report</title>
+<title>Weekly Champion Report</title>
 
 <style>
   body {
     font-family: Arial, sans-serif;
     background: #f4f6f8;
+    margin: 0;
     padding: 20px;
   }
 
-  h2 {
-    margin-bottom: 10px;
+  .layout {
+    display: flex;
+    gap: 20px;
+  }
+
+  /* LEFT PANEL */
+  .left {
+    width: 260px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+  }
+
+  .left h3 {
+    margin-top: 0;
+  }
+
+  .class-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+
+  .class-item:hover {
+    background: #f0f4ff;
+  }
+
+  .class-item.active {
+    background: #3498db;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  /* RIGHT PANEL */
+  .right {
+    flex: 1;
   }
 
   .champion-card {
@@ -37,10 +72,6 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
 
-  .kid-card h3 {
-    margin: 0 0 10px;
-  }
-
   .badge {
     display: inline-block;
     padding: 5px 12px;
@@ -48,27 +79,111 @@
     background: #3498db;
     color: #fff;
     font-size: 13px;
+    margin-bottom: 8px;
   }
 </style>
 </head>
 
 <body>
 
-<h2>🏆 Weekly Class Performance (Friday → Thursday)</h2>
+<h2>🏆 Weekly Champion (Friday → Thursday)</h2>
 
-<div id="weeklyChampion" class="champion-card"></div>
-<div id="weeklyKids" class="kids-grid"></div>
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="left">
+    <h3>🏫 Classes</h3>
+    <div id="classList"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div id="weeklyChampion" class="champion-card">
+      Select a class to view report
+    </div>
+    <div id="weeklyKids" class="kids-grid"></div>
+  </div>
+
+</div>
 
 <script>
-    const API = "http://localhost:3000/api";
+/* =====================================
+   CONFIG
+===================================== */
+const API = "http://localhost:3000/api";
 
-    async function loadWeeklyClassReport(cls) {
+/* =====================================
+   GLOBAL STATE
+===================================== */
+let TREE_CLASSES = [];
+let MEMBERS_MAP = {};
+let SELECTED_CLASS = null;
+
+/* =====================================
+   LOAD CLASSES + MEMBERS
+===================================== */
+async function loadTreeClasses() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return alert("User not logged in");
+
+  try {
+    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+    const data = await res.json();
+    TREE_CLASSES = data.classes || [];
+
+    const memberIds = new Set();
+    TREE_CLASSES.forEach(cls => {
+      (cls.members || []).forEach(id =>
+        memberIds.add(String(id._id || id))
+      );
+    });
+
+    if (memberIds.size) {
+      const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
+      const list = await r.json();
+      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+    }
+
+    buildClassList();
+  } catch (err) {
+    console.error("❌ Load failed", err);
+  }
+}
+
+/* =====================================
+   BUILD CLASS LIST
+===================================== */
+function buildClassList() {
+  const area = document.getElementById("classList");
+  area.innerHTML = "";
+
+  TREE_CLASSES.forEach(cls => {
+    const div = document.createElement("div");
+    div.className = "class-item";
+    div.textContent = cls.name;
+
+    div.onclick = () => {
+      document
+        .querySelectorAll(".class-item")
+        .forEach(e => e.classList.remove("active"));
+
+      div.classList.add("active");
+      SELECTED_CLASS = cls;
+      loadWeeklyClassReport(cls);
+    };
+
+    area.appendChild(div);
+  });
+}
+
+/* =====================================
+   WEEKLY REPORT (FRI → THU)
+===================================== */
+async function loadWeeklyClassReport(cls) {
   const kids = {};
   const kidsByName = {};
 
-  /* =========================
-     1) INIT KIDS
-  ========================= */
+  /* INIT KIDS */
   cls.members.forEach(mid => {
     const id = String(mid._id || mid);
     const name = MEMBERS_MAP[id] || mid.name || "Unknown";
@@ -83,19 +198,14 @@
     kidsByName[name.toLowerCase()] = kids[id];
   });
 
-  /* =========================
-     2) GET FRIDAY OF WEEK
-  ========================= */
+  /* GET FRIDAY */
   const today = new Date();
-  const day = today.getDay(); // 0=Sun, 5=Fri
-  const diffToFriday = (day >= 5) ? day - 5 : day + 2;
-
+  const day = today.getDay(); // 0 Sun
+  const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
-  friday.setDate(today.getDate() - diffToFriday);
+  friday.setDate(today.getDate() - diff);
 
-  /* =========================
-     3) LOOP FRIDAY → THURSDAY
-  ========================= */
+  /* LOOP 7 DAYS */
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
@@ -109,14 +219,8 @@
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    /* ===== Activities ===== */
     activities.forEach(doc => {
-      const kidId = String(
-        doc.schoolMember ||
-        doc.schoolMemberId ||
-        doc.kidmember
-      );
-
+      const kidId = String(doc.schoolMember || doc.kidmember);
       const kid = kids[kidId];
       if (!kid) return;
 
@@ -125,12 +229,10 @@
       });
     });
 
-    /* ===== Routines ===== */
     routines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
-      const nameKey = (r.kidName || "").toLowerCase();
-
-      const kid = kids[kidId] || kidsByName[nameKey];
+      const kid =
+        kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
       if (!kid) return;
 
       (r.items || []).forEach(it => {
@@ -142,47 +244,46 @@
   renderWeeklyReport(Object.values(kids), friday);
 }
 
-/* =========================
-   4) RENDER REPORT
-========================= */
+/* =====================================
+   RENDER
+===================================== */
 function renderWeeklyReport(kids, friday) {
-  const kidsArea = document.getElementById("weeklyKids");
-  const champArea = document.getElementById("weeklyChampion");
+  const champ = document.getElementById("weeklyChampion");
+  const list = document.getElementById("weeklyKids");
+  list.innerHTML = "";
 
-  kidsArea.innerHTML = "";
+  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars);
 
-  kids.forEach(k => {
-    k.totalStars = k.routineStars + k.activityStars;
-  });
-
-  const champion = kids.reduce((a, b) =>
+  const winner = kids.reduce((a, b) =>
     b.totalStars > a.totalStars ? b : a
   );
 
   const end = new Date(friday);
   end.setDate(friday.getDate() + 6);
 
-  champArea.innerHTML = `
-    👑 Weekly Champion: <strong>${champion.name}</strong><br>
-    ⭐ ${champion.totalStars} Stars<br>
+  champ.innerHTML = `
+    👑 Champion: <strong>${winner.name}</strong><br>
+    ⭐ ${winner.totalStars} Stars<br>
     📅 ${friday.toDateString()} → ${end.toDateString()}
   `;
 
   kids.forEach(k => {
-    kidsArea.innerHTML += `
+    list.innerHTML += `
       <div class="kid-card">
         <h3>🧒 ${k.name}</h3>
-        <span class="badge">${k.totalStars} ⭐ Total</span>
-        <p>Routine Stars: ${k.routineStars} ⭐</p>
-        <p>Activity Stars: ${k.activityStars} ⭐</p>
+        <div class="badge">${k.totalStars} ⭐ Total</div>
+        <p>Routine: ${k.routineStars} ⭐</p>
+        <p>Activities: ${k.activityStars} ⭐</p>
       </div>
     `;
   });
 }
 
-
-loadWeeklyClassReport(selectedClass);
-
+/* =====================================
+   INIT
+===================================== */
+window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
+
 </body>
 </html>
