@@ -5,119 +5,118 @@
 <title>Weekly Champion Report</title>
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 20px;
-  }
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 20px;
+}
 
-  /* HEADER */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
 
-  #nurseryTitle {
-    font-size: 22px;
-    font-weight: bold;
-    color: #2c3e50;
-  }
+#nurseryTitle {
+  font-size: 22px;
+  font-weight: bold;
+}
 
-  .layout {
-    display: flex;
-    gap: 20px;
-  }
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 
-  /* LEFT PANEL */
-  .left {
-    width: 260px;
-    background: #fff;
-    border-radius: 10px;
-    padding: 15px;
-  }
+.layout {
+  display: flex;
+  gap: 20px;
+}
 
-  .left h3 {
-    margin-top: 0;
-  }
+.left {
+  width: 260px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 15px;
+}
 
-  .class-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-  }
+.class-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
 
-  .class-item:hover {
-    background: #f0f4ff;
-  }
+.class-item:hover { background: #f0f4ff; }
 
-  .class-item.active {
-    background: #3498db;
-    color: #fff;
-    font-weight: bold;
-  }
+.class-item.active {
+  background: #3498db;
+  color: #fff;
+  font-weight: bold;
+}
 
-  /* RIGHT PANEL */
-  .right {
-    flex: 1;
-  }
+.right { flex: 1; }
 
-  .champion-card {
-    background: linear-gradient(135deg, #ffd700, #fff2a8);
-    padding: 20px;
-    border-radius: 16px;
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 20px;
-  }
+.champion-card {
+  background: linear-gradient(135deg, #ffd700, #fff2a8);
+  padding: 20px;
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
 
-  .kids-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-  }
+.kids-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
 
-  .kid-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
+.kid-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
 
-  .badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 20px;
-    background: #3498db;
-    color: #fff;
-    font-size: 13px;
-    margin-bottom: 8px;
-  }
+.rank {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: #3498db;
+  color: #fff;
+  font-size: 13px;
+}
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <h2 id="nurseryTitle">Loading...</h2>
-  <h2>🏆 Weekly Champion (Friday → Thursday)</h2>
+
+  <div class="controls">
+    <label>📅 Week:</label>
+    <input type="date" id="weekPicker">
+  </div>
 </div>
 
 <div class="layout">
 
-  <!-- LEFT -->
   <div class="left">
     <h3>🏫 Classes</h3>
     <div id="classList"></div>
   </div>
 
-  <!-- RIGHT -->
   <div class="right">
     <div id="weeklyChampion" class="champion-card">
-      Select a class to view report
+      Select a class
     </div>
     <div id="weeklyKids" class="kids-grid"></div>
   </div>
@@ -125,56 +124,54 @@
 </div>
 
 <script>
-/* =====================================
-   CONFIG
-===================================== */
 const API = "http://localhost:3000/api";
 
-/* =====================================
-   GLOBAL STATE
-===================================== */
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
 let SELECTED_CLASS = null;
 
-/* =====================================
-   LOAD CLASSES + MEMBERS
-===================================== */
-async function loadTreeClasses() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return alert("User not logged in");
-
-  /* SET NURSERY NAME */
-  const nurseryTitle = document.getElementById("nurseryTitle");
-  nurseryTitle.textContent = user?.nurseryName || "Happy Kids Nursery";
-
-  try {
-    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-    const data = await res.json();
-    TREE_CLASSES = data.classes || [];
-
-    const memberIds = new Set();
-    TREE_CLASSES.forEach(cls => {
-      (cls.members || []).forEach(id =>
-        memberIds.add(String(id._id || id))
-      );
-    });
-
-    if (memberIds.size) {
-      const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
-    }
-
-    buildClassList();
-  } catch (err) {
-    console.error("❌ Load failed", err);
-  }
+/* =============================
+   DATE → FRIDAY
+============================= */
+function getFriday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day >= 5 ? day - 5 : day + 2;
+  d.setDate(d.getDate() - diff);
+  return d;
 }
 
-/* =====================================
+/* =============================
+   LOAD CLASSES
+============================= */
+async function loadTreeClasses() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return alert("Not logged in");
+
+  document.getElementById("nurseryTitle").textContent =
+    user?.nurseryName || "Happy Kids Nursery";
+
+  const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+  const data = await res.json();
+  TREE_CLASSES = data.classes || [];
+
+  const ids = new Set();
+  TREE_CLASSES.forEach(c =>
+    (c.members || []).forEach(m => ids.add(String(m._id || m)))
+  );
+
+  if (ids.size) {
+    const r = await fetch(`${API}/sch-members?ids=${[...ids].join(",")}`);
+    const list = await r.json();
+    list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+  }
+
+  buildClassList();
+}
+
+/* =============================
    BUILD CLASS LIST
-===================================== */
+============================= */
 function buildClassList() {
   const area = document.getElementById("classList");
   area.innerHTML = "";
@@ -185,77 +182,65 @@ function buildClassList() {
     div.textContent = cls.name;
 
     div.onclick = () => {
-      document
-        .querySelectorAll(".class-item")
+      document.querySelectorAll(".class-item")
         .forEach(e => e.classList.remove("active"));
-
       div.classList.add("active");
+
       SELECTED_CLASS = cls;
-      loadWeeklyClassReport(cls);
+      loadWeeklyClassReport();
     };
 
     area.appendChild(div);
   });
 }
 
-/* =====================================
-   WEEKLY REPORT (FRI → THU)
-===================================== */
-async function loadWeeklyClassReport(cls) {
+/* =============================
+   WEEKLY REPORT
+============================= */
+async function loadWeeklyClassReport() {
+  if (!SELECTED_CLASS) return;
+
   const kids = {};
-  const kidsByName = {};
-
-  cls.members.forEach(m => {
+  SELECTED_CLASS.members.forEach(m => {
     const id = String(m._id || m);
-    const name = MEMBERS_MAP[id] || m.name || "Unknown";
-
     kids[id] = {
       id,
-      name,
+      name: MEMBERS_MAP[id] || "Unknown",
       routineStars: 0,
       activityStars: 0
     };
-
-    kidsByName[name.toLowerCase()] = kids[id];
   });
 
-  const today = new Date();
-  const day = today.getDay();
-  const diff = day >= 5 ? day - 5 : day + 2;
-  const friday = new Date(today);
-  friday.setDate(today.getDate() - diff);
+  const picker = document.getElementById("weekPicker");
+  const baseDate = picker.value || new Date().toISOString().slice(0,10);
+  const friday = getFriday(baseDate);
 
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
-    const date = d.toISOString().slice(0, 10);
+    const date = d.toISOString().slice(0,10);
 
     const [rRes, aRes] = await Promise.all([
-      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
-      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+      fetch(`${API}/sch-routine/load?classId=${SELECTED_CLASS._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${SELECTED_CLASS._id}&date=${date}`)
     ]);
 
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
     activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.kidmember);
-      const kid = kids[kidId];
+      const kid = kids[String(doc.schoolMember || doc.kidmember)];
       if (!kid) return;
-
-      (doc.items || []).forEach(it => {
-        const stars = Number(it.evaluation);
-        if (!isNaN(stars)) kid.activityStars += stars;
-      });
+      (doc.items || []).forEach(it =>
+        kid.activityStars += Number(it.evaluation || 0)
+      );
     });
 
     routines.forEach(r => {
-      const kidId = String(r.kidmember || r.kidId);
-      const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
+      const kid = kids[String(r.kidmember)];
       if (!kid) return;
-
       (r.items || []).forEach(it => {
-        if (it.done === true) kid.routineStars += 1;
+        if (it.done) kid.routineStars++;
       });
     });
   }
@@ -263,53 +248,65 @@ async function loadWeeklyClassReport(cls) {
   renderWeeklyReport(Object.values(kids), friday);
 }
 
-/* =====================================
-   RENDER
-===================================== */
+/* =============================
+   RENDER + TIES
+============================= */
 function renderWeeklyReport(kids, friday) {
   const champ = document.getElementById("weeklyChampion");
   const list = document.getElementById("weeklyKids");
   list.innerHTML = "";
 
-  if (!kids.length) {
-    champ.innerHTML = "⚠️ No kids found for this class";
-    return;
-  }
+  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars);
 
-  kids.forEach(k => {
-    k.totalStars = k.routineStars + k.activityStars;
-  });
+  kids.sort((a,b) => b.totalStars - a.totalStars);
 
-  const hasStars = kids.some(k => k.totalStars > 0);
+  let rank = 0;
+  let lastStars = null;
+  let medalRank = 0;
 
-  if (!hasStars) {
-    champ.innerHTML = "ℹ️ No activities or routines recorded this week";
-  } else {
-    const winner = kids.reduce((a, b) => b.totalStars > a.totalStars ? b : a);
-    const end = new Date(friday);
-    end.setDate(friday.getDate() + 6);
+  kids.forEach((k, i) => {
+    if (k.totalStars !== lastStars) {
+      rank = i + 1;
+      medalRank++;
+    }
+    lastStars = k.totalStars;
 
-    champ.innerHTML = `
-      👑 Champion: <strong>${winner.name}</strong><br>
-      ⭐ ${winner.totalStars} Stars<br>
-      📅 ${friday.toDateString()} → ${end.toDateString()}
-    `;
-  }
+    let medal = "";
+    if (medalRank === 1) medal = "🥇";
+    else if (medalRank === 2) medal = "🥈";
+    else if (medalRank === 3) medal = "🥉";
 
-  kids.forEach(k => {
     list.innerHTML += `
       <div class="kid-card">
+        <div class="rank">${medal} Rank ${rank}</div>
         <h3>🧒 ${k.name}</h3>
         <div class="badge">${k.totalStars} ⭐ Total</div>
-        <p>Routine: ${k.routineStars} ⭐</p>
-        <p>Activities: ${k.activityStars} ⭐</p>
+        <p>Routine: ${k.routineStars}</p>
+        <p>Activities: ${k.activityStars}</p>
       </div>
     `;
   });
+
+  const winner = kids[0];
+  const end = new Date(friday);
+  end.setDate(friday.getDate() + 6);
+
+  champ.innerHTML = `
+    👑 Champion: <strong>${winner.name}</strong><br>
+    ⭐ ${winner.totalStars} Stars<br>
+    📅 ${friday.toDateString()} → ${end.toDateString()}
+  `;
 }
 
-/* INIT */
-window.addEventListener("DOMContentLoaded", loadTreeClasses);
+/* =============================
+   INIT
+============================= */
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("weekPicker").addEventListener("change", () => {
+    if (SELECTED_CLASS) loadWeeklyClassReport();
+  });
+  loadTreeClasses();
+});
 </script>
 
 </body>
