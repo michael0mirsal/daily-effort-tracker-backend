@@ -252,21 +252,43 @@ function renderWeeklyReport(kids, friday) {
   const list = document.getElementById("weeklyKids");
   list.innerHTML = "";
 
-  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars);
+  /* =========================
+     NO KIDS SAFETY CHECK
+  ========================= */
+  if (!kids.length) {
+    champ.innerHTML = "⚠️ No kids found for this class";
+    return;
+  }
 
-  const winner = kids.reduce((a, b) =>
-    b.totalStars > a.totalStars ? b : a
-  );
+  kids.forEach(k => {
+    k.totalStars = (k.routineStars || 0) + (k.activityStars || 0);
+  });
 
-  const end = new Date(friday);
-  end.setDate(friday.getDate() + 6);
+  /* =========================
+     ALL ZERO STARS CHECK
+  ========================= */
+  const hasAnyStars = kids.some(k => k.totalStars > 0);
 
-  champ.innerHTML = `
-    👑 Champion: <strong>${winner.name}</strong><br>
-    ⭐ ${winner.totalStars} Stars<br>
-    📅 ${friday.toDateString()} → ${end.toDateString()}
-  `;
+  if (!hasAnyStars) {
+    champ.innerHTML = "ℹ️ No activities or routines recorded this week";
+  } else {
+    const winner = kids.reduce((best, current) =>
+      current.totalStars > best.totalStars ? current : best
+    );
 
+    const end = new Date(friday);
+    end.setDate(friday.getDate() + 6);
+
+    champ.innerHTML = `
+      👑 Champion: <strong>${winner.name}</strong><br>
+      ⭐ ${winner.totalStars} Stars<br>
+      📅 ${friday.toDateString()} → ${end.toDateString()}
+    `;
+  }
+
+  /* =========================
+     RENDER KIDS
+  ========================= */
   kids.forEach(k => {
     list.innerHTML += `
       <div class="kid-card">
@@ -278,6 +300,7 @@ function renderWeeklyReport(kids, friday) {
     `;
   });
 }
+
 
 /* =====================================
    INIT
