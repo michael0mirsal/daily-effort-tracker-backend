@@ -64,33 +64,60 @@ router.post("/sch-routine/save", async (req, res) => {
 
 
 
+
+
+// GET /api/sch-routine/load
 router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
-  if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
+
+  if (!classId || !date) {
+    return res.status(400).json({ error: "Missing classId or date" });
+  }
 
   try {
-    const classObjectId = new mongoose.Types.ObjectId(classId); // ✅ use 'new'
+    const classObjectId = new mongoose.Types.ObjectId(classId); // ✅ ensure ObjectId
 
+    // 1️⃣ Load all SchoolMembers for this class
     const schoolMembers = await SchoolMember.find({ class: classObjectId })
       .populate("member", "name");
 
-    if (!schoolMembers.length) return res.json([]);
+    if (!schoolMembers.length) {
+      // No members found, but we can still fetch routines directly
+      const routines = await SchRoutine.find({
+        classId: classObjectId,
+        ...(date !== "all" && { date })
+      }).populate("schoolMember", "member").lean();
 
+      const normalized = routines.map(r => ({
+        _id: r._id,
+        classId: r.classId,
+        schoolMember: String(r.schoolMember?._id || r.schoolMember),
+        kidName: r.schoolMember?.member?.name || "Unknown",
+        date: r.date,
+        items: r.items || []
+      }));
+
+      return res.json(normalized);
+    }
+
+    // 2️⃣ Map schoolMember _id → kid name
     const kidMap = {};
     const schoolMemberIds = schoolMembers.map(sm => sm._id);
-
     schoolMembers.forEach(sm => {
       kidMap[String(sm._id)] = sm.member?.name || "Unknown";
     });
 
+    // 3️⃣ Build routine filter
     const routineFilter = {
-  schoolMember: { $in: schoolMembers.map(sm => sm._id) }, // singular
-  classId: new mongoose.Types.ObjectId(classId)
-};
-if (date !== "all") routineFilter.date = date;
+      schoolMember: { $in: schoolMemberIds },
+      classId: classObjectId,
+      ...(date !== "all" && { date })
+    };
 
+    // 4️⃣ Fetch routines
     const routines = await SchRoutine.find(routineFilter).lean();
 
+    // 5️⃣ Normalize
     const normalized = routines.map(r => ({
       _id: r._id,
       classId: r.classId,
@@ -107,6 +134,7 @@ if (date !== "all") routineFilter.date = date;
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
+
 
 
 
