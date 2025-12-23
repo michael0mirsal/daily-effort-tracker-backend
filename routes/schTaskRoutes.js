@@ -75,45 +75,35 @@ router.post("/sch-routine/save", async (req, res) => {
 // GET /api/sch-routine/load
 router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
-
-  if (!classId || !date) {
-    return res.status(400).json({ error: "Missing classId or date" });
-  }
+  if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
   try {
-    // Convert classId to ObjectId
     const classObjectId = new mongoose.Types.ObjectId(classId);
 
-    // 1️⃣ Load SchoolMembers for this class and populate member name
     const schoolMembers = await SchoolMember.find({ class: classObjectId })
       .populate("member", "name");
 
     if (!schoolMembers.length) return res.json([]);
 
-    // 2️⃣ Build a map: schoolMemberId → kidName
+    // Map SchoolMember._id (as string) → kid name
     const kidMap = {};
     schoolMembers.forEach(sm => {
-      if (sm.member && sm.member.name) {
-        kidMap[String(sm._id)] = sm.member.name;
-      }
+      kidMap[sm._id.toString()] = sm.member?.name || "Unknown";
     });
 
-    // 3️⃣ Build routine filter
     const routineFilter = {
       schoolMember: { $in: schoolMembers.map(sm => sm._id) },
       classId: classObjectId
     };
     if (date !== "all") routineFilter.date = date;
 
-    // 4️⃣ Fetch routines
     const routines = await SchRoutine.find(routineFilter).lean();
 
-    // 5️⃣ Normalize results with correct kidName
     const normalized = routines.map(r => ({
       _id: r._id,
-      classId: r.classId,
-      schoolMember: String(r.schoolMember),
-      kidName: kidMap[String(r.schoolMember)] || "Unknown",
+      classId: r.classId.toString(),
+      schoolMember: r.schoolMember.toString(), // convert ObjectId to string
+      kidName: kidMap[r.schoolMember.toString()] || "Unknown",
       date: r.date,
       items: r.items || []
     }));
@@ -125,7 +115,6 @@ router.get("/sch-routine/load", async (req, res) => {
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
-
 
 
 
