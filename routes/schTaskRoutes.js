@@ -15,6 +15,8 @@ import crypto from "crypto";
 const router = express.Router();
 
 
+
+
 router.post("/sch-routine/save", async (req, res) => {
   try {
     const { date, classId, data } = req.body;
@@ -22,15 +24,19 @@ router.post("/sch-routine/save", async (req, res) => {
     if (!date || !data || !classId)
       return res.status(400).json({ error: "Missing date, classId, or data" });
 
+    const classObjectId = new mongoose.Types.ObjectId(classId); // convert classId
+
     let results = [];
 
     for (const entry of data) {
       const { schoolMemberId, items } = entry;
+      const schoolMemberObjectId = new mongoose.Types.ObjectId(schoolMemberId); // convert schoolMemberId
 
+      // Find existing routine
       let routine = await SchRoutine.findOne({
-        schoolMember: schoolMemberId,
+        schoolMember: schoolMemberObjectId,
         date,
-        classId
+        classId: classObjectId
       });
 
       if (routine) {
@@ -38,8 +44,8 @@ router.post("/sch-routine/save", async (req, res) => {
         await routine.save();
       } else {
         routine = await SchRoutine.create({
-          classId,
-          schoolMember: schoolMemberId,
+          classId: classObjectId,
+          schoolMember: schoolMemberObjectId,
           date,
           items
         });
@@ -51,7 +57,7 @@ router.post("/sch-routine/save", async (req, res) => {
     res.json({ success: true, saved: results.length, results });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error saving routine:", err);
     res.status(500).json({ error: "Failed to save routine" });
   }
 });
