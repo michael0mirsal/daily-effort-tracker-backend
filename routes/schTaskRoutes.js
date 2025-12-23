@@ -60,22 +60,39 @@ router.post("/sch-routine/save", async (req, res) => {
 
 router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
-  if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
+  if (!classId || !date) {
+    return res.status(400).json({ error: "Missing classId or date" });
+  }
 
   try {
+    // 1️⃣ Load all SchoolMembers for this class
     const schoolMembers = await SchoolMember.find({ class: classId })
-      .populate("member", "name");
+      .populate("member", "name"); // get kid name
 
+    if (!schoolMembers.length) {
+      return res.json([]); // no members, return empty
+    }
+
+    // 2️⃣ Build a map of SchoolMember _id → kid name
     const kidMap = {};
-    schoolMembers.forEach(m => {
-      kidMap[String(m._id)] = m.member?.name || "Unknown";
+    schoolMembers.forEach(sm => {
+      kidMap[String(sm._id)] = sm.member?.name || "Unknown";
     });
 
-    const filter = { schoolMember: { $in: schoolMembers.map(sm => sm._id) } };
-    if (date !== "all") filter.date = date;
+    // 3️⃣ Build filter for routines
+    const routineFilter = {
+      schoolMember: { $in: schoolMembers.map(sm => sm._id) },
+      classId
+    };
+    if (date !== "all") routineFilter.date = date;
 
-    const routines = await SchRoutine.find(filter).lean();
+    console.log("Routine filter:", routineFilter);
 
+    // 4️⃣ Find matching routines
+    const routines = await SchRoutine.find(routineFilter).lean();
+    console.log("Found routines:", routines.length);
+
+    // 5️⃣ Normalize results
     const normalized = routines.map(r => ({
       _id: r._id,
       classId: r.classId,
@@ -88,7 +105,7 @@ router.get("/sch-routine/load", async (req, res) => {
     res.json(normalized);
 
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching routines:", err);
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
