@@ -28,7 +28,7 @@ router.post("/sch-routine/save", async (req, res) => {
       const { schoolMemberId, items } = entry;
 
       let routine = await SchRoutine.findOne({
-        kidmember: schoolMemberId,
+        schoolMember: schoolMemberId,
         date,
         classId
       });
@@ -39,7 +39,7 @@ router.post("/sch-routine/save", async (req, res) => {
       } else {
         routine = await SchRoutine.create({
           classId,
-          kidmember: schoolMemberId,
+          schoolMember: schoolMemberId,
           date,
           items
         });
@@ -63,28 +63,24 @@ router.get("/sch-routine/load", async (req, res) => {
   if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
   try {
-    // 1. Load members + populate names
     const schoolMembers = await SchoolMember.find({ class: classId })
-      .populate("member", "name"); // 🔥 include kid name
+      .populate("member", "name");
 
-    const kidIds = schoolMembers.map(m => String(m._id));
     const kidMap = {};
     schoolMembers.forEach(m => {
-      kidMap[String(m._id)] = m.member.name;
+      kidMap[String(m._id)] = m.member?.name || "Unknown";
     });
 
-    // 2. Filter routines
-    const filter = { kidmember: { $in: kidIds } };
+    const filter = { schoolMember: { $in: schoolMembers.map(sm => sm._id) } };
     if (date !== "all") filter.date = date;
 
     const routines = await SchRoutine.find(filter).lean();
 
-    // 3. Normalize routines
     const normalized = routines.map(r => ({
       _id: r._id,
       classId: r.classId,
-      kidmember: String(r.kidmember),
-      kidName: kidMap[String(r.kidmember)] || "Unknown",
+      schoolMember: String(r.schoolMember),
+      kidName: kidMap[String(r.schoolMember)] || "Unknown",
       date: r.date,
       items: r.items || []
     }));
