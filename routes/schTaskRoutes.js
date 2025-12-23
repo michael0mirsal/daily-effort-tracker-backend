@@ -62,39 +62,34 @@ router.post("/sch-routine/save", async (req, res) => {
 
 router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
-  if (!classId || !date) {
-    return res.status(400).json({ error: "Missing classId or date" });
-  }
+  if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
 
   try {
     const classObjectId = mongoose.Types.ObjectId(classId);
 
-    // 1️⃣ Load all SchoolMembers for this class
     const schoolMembers = await SchoolMember.find({ class: classObjectId })
       .populate("member", "name");
 
     if (!schoolMembers.length) return res.json([]);
 
-    // 2️⃣ Build map of SchoolMember _id → kid name
     const kidMap = {};
+    const schoolMemberIds = schoolMembers.map(sm => sm._id);
+
     schoolMembers.forEach(sm => {
       kidMap[String(sm._id)] = sm.member?.name || "Unknown";
     });
 
-    // 3️⃣ Build filter for routines
     const routineFilter = {
-      schoolMember: { $in: schoolMembers.map(sm => sm._id) }, // these are ObjectIds
+      schoolMember: { $in: schoolMemberIds }, // ObjectId array
       classId: classObjectId
     };
     if (date !== "all") routineFilter.date = date;
 
     console.log("Routine filter:", routineFilter);
 
-    // 4️⃣ Find routines
     const routines = await SchRoutine.find(routineFilter).lean();
     console.log("Found routines:", routines.length);
 
-    // 5️⃣ Normalize
     const normalized = routines.map(r => ({
       _id: r._id,
       classId: r.classId,
@@ -111,7 +106,6 @@ router.get("/sch-routine/load", async (req, res) => {
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
-
 
 
 
