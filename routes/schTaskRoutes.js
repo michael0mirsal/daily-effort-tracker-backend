@@ -25,10 +25,10 @@ router.post("/sch-routine/save", async (req, res) => {
     let results = [];
 
     for (const entry of data) {
-      const { kidId, items } = entry;
+      const { schoolMemberId, items } = entry;
 
       let routine = await SchRoutine.findOne({
-        kidmember: kidId,
+        kidmember: schoolMemberId,
         date,
         classId
       });
@@ -39,7 +39,7 @@ router.post("/sch-routine/save", async (req, res) => {
       } else {
         routine = await SchRoutine.create({
           classId,
-          kidmember: kidId,
+          kidmember: schoolMemberId,
           date,
           items
         });
@@ -67,10 +67,10 @@ router.get("/sch-routine/load", async (req, res) => {
     const schoolMembers = await SchoolMember.find({ class: classId })
       .populate("member", "name"); // 🔥 include kid name
 
-    const kidIds = schoolMembers.map(m => String(m.member._id));
+    const kidIds = schoolMembers.map(m => String(m._id));
     const kidMap = {};
     schoolMembers.forEach(m => {
-      kidMap[String(m.member._id)] = m.member.name;
+      kidMap[String(m._id)] = m.member.name;
     });
 
     // 2. Filter routines
