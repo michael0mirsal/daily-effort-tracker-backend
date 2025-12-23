@@ -91,7 +91,9 @@ router.get("/sch-routine/load", async (req, res) => {
     // 4️⃣ Find matching routines
     const routines = await SchRoutine.find(routineFilter).lean();
     console.log("Found routines:", routines.length);
-
+console.log("SchoolMember IDs:", schoolMembers.map(sm => sm._id));
+console.log("Class ID:", classId);
+console.log("Date:", date);
     // 5️⃣ Normalize results
     const normalized = routines.map(r => ({
       _id: r._id,
