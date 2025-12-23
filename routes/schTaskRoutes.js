@@ -84,10 +84,10 @@ router.get("/sch-routine/load", async (req, res) => {
     });
 
     const routineFilter = {
-      schoolMember: { $in: schoolMemberIds },
-      classId: classObjectId
-    };
-    if (date !== "all") routineFilter.date = date;
+  schoolMember: { $in: schoolMembers.map(sm => sm._id) }, // singular
+  classId: new mongoose.Types.ObjectId(classId)
+};
+if (date !== "all") routineFilter.date = date;
 
     const routines = await SchRoutine.find(routineFilter).lean();
 
