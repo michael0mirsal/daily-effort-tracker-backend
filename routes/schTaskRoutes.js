@@ -58,6 +58,8 @@ router.post("/sch-routine/save", async (req, res) => {
 
 
 
+
+
 router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
   if (!classId || !date) {
@@ -65,15 +67,15 @@ router.get("/sch-routine/load", async (req, res) => {
   }
 
   try {
+    const classObjectId = mongoose.Types.ObjectId(classId);
+
     // 1️⃣ Load all SchoolMembers for this class
-    const schoolMembers = await SchoolMember.find({ class: classId })
-      .populate("member", "name"); // get kid name
+    const schoolMembers = await SchoolMember.find({ class: classObjectId })
+      .populate("member", "name");
 
-    if (!schoolMembers.length) {
-      return res.json([]); // no members, return empty
-    }
+    if (!schoolMembers.length) return res.json([]);
 
-    // 2️⃣ Build a map of SchoolMember _id → kid name
+    // 2️⃣ Build map of SchoolMember _id → kid name
     const kidMap = {};
     schoolMembers.forEach(sm => {
       kidMap[String(sm._id)] = sm.member?.name || "Unknown";
@@ -81,20 +83,18 @@ router.get("/sch-routine/load", async (req, res) => {
 
     // 3️⃣ Build filter for routines
     const routineFilter = {
-      schoolMember: { $in: schoolMembers.map(sm => sm._id) },
-      classId
+      schoolMember: { $in: schoolMembers.map(sm => sm._id) }, // these are ObjectIds
+      classId: classObjectId
     };
     if (date !== "all") routineFilter.date = date;
 
     console.log("Routine filter:", routineFilter);
 
-    // 4️⃣ Find matching routines
+    // 4️⃣ Find routines
     const routines = await SchRoutine.find(routineFilter).lean();
     console.log("Found routines:", routines.length);
-console.log("SchoolMember IDs:", schoolMembers.map(sm => sm._id));
-console.log("Class ID:", classId);
-console.log("Date:", date);
-    // 5️⃣ Normalize results
+
+    // 5️⃣ Normalize
     const normalized = routines.map(r => ({
       _id: r._id,
       classId: r.classId,
@@ -111,6 +111,7 @@ console.log("Date:", date);
     res.status(500).json({ error: "Server error fetching routines" });
   }
 });
+
 
 
 
