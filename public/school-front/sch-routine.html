@@ -583,7 +583,7 @@ async function saveRoutine() {
     classId: window.selectedClass,
     date,
     data: Object.keys(kidMap).map(id => ({
-      kidId: id,            // kidId === SchoolMember ID
+      schoolMemberId: id,            // kidId === SchoolMember ID
       items: kidMap[id]
     }))
   };
