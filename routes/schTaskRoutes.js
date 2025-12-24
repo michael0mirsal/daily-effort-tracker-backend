@@ -19,25 +19,17 @@ const router = express.Router();
 
 router.post("/sch-routine/save", async (req, res) => {
   try {
-    const { date, classId, data } = req.body;
+    const { classId, data } = req.body;
 
     if (!date || !data || !classId) {
       return res.status(400).json({ error: "Missing date, classId, or data" });
     }  
 
-  // ⛔ HARD BACKEND BLOCK
+  // 🔒 FORCE TODAY (SERVER TIME)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const date = today.toISOString().split("T")[0];
 
-    const routineDate = new Date(date);
-    routineDate.setHours(0, 0, 0, 0);
-
-    if (routineDate < today) {
-      return res.status(403).json({
-        success: false,
-        error: "Past routines cannot be edited"
-      });
-    }
  
     // Convert classId to ObjectId
     const classObjectId = new mongoose.Types.ObjectId(classId);
