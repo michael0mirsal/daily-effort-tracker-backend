@@ -588,15 +588,15 @@ function disableRoutineEditing() {
    SAVE ROUTINE
 ---------------------------- */
 async function saveRoutine() {
-  const date =
-    document.getElementById("routineDate")?.value ||
-    new Date().toISOString().split("T")[0];
-   // ⛔ FRONTEND BLOCK
-  if (isPastDate(date)) {
-    alert("❌ You cannot edit a past routine");
+  // ✅ ALWAYS use today
+  const today = new Date().toISOString().split("T")[0];
+
+  // ⛔ Extra UI safety (optional)
+  const uiDate = document.getElementById("routineDate")?.value;
+  if (uiDate && uiDate !== today) {
+    alert("❌ You can only save today's routine");
     return;
   }
-    
 
   const rows = document.querySelectorAll("tbody tr");
   const kidMap = {};
@@ -615,7 +615,7 @@ async function saveRoutine() {
 
   const payload = {
     classId: window.selectedClass,
-    date,
+     date: today, // 🔒 forced
     data: Object.keys(kidMap).map(id => ({
       schoolMemberId: id,            // kidId === SchoolMember ID
       items: kidMap[id]
