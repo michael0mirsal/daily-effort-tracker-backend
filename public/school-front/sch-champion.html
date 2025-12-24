@@ -421,7 +421,7 @@ function renderWeeklyReport(kids, friday) {
     return;
   }
 
-  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars);
+  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars);
   kids.sort((a, b) => b.totalStars - a.totalStars);
 
   // Ranks & Medals
