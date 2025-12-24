@@ -75,35 +75,47 @@ router.post("/sch-routine/save", async (req, res) => {
 // GET /api/sch-routine/load
 router.get("/sch-routine/load", async (req, res) => {
   const { classId, date } = req.query;
-  if (!classId || !date) return res.status(400).json({ error: "Missing classId or date" });
+
+  // 1️⃣ Validate input
+  if (!classId || !date) {
+    return res.status(400).json({
+      success: false,
+      error: "Missing classId or date"
+    });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(classId)) {
+    return res.status(400).json({
+      success: false,
+      error: "Invalid classId"
+    });
+  }
 
   try {
-    const classObjectId = new mongoose.Types.ObjectId(classId);
+    // 2️⃣ Build filter
+    const filter = { classId };
 
-    const schoolMembers = await SchoolMember.find({ class: classObjectId })
-      .populate("member", "name");
+    if (date !== "all") {
+      filter.date = date;
+    }
 
-    if (!schoolMembers.length) return res.json([]);
+    // 3️⃣ Load routines with deep populate
+    const routines = await SchRoutine.find(filter)
+      .populate({
+        path: "schoolMember",
+        populate: {
+          path: "member",
+          select: "name"
+        }
+      })
+      .lean();
 
-    // Map SchoolMember._id (as string) → kid name
-    const kidMap = {};
-    schoolMembers.forEach(sm => {
-      kidMap[sm._id.toString()] = sm.member?.name || "Unknown";
-    });
-
-    const routineFilter = {
-      schoolMember: { $in: schoolMembers.map(sm => sm._id) },
-      classId: classObjectId
-    };
-    if (date !== "all") routineFilter.date = date;
-
-    const routines = await SchRoutine.find(routineFilter).lean();
-
+    // 4️⃣ Normalize response
     const normalized = routines.map(r => ({
       _id: r._id,
-      classId: r.classId.toString(),
-      schoolMember: r.schoolMember.toString(), // convert ObjectId to string
-      kidName: kidMap[r.schoolMember.toString()] || "Unknown",
+      classId: r.classId,
+      schoolMemberId: r.schoolMember?._id || null,
+      kidName: r.schoolMember?.member?.name || null,
       date: r.date,
       items: r.items || []
     }));
@@ -111,10 +123,14 @@ router.get("/sch-routine/load", async (req, res) => {
     res.json(normalized);
 
   } catch (err) {
-    console.error("Error fetching routines:", err);
-    res.status(500).json({ error: "Server error fetching routines" });
+    console.error("Load routines error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Server error fetching routines"
+    });
   }
 });
+
 
 
 
