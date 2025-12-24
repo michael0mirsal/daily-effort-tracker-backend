@@ -665,6 +665,37 @@ document.getElementById("loadByDateBtn").onclick = async () => {
 };
 
 
+// navigation / logout
+  document.getElementById("backBtn").onclick = () => window.location.href = "sch-choose.html";
+  document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("currentUser"); window.location.href = "sch-login.html"; };
+
+  /* Helper: createRowHTML used when loading unknown tasks */
+  function createRowHTML(task) {
+    return `
+      <td>${escapeHtml(task)}</td>
+      <td><input type="checkbox"></td>
+      <td>
+        <div class="member-box"></div>
+        <div>
+          <select class="member-select"><option value="">Add member...</option>${optionsHTML()}</select>
+          <button class="small-btn" type="button" onclick="addMemberFromBtn(this)">Add</button>
+        </div>
+      </td>
+    `;
+  }
+
+  // small utility used by load/create
+  function optionsHTML() {
+    return membersList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+  }
+
+  // escape helper reused
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+
 </script>
 
 </body>
