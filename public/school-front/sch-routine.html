@@ -600,63 +600,220 @@ async function saveRoutine() {
 
 document.getElementById("saveBtn").onclick = saveRoutine;
 
+
+// Load class members for selected class
+async function loadClassMembers(classId) {
+  try {
+    const res = await fetch(`${API}/class/${classId}/members`);
+    const members = await res.json();
+    window.classMembers = members || [];
+  } catch (err) {
+    console.error("Failed to load class members:", err);
+    window.classMembers = [];
+  }
+}
+
+// Generate <option> HTML for member select
+function optionsHTML(members = []) {
+  return members.map(m => `<option value="${m._id}">${escapeHtml(m.name)}</option>`).join("");
+}
+
+// Create a task row with checkbox and member select/add
+function createRowHTML(task, members = []) {
+  return `
+    <td>${escapeHtml(task)}</td>
+    <td><input type="checkbox" /></td>
+    <td>
+      <div class="member-box"></div>
+      <select class="member-select">
+        ${optionsHTML(members)}
+      </select>
+      <button type="button" class="add-member-btn">Add</button>
+    </td>
+  `;
+}
+
+
+
 /* ============================================================
    🔧 FIX #2 — LOAD ROUTINE USE schoolMember
 ============================================================ */
-async function loadRoutineByDate(date) {
-  const res = await fetch(
-    `${API}/sch-routine/load?classId=${window.selectedClass}&date=${date}`
-  );
-  const routines = await res.json();
+async function loadRoutineByDate(date, auto = false) {
+  const classId = window.selectedClass;
+  if (!classId) return alert("Please select a class first.");
+  if (!date) return alert("Please choose a date.");
 
-  const grouped = {};
+  try {
+    /* =========================
+       1) Ensure members loaded
+       ========================= */
+    if (!window.classMembers || !Array.isArray(window.classMembers)) {
+      await loadMembersIntoSelector(classId);
 
-  routines.forEach(r => {
-    // 🔹 A. SAFETY CHECK → HERE
-    if (!r.schoolMemberId) {
-      console.warn("Routine without schoolMemberId:", r);
+      if (!Array.isArray(window.classMembersList)) {
+        throw new Error("classMembersList not loaded");
+      }
+
+      window.classMembers = window.classMembersList.map(m => ({
+        _id: String(m.id),
+        name: m.name
+      }));
+    }
+
+    /* =========================
+       2) Fetch routines
+       ========================= */
+    const res = await fetch(
+      `${API}/sch-routine/load?classId=${classId}&date=${date}`
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch routines");
+
+    const routines = await res.json();
+    if (!Array.isArray(routines) || routines.length === 0) {
+      if (!auto) alert(`No routine found for ${date}`);
       return;
     }
-  r.items.forEach(i => {
-    if (!i.done) return;
 
-    if (!grouped[i.section]) grouped[i.section] = {};
-    if (!grouped[i.section][i.task]) grouped[i.section][i.task] = [];
+    /* =========================
+       3) Reset UI
+       ========================= */
+    clearAllCheckboxes();
+    document.querySelectorAll(".member-box").forEach(b => (b.innerHTML = ""));
 
-    grouped[i.section][i.task].push(r.schoolMemberId); // ✅ FIX
-  });
-});
+    /* =========================
+       4) Group ONLY completed items
+       ========================= */
+    const grouped = {};
 
+    routines.forEach(r => {
 
-  Object.entries(grouped).forEach(([section, tasks]) => {
-    const body = document.getElementById(section + "Body");
-    Object.entries(tasks).forEach(([task, kids]) => {
-      const row = [...body.rows].find(
-        r => r.cells[0].textContent.trim() === task
-      );
-      if (!row) return;
+      /* 🔹 A. SAFETY CHECK */
+      if (!r.schoolMemberId) {
+        console.warn("Routine without schoolMemberId:", r);
+        return;
+      }
 
-      row.querySelector("input").checked = true;
-      const box = row.querySelector(".member-box");
-      box.innerHTML = "";
+      if (!Array.isArray(r.items)) return;
 
-      kids.forEach(id => {
-        const kid = window.classMembersList.find(m => m.id === id);
-        // 🔹 B. DEBUG ORPHAN DATA → HERE
-        if (!kid) {
-          console.warn("Missing kid in classMembersList:", id);
-          return;
-        }
-        
-        const tag = document.createElement("div");
-        tag.className = "member-tag";
-        tag.dataset.id = kid.id;
-        tag.innerHTML = `<span>${kid.name}</span><span class="remove">×</span>`;
-        box.appendChild(tag);
+      r.items.forEach(item => {
+        if (!item.section || !item.task) return;
+
+        // 🔥 ignore unfinished tasks
+        if (item.done !== true) return;
+
+        if (!grouped[item.section]) grouped[item.section] = {};
+        if (!grouped[item.section][item.task])
+          grouped[item.section][item.task] = [];
+
+        grouped[item.section][item.task].push({
+          kidId: String(r.schoolMemberId) // ✅ FIXED FIELD
+        });
       });
     });
-  });
+
+    /* =========================
+       5) Render UI (CORRECT)
+       ========================= */
+    Object.entries(grouped).forEach(([section, tasks]) => {
+      const sectionBody = document.getElementById(section + "Body");
+      if (!sectionBody) return;
+
+      Object.entries(tasks).forEach(([taskName, items]) => {
+        let row = Array.from(sectionBody.querySelectorAll("tr")).find(
+          r =>
+            r.children[0].textContent.trim().toLowerCase() ===
+            taskName.trim().toLowerCase()
+        );
+
+        if (!row) {
+          row = document.createElement("tr");
+          row.innerHTML = createRowHTML(taskName, []);
+          sectionBody.appendChild(row);
+          attachCheckboxListeners();
+
+          const addBtn = row.querySelector(".add-member-btn");
+          if (addBtn) addBtn.onclick = () => addMemberFromBtn(addBtn);
+        }
+
+        /* ===== Checkbox ===== */
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = true;
+
+        /* ===== Members ===== */
+        const box = row.querySelector(".member-box");
+        box.innerHTML = "";
+
+        items.forEach(i => {
+          const kid = window.classMembers.find(m => m._id === i.kidId);
+
+          /* 🔹 B. DEBUG ORPHAN DATA */
+          if (!kid) {
+            console.warn("Missing kid in classMembersList:", i.kidId);
+            return;
+          }
+
+          const tag = document.createElement("div");
+          tag.className = "member-tag";
+          tag.dataset.id = kid._id;
+          tag.innerHTML = `
+            <span>${escapeHtml(kid.name)}</span>
+            <span class="remove">×</span>
+          `;
+
+          tag.querySelector(".remove").onclick = () => {
+            if (isPast) return;
+            tag.remove();
+          };
+
+          box.appendChild(tag);
+        });
+      });
+    });
+
+    /* =========================
+       6) Stars + Locking
+       ========================= */
+    updateRoutineStars();
+
+    const today = new Date().toISOString().split("T")[0];
+    const isPast = date < today;
+
+    document.querySelectorAll("input, button, select").forEach(el => {
+      if (el.id === "saveBtn" || el.classList.contains("add-member-btn")) {
+        el.disabled = isPast;
+        el.style.opacity = isPast ? 0.5 : 1;
+        el.style.cursor = isPast ? "not-allowed" : "pointer";
+      } else if (
+        ["checkbox", "text"].includes(el.type) ||
+        el.tagName === "SELECT"
+      ) {
+        el.disabled = isPast;
+      }
+    });
+
+    window.currentLoadedDate = date;
+
+    if (!auto) {
+      alert(
+        isPast
+          ? `🔒 Viewing past routine (${date}). Editing locked.`
+          : `✅ Routine loaded for ${date}`
+      );
+    }
+
+  } catch (err) {
+    console.error("Load routine error:", err);
+    if (!auto) alert("❌ Failed to load routine by date.");
+  }
 }
+
+
+
+
+
+
+
 document.getElementById("loadByDateBtn").onclick = async () => {
   const date = document.getElementById("loadDate").value;
   console.log("🔍 Load by date clicked:", date);
@@ -684,19 +841,6 @@ async function initOnLoad() {
   /* ----------------------------
      TASK CRUD + Add Row creation (with Members UI)
   ---------------------------- */
-  function createRowHTML(task) {
-    return `
-      <td>${escapeHtml(task)}</td>
-      <td><input type="checkbox"></td>
-      <td>
-        <div class="member-box"></div>
-        <div>
-          <select class="member-select"><option value="">Add member...</option>${optionsHTML()}</select>
-          <button class="small-btn" type="button" onclick="addMemberFromBtn(this)">Add</button>
-        </div>
-      </td>
-    `;
-  }
 
   function addTask(type) {
     const input = document.getElementById(type + "Input");
@@ -846,13 +990,6 @@ document.getElementById("loadBtn").onclick = async () => {
   }
 };
 
-
-
-
-  // small utility used by load/create
-  function optionsHTML() {
-    return membersList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
-  }
 
 
 
