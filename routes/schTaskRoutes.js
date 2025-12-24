@@ -23,8 +23,22 @@ router.post("/sch-routine/save", async (req, res) => {
 
     if (!date || !data || !classId) {
       return res.status(400).json({ error: "Missing date, classId, or data" });
-    }
+    }  
 
+  // ⛔ HARD BACKEND BLOCK
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const routineDate = new Date(date);
+    routineDate.setHours(0, 0, 0, 0);
+
+    if (routineDate < today) {
+      return res.status(403).json({
+        success: false,
+        error: "Past routines cannot be edited"
+      });
+    }
+ 
     // Convert classId to ObjectId
     const classObjectId = new mongoose.Types.ObjectId(classId);
 
@@ -63,8 +77,8 @@ router.post("/sch-routine/save", async (req, res) => {
     res.json({ success: true, saved: results.length, results });
 
   } catch (err) {
-    console.error("Error saving routines:", err);
-    res.status(500).json({ error: "Failed to save routine" });
+    console.error("❌Error saving routines:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
