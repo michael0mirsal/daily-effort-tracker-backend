@@ -612,13 +612,21 @@ async function loadRoutineByDate(date) {
   const grouped = {};
 
   routines.forEach(r => {
-    r.items.forEach(i => {
-      if (!i.done) return;
-      if (!grouped[i.section]) grouped[i.section] = {};
-      if (!grouped[i.section][i.task]) grouped[i.section][i.task] = [];
-      grouped[i.section][i.task].push(r.schoolMember); // 🔧 FIX
-    });
+    // 🔹 A. SAFETY CHECK → HERE
+    if (!r.schoolMemberId) {
+      console.warn("Routine without schoolMemberId:", r);
+      return;
+    }
+  r.items.forEach(i => {
+    if (!i.done) return;
+
+    if (!grouped[i.section]) grouped[i.section] = {};
+    if (!grouped[i.section][i.task]) grouped[i.section][i.task] = [];
+
+    grouped[i.section][i.task].push(r.schoolMemberId); // ✅ FIX
   });
+});
+
 
   Object.entries(grouped).forEach(([section, tasks]) => {
     const body = document.getElementById(section + "Body");
@@ -634,7 +642,12 @@ async function loadRoutineByDate(date) {
 
       kids.forEach(id => {
         const kid = window.classMembersList.find(m => m.id === id);
-        if (!kid) return;
+        // 🔹 B. DEBUG ORPHAN DATA → HERE
+        if (!kid) {
+          console.warn("Missing kid in classMembersList:", id);
+          return;
+        }
+        
         const tag = document.createElement("div");
         tag.className = "member-tag";
         tag.dataset.id = kid.id;
