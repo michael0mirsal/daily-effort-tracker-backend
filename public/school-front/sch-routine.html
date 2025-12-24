@@ -556,6 +556,34 @@ function addMemberFromBtn(btn) {
   select.value = "";
 }
 
+function isPastDate(dateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+
+  return d < today;
+}
+
+
+function disableRoutineEditing() {
+  document.querySelectorAll("input[type='checkbox']").forEach(el => {
+    el.disabled = true;
+  });
+
+  document.querySelectorAll(".add-member-btn, .member-select").forEach(el => {
+    el.disabled = true;
+  });
+
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = "🔒 Past routine (Read only)";
+  }
+}
+
+
 /* ----------------------------
    SAVE ROUTINE
 ---------------------------- */
@@ -563,6 +591,12 @@ async function saveRoutine() {
   const date =
     document.getElementById("routineDate")?.value ||
     new Date().toISOString().split("T")[0];
+   // ⛔ FRONTEND BLOCK
+  if (isPastDate(date)) {
+    alert("❌ You cannot edit a past routine");
+    return;
+  }
+    
 
   const rows = document.querySelectorAll("tbody tr");
   const kidMap = {};
@@ -793,7 +827,13 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
+     const date = document.getElementById("routineDate").value;
 
+      if (isPastDate(date)) {
+       disableRoutineEditing();
+      }
+
+     
     if (!auto) {
       alert(
         isPast
