@@ -344,8 +344,8 @@ async function loadWeeklyClassReport(cls) {
     ] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`),
-      fetch(`${API_BASE}/api/routines/search?date=${date}`),
-      fetch(`${API_BASE}/api/efforts/search?date=${date}`)
+      fetch(`${API}/api/routines/search?date=${date}`),
+      fetch(`${API}/api/efforts/search?date=${date}`)
     ]);
 
     const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
