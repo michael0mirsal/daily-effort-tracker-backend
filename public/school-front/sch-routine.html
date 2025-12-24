@@ -587,14 +587,19 @@ function disableRoutineEditing() {
 /* ----------------------------
    SAVE ROUTINE
 ---------------------------- */
-async function saveRoutine() {
-  // ✅ ALWAYS use today
-  const today = new Date().toISOString().split("T")[0];
+function getToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().split("T")[0];
+}
 
-  // ⛔ Extra UI safety (optional)
+async function saveRoutine() {
+  const today = getToday();
+
+  // ⛔ UI Safety
   const uiDate = document.getElementById("routineDate")?.value;
   if (uiDate && uiDate !== today) {
-    alert("❌ You can only save today's routine");
+    alert("❌ You can only edit today's routine");
     return;
   }
 
@@ -607,28 +612,47 @@ async function saveRoutine() {
     const section = row.closest("table")?.dataset.section || "unknown";
 
     row.querySelectorAll(".member-tag").forEach(tag => {
-      const schoolMemberId = tag.dataset.id; // 🔧 FIX
+      const schoolMemberId = tag.dataset.id;
+      if (!schoolMemberId) return;
+
       if (!kidMap[schoolMemberId]) kidMap[schoolMemberId] = [];
       kidMap[schoolMemberId].push({ section, task, done });
     });
   });
 
+  if (!Object.keys(kidMap).length) {
+    alert("⚠️ No data to save");
+    return;
+  }
+
   const payload = {
     classId: window.selectedClass,
+    date: today, // 🔒 always today
     data: Object.keys(kidMap).map(id => ({
-      schoolMemberId: id,            // kidId === SchoolMember ID
+      schoolMemberId: id,
       items: kidMap[id]
     }))
   };
 
-  const res = await fetch(`${API}/sch-routine/save`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const res = await fetch(`${API}/sch-routine/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  const json = await res.json();
-  alert(json.success ? "Saved ✅" : "Save failed ❌");
+    const json = await res.json();
+
+    if (!res.ok) {
+      alert("❌ " + (json.error || "Save failed"));
+      return;
+    }
+
+    alert("✅ Today's routine saved");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Network error");
+  }
 }
 
 document.getElementById("saveBtn").onclick = saveRoutine;
