@@ -21,56 +21,56 @@ router.post("/sch-routine/save", async (req, res) => {
   try {
     const { classId, data } = req.body;
 
-    if (!date || !data || !classId) {
-      return res.status(400).json({ error: "Missing date, classId, or data" });
-    }  
+    if (!classId || !Array.isArray(data)) {
+      return res.status(400).json({
+        error: "Missing or invalid classId or data"
+      });
+    }
 
-  // 🔒 FORCE TODAY (SERVER TIME)
+    // 🔒 FORCE TODAY (SERVER TIME)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const date = today.toISOString().split("T")[0];
 
- 
-    // Convert classId to ObjectId
     const classObjectId = new mongoose.Types.ObjectId(classId);
-
-    let results = [];
+    const results = [];
 
     for (const entry of data) {
-  const { schoolMemberId, items } = entry;
+      const { schoolMemberId, items } = entry;
 
-  if (!schoolMemberId) continue;
-  if (!mongoose.Types.ObjectId.isValid(schoolMemberId)) continue;
+      if (!mongoose.Types.ObjectId.isValid(schoolMemberId)) continue;
 
-  const schoolMemberObjectId = new mongoose.Types.ObjectId(schoolMemberId);
+      const schoolMemberObjectId = new mongoose.Types.ObjectId(schoolMemberId);
 
-  let routine = await SchRoutine.findOne({
-    schoolMember: schoolMemberObjectId,
-    date,
-    classId: classObjectId
-  });
+      let routine = await SchRoutine.findOne({
+        classId: classObjectId,
+        schoolMember: schoolMemberObjectId,
+        date
+      });
 
-  if (routine) {
-    routine.items = items;
-    await routine.save();
-  } else {
-    routine = await SchRoutine.create({
-      classId: classObjectId,
-      schoolMember: schoolMemberObjectId,
-      date,
-      items
+      if (routine) {
+        routine.items = items;
+        await routine.save();
+      } else {
+        routine = await SchRoutine.create({
+          classId: classObjectId,
+          schoolMember: schoolMemberObjectId,
+          date,
+          items
+        });
+      }
+
+      results.push(routine);
+    }
+
+    res.json({
+      success: true,
+      saved: results.length
     });
-  }
-
-  results.push(routine);
-}
-
-
-    res.json({ success: true, saved: results.length, results });
 
   } catch (err) {
-    console.error("❌Error saving routines:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ Error saving routines:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
