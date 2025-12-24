@@ -305,46 +305,107 @@ async function loadWeeklyClassReport(cls) {
   const kids = {};
   const kidsByName = {};
 
+  // ---------------- INIT KIDS ----------------
   (cls.members || []).forEach(m => {
     const id = String(m._id || m);
     const name = MEMBERS_MAP[id] || m.name || "Unknown";
-    kids[id] = { id, name, routineStars: 0, activityStars: 0 };
+
+    kids[id] = {
+      id,
+      name,
+      routineStars: 0,
+      activityStars: 0,
+      familyRoutineStars: 0,
+      familyActivityStars: 0
+    };
+
     kidsByName[name.toLowerCase()] = kids[id];
   });
 
+  // ---------------- WEEK RANGE (Fri → Thu) ----------------
   const today = new Date();
   const day = today.getDay();
   const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
+  // ---------------- LOOP 7 DAYS ----------------
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
     const date = d.toISOString().slice(0, 10);
 
-    const [rRes, aRes] = await Promise.all([
+    // 🔹 FETCH ALL SOURCES (PARALLEL)
+    const [
+      schRoutineRes,
+      schActivityRes,
+      famRoutineRes,
+      famActivityRes
+    ] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
-      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`),
+      fetch(`${API_BASE}/api/routines/search?date=${date}`),
+      fetch(`${API_BASE}/api/efforts/search?date=${date}`)
     ]);
 
-    const routines = rRes.ok ? await rRes.json() : [];
-    const activities = aRes.ok ? await aRes.json() : [];
+    const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
+    const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
+    const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
+    const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
 
-    activities.forEach(doc => {
+    // ---------------- SCHOOL ACTIVITIES ----------------
+    schoolActivities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.kidmember);
       const kid = kids[kidId] || kidsByName[(doc.kidName || "").toLowerCase()];
       if (!kid) return;
-      (doc.items || []).forEach(it => { kid.activityStars += Number(it.evaluation || 0); });
+
+      (doc.items || []).forEach(it => {
+        kid.activityStars += Number(it.evaluation || 0);
+      });
     });
 
-    routines.forEach(r => {
+    // ---------------- SCHOOL ROUTINES ----------------
+    schoolRoutines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
       const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
       if (!kid) return;
-      (r.items || []).forEach(it => { if(it.done) kid.routineStars++; });
+
+      (r.items || []).forEach(it => {
+        if (it.done) kid.routineStars++;
+      });
+    });
+
+    // ---------------- FAMILY ACTIVITIES ----------------
+    familyActivities.forEach(doc => {
+      const kidId = String(doc.schoolMember || doc.kidmember || doc.memberId);
+      const kid = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
+      if (!kid) return;
+
+      (doc.items || []).forEach(it => {
+        kid.familyActivityStars += Number(it.evaluation || 0);
+      });
+    });
+
+    // ---------------- FAMILY ROUTINES ----------------
+    familyRoutines.forEach(r => {
+      const kidId = String(r.schoolMember || r.kidmember || r.memberId);
+      const kid = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
+      if (!kid) return;
+
+      (r.items || []).forEach(it => {
+        if (it.done) kid.familyRoutineStars++;
+      });
     });
   }
+
+  // ---------------- TOTAL STARS ----------------
+  Object.values(kids).forEach(k => {
+    k.totalStars =
+      k.routineStars +
+      k.activityStars +
+      k.familyRoutineStars +
+      k.familyActivityStars;
+  });
 
   renderWeeklyReport(Object.values(kids), friday);
 }
