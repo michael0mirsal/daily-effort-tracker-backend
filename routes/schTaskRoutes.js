@@ -19,58 +19,69 @@ const router = express.Router();
 
 router.post("/sch-routine/save", async (req, res) => {
   try {
-    const { classId, data } = req.body;
+    const { classId, date, data } = req.body;
 
-    if (!classId || !Array.isArray(data)) {
+    if (!classId || !date || !Array.isArray(data)) {
       return res.status(400).json({
-        error: "Missing or invalid classId or data"
+        error: "Missing classId, date, or data"
       });
     }
 
-    // 🔒 FORCE TODAY (SERVER TIME)
+    // 🔒 FORCE SERVER TODAY
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const date = today.toISOString().split("T")[0];
+    const todayStr = today.toISOString().split("T")[0];
+
+    if (date !== todayStr) {
+      return res.status(403).json({
+        error: "Past or future routines cannot be edited"
+      });
+    }
 
     const classObjectId = new mongoose.Types.ObjectId(classId);
-    const results = [];
+    let savedCount = 0;
 
     for (const entry of data) {
       const { schoolMemberId, items } = entry;
 
       if (!mongoose.Types.ObjectId.isValid(schoolMemberId)) continue;
 
-      const schoolMemberObjectId = new mongoose.Types.ObjectId(schoolMemberId);
+      const schoolMemberObjectId =
+        new mongoose.Types.ObjectId(schoolMemberId);
 
+      // ✅ ONE ROUTINE PER DAY PER CHILD
       let routine = await SchRoutine.findOne({
         classId: classObjectId,
         schoolMember: schoolMemberObjectId,
-        date
+        date: todayStr
       });
 
       if (routine) {
+        // 🔁 UPDATE TODAY
         routine.items = items;
         await routine.save();
       } else {
-        routine = await SchRoutine.create({
+        // ➕ CREATE TODAY
+        await SchRoutine.create({
           classId: classObjectId,
           schoolMember: schoolMemberObjectId,
-          date,
+          date: todayStr,
           items
         });
       }
 
-      results.push(routine);
+      savedCount++;
     }
 
     res.json({
       success: true,
-      saved: results.length
+      saved: savedCount,
+      date: todayStr
     });
 
   } catch (err) {
-    console.error("❌ Error saving routines:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error saving routine:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
