@@ -657,6 +657,14 @@ async function loadRoutineByDate(date) {
     });
   });
 }
+document.getElementById("loadByDateBtn").onclick = async () => {
+  const date = document.getElementById("loadDate").value;
+  console.log("🔍 Load by date clicked:", date);
+
+  await loadRoutineByDate(date);
+};
+
+
 </script>
 
 </body>
