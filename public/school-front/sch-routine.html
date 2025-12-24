@@ -669,6 +669,42 @@ document.getElementById("loadByDateBtn").onclick = async () => {
   document.getElementById("backBtn").onclick = () => window.location.href = "sch-choose.html";
   document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("currentUser"); window.location.href = "sch-login.html"; };
 
+
+document.getElementById("loadBtn").onclick = async () => {
+  const classId = window.selectedClass;
+  if (!classId) return alert("Please select a class first.");
+
+  try {
+    const res = await fetch(`${API}/sch-routine/load?classId=${classId}&date=all`);
+    const data = await res.json();
+
+    if (!data.length) return alert("No saved routines for this class.");
+
+    const reportBody = document.getElementById("reportBody");
+    reportBody.innerHTML = "";
+    document.getElementById("reportSection").style.display = "block";
+
+    data.forEach(r => {
+      const doneCount = (r.items || []).filter(i => i.done).length;
+      const total = (r.items || []).length;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${doneCount}/${total} ✅</td>
+        <td>${getStars(doneCount)}</td>
+      `;
+      reportBody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load routines.");
+  }
+};
+
+
+
   /* Helper: createRowHTML used when loading unknown tasks */
   function createRowHTML(task) {
     return `
