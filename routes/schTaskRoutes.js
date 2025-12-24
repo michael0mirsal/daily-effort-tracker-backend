@@ -31,34 +31,34 @@ router.post("/sch-routine/save", async (req, res) => {
     let results = [];
 
     for (const entry of data) {
-      const { schoolMemberId, items } = entry;
+  const { schoolMemberId, items } = entry;
 
-      if (!schoolMemberId) continue;
+  if (!schoolMemberId) continue;
+  if (!mongoose.Types.ObjectId.isValid(schoolMemberId)) continue;
 
-      // Convert schoolMemberId to ObjectId
-      const schoolMemberObjectId = new mongoose.Types.ObjectId(schoolMemberId);
+  const schoolMemberObjectId = new mongoose.Types.ObjectId(schoolMemberId);
 
-      // Find existing routine
-      let routine = await SchRoutine.findOne({
-        schoolMember: schoolMemberObjectId,
-        date,
-        classId: classObjectId
-      });
+  let routine = await SchRoutine.findOne({
+    schoolMember: schoolMemberObjectId,
+    date,
+    classId: classObjectId
+  });
 
-      if (routine) {
-        routine.items = items;
-        await routine.save();
-      } else {
-        routine = await SchRoutine.create({
-          classId: classObjectId,
-          schoolMember: schoolMemberObjectId,
-          date,
-          items
-        });
-      }
+  if (routine) {
+    routine.items = items;
+    await routine.save();
+  } else {
+    routine = await SchRoutine.create({
+      classId: classObjectId,
+      schoolMember: schoolMemberObjectId,
+      date,
+      items
+    });
+  }
 
-      results.push(routine);
-    }
+  results.push(routine);
+}
+
 
     res.json({ success: true, saved: results.length, results });
 
