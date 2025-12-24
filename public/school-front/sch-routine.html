@@ -670,6 +670,149 @@ document.getElementById("loadByDateBtn").onclick = async () => {
   document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("currentUser"); window.location.href = "sch-login.html"; };
 
 
+/* ============================================================
+   7) Initialize on load (after class selected)
+   ============================================================ */
+async function initOnLoad() {
+  const classId = document.getElementById("classShow").value;
+  if (!classId) return;
+
+  await loadMembersIntoSelector(classId);
+  fillMemberTagsOnLoad();
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+  /* ----------------------------
+     TASK CRUD + Add Row creation (with Members UI)
+  ---------------------------- */
+  function createRowHTML(task) {
+    return `
+      <td>${escapeHtml(task)}</td>
+      <td><input type="checkbox"></td>
+      <td>
+        <div class="member-box"></div>
+        <div>
+          <select class="member-select"><option value="">Add member...</option>${optionsHTML()}</select>
+          <button class="small-btn" type="button" onclick="addMemberFromBtn(this)">Add</button>
+        </div>
+      </td>
+    `;
+  }
+
+  function addTask(type) {
+    const input = document.getElementById(type + "Input");
+    if (!input) return;
+    const task = input.value.trim();
+    if (!task) return;
+
+    // pick body id
+    const mapping = {
+      morning: "morningBody",
+      after: "afterBody",
+      night: "nightBody",
+      classRoutine: "classRoutineBody"
+    };
+    const bodyId = mapping[type];
+    if (!bodyId) return;
+
+    const body = document.getElementById(bodyId);
+
+    // prevent duplicates (case-insensitive)
+    const existing = Array.from(body.querySelectorAll("tr")).some(r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase());
+    if (existing) { alert("Task already exists!"); return; }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = createRowHTML(task);
+    body.appendChild(tr);
+    setupMemberSelector(tr);
+    attachCheckboxListeners();
+    input.value = "";
+  }
+
+  // simple escape to avoid HTML injection for task text
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+  /* ----------------------------
+     COLLECT ALL TASKS (with members)
+  ---------------------------- */
+  const sections = ["morning", "after", "night"];
+  function getAllTasks() {
+    const routines = [];
+
+    // morning/after/night
+    sections.forEach(section => {
+      const body = document.getElementById(section + "Body");
+      if (!body) return;
+      Array.from(body.querySelectorAll("tr")).forEach(row => {
+        const task = row.children[0].textContent;
+        const done = !!row.querySelector("input[type='checkbox']").checked;
+        const members = Array.from(row.querySelectorAll(".member-box .tag")).map(t => t.dataset.name);
+        routines.push({ section, task, done, members });
+      });
+    });
+
+    // classRoutine (if used)
+    const classBody = document.getElementById("classRoutineBody");
+    if (classBody) {
+      Array.from(classBody.querySelectorAll("tr")).forEach(row => {
+        const task = row.children[0].textContent;
+        const done = !!row.querySelector("input[type='checkbox']").checked;
+        const members = Array.from(row.querySelectorAll(".member-box .tag")).map(t => t.dataset.name);
+        routines.push({ section: "class", task, done, members });
+      });
+    }
+
+    return routines;
+  }
+
+  function clearAllCheckboxes() {
+    document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
+  }
+
+  function getStars(count) { return "⭐".repeat(count) || "⚪"; }
+
+  function updateRoutineStars() {
+    const items = getAllTasks();
+    const checkedCount = items.filter(i => i.done).length;
+    document.getElementById("routineStarsDisplay").textContent = `${checkedCount}⭐`;
+
+    // update report lines if loaded
+    if (window.currentLoadedDate) {
+      document.querySelectorAll("#reportBody tr").forEach(row => {
+        if (row.children[0].textContent === window.currentLoadedDate) {
+          const total = items.length;
+          row.children[1].textContent = `${checkedCount}/${total} ✅`;
+          row.children[2].textContent = getStars(checkedCount);
+        }
+      });
+    }
+  }
+
+  function attachCheckboxListeners() {
+    document.querySelectorAll("input[type='checkbox']").forEach(cb => {
+      cb.onchange = updateRoutineStars;
+    });
+  }
+
+  // set up initial checkbox listeners
+  attachCheckboxListeners();
+
+  /* ----------------------------
+     SAVE / LOAD (integrated with members)
+  ---------------------------- */
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user) {
+    // graceful redirect if no user
+    // window.location.href = "login.html"; // commented to allow local testing if needed
+  } else {
+    document.getElementById("pageTitle").innerText = `🌞 ${user.name}'s Daily Routine`;
+    const fEl = document.getElementById("familyName");
+    if (fEl) fEl.textContent = user.family || "Unknown";
+  }
+
+
+
 document.getElementById("loadBtn").onclick = async () => {
   const classId = window.selectedClass;
   if (!classId) return alert("Please select a class first.");
@@ -705,31 +848,12 @@ document.getElementById("loadBtn").onclick = async () => {
 
 
 
-  /* Helper: createRowHTML used when loading unknown tasks */
-  function createRowHTML(task) {
-    return `
-      <td>${escapeHtml(task)}</td>
-      <td><input type="checkbox"></td>
-      <td>
-        <div class="member-box"></div>
-        <div>
-          <select class="member-select"><option value="">Add member...</option>${optionsHTML()}</select>
-          <button class="small-btn" type="button" onclick="addMemberFromBtn(this)">Add</button>
-        </div>
-      </td>
-    `;
-  }
 
   // small utility used by load/create
   function optionsHTML() {
     return membersList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
   }
 
-  // escape helper reused
-  function escapeHtml(str) {
-    if (!str) return "";
-    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
-  }
 
 
 </script>
