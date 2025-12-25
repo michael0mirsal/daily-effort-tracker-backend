@@ -308,14 +308,14 @@ async function loadWeeklyClassReport(cls) {
   (cls.members || []).forEach(m => {
     const id = String(m._id || m);
     const name = MEMBERS_MAP[id] || m.name || "Unknown";
-
-    // Use actual family ID
-    const familyId = m.family || null;
+    const familyId = m.family || null; // get family id
+    const familyName = m.familyName || m.name || "Unknown"; // optional display name
 
     kids[id] = {
       id,
       name,
       familyId,
+      familyName,
       routineStars: 0,
       activityStars: 0,
       familyRoutineStars: 0,
@@ -338,12 +338,11 @@ async function loadWeeklyClassReport(cls) {
     d.setDate(friday.getDate() + i);
     const date = d.toISOString().slice(0, 10);
 
-    // 🔹 FETCH SCHOOL DATA
+    // ---------------- SCHOOL DATA ----------------
     const [schRoutineRes, schActivityRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
     ]);
-
     const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
     const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
 
@@ -367,14 +366,13 @@ async function loadWeeklyClassReport(cls) {
       });
     });
 
-    // ---------------- FETCH FAMILY DATA PER KID ----------------
+    // ---------------- FAMILY DATA ----------------
     for (const kid of Object.values(kids)) {
-      const familyId = kid.familyId;
-      if (!familyId) continue; // skip if no family
+      if (!kid.familyId) continue; // skip if no family
 
       // Family routines
       const famRoutineRes = await fetch(
-        `${API}/routines/search?family=${encodeURIComponent(familyId)}&name=${encodeURIComponent(kid.name)}&date=${date}`
+        `${API}/routines/search?family=${encodeURIComponent(kid.familyId)}&name=${encodeURIComponent(kid.name)}&date=${date}`
       );
       const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
       familyRoutines.forEach(r => {
@@ -388,7 +386,7 @@ async function loadWeeklyClassReport(cls) {
 
       // Family activities
       const famActivityRes = await fetch(
-        `${API}/efforts/search?family=${encodeURIComponent(familyId)}&name=${encodeURIComponent(kid.name)}&date=${date}`
+        `${API}/efforts/search?family=${encodeURIComponent(kid.familyId)}&name=${encodeURIComponent(kid.name)}&date=${date}`
       );
       const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
       familyActivities.forEach(doc => {
