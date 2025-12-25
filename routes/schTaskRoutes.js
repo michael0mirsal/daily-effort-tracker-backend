@@ -22,19 +22,21 @@ router.post("/sch-routine/save", async (req, res) => {
     const { classId, date, data } = req.body;
 
     if (!classId || !date || !Array.isArray(data)) {
-      return res.status(400).json({
-        error: "Missing classId, date, or data"
-      });
+      return res.status(400).json({ error: "Missing classId, date, or data" });
     }
 
-    // 🔒 FORCE SERVER TODAY
+    // Normalize dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
 
-    if (date !== todayStr) {
+    const reqDate = new Date(date);
+    reqDate.setHours(0, 0, 0, 0);
+
+    // 🔒 Block past
+    if (reqDate < today) {
       return res.status(403).json({
-        error: "Past or future routines cannot be edited"
+        error: "Past routines are read-only"
       });
     }
 
@@ -43,29 +45,27 @@ router.post("/sch-routine/save", async (req, res) => {
 
     for (const entry of data) {
       const { schoolMemberId, items } = entry;
-
       if (!mongoose.Types.ObjectId.isValid(schoolMemberId)) continue;
 
       const schoolMemberObjectId =
         new mongoose.Types.ObjectId(schoolMemberId);
 
-      // ✅ ONE ROUTINE PER DAY PER CHILD
+      // 🔁 SAME DATE → overwrite
       let routine = await SchRoutine.findOne({
         classId: classObjectId,
         schoolMember: schoolMemberObjectId,
-        date: todayStr
+        date
       });
 
       if (routine) {
-        // 🔁 UPDATE TODAY
         routine.items = items;
         await routine.save();
       } else {
-        // ➕ CREATE TODAY
+        // ➕ NEW DATE → new document
         await SchRoutine.create({
           classId: classObjectId,
           schoolMember: schoolMemberObjectId,
-          date: todayStr,
+          date,
           items
         });
       }
@@ -76,7 +76,7 @@ router.post("/sch-routine/save", async (req, res) => {
     res.json({
       success: true,
       saved: savedCount,
-      date: todayStr
+      date
     });
 
   } catch (err) {
