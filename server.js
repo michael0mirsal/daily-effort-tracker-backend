@@ -51,6 +51,71 @@ app.use("/api/families", familyRoutes);
 // ✅ Effort APIs (MongoDB version)
 // ======================================================
 
+//champion activities:
+app.get("/api/efforts/searchByFamilyId", async (req, res) => {
+  try {
+    const { name, date, familyId } = req.query;
+    if (!name || !familyId) return res.status(400).json({ error: "Missing required query parameters: name, familyId" });
+
+    const familyDoc = await Family.findById(familyId);
+    if (!familyDoc) return res.json([]);
+
+    const memberQuery = { name, family: familyDoc._id };
+    const members = await Member.find(memberQuery);
+    const memberIds = members.map(m => m._id);
+    const query = { member: { $in: memberIds } };
+    if (date) query.date = date;
+
+    const results = await Task.find(query).populate("member");
+    res.json(results);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error searching efforts" });
+  }
+});
+//champion routines:
+app.get("/api/routines/searchByFamilyId", async (req, res) => {
+  try {
+    const { name, date, familyId } = req.query;
+
+    if (!name || !familyId) {
+      return res.status(400).json({ error: "Missing required query parameters: name, familyId" });
+    }
+
+    // Find family by ID
+    const familyDoc = await Family.findById(familyId);
+    if (!familyDoc) return res.json([]);
+
+    // Find member inside that family
+    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
+    if (!memberDoc) return res.json([]);
+
+    // Filter by date if provided
+    const query = { member: memberDoc._id };
+    if (date && date !== "all") query.date = date;
+
+    const routines = await Routine.find(query);
+
+    const result = routines.map(r => ({
+      name: memberDoc.name,
+      family: familyDoc.name,
+      date: r.date,
+      items: r.items,
+      checkedData: r.checkedData
+    }));
+
+    res.json(result);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error searching routines" });
+  }
+});
+
+
+
+
 // POST /api/efforts
 app.post("/api/efforts", async (req, res) => {
   try {
