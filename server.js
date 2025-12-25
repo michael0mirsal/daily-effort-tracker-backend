@@ -79,24 +79,34 @@ app.get("/api/efforts/searchByFamilyId", async (req, res) => {
     res.status(500).json({ error: "Server error searching efforts" });
   }
 });
-//champion routines:
-app.get("/api/routines/searchByFamilyId", async (req, res) => {
-  try {
-    const { name, date, familyId } = req.query;
 
-    if (!name || !familyId) {
-      return res.status(400).json({ error: "Missing required query parameters: name, familyId" });
+
+//champion routines:
+app.get("/api/routines/search", async (req, res) => {
+  try {
+    const { name, date, family } = req.query;
+
+    if (!name || !family) {
+      return res.status(400).json({ error: "Missing required query parameters: name, family" });
     }
 
-    // Find family by ID
-    const familyDoc = await Family.findById(familyId);
+    // Determine if `family` is an ObjectId
+    let familyDoc;
+    if (/^[0-9a-fA-F]{24}$/.test(family)) {
+      // it's an ObjectId
+      familyDoc = await Family.findById(family);
+    } else {
+      // fallback: treat as family name
+      familyDoc = await Family.findOne({ name: family });
+    }
+
     if (!familyDoc) return res.json([]);
 
-    // Find member inside that family
+    // Find the member inside that family
     const memberDoc = await Member.findOne({ name, family: familyDoc._id });
     if (!memberDoc) return res.json([]);
 
-    // Filter by date if provided
+    // Search routines: if date is provided, filter by date
     const query = { member: memberDoc._id };
     if (date && date !== "all") query.date = date;
 
@@ -111,7 +121,6 @@ app.get("/api/routines/searchByFamilyId", async (req, res) => {
     }));
 
     res.json(result);
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error searching routines" });
@@ -119,6 +128,7 @@ app.get("/api/routines/searchByFamilyId", async (req, res) => {
 });
 
 
+///////////////////////////////////////////////////////////////////////////////////////
 
 
 // POST /api/efforts
@@ -145,12 +155,8 @@ app.post("/api/efforts", async (req, res) => {
     }
 
     // Find family
-    if (family) {
-  // Treat family as ObjectId
-  const familyDoc = await Family.findById(family);
-  if (!familyDoc) return res.json([]);
-  memberQuery.family = familyDoc._id;
-}
+    const familyDoc = await Family.findOne({ name: family });
+    if (!familyDoc) return res.status(404).json({ error: "Family not found" });
 
     // Find member in family
     const memberDoc = await Member.findOne({ name, family: familyDoc._id });
