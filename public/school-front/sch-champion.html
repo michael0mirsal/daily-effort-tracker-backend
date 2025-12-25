@@ -243,12 +243,13 @@ body {
 </div>
 
 <script>
+// ================= CONFIG =================
 const API = "http://localhost:3000/api";
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
 let SELECTED_CLASS = null;
 
-// ----------------- LOAD CLASSES -----------------
+// ================= LOAD CLASSES =================
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return alert("User not logged in");
@@ -278,7 +279,7 @@ async function loadTreeClasses() {
   }
 }
 
-// ----------------- BUILD CLASS LIST -----------------
+// ================= BUILD CLASS LIST =================
 function buildClassList() {
   const area = document.getElementById("classList");
   area.innerHTML = "";
@@ -299,7 +300,7 @@ function buildClassList() {
   });
 }
 
-// ----------------- LOAD WEEKLY CLASS REPORT -----------------
+// ================= WEEKLY REPORT =================
 async function loadWeeklyClassReport(cls) {
   const kids = {};
   const kidsByName = {};
@@ -308,12 +309,12 @@ async function loadWeeklyClassReport(cls) {
   (cls.members || []).forEach(m => {
     const id = String(m._id || m);
     const name = MEMBERS_MAP[id] || m.name || "Unknown";
-    const familyName = m.familyName || m.name || "Unknown";
+    const familyId = m.family || null;
 
     kids[id] = {
       id,
       name,
-      familyName,
+      familyId,  // store familyId
       routineStars: 0,
       activityStars: 0,
       familyRoutineStars: 0,
@@ -367,37 +368,40 @@ async function loadWeeklyClassReport(cls) {
       });
     });
 
-    // ---------------- FETCH FAMILY DATA IN BATCH ----------------
-    const familyNamesSet = new Set(Object.values(kids).map(k => k.familyName));
-    const familyNamesQuery = [...familyNamesSet].map(fn => encodeURIComponent(fn)).join(",");
+    // ---------------- FAMILY DATA PER KID ----------------
+    for (const kid of Object.values(kids)) {
+      if (!kid.familyId) continue; // skip if no familyId
 
-    // Fetch all family routines for this date
-    const famRoutineRes = await fetch(`${API}/routines/search?families=${familyNamesQuery}&date=${date}`);
-    const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
+      // Fetch family routines
+      const famRoutineRes = await fetch(
+        `${API}/routines/search?family=${encodeURIComponent(kid.familyId)}&name=${encodeURIComponent(kid.name)}&date=${date}`
+      );
+      const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
 
-    // Fetch all family activities for this date
-    const famActivityRes = await fetch(`${API}/efforts/search?families=${familyNamesQuery}&date=${date}`);
-    const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
-
-    // ---------------- ASSIGN FAMILY ROUTINES ----------------
-    familyRoutines.forEach(r => {
-      const kidId = String(r.memberId || r._id);
-      const kid = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
-      if (!kid) return;
-      (r.items || []).forEach(it => {
-        if (it.done) kid.familyRoutineStars++;
+      familyRoutines.forEach(r => {
+        const kidId = String(r.memberId || r._id);
+        const k = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
+        if (!k) return;
+        (r.items || []).forEach(it => {
+          if (it.done) k.familyRoutineStars++;
+        });
       });
-    });
 
-    // ---------------- ASSIGN FAMILY ACTIVITIES ----------------
-    familyActivities.forEach(doc => {
-      const kidId = String(doc.memberId || doc._id);
-      const kid = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
-      if (!kid) return;
-      (doc.items || []).forEach(it => {
-        kid.familyActivityStars += Number(it.evaluation || 0);
+      // Fetch family activities
+      const famActivityRes = await fetch(
+        `${API}/efforts/search?family=${encodeURIComponent(kid.familyId)}&name=${encodeURIComponent(kid.name)}&date=${date}`
+      );
+      const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
+
+      familyActivities.forEach(doc => {
+        const kidId = String(doc.memberId || doc._id);
+        const k = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
+        if (!k) return;
+        (doc.items || []).forEach(it => {
+          k.familyActivityStars += Number(it.evaluation || 0);
+        });
       });
-    });
+    }
   }
 
   // ---------------- TOTAL STARS ----------------
@@ -412,7 +416,7 @@ async function loadWeeklyClassReport(cls) {
   renderWeeklyReport(Object.values(kids), friday);
 }
 
-// ----------------- RENDER -----------------
+// ================= RENDER =================
 function renderWeeklyReport(kids, friday) {
   const champ = document.getElementById("weeklyChampion");
   const list = document.getElementById("weeklyKids");
@@ -443,8 +447,8 @@ function renderWeeklyReport(kids, friday) {
   champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
 
   // Render kids with progress bar
-  const maxStars = Math.max(...kids.map(kk => kk.totalStars)) || 1;
   kids.forEach((k, i) => {
+    const maxStars = Math.max(...kids.map(kk => kk.totalStars)) || 1;
     const barPercent = (k.totalStars / maxStars) * 100;
 
     list.innerHTML += `
@@ -464,6 +468,7 @@ function renderWeeklyReport(kids, friday) {
   });
 }
 
+// ================= INIT =================
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
 
