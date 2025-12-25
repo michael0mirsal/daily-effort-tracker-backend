@@ -269,7 +269,7 @@ async function loadTreeClasses() {
     if (memberIds.size) {
       const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
       const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+      list.forEach(m => MEMBERS_MAP[m._id] = m);
     }
 
     buildClassList();
@@ -299,44 +299,54 @@ function buildClassList() {
   });
 }
 
+// ----------------- HELPER: Normalize -----------------
+function normalizeData(records, source, type) {
+  return (records || []).map(r => ({
+    memberId: r.schoolMember || r.kidmember || r.member || r._id,
+    name: r.name || r.kidName || "",
+    familyId: r.family || null,
+    date: r.date,
+    source,
+    type,
+    items: r.items || []
+  }));
+}
+
 // ----------------- LOAD WEEKLY CLASS REPORT -----------------
 async function loadWeeklyClassReport(cls) {
   const kids = {};
   const kidsByName = {};
 
-  // ---------------- INIT KIDS ----------------
   (cls.members || []).forEach(m => {
     const id = String(m._id || m);
-    const name = MEMBERS_MAP[id] || m.name || "Unknown";
-    const familyName = m.familyName || m.name || "Unknown"; // store family
+    const name = m.name || "Unknown";
+    const familyId = m.family || null;
 
-    kids[id] = {
-      id,
-      name,
-      familyName,
-      routineStars: 0,
-      activityStars: 0,
-      familyRoutineStars: 0,
-      familyActivityStars: 0
+    kids[id] = { 
+      id, 
+      name, 
+      familyId,
+      routineStars: 0, 
+      activityStars: 0, 
+      familyRoutineStars: 0, 
+      familyActivityStars: 0 
     };
-
     kidsByName[name.toLowerCase()] = kids[id];
   });
 
-  // ---------------- WEEK RANGE (Fri → Thu) ----------------
+  // Fri → Thu
   const today = new Date();
   const day = today.getDay();
   const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
-  // ---------------- LOOP 7 DAYS ----------------
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
     const date = d.toISOString().slice(0, 10);
 
-    // 🔹 FETCH SCHOOL DATA
+    // ---------------- SCHOOL DATA ----------------
     const [schRoutineRes, schActivityRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -345,75 +355,48 @@ async function loadWeeklyClassReport(cls) {
     const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
     const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
 
-    // ---------------- SCHOOL ROUTINES ----------------
-    schoolRoutines.forEach(r => {
-      const kidId = String(r.kidmember || r.kidId);
-      const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
-      if (!kid) return;
+    // ---------------- FAMILY DATA ----------------
+    const familyPromises = Object.values(kids).map(kid => {
+      if (!kid.familyId) return Promise.resolve({ routines: [], activities: [] });
 
-      (r.items || []).forEach(it => {
-        if (it.done) kid.routineStars++;
-      });
+      return Promise.all([
+        fetch(`${API}/routines/search?name=${encodeURIComponent(kid.name)}&family=${kid.familyId}&date=${date}`)
+          .then(r => r.ok ? r.json() : []),
+        fetch(`${API}/efforts/search?name=${encodeURIComponent(kid.name)}&family=${kid.familyId}&date=${date}`)
+          .then(r => r.ok ? r.json() : [])
+      ]).then(([routines, activities]) => ({ kidId: kid.id, routines, activities }));
     });
 
-    // ---------------- SCHOOL ACTIVITIES ----------------
-    schoolActivities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.kidmember);
-      const kid = kids[kidId] || kidsByName[(doc.kidName || "").toLowerCase()];
-      if (!kid) return;
+    const familyData = await Promise.all(familyPromises);
 
-      (doc.items || []).forEach(it => {
-        kid.activityStars += Number(it.evaluation || 0);
-      });
+    // ---------------- NORMALIZE ALL DATA ----------------
+    const allData = [
+      ...normalizeData(schoolRoutines, "school", "routine"),
+      ...normalizeData(schoolActivities, "school", "activity")
+    ];
+
+    familyData.forEach(f => {
+      allData.push(...normalizeData(f.routines, "family", "routine"));
+      allData.push(...normalizeData(f.activities, "family", "activity"));
     });
 
-    // ---------------- FETCH FAMILY DATA PER KID ----------------
-    const familyRoutinesArray = await Promise.all(
-      Object.values(kids).map(async kid => {
-        const res = await fetch(`${API}/routines/search?name=${encodeURIComponent(kid.name)}&family=${encodeURIComponent(kid.familyName)}&date=${date}`);
-        return res.ok ? await res.json() : [];
-      })
-    );
-    const familyActivitiesArray = await Promise.all(
-      Object.values(kids).map(async kid => {
-        const res = await fetch(`${API}/efforts/search?name=${encodeURIComponent(kid.name)}&family=${encodeURIComponent(kid.familyName)}&date=${date}`);
-        return res.ok ? await res.json() : [];
-      })
-    );
-
-    const familyRoutines = familyRoutinesArray.flat();
-    const familyActivities = familyActivitiesArray.flat();
-
-    // ---------------- FAMILY ROUTINES ----------------
-    familyRoutines.forEach(r => {
-      const kidId = String(r.memberId || r._id);
-      const kid = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
+    // ---------------- CALCULATE STARS ----------------
+    allData.forEach(d => {
+      const kid = kids[d.memberId] || kidsByName[(d.name || "").toLowerCase()];
       if (!kid) return;
 
-      (r.items || []).forEach(it => {
-        if (it.done) kid.familyRoutineStars++;
-      });
-    });
-
-    // ---------------- FAMILY ACTIVITIES ----------------
-    familyActivities.forEach(doc => {
-      const kidId = String(doc.memberId || doc._id);
-      const kid = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
-      if (!kid) return;
-
-      (doc.items || []).forEach(it => {
-        kid.familyActivityStars += Number(it.evaluation || 0);
+      d.items.forEach(it => {
+        if (d.source === "school" && d.type === "routine" && it.done) kid.routineStars++;
+        if (d.source === "school" && d.type === "activity") kid.activityStars += Number(it.evaluation || 0);
+        if (d.source === "family" && d.type === "routine" && it.done) kid.familyRoutineStars++;
+        if (d.source === "family" && d.type === "activity") kid.familyActivityStars += Number(it.evaluation || 0);
       });
     });
   }
 
   // ---------------- TOTAL STARS ----------------
   Object.values(kids).forEach(k => {
-    k.totalStars =
-      k.routineStars +
-      k.activityStars +
-      k.familyRoutineStars +
-      k.familyActivityStars;
+    k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars;
   });
 
   renderWeeklyReport(Object.values(kids), friday);
@@ -430,10 +413,9 @@ function renderWeeklyReport(kids, friday) {
     return;
   }
 
-  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars);
   kids.sort((a, b) => b.totalStars - a.totalStars);
 
-  // Ranks & Medals
+  // Rank & Medal
   let rank = 0, lastStars = null, medalRank = 0;
   kids.forEach((k, i) => {
     if (k.totalStars !== lastStars) { rank = i + 1; medalRank++; }
@@ -449,11 +431,10 @@ function renderWeeklyReport(kids, friday) {
   const end = new Date(friday); end.setDate(friday.getDate() + 6);
   champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
 
-  // Render kids with progress bar
-  const maxStars = Math.max(...kids.map(kk => kk.totalStars)) || 1;
+  // Render kids
+  const maxStars = Math.max(...kids.map(k => k.totalStars)) || 1;
   kids.forEach((k, i) => {
     const barPercent = (k.totalStars / maxStars) * 100;
-
     list.innerHTML += `
       <div class="kid-card ${i === 0 ? 'champion' : ''}">
         <div class="rank">${k.rankDisplay}</div>
@@ -471,6 +452,7 @@ function renderWeeklyReport(kids, friday) {
   });
 }
 
+// ----------------- INIT -----------------
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
 
