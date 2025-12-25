@@ -849,11 +849,10 @@ async function loadRoutineByDate(date, auto = false) {
     });
 
     window.currentLoadedDate = date;
-     const date = document.getElementById("routineDate").value;
 
-      if (isPastDate(date)) {
-       disableRoutineEditing();
-      }
+      if (isPast) {
+      disableRoutineEditing();
+    }
 
      
     if (!auto) {
