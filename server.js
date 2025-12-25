@@ -57,8 +57,13 @@ app.get("/api/efforts/searchByFamilyId", async (req, res) => {
     const { name, date, familyId } = req.query;
     if (!name || !familyId) return res.status(400).json({ error: "Missing required query parameters: name, familyId" });
 
-    const familyDoc = await Family.findById(familyId);
-    if (!familyDoc) return res.json([]);
+    if (family) {
+  // Treat family as ObjectId
+  const familyDoc = await Family.findById(family);
+  if (!familyDoc) return res.json([]);
+  memberQuery.family = familyDoc._id;
+}
+
 
     const memberQuery = { name, family: familyDoc._id };
     const members = await Member.find(memberQuery);
@@ -140,8 +145,12 @@ app.post("/api/efforts", async (req, res) => {
     }
 
     // Find family
-    const familyDoc = await Family.findOne({ name: family });
-    if (!familyDoc) return res.status(404).json({ error: "Family not found" });
+    if (family) {
+  // Treat family as ObjectId
+  const familyDoc = await Family.findById(family);
+  if (!familyDoc) return res.json([]);
+  memberQuery.family = familyDoc._id;
+}
 
     // Find member in family
     const memberDoc = await Member.findOne({ name, family: familyDoc._id });
