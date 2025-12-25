@@ -302,21 +302,12 @@ function buildClassList() {
 // ----------------- HELPER: Normalize -----------------
 function normalizeData(records, source, type) {
   return (records || []).map(r => ({
-    memberId: r.schoolMember || r.kidmember || r.member || r._id,
+    memberId: r.schoolMember || r.kidmember || r.member || (r.member?._id) || r._id,
     date: r.date,
     source,
     type,
     items: r.items || []
   }));
-}
-
-// ----------------- HELPER: Stars -----------------
-function calculateStars(data) {
-  let stars = 0;
-  data.forEach(d => d.items.forEach(it => {
-    if (it.done || it.checkedData > 0 || it.evaluation > 0) stars++;
-  }));
-  return stars;
 }
 
 // ----------------- LOAD WEEKLY CLASS REPORT -----------------
@@ -327,7 +318,16 @@ async function loadWeeklyClassReport(cls) {
   (cls.members || []).forEach(m => {
     const id = String(m._id || m);
     const name = MEMBERS_MAP[id] || m.name || "Unknown";
-    kids[id] = { id, name, routineStars:0, activityStars:0, familyRoutineStars:0, familyActivityStars:0 };
+    const familyName = m.familyName || m.name || "Unknown"; // store family
+    kids[id] = {
+      id,
+      name,
+      familyName,
+      routineStars:0,
+      activityStars:0,
+      familyRoutineStars:0,
+      familyActivityStars:0
+    };
     kidsByName[name.toLowerCase()] = kids[id];
   });
 
@@ -343,17 +343,31 @@ async function loadWeeklyClassReport(cls) {
     d.setDate(friday.getDate()+i);
     const date = d.toISOString().slice(0,10);
 
-    const [schRoutineRes, schActivityRes, famRoutineRes, famActivityRes] = await Promise.all([
+    // ---------------- FETCH SCHOOL DATA ----------------
+    const [schRoutineRes, schActivityRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
-      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`),
-      fetch(`${API}/routines/search?date=${date}`),
-      fetch(`${API}/efforts/search?date=${date}`)
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
     ]);
 
-    const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json(): [];
-    const schoolActivities = schActivityRes.ok ? await schActivityRes.json(): [];
-    const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json(): [];
-    const familyActivities = famActivityRes.ok ? await famActivityRes.json(): [];
+    const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
+    const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
+
+    // ---------------- FETCH FAMILY DATA PER KID ----------------
+    const familyRoutinesArray = await Promise.all(
+      Object.values(kids).map(async kid => {
+        const res = await fetch(`${API}/routines/search?name=${encodeURIComponent(kid.name)}&family=${encodeURIComponent(kid.familyName)}&date=${date}`);
+        return res.ok ? await res.json() : [];
+      })
+    );
+    const familyActivitiesArray = await Promise.all(
+      Object.values(kids).map(async kid => {
+        const res = await fetch(`${API}/efforts/search?name=${encodeURIComponent(kid.name)}&family=${encodeURIComponent(kid.familyName)}&date=${date}`);
+        return res.ok ? await res.json() : [];
+      })
+    );
+
+    const familyRoutines = familyRoutinesArray.flat();
+    const familyActivities = familyActivitiesArray.flat();
 
     const allData = [
       ...normalizeData(schoolRoutines,"school","routine"),
@@ -374,6 +388,7 @@ async function loadWeeklyClassReport(cls) {
     });
   }
 
+  // ---------------- TOTAL STARS ----------------
   Object.values(kids).forEach(k=>{
     k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars;
   });
