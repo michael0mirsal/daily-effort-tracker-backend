@@ -595,11 +595,11 @@ function getToday() {
 
 async function saveRoutine() {
   const today = getToday();
+  const uiDate = document.getElementById("routineDate")?.value || today;
 
-  // ⛔ UI Safety
-  const uiDate = document.getElementById("routineDate")?.value;
-  if (uiDate && uiDate !== today) {
-    alert("❌ You can only edit today's routine");
+  // 🔒 Block past only
+  if (isPastDate(uiDate)) {
+    alert("🔒 Past routines are read-only");
     return;
   }
 
@@ -627,7 +627,7 @@ async function saveRoutine() {
 
   const payload = {
     classId: window.selectedClass,
-    date: today, // 🔒 always today
+    date: uiDate, // ✅ selected date (today OR future)
     data: Object.keys(kidMap).map(id => ({
       schoolMemberId: id,
       items: kidMap[id]
@@ -642,13 +642,12 @@ async function saveRoutine() {
     });
 
     const json = await res.json();
-
     if (!res.ok) {
       alert("❌ " + (json.error || "Save failed"));
       return;
     }
 
-    alert("✅ Today's routine saved");
+    alert(`✅ Routine saved for ${uiDate}`);
   } catch (err) {
     console.error(err);
     alert("❌ Network error");
