@@ -373,9 +373,10 @@ async function loadWeeklyClassReport(cls) {
       if (!kid.familyId) continue; // skip if no familyId
 
       // Fetch family routines
-      const famRoutineRes = await fetch(
-       `${API}/routines/searchByFamilyId?name=${encodeURIComponent(kid.name)}&familyId=${kid.familyId}&date=${date}`
-       );
+      // Family routines
+       const famRoutineRes = await fetch(
+        `${API}/routines/search?memberId=${kid.id}&date=${date}`
+            );
       const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
 
       familyRoutines.forEach(r => {
@@ -389,8 +390,8 @@ async function loadWeeklyClassReport(cls) {
 
       // Fetch family activities
       const famActivityRes = await fetch(
-      `${API}/efforts/searchByFamilyId?name=${encodeURIComponent(kid.name)}&familyId=${kid.familyId}&date=${date}`
-       );
+        `${API}/efforts/searchByFamilyId?memberId=${kid.id}&date=${date}`
+        );
       const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
 
       familyActivities.forEach(doc => {
