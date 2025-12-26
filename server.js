@@ -52,24 +52,17 @@ app.use("/api/families", familyRoutes);
 // ======================================================
 
 //champion activities:
+// champion activities (PROFESSIONAL FIX)
 app.get("/api/efforts/searchByFamilyId", async (req, res) => {
   try {
-    const { name, date, familyId } = req.query;
-    if (!name || !familyId) return res.status(400).json({ error: "Missing required query parameters: name, familyId" });
+    const { memberId, date } = req.query;
 
-    if (family) {
-  // Treat family as ObjectId
-  const familyDoc = await Family.findById(family);
-  if (!familyDoc) return res.json([]);
-  memberQuery.family = familyDoc._id;
-}
+    if (!memberId) {
+      return res.status(400).json({ error: "Missing required query parameter: memberId" });
+    }
 
-
-    const memberQuery = { name, family: familyDoc._id };
-    const members = await Member.find(memberQuery);
-    const memberIds = members.map(m => m._id);
-    const query = { member: { $in: memberIds } };
-    if (date) query.date = date;
+    const query = { member: memberId };
+    if (date && date !== "all") query.date = date;
 
     const results = await Task.find(query).populate("member");
     res.json(results);
@@ -81,46 +74,32 @@ app.get("/api/efforts/searchByFamilyId", async (req, res) => {
 });
 
 
+
 //champion routines:
+// champion routines (PROFESSIONAL FIX)
 app.get("/api/routines/search", async (req, res) => {
   try {
-    const { name, date, family } = req.query;
+    const { memberId, date } = req.query;
 
-    if (!name || !family) {
-      return res.status(400).json({ error: "Missing required query parameters: name, family" });
+    if (!memberId) {
+      return res.status(400).json({ error: "Missing required query parameter: memberId" });
     }
 
-    // Determine if `family` is an ObjectId
-    let familyDoc;
-    if (/^[0-9a-fA-F]{24}$/.test(family)) {
-      // it's an ObjectId
-      familyDoc = await Family.findById(family);
-    } else {
-      // fallback: treat as family name
-      familyDoc = await Family.findOne({ name: family });
-    }
-
-    if (!familyDoc) return res.json([]);
-
-    // Find the member inside that family
-    const memberDoc = await Member.findOne({ name, family: familyDoc._id });
-    if (!memberDoc) return res.json([]);
-
-    // Search routines: if date is provided, filter by date
-    const query = { member: memberDoc._id };
+    const query = { member: memberId };
     if (date && date !== "all") query.date = date;
 
-    const routines = await Routine.find(query);
+    const routines = await Routine.find(query).populate("member");
 
     const result = routines.map(r => ({
-      name: memberDoc.name,
-      family: familyDoc.name,
+      memberId: r.member._id,
+      name: r.member.name,
       date: r.date,
       items: r.items,
       checkedData: r.checkedData
     }));
 
     res.json(result);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error searching routines" });
