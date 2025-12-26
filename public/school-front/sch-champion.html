@@ -307,22 +307,23 @@ async function loadWeeklyClassReport(cls) {
 
   // ---------------- INIT KIDS ----------------
   (cls.members || []).forEach(m => {
-    const id = String(m._id || m);
-    const name = MEMBERS_MAP[id] || m.name || "Unknown";
-    const familyId = m.family || null;
+  const id = String(m.member || m._id); // ✅ FIX
+  const name = MEMBERS_MAP[id] || m.name || "Unknown";
+  const familyId = m.family || null;
 
-    kids[id] = {
-      id,
-      name,
-      familyId,  // store familyId
-      routineStars: 0,
-      activityStars: 0,
-      familyRoutineStars: 0,
-      familyActivityStars: 0
-    };
+  kids[id] = {
+    id, // family memberId
+    name,
+    familyId,
+    routineStars: 0,
+    activityStars: 0,
+    familyRoutineStars: 0,
+    familyActivityStars: 0
+  };
 
-    kidsByName[name.toLowerCase()] = kids[id];
-  });
+  kidsByName[name.toLowerCase()] = kids[id];
+});
+
 
   // ---------------- WEEK RANGE (Fri → Thu) ----------------
   const today = new Date();
