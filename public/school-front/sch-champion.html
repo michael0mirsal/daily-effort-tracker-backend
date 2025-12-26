@@ -380,7 +380,7 @@ async function loadWeeklyClassReport(cls) {
       const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
 
       familyRoutines.forEach(r => {
-        const kidId = String(r.memberId || r._id);
+        const kidId = String(r.memberId);
         const k = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
         if (!k) return;
         (r.items || []).forEach(it => {
@@ -395,7 +395,7 @@ async function loadWeeklyClassReport(cls) {
       const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
 
       familyActivities.forEach(doc => {
-        const kidId = String(doc.memberId || doc._id);
+        const kidId = String(doc.memberId);
         const k = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
         if (!k) return;
         (doc.items || []).forEach(it => {
