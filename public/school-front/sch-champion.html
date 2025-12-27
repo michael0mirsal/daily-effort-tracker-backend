@@ -257,27 +257,33 @@ async function loadTreeClasses() {
     user?.nurseryName || "Happy Kids Nursery";
 
   try {
+    // Load classes
     const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
     const data = await res.json();
     TREE_CLASSES = data.classes || [];
     console.log("Classes loaded:", TREE_CLASSES);
 
-    // Load members map
+    // Collect all schoolMember IDs
     const schoolMemberIds = new Set();
     TREE_CLASSES.forEach(cls =>
       (cls.members || []).forEach(m => schoolMemberIds.add(String(m._id)))
     );
 
+    // Load school members details
     if (schoolMemberIds.size) {
-      const r = await fetch(`${API}/sch-members?ids=${[...schoolMemberIds].join(",")}`);
+      const r = await fetch(
+        `${API}/sch-members?ids=${[...schoolMemberIds].join(",")}`
+      );
       const list = await r.json();
+
       list.forEach(m => {
+        // Ensure we store FamilyMember ID correctly
         MEMBERS_MAP[String(m._id)] = {
           name: m.name || "Unknown",
-          familyMemberId: m.member ? String(m.member._id) : null
+          familyMemberId: m.member ? String(m.member) : null
         };
       });
-      console.log("Members map loaded:", MEMBERS_MAP);
+      console.log("Members map loaded: ", MEMBERS_MAP);
     }
 
     buildClassList();
@@ -297,7 +303,8 @@ function buildClassList() {
     div.textContent = cls.name;
 
     div.onclick = () => {
-      document.querySelectorAll(".class-item").forEach(e => e.classList.remove("active"));
+      document.querySelectorAll(".class-item")
+        .forEach(e => e.classList.remove("active"));
       div.classList.add("active");
 
       SELECTED_CLASS = cls;
@@ -312,8 +319,9 @@ function buildClassList() {
 async function loadWeeklyClassReport(cls) {
   console.log("Loading weekly report for class:", cls.name);
 
-  const kids = {};       // schoolMemberId → kid
-  const kidsByName = {}; // name → [kids]
+  const kids = {};           // schoolMemberId → kid data
+  const kidsByName = {};     // name → kid (for fallback)
+  const schoolToFamily = {}; // schoolMemberId → familyMemberId
 
   // ---------------- INIT KIDS ----------------
   (cls.members || []).forEach(m => {
@@ -332,92 +340,85 @@ async function loadWeeklyClassReport(cls) {
       familyActivityStars: 0
     };
 
-    const lowerName = name.toLowerCase();
-    if (!kidsByName[lowerName]) kidsByName[lowerName] = [];
-    kidsByName[lowerName].push(kids[schoolMemberId]);
+    kidsByName[name.toLowerCase()] = kids[schoolMemberId];
+    schoolToFamily[schoolMemberId] = familyMemberId;
   });
 
-  console.log("Class members mapped:", kids);
+  console.log("Class members mapped: ", kids);
 
-  // ---------------- WEEK RANGE ----------------
+  // ---------------- WEEK RANGE (Fri → Thu) ----------------
   const today = new Date();
   const day = today.getDay();
   const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
-  const weekDates = [];
+  // ---------------- LOOP 7 DAYS ----------------
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
-    weekDates.push(d.toISOString().slice(0, 10));
-  }
-
-  // ---------------- FETCH ALL SCHOOL DATA ----------------
-  for (const date of weekDates) {
+    const date = d.toISOString().slice(0, 10);
     console.log("Processing date:", date);
 
-    const [schRoutineRes, schActivityRes] = await Promise.all([
-      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
-      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
-    ]);
-
-    const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
-    const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
-
-    schoolRoutines.forEach(r => {
-      let kid = kids[r.schoolMember];
-      if (!kid && r.kidName) {
-        const matches = kidsByName[r.kidName.toLowerCase()] || [];
-        if (matches.length === 1) kid = matches[0];
-        else if (matches.length > 1) console.warn(`Multiple kids with name '${r.kidName}' on ${date}`);
-      }
-      if (!kid) return;
-      (r.items || []).forEach(it => { if (it.done) kid.routineStars++; });
-    });
-
-    schoolActivities.forEach(doc => {
-      let kid = kids[doc.schoolMember];
-      if (!kid && doc.kidName) {
-        const matches = kidsByName[doc.kidName.toLowerCase()] || [];
-        if (matches.length === 1) kid = matches[0];
-        else if (matches.length > 1) console.warn(`Multiple kids with name '${doc.kidName}' on ${date}`);
-      }
-      if (!kid) return;
-      (doc.items || []).forEach(it => { kid.activityStars += Number(it.evaluation || 0); });
-    });
-  }
-
-  // ---------------- BATCH FETCH FAMILY DATA ----------------
-  const familyIds = Object.values(kids)
-    .map(k => k.familyMemberId)
-    .filter(Boolean);
-
-  if (familyIds.length > 0) {
-    // batch family routines
+    // ----- SCHOOL DATA -----
     try {
-      const famRoutineRes = await fetch(`${API}/routines/search?memberIds=${familyIds.join(",")}&dates=${weekDates.join(",")}`);
-      const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
-      familyRoutines.forEach(r => {
-        const kid = Object.values(kids).find(k => k.familyMemberId === r.memberId);
-        if (!kid) return;
-        (r.items || []).forEach(it => { if (it.done) kid.familyRoutineStars++; });
+      const [schRoutineRes, schActivityRes] = await Promise.all([
+        fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+        fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+      ]);
+
+      const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
+      const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
+
+      schoolRoutines.forEach(r => {
+        const kid = kids[String(r.schoolMember)] || kidsByName[(r.kidName || "").toLowerCase()];
+        if (!kid) {
+          console.warn("School routine kid not found:", r);
+          return;
+        }
+        (r.items || []).forEach(it => { if (it.done) kid.routineStars++; });
+      });
+
+      schoolActivities.forEach(doc => {
+        const kid = kids[String(doc.schoolMember)] || kidsByName[(doc.kidName || "").toLowerCase()];
+        if (!kid) {
+          console.warn("School activity kid not found:", doc);
+          return;
+        }
+        (doc.items || []).forEach(it => { kid.activityStars += Number(it.evaluation || 0); });
       });
     } catch (err) {
-      console.warn("Failed to fetch family routines:", err);
+      console.warn("Failed to load school data for date:", date, err);
     }
 
-    // batch family activities
-    try {
-      const famActivityRes = await fetch(`${API}/efforts/searchByFamilyIds?memberIds=${familyIds.join(",")}&dates=${weekDates.join(",")}`);
-      const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
-      familyActivities.forEach(doc => {
-        const kid = Object.values(kids).find(k => k.familyMemberId === doc.memberId);
-        if (!kid) return;
-        (doc.items || []).forEach(it => { kid.familyActivityStars += Number(it.evaluation || 0); });
-      });
-    } catch (err) {
-      console.warn("Failed to fetch family activities:", err);
+    // ----- FAMILY DATA -----
+    for (const kid of Object.values(kids)) {
+      if (!kid.familyMemberId) {
+        console.warn(`No familyMemberId for kid ${kid.name} (schoolMemberId: ${kid.schoolMemberId}), skipping family data.`);
+        continue;
+      }
+
+      // Family routines
+      try {
+        const famRoutineRes = await fetch(`${API}/routines/search?memberId=${kid.familyMemberId}&date=${date}`);
+        const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
+        familyRoutines.forEach(r => {
+          (r.items || []).forEach(it => { if (it.done) kid.familyRoutineStars++; });
+        });
+      } catch (err) {
+        console.warn(`Failed to load family routines for ${kid.name} (FamilyMemberId: ${kid.familyMemberId})`, err);
+      }
+
+      // Family activities
+      try {
+        const famActivityRes = await fetch(`${API}/efforts/searchByFamilyId?memberId=${kid.familyMemberId}&date=${date}`);
+        const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
+        familyActivities.forEach(doc => {
+          (doc.items || []).forEach(it => { kid.familyActivityStars += Number(it.evaluation || 0); });
+        });
+      } catch (err) {
+        console.warn(`Failed to load family activities for ${kid.name} (FamilyMemberId: ${kid.familyMemberId})`, err);
+      }
     }
   }
 
@@ -426,7 +427,8 @@ async function loadWeeklyClassReport(cls) {
     k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars;
   });
 
-  console.log("Final kid stats:", kids);
+  console.log("Final kid stats: ", kids);
+
   renderWeeklyReport(Object.values(kids), friday);
 }
 
@@ -483,6 +485,7 @@ function renderWeeklyReport(kids, friday) {
   });
 }
 
+// ================= INIT =================
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
 
