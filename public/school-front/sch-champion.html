@@ -302,30 +302,27 @@ function buildClassList() {
 
 // ================= WEEKLY REPORT =================
 async function loadWeeklyClassReport(cls) {
- const kids = {};
-const uniqueKids = [];
+  const kids = {};
+  const kidsByName = {};
 
-(cls.members || []).forEach(m => {
-  const schoolId = String(m._id);
-  const familyId = m.family ? String(m.family) : null;
-  const name = MEMBERS_MAP[schoolId] || "Unknown";
+  // ---------------- INIT KIDS ----------------
+  (cls.members || []).forEach(m => {
+  const id = String(m.member || m._id); // ✅ FIX
+  const name = MEMBERS_MAP[id] || m.name || "Unknown";
+  const familyId = m.family || null;
 
-  const kid = {
-    schoolId,
-    familyId,
+  kids[id] = {
+    id, // family memberId
     name,
+    familyId,
     routineStars: 0,
     activityStars: 0,
     familyRoutineStars: 0,
     familyActivityStars: 0
   };
 
-  kids[schoolId] = kid;
-  if (familyId) kids[familyId] = kid;
-
-  uniqueKids.push(kid);
+  kidsByName[name.toLowerCase()] = kids[id];
 });
-
 
 
   // ---------------- WEEK RANGE (Fri → Thu) ----------------
@@ -373,32 +370,40 @@ const uniqueKids = [];
     });
 
     // ---------------- FAMILY DATA PER KID ----------------
-    for (const kid of uniqueKids) {
-  if (!kid.familyId) continue;
+    for (const kid of Object.values(kids)) {
+      if (!kid.familyId) continue; // skip if no familyId
 
-  const famRoutineRes = await fetch(
-    `${API}/routines/search?memberId=${kid.familyId}&date=${date}`
-  );
-  const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
+      // Fetch family routines
+      // Family routines
+       const famRoutineRes = await fetch(
+        `${API}/routines/search?memberId=${kid.id}&date=${date}`
+            );
+      const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
 
-  familyRoutines.forEach(r => {
-    (r.items || []).forEach(it => {
-      if (it.done) kid.familyRoutineStars++;
-    });
-  });
+      familyRoutines.forEach(r => {
+        const kidId = String(r.memberId);
+        const k = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
+        if (!k) return;
+        (r.items || []).forEach(it => {
+          if (it.done) k.familyRoutineStars++;
+        });
+      });
 
-  const famActivityRes = await fetch(
-    `${API}/efforts/searchByFamilyId?memberId=${kid.familyId}&date=${date}`
-  );
-  const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
+      // Fetch family activities
+      const famActivityRes = await fetch(
+        `${API}/efforts/searchByFamilyId?memberId=${kid.id}&date=${date}`
+        );
+      const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
 
-  familyActivities.forEach(doc => {
-    (doc.items || []).forEach(it => {
-      kid.familyActivityStars += Number(it.evaluation || 0);
-    });
-  });
-}
-
+      familyActivities.forEach(doc => {
+        const kidId = String(doc.memberId);
+        const k = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
+        if (!k) return;
+        (doc.items || []).forEach(it => {
+          k.familyActivityStars += Number(it.evaluation || 0);
+        });
+      });
+    }
   }
 
   // ---------------- TOTAL STARS ----------------
@@ -410,8 +415,7 @@ const uniqueKids = [];
       k.familyActivityStars;
   });
 
-  renderWeeklyReport(uniqueKids, friday);
-
+  renderWeeklyReport(Object.values(kids), friday);
 }
 
 // ================= RENDER =================
