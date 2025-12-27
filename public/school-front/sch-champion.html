@@ -275,13 +275,9 @@ async function loadTreeClasses() {
 
       list.forEach(m => {
         // Safe mapping
-        let familyMemberId = null;
-        if (m.member) {
-          if (typeof m.member === "string") familyMemberId = m.member;
-          else if (typeof m.member === "object") familyMemberId = m.member._id;
-        }
+        const familyMemberId = m.familyMemberId || null;
+        const name = m.name || "Unknown";
 
-        const name = m.member?.name || m.memberName || m.name || "Unknown";
 
         MEMBERS_MAP[String(m._id)] = { name, familyMemberId };
 
