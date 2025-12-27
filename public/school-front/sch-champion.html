@@ -3,243 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <title>Weekly Champion Report</title>
-
 <style>
-/* --------------------- GLOBAL --------------------- */
-body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: #f0f4f8;
-  margin: 0;
-  padding: 20px;
-  color: #2c3e50;
-}
-
-/* --------------------- HEADER --------------------- */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  background: linear-gradient(135deg, #6a11cb, #2575fc);
-  color: white;
-  padding: 15px 25px;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-#nurseryTitle {
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.header h2 {
-  font-size: 22px;
-  font-weight: 600;
-}
-
-/* --------------------- LAYOUT --------------------- */
-.layout {
-  display: flex;
-  gap: 20px;
-}
-
-/* --------------------- LEFT PANEL --------------------- */
-.left {
-  width: 280px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-  transition: 0.3s;
-}
-
-.left:hover {
-  transform: translateY(-3px);
-}
-
-.left h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 20px;
-  color: #34495e;
-}
-
-.class-item {
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: 0.25s;
-  background: #f9fafc;
-  font-weight: 600;
-}
-
-.class-item:hover {
-  background: #3498db;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.class-item.active {
-  background: #2c3e50;
-  color: white;
-}
-
-/* --------------------- RIGHT PANEL --------------------- */
-.right {
-  flex: 1;
-}
-
-/* --------------------- CHAMPION CARD --------------------- */
-.champion-card {
-  background: linear-gradient(135deg, #ffd700, #fffa9e);
-  padding: 30px;
-  border-radius: 20px;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 25px;
-  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
-  text-align: center;
-  color: #34495e;
-  position: relative;
-  z-index: 10;
-  transform: translateY(-20px);
-  animation: float 2.5s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(-20px); }
-  50% { transform: translateY(-10px); }
-}
-
-/* Trophy icon floating */
-.champion-card::before {
-  content: "🏆";
-  font-size: 48px;
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: trophy-bounce 2s infinite;
-}
-
-@keyframes trophy-bounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-10px); }
-}
-
-/* --------------------- KIDS GRID --------------------- */
-.kids-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-  margin-top: -20px;
-}
-
-.kid-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-  transition: 0.3s;
-  text-align: center;
-}
-
-.kid-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-}
-
-.kid-card h3 {
-  margin-bottom: 10px;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.rank {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 25px;
-  background: #3498db;
-  color: white;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.p-stats {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin: 3px 0;
-}
-
-/* --------------------- STAR PROGRESS BAR --------------------- */
-.progress-container {
-  width: 100%;
-  background: #ecf0f1;
-  border-radius: 12px;
-  height: 14px;
-  margin: 6px 0 12px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #f39c12, #f1c40f);
-  width: 0%;
-  transition: width 0.8s ease-in-out;
-}
-
-/* --------------------- TOP RANK HIGHLIGHT --------------------- */
-.kid-card.champion {
-  border: 2px solid gold;
-  box-shadow: 0 12px 24px rgba(255, 215, 0, 0.4);
-  background: linear-gradient(135deg, #fff8dc, #ffe680);
-  transform: translateY(-20px);
-}
-
-/* --------------------- RESPONSIVE --------------------- */
-@media(max-width: 900px) {
-  .layout {
-    flex-direction: column;
-  }
-  .left {
-    width: 100%;
-  }
-}
+/* Global styles (same as before) */
+body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; color: #2c3e50; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+#nurseryTitle { font-size: 26px; font-weight: 700; }
+.header h2 { font-size: 22px; font-weight: 600; }
+.layout { display: flex; gap: 20px; }
+.left { width: 280px; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.1); transition: 0.3s; }
+.left:hover { transform: translateY(-3px); }
+.left h3 { margin-top:0; margin-bottom:15px; font-size:20px; color:#34495e; }
+.class-item { padding:12px; border-radius:12px; margin-bottom:10px; cursor:pointer; transition:0.25s; background:#f9fafc; font-weight:600; }
+.class-item:hover { background:#3498db; color:white; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+.class-item.active { background:#2c3e50; color:white;}
+.right { flex:1; }
+.champion-card { background: linear-gradient(135deg, #ffd700, #fffa9e); padding:30px; border-radius:20px; font-size:24px; font-weight:bold; margin-bottom:25px; box-shadow:0 12px 24px rgba(0,0,0,0.2); text-align:center; color:#34495e; position:relative; z-index:10; transform: translateY(-20px); animation: float 2.5s ease-in-out infinite;}
+@keyframes float {0%,100% {transform: translateY(-20px);} 50%{transform: translateY(-10px);}}
+.champion-card::before { content: "🏆"; font-size:48px; position:absolute; top:-40px; left:50%; transform: translateX(-50%); animation: trophy-bounce 2s infinite;}
+@keyframes trophy-bounce {0%,100% { transform: translateX(-50%) translateY(0);} 50% {transform: translateX(-50%) translateY(-10px);}}
+.kids-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:20px; margin-top:-20px;}
+.kid-card { background:#fff; border-radius:16px; padding:18px; box-shadow:0 6px 16px rgba(0,0,0,0.1); transition:0.3s; text-align:center;}
+.kid-card:hover { transform:translateY(-5px); box-shadow:0 12px 24px rgba(0,0,0,0.15);}
+.kid-card h3 { margin-bottom:10px; font-size:20px; font-weight:600;}
+.rank { font-size:22px; font-weight:700; margin-bottom:8px;}
+.badge { display:inline-block; padding:6px 16px; border-radius:25px; background:#3498db; color:white; font-weight:600; margin-bottom:8px;}
+.p-stats { font-size:14px; color:#7f8c8d; margin:3px 0;}
+.progress-container { width:100%; background:#ecf0f1; border-radius:12px; height:14px; margin:6px 0 12px; overflow:hidden;}
+.progress-bar { height:100%; border-radius:12px; background: linear-gradient(90deg,#f39c12,#f1c40f); width:0%; transition: width 0.8s ease-in-out;}
+.kid-card.champion { border:2px solid gold; box-shadow:0 12px 24px rgba(255,215,0,0.4); background: linear-gradient(135deg,#fff8dc,#ffe680); transform: translateY(-20px);}
+@media(max-width:900px){.layout{flex-direction:column;}.left{width:100%;}}
 </style>
 </head>
-
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <h2 id="nurseryTitle">Loading...</h2>
   <h2>🏆 Weekly Champion (Friday → Thursday)</h2>
 </div>
 
 <div class="layout">
-
-  <!-- LEFT -->
   <div class="left">
     <h3>🏫 Classes</h3>
     <div id="classList"></div>
   </div>
-
-  <!-- RIGHT -->
   <div class="right">
-    <div id="weeklyChampion" class="champion-card">
-      Select a class to view report
-    </div>
+    <div id="weeklyChampion" class="champion-card">Select a class to view report</div>
     <div id="weeklyKids" class="kids-grid"></div>
   </div>
-
 </div>
 
 <script>
@@ -247,239 +57,167 @@ const API = "http://localhost:3000/api";
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
 let SELECTED_CLASS = null;
+let lastLoadId = 0; // debounce for class clicks
 
-// ================= LOAD CLASSES =================
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return alert("User not logged in");
+  if(!user) return alert("User not logged in");
 
-  document.getElementById("nurseryTitle").textContent =
-    user?.nurseryName || "Happy Kids Nursery";
+  document.getElementById("nurseryTitle").textContent = user.nurseryName || "Happy Kids Nursery";
 
   try {
     const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
     const data = await res.json();
     TREE_CLASSES = data.classes || [];
-    console.log("Classes loaded:", TREE_CLASSES);
 
-    // Build school members map
     const schoolMemberIds = new Set();
-    TREE_CLASSES.forEach(cls =>
-      (cls.members || []).forEach(m => schoolMemberIds.add(String(m._id)))
-    );
+    TREE_CLASSES.forEach(cls => (cls.members||[]).forEach(m=>schoolMemberIds.add(String(m._id))));
 
-    if (schoolMemberIds.size) {
+    if(schoolMemberIds.size){
       const r = await fetch(`${API}/sch-members/with-family?ids=${[...schoolMemberIds].join(",")}`);
       const list = await r.json();
-      console.log("School members fetched:", list);
-
-      list.forEach(m => {
-        MEMBERS_MAP[String(m._id)] = {
-          name: m.name || "Unknown",
-          familyMemberId: m.familyMemberId || null
-        };
-        if (!m.familyMemberId) console.warn(`[WARN] Missing familyMemberId for kid ${m.name} (${m._id})`);
+      list.forEach(m=>{
+        MEMBERS_MAP[String(m._id)] = {name:m.name||"Unknown", familyMemberId:m.familyMemberId||null};
+        if(!m.familyMemberId) console.warn(`[WARN] Missing familyMemberId for ${m.name}`);
       });
-
-      console.log("Members map loaded:", MEMBERS_MAP);
     }
-
     buildClassList();
-  } catch (err) {
-    console.error("Error loading classes:", err);
-  }
+  } catch(err){ console.error("Error loading classes:", err);}
 }
 
-// ================= BUILD CLASS LIST =================
-function buildClassList() {
+function buildClassList(){
   const area = document.getElementById("classList");
-  area.innerHTML = "";
-
-  TREE_CLASSES.forEach(cls => {
+  area.innerHTML="";
+  TREE_CLASSES.forEach(cls=>{
     const div = document.createElement("div");
-    div.className = "class-item";
-    div.textContent = cls.name;
-
-    div.onclick = () => {
-      document.querySelectorAll(".class-item").forEach(e => e.classList.remove("active"));
+    div.className="class-item";
+    div.textContent=cls.name;
+    div.onclick=()=>{ 
+      document.querySelectorAll(".class-item").forEach(e=>e.classList.remove("active"));
       div.classList.add("active");
-      SELECTED_CLASS = cls;
-      loadWeeklyClassReport(cls);
+      SELECTED_CLASS=cls;
+      lastLoadId++;
+      loadWeeklyClassReport(cls,lastLoadId);
     };
-
     area.appendChild(div);
   });
 }
 
-// ================= WEEKLY REPORT =================
-async function loadWeeklyClassReport(cls) {
-  console.log("Loading weekly report for class:", cls.name);
+async function loadWeeklyClassReport(cls, loadId){
+  const kids={}; const kidsByName={};
 
-  const kids = {};       // schoolMemberId → kid data
-  const kidsByName = {}; // name → kid fallback
-
-  // ---------------- INIT KIDS ----------------
-  (cls.members || []).forEach(m => {
-    const schoolMemberId = String(m._id);
-    const memberData = MEMBERS_MAP[schoolMemberId] || {};
-    const familyMemberId = memberData.familyMemberId || null;
-    const name = memberData.name || m.name || "Unknown";
-
-    kids[schoolMemberId] = {
-      schoolMemberId,
-      familyMemberId,
-      name,
-      routineStars: 0,
-      activityStars: 0,
-      familyRoutineStars: 0,
-      familyActivityStars: 0
-    };
-
+  (cls.members||[]).forEach(m=>{
+    const schoolMemberId=String(m._id);
+    const memberData = MEMBERS_MAP[schoolMemberId]||{};
+    const name = memberData.name||m.name||"Unknown";
+    const familyMemberId = memberData.familyMemberId||null;
+    kids[schoolMemberId]={schoolMemberId,familyMemberId,name,routineStars:0,activityStars:0,familyRoutineStars:0,familyActivityStars:0};
     kidsByName[name.toLowerCase()] = kids[schoolMemberId];
   });
 
-  console.log("Class members mapped:", kids);
+  const today=new Date();
+  const day=today.getDay();
+  const diff = day>=5?day-5:day+2;
+  const friday=new Date(today);
+  friday.setDate(today.getDate()-diff);
 
-  // ---------------- WEEK RANGE ----------------
-  const today = new Date();
-  const day = today.getDay();
-  const diff = day >= 5 ? day - 5 : day + 2;
-  const friday = new Date(today);
-  friday.setDate(today.getDate() - diff);
+  const dates=[];
+  for(let i=0;i<7;i++){ const d=new Date(friday); d.setDate(friday.getDate()+i); dates.push(d.toISOString().slice(0,10)); }
 
-  const dates = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(friday);
-    d.setDate(friday.getDate() + i);
-    dates.push(d.toISOString().slice(0, 10));
-  }
-
-  // ---------------- SCHOOL DATA FETCH ----------------
-  const schoolRoutinePromises = dates.map(date =>
-    fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`)
-      .then(res => res.ok ? res.json() : [])
-  );
-
-  const schoolActivityPromises = dates.map(date =>
-    fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
-      .then(res => res.ok ? res.json() : [])
-  );
-
+  // School data parallel fetch
+  const schoolRoutinePromises = dates.map(date=>fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`).then(r=>r.ok?r.json():[]));
+  const schoolActivityPromises = dates.map(date=>fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`).then(r=>r.ok?r.json():[]));
   const schoolRoutinesByDay = await Promise.all(schoolRoutinePromises);
   const schoolActivitiesByDay = await Promise.all(schoolActivityPromises);
 
-  // Map school routines & activities
-  schoolRoutinesByDay.flat().forEach(r => {
-    const kid = kids[r.schoolMember] || kidsByName[(r.kidName || "").toLowerCase()];
-    if (!kid) return console.warn("School routine kid not found:", r);
-    (r.items || []).forEach(it => { if (it.done) kid.routineStars++; });
-  });
-
-  schoolActivitiesByDay.flat().forEach(doc => {
-    const kid = kids[doc.schoolMember] || kidsByName[(doc.kidName || "").toLowerCase()];
-    if (!kid) return console.warn("School activity kid not found:", doc);
-    (doc.items || []).forEach(it => { kid.activityStars += Number(it.evaluation || 0); });
-  });
-
-  // ---------------- FAMILY DATA FETCH ----------------
-  const familyKids = Object.values(kids).filter(k => k.familyMemberId);
-
-  await Promise.all(familyKids.map(async kid => {
-    try {
-      // Family routines
-      const famRoutinePromises = dates.map(date =>
-        fetch(`${API}/routines/search?memberId=${kid.familyMemberId}&date=${date}`)
-          .then(res => res.ok ? res.json() : [])
-      );
-      const famRoutinesByDay = await Promise.all(famRoutinePromises);
-      famRoutinesByDay.flat().forEach(r => {
-        (r.items || []).forEach(it => { if (it.done) kid.familyRoutineStars++; });
-      });
-
-      // Family activities
-      const famActivityPromises = dates.map(date =>
-        fetch(`${API}/efforts/searchByFamilyId?memberId=${kid.familyMemberId}&date=${date}`)
-          .then(res => res.ok ? res.json() : [])
-      );
-      const famActivitiesByDay = await Promise.all(famActivityPromises);
-      famActivitiesByDay.flat().forEach(a => {
-        (a.items || []).forEach(it => { kid.familyActivityStars += Number(it.evaluation || 0); });
-      });
-
-    } catch (err) {
-      console.warn(`Failed to load family data for ${kid.name}`, err);
-    }
+  schoolRoutinesByDay.forEach(dayRoutines=>dayRoutines.forEach(r=>{
+    const kid=kids[r.schoolMember]||kidsByName[(r.kidName||"").toLowerCase()];
+    if(!kid) return;
+    (r.items||[]).forEach(it=>{if(it.done) kid.routineStars++;});
   }));
 
-  // ---------------- TOTAL STARS ----------------
-  Object.values(kids).forEach(k => {
-    k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars;
-  });
+  schoolActivitiesByDay.forEach(dayActs=>dayActs.forEach(a=>{
+    const kid=kids[a.schoolMember]||kidsByName[(a.kidName||"").toLowerCase()];
+    if(!kid) return;
+    (a.items||[]).forEach(it=>{kid.activityStars+=Number(it.evaluation||0);});
+  }));
 
-  console.log("Final kid stats:", kids);
-  renderWeeklyReport(Object.values(kids), friday);
-}
+  // Batch family data fetch
+  const familyKids = Object.values(kids).filter(k=>k.familyMemberId);
+  const familyIds = familyKids.map(k=>k.familyMemberId);
+  const startDate = dates[0]; const endDate = dates[dates.length-1];
 
-// ================= RENDER =================
-function renderWeeklyReport(kids, friday) {
-  const champ = document.getElementById("weeklyChampion");
-  const list = document.getElementById("weeklyKids");
-  list.innerHTML = "";
+  if(familyIds.length){
+    try{
+      // Family routines batch
+      const famRoutineRes = await fetch(`${API}/routines/search?memberIds=${familyIds.join(",")}&start=${startDate}&end=${endDate}`);
+      const famRoutines = famRoutineRes.ok?await famRoutineRes.json():[];
+      famRoutines.forEach(r=>{
+        const kid = kidsByName[(r.kidName||"").toLowerCase()] || kids[r.schoolMember];
+        if(!kid) return;
+        (r.items||[]).forEach(it=>{if(it.done) kid.familyRoutineStars++;});
+      });
 
-  if (!kids.length) {
-    champ.innerHTML = "⚠️ No kids found";
-    return;
+      // Family activities batch
+      const famActRes = await fetch(`${API}/efforts/searchByFamilyIds?memberIds=${familyIds.join(",")}&start=${startDate}&end=${endDate}`);
+      const famActs = famActRes.ok?await famActRes.json():[];
+      famActs.forEach(a=>{
+        const kid = kidsByName[(a.kidName||"").toLowerCase()] || kids[a.schoolMember];
+        if(!kid) return;
+        (a.items||[]).forEach(it=>{kid.familyActivityStars+=Number(it.evaluation||0);});
+      });
+
+    }catch(err){console.warn("Failed to load family batch data",err);}
   }
 
-  kids.sort((a, b) => b.totalStars - a.totalStars);
+  // Total stars
+  Object.values(kids).forEach(k=>k.totalStars=k.routineStars+k.activityStars+k.familyRoutineStars+k.familyActivityStars);
 
-  let rank = 0, lastStars = null, medalRank = 0;
-  kids.forEach((k, i) => {
-    if (k.totalStars !== lastStars) { rank = i + 1; medalRank++; }
-    lastStars = k.totalStars;
+  // Check if this is the latest load
+  if(loadId!==lastLoadId) return; 
 
-    let medal = "";
-    if (medalRank === 1) medal = "🥇";
-    else if (medalRank === 2) medal = "🥈";
-    else if (medalRank === 3) medal = "🥉";
+  renderWeeklyReport(Object.values(kids),friday);
+}
 
-    k.rankDisplay = `${medal} Rank ${rank}`;
+function renderWeeklyReport(kids,friday){
+  const champ=document.getElementById("weeklyChampion");
+  const list=document.getElementById("weeklyKids");
+  list.innerHTML="";
+
+  if(!kids.length){ champ.innerHTML="⚠️ No kids found"; return; }
+
+  kids.sort((a,b)=>b.totalStars-a.totalStars);
+  let rank=0,lastStars=null,medalRank=0;
+  kids.forEach((k,i)=>{
+    if(k.totalStars!==lastStars){ rank=i+1; medalRank++; } lastStars=k.totalStars;
+    let medal="";
+    if(medalRank===1) medal="🥇"; else if(medalRank===2) medal="🥈"; else if(medalRank===3) medal="🥉";
+    k.rankDisplay=`${medal} Rank ${rank}`;
   });
 
-  const winner = kids[0];
-  const end = new Date(friday);
-  end.setDate(friday.getDate() + 6);
+  const winner=kids[0];
+  const end=new Date(friday); end.setDate(friday.getDate()+6);
+  champ.innerHTML=`👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
 
-  champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
-
-  kids.forEach((k, i) => {
-    const maxStars = kids[0].totalStars || 1;
-    const barPercent = (k.totalStars / maxStars) * 100;
-
-    list.innerHTML += `
-      <div class="kid-card ${i === 0 ? "champion" : ""}">
+  kids.forEach((k,i)=>{
+    const maxStars = winner.totalStars||1;
+    const barPercent = (k.totalStars/maxStars)*100;
+    list.innerHTML+=`
+      <div class="kid-card ${i===0?"champion":""}">
         <div class="rank">${k.rankDisplay}</div>
         <h3>🧒 ${k.name}</h3>
-        <div class="progress-container">
-          <div class="progress-bar" style="width:${barPercent}%"></div>
-        </div>
+        <div class="progress-container"><div class="progress-bar" style="width:${barPercent}%"></div></div>
         <div class="badge">${k.totalStars} ⭐ Total</div>
-        <p>Routine: ${k.routineStars}</p>
-        <p>Activities: ${k.activityStars}</p>
-        <p>Family Routine: ${k.familyRoutineStars}</p>
-        <p>Family Activity: ${k.familyActivityStars}</p>
-      </div>
-    `;
+        <p class="p-stats">Routine: ${k.routineStars}</p>
+        <p class="p-stats">Activities: ${k.activityStars}</p>
+        <p class="p-stats">Family Routine: ${k.familyRoutineStars}</p>
+        <p class="p-stats">Family Activity: ${k.familyActivityStars}</p>
+      </div>`;
   });
 }
 
-// ================= INIT =================
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
-
-
-
-
 
 </body>
 </html>
