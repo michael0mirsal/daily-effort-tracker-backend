@@ -381,36 +381,46 @@ async function loadWeeklyClassReport(cls) {
     });
 
     // ---------- FAMILY DATA ----------
-    for (const kid of Object.values(kids)) {
+for (const kid of Object.values(kids)) {
 
-      // Family routines
-      const famRoutineRes = await fetch(
-        `${API}/routines/search?memberId=${kid.id}&date=${date}`
-      );
-      const familyRoutines = famRoutineRes.ok
-        ? await famRoutineRes.json()
-        : [];
+  // Skip if no FamilyMember ID
+  if (!kid.id) continue;
 
-      familyRoutines.forEach(r => {
-        (r.items || []).forEach(it => {
-          if (it.done) kid.familyRoutineStars++;
-        });
+  // Family routines
+  try {
+    const famRoutineRes = await fetch(
+      `${API}/routines/search?memberId=${kid.id}&date=${date}`
+    );
+    const familyRoutines = famRoutineRes.ok
+      ? await famRoutineRes.json()
+      : [];
+    familyRoutines.forEach(r => {
+      (r.items || []).forEach(it => {
+        if (it.done) kid.familyRoutineStars++;
       });
+    });
+  } catch (err) {
+    console.warn("Failed to load family routines for", kid.name, err);
+  }
 
-      // Family activities
-      const famActivityRes = await fetch(
-        `${API}/efforts/searchByFamilyId?memberId=${kid.id}&date=${date}`
-      );
-      const familyActivities = famActivityRes.ok
-        ? await famActivityRes.json()
-        : [];
-
-      familyActivities.forEach(doc => {
-        (doc.items || []).forEach(it => {
-          kid.familyActivityStars += Number(it.evaluation || 0);
-        });
+  // Family activities
+  try {
+    const famActivityRes = await fetch(
+      `${API}/efforts/searchByFamilyId?memberId=${kid.id}&date=${date}`
+    );
+    const familyActivities = famActivityRes.ok
+      ? await famActivityRes.json()
+      : [];
+    familyActivities.forEach(doc => {
+      (doc.items || []).forEach(it => {
+        kid.familyActivityStars += Number(it.evaluation || 0);
       });
-    }
+    });
+  } catch (err) {
+    console.warn("Failed to load family activities for", kid.name, err);
+  }
+}
+
   }
 
   // ------------------------------------------------
