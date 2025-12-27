@@ -16,66 +16,278 @@
 }
 
 /* RESET */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body { height: 100%; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
 
 /* ================= ZOOM WRAPPER ================= */
-#zoomWrapper { width: 100%; height: 100%; overflow: auto; padding: 20px; }
+#zoomWrapper {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 20px;
+}
 
 /* ================= SCALED CONTAINER ================= */
-#container { transform: scale(0.75); transform-origin: top left; width: calc(100% / 0.75); min-height: calc(100% / 0.75); display: flex; align-items: flex-start; }
+#container {
+  transform: scale(0.75);
+  transform-origin: top left;
+  width: calc(100% / 0.75);
+  min-height: calc(100% / 0.75);
+  display: flex;
+  height: auto;
+  align-items: flex-start;
+}
 
 /* ================= LEFT TREE PANEL ================= */
-#treePanel { width: 320px; background: linear-gradient(180deg, #ffffff, #f1f3f6); border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
+#treePanel {
+  width: 320px;
+  background: linear-gradient(180deg, #ffffff, #f1f3f6);
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  overflow-y: auto;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+}
 
-#nurseryTitle { text-align: center; font-size: 1.4rem; margin-bottom: 20px; color: var(--primary); font-weight: 700; }
-.class-branch { background: #fff; border-radius: 14px; padding: 12px 15px; margin-bottom: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: 0.25s; }
-.class-branch:hover { background: #f0f6ff; transform: translateX(4px); }
-.child-items { margin: 8px 0 15px 15px; }
-.tree-section { margin-top: 10px; margin-left: 12px; border-left: 2px dashed #dcdde1; padding-left: 10px; }
-.tree-section-title { font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.teacher-box { background: #eef3ff; border-left: 4px solid var(--secondary); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; cursor:pointer; }
-.member-box { background: #f9fafb; border-left: 4px solid var(--success); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; cursor:pointer; }
+#nurseryTitle {
+  text-align: center;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.class-branch {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  transition: 0.25s;
+}
+
+.class-branch:hover {
+  background: #f0f6ff;
+  transform: translateX(4px);
+}
+
+.child-items {
+  margin: 8px 0 15px 15px;
+}
+
+.tree-section {
+  margin-top: 10px;
+  margin-left: 12px;
+  border-left: 2px dashed #dcdde1;
+  padding-left: 10px;
+}
+
+.tree-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.teacher-box {
+  background: #eef3ff;
+  border-left: 4px solid var(--secondary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+}
+
+.member-box {
+  background: #f9fafb;
+  border-left: 4px solid var(--success);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+}
 
 /* ================= RIGHT REPORT PANEL ================= */
-#rightPanel { flex: 1; padding: 25px; overflow-y: auto; }
-#topButtons { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
-button { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; }
+#rightPanel {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+/* TOP BAR */
+#topButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 #backBtn { background: #ecf0f1; }
 #logoutBtn { background: var(--danger); color: white; }
-#sendMsgBtn { background: var(--secondary); color: white; }
 
 /* ================= REPORT ================= */
 #classReport h2 { margin-top: 0; }
-.report-header { background: linear-gradient(135deg, var(--primary), #1f2d3a); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; }
+
+.report-header {
+  background: linear-gradient(135deg, var(--primary), #1f2d3a);
+  color: white;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+}
+
 .report-header h2 { margin: 0; font-size: 1.8rem; }
-.child-card { background: var(--card); border-radius: 18px; padding: 22px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-.child-title { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+
+.child-card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.child-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
 .child-title h3 { margin: 0; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin: 20px 0; }
-.kpi { background: #f9fafb; border-radius: 14px; padding: 15px; text-align: center; }
-.kpi h4 { margin: 0; font-size: 0.9rem; color: #777; }
-.kpi strong { display: block; margin-top: 8px; font-size: 1.4rem; }
-.section-title { margin-top: 25px; margin-bottom: 10px; font-size: 1.1rem; color: var(--primary); border-left: 4px solid var(--secondary); padding-left: 10px; }
-table { width: 100%; border-collapse: collapse; margin-top: 12px; border: 1px solid #dcdde1; border-radius: 10px; overflow: hidden; }
-th { background: #f1f3f6; font-weight: 700; color: #2c3e50; border-bottom: 2px solid #dcdde1; }
-th, td { padding: 12px; border-right: 1px solid #e0e0e0; }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.kpi {
+  background: #f9fafb;
+  border-radius: 14px;
+  padding: 15px;
+  text-align: center;
+}
+
+.kpi h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.kpi strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.4rem;
+}
+
+.section-title {
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: var(--primary);
+  border-left: 4px solid var(--secondary);
+  padding-left: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  border: 1px solid #dcdde1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th {
+  background: #f1f3f6;
+  font-weight: 700;
+  color: #2c3e50;
+  border-bottom: 2px solid #dcdde1;
+}
+
+th, td {
+  padding: 12px;
+  border-right: 1px solid #e0e0e0;
+}
+
 tr td:last-child, tr th:last-child { border-right: none; }
 tr:nth-child(even) td { background: #fafbfc; }
 tr:hover td { background: #eef4ff; }
-.badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; color: white; }
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: white;
+}
+
 .badge-success { background: var(--success); }
 .badge-primary { background: var(--secondary); }
+
 .empty { color: #888; font-style: italic; }
 
 /* ================= MESSAGE MODAL ================= */
-#msgModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center; }
-#msgModal .modal-content { background:#fff; border-radius:12px; padding:20px; max-width:500px; width:90%; position:relative; }
-#msgModal input, #msgModal textarea, #msgModal select { width:100%; margin-bottom:10px; padding:6px; border-radius:6px; border:1px solid #ccc; font-size:1rem; }
-#msgModal .modal-buttons { text-align:right; }
-#msgModal .modal-buttons button { margin-left:10px; padding:8px 14px; border-radius:6px; font-weight:600; }
+#msgModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right:0; bottom:0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
 
+#msgModal .modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 400px;
+  max-width: 90%;
+}
+
+#msgModal input, #msgModal textarea, #msgModal select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+#msgModal button {
+  width: 100%;
+  padding: 10px;
+  background: var(--secondary);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -93,8 +305,8 @@ tr:hover td { background: #eef4ff; }
     <div id="rightPanel">
       <div id="topButtons">
         <button id="backBtn">⬅ Back</button>
-        <button id="sendMsgBtn">✉️ Send Message</button>
         <button id="logoutBtn">Logout</button>
+        <button id="sendMsgBtn">✉ Send Message</button>
       </div>
       <div id="classReport">
         <h2>Select a class to view full report</h2>
@@ -107,24 +319,15 @@ tr:hover td { background: #eef4ff; }
 <!-- MESSAGE MODAL -->
 <div id="msgModal">
   <div class="modal-content">
-    <h3>Send New Message</h3>
-    <label>Title</label>
-    <input type="text" id="msgTitle" placeholder="Message title">
-    <label>Message</label>
-    <textarea id="msgBody" rows="4" placeholder="Type your message"></textarea>
-    <label>Type</label>
-    <select id="msgTargetType">
-      <option value="nursery">Entire Nursery</option>
-      <option value="class">Specific Class</option>
-      <option value="student">Specific Student</option>
+    <h3>Send Message</h3>
+    <input type="text" id="msgTitle" placeholder="Title" />
+    <textarea id="msgBody" rows="4" placeholder="Message"></textarea>
+    <select id="msgTarget">
+      <option value="class">Class</option>
+      <option value="nursery">Whole Nursery</option>
     </select>
-    <input type="text" id="msgClassId" placeholder="Class ID" style="display:none;">
-    <input type="text" id="msgStudentId" placeholder="Student ID" style="display:none;">
-    <input type="file" id="msgAttachments" multiple>
-    <div class="modal-buttons">
-      <button id="msgCancelBtn" style="background:#eee;">Cancel</button>
-      <button id="msgSendBtn" style="background:var(--secondary); color:white;">Send</button>
-    </div>
+    <button id="msgSendBtn">Send</button>
+    <button onclick="closeMessageModal()" style="margin-top:10px;background:#e74c3c;">Cancel</button>
   </div>
 </div>
 
@@ -135,23 +338,145 @@ const API = "http://localhost:3000/api";
    GLOBAL STATE
 ===================================== */
 let TREE_CLASSES = [];
-let MEMBERS_MAP = {};
-let TEACHERS_MAP = {};
+let MEMBERS_MAP = {};   // kidId -> name
+let TEACHERS_MAP = {};  // teacherId -> name
 
 /* =====================================
-   DATE HELPER
+   COMBINED REPORT (must be defined BEFORE buildTree)
 ===================================== */
-function getSelectedDate() {
-  const el = document.getElementById("filterDate");
-  return el && el.value ? el.value : new Date().toISOString().slice(0, 10);
+async function loadCombinedClassReport(cls) {
+  const area = document.getElementById("reportContent");
+  if (!area) return;
+
+  const date = new Date().toISOString().slice(0, 10);
+  area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
+
+  try {
+    const [rRes, aRes] = await Promise.all([
+      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+    ]);
+
+    const routines = rRes.ok ? await rRes.json() : [];
+    const activities = aRes.ok ? await aRes.json() : [];
+
+    const kids = {};
+    const kidsByName = {};
+
+    cls.members.forEach(mid => {
+      const id = String(mid._id || mid);
+      const name = MEMBERS_MAP[id] || mid.name || "Unknown";
+      kids[id] = { id, name, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
+      kidsByName[name.toLowerCase()] = kids[id];
+    });
+
+    activities.forEach(doc => {
+      const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
+      const kid = kids[kidId]; if(!kid) return;
+      (doc.items||[]).forEach(it=>{
+        kid.totalTime += Number(it.timeMin||0);
+        kid.activityStars += Number(it.evaluation||0);
+        kid.activities.push(it);
+      });
+    });
+
+    routines.forEach(r=>{
+      const kidId = String(r.kidmember || r.kidId);
+      const nameKey = (r.kidName||"").toLowerCase();
+      const kid = kids[kidId] || kidsByName[nameKey];
+      if(!kid) return;
+      (r.items||[]).forEach(it=>{
+        if(it.done!==true) return;
+        kid.routineStars += 1;
+        kid.routines.push({ task: it.task, section: it.section });
+      });
+    });
+
+    // render
+    area.innerHTML = `<div class="report-header">
+      <h2>${cls.name} – Daily Performance Report</h2>
+      <span>Date: ${date}</span>
+    </div>`;
+
+    Object.values(kids).forEach(k=>{
+      const totalStars = k.routineStars + k.activityStars;
+      const grouped = {};
+      k.routines.forEach(r=>{
+        if(!grouped[r.section]) grouped[r.section]=[];
+        grouped[r.section].push(r.task);
+      });
+
+      area.innerHTML += `<div class="child-card">
+        <div class="child-title">
+          <h3>🧒 ${k.name}</h3>
+          <span class="badge badge-primary">${totalStars} ⭐ Total</span>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
+          <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
+          <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
+        </div>
+        <div class="section-title">✅ Completed Routines</div>
+        ${k.routines.length ? Object.entries(grouped).map(([s,tasks])=>`<strong>${s.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`).join("") : `<p class="empty">No completed routines</p>`}
+        <div class="section-title">📊 Activities</div>
+        ${k.activities.length ? `<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${k.activities.map(a=>`<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note||"-"}</td></tr>`).join("")}</table>` : `<p class="empty">No activities recorded</p>`}
+      </div>`;
+    });
+
+  } catch(err){
+    console.error(err);
+    area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`;
+  }
 }
 
 /* =====================================
-   LOAD CLASSES + MEMBERS + TEACHERS
+   BUILD TREE
+===================================== */
+function buildTree() {
+  const tree = document.getElementById("classTree");
+  if (!tree) return;
+  tree.innerHTML = "";
+
+  TREE_CLASSES.forEach(cls => {
+    const classDiv = document.createElement("div");
+    classDiv.className = "class-branch";
+    classDiv.textContent = cls.name;
+
+    const childBox = document.createElement("div");
+    childBox.className = "child-items";
+    childBox.style.display = "none";
+
+    classDiv.onclick = async () => {
+      const open = childBox.style.display === "block";
+      childBox.style.display = open ? "none" : "block";
+      if (open) return;
+
+      childBox.innerHTML = `
+        <div class="tree-section">
+          <div class="tree-section-title">👩‍🏫 Teachers</div>
+          ${(cls.teachers || []).map(tid => `<div class="teacher-box">${TEACHERS_MAP[tid._id || tid]||"Teacher"}</div>`).join("")}
+        </div>
+        <div class="tree-section">
+          <div class="tree-section-title">🧒 Kids</div>
+          ${(cls.members || []).map(mid => `<div class="member-box" data-member="${mid._id||mid}">${MEMBERS_MAP[mid._id||mid]||"Kid"}</div>`).join("")}
+        </div>
+      `;
+
+      loadCombinedClassReport(cls);
+    };
+
+    tree.appendChild(classDiv);
+    tree.appendChild(childBox);
+  });
+}
+
+/* =====================================
+   LOAD TREE CLASSES
 ===================================== */
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
+
   try {
     const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
     const data = await res.json();
@@ -178,102 +503,45 @@ async function loadTreeClasses() {
     }
 
     buildTree();
-  } catch (err) { console.error("Tree load failed", err); }
-}
-
-/* =====================================
-   BUILD TREE
-===================================== */
-function buildTree() {
-  const tree = document.getElementById("classTree");
-  if (!tree) return;
-  tree.innerHTML = "";
-
-  TREE_CLASSES.forEach(cls => {
-    const classDiv = document.createElement("div");
-    classDiv.className = "class-branch";
-    classDiv.textContent = cls.name;
-
-    const childBox = document.createElement("div");
-    childBox.className = "child-items";
-    childBox.style.display = "none";
-
-    classDiv.onclick = async () => {
-      const open = childBox.style.display === "block";
-      childBox.style.display = open ? "none" : "block";
-      if (open) return;
-
-      childBox.innerHTML = `
-  <div class="tree-section">
-    <div class="tree-section-title">👩‍🏫 Teachers</div>
-    ${(cls.teachers || []).map(tid => `<div class="teacher-box">${TEACHERS_MAP[tid._id || tid]||"Teacher"}</div>`).join("")}
-  </div>
-  <div class="tree-section">
-    <div class="tree-section-title">🧒 Kids</div>
-    ${(cls.members || []).map(mid => `<div class="member-box" data-member="${mid._id||mid}">${MEMBERS_MAP[mid._id||mid]||"Kid"}</div>`).join("")}
-  </div>
-      `;
-      loadCombinedClassReport(cls);
-    };
-
-    tree.appendChild(classDiv);
-    tree.appendChild(childBox);
-  });
-
-  // Dynamic click to open message modal
-  document.addEventListener("click", e => {
-    if(e.target.classList.contains("member-box")) openMessageModal("student", e.target.dataset.member);
-    if(e.target.classList.contains("class-branch")) {
-      const cls = TREE_CLASSES.find(c=>c.name===e.target.textContent);
-      if(cls) openMessageModal("class", cls._id);
-    }
-  });
+  } catch (err) {
+    console.error("❌ Tree load failed", err);
+  }
 }
 
 /* =====================================
    MESSAGE MODAL LOGIC
 ===================================== */
-const sendMsgBtn = document.getElementById("sendMsgBtn");
 const msgModal = document.getElementById("msgModal");
-const msgCancelBtn = document.getElementById("msgCancelBtn");
-const msgTargetType = document.getElementById("msgTargetType");
-const msgClassId = document.getElementById("msgClassId");
-const msgStudentId = document.getElementById("msgStudentId");
+document.getElementById("sendMsgBtn").onclick = () => { msgModal.style.display = "flex"; };
+function closeMessageModal() { msgModal.style.display = "none"; }
 
-function openMessageModal(type, id=null) {
-  msgModal.style.display="flex";
-  msgTargetType.value=type;
-  msgClassId.value = type==="class"?id:"";
-  msgStudentId.value = type==="student"?id:"";
-  msgClassId.style.display = type==="class"?"block":"none";
-  msgStudentId.style.display = type==="student"?"block":"none";
-}
+document.getElementById("msgSendBtn").onclick = async () => {
+  const title = document.getElementById("msgTitle").value;
+  const message = document.getElementById("msgBody").value;
+  const target = document.getElementById("msgTarget").value;
+  const user = JSON.parse(localStorage.getItem("user"));
 
-sendMsgBtn.onclick = ()=>openMessageModal("nursery");
-msgCancelBtn.onclick = ()=>{ msgModal.style.display="none"; }
-msgTargetType.addEventListener("change", ()=>{
-  msgClassId.style.display = msgTargetType.value==="class"?"block":"none";
-  msgStudentId.style.display = msgTargetType.value==="student"?"block":"none";
-});
-
-document.getElementById("msgSendBtn").onclick = async ()=>{
-  const sender = JSON.parse(localStorage.getItem("user"));
-  const data = {
-    senderId: sender._id,
+  const payload = {
+    senderId: user.id,
     senderModel: "StaffMember",
-    title: document.getElementById("msgTitle").value,
-    message: document.getElementById("msgBody").value,
-    attachments: Array.from(document.getElementById("msgAttachments").files).map(f=>({name:f.name,url:URL.createObjectURL(f)}))
+    title,
+    message
   };
-  if(msgTargetType.value==="student") data.targetSchoolMember=msgStudentId.value;
-  if(msgTargetType.value==="class") data.classId=msgClassId.value;
-  if(msgTargetType.value==="nursery") data.nurseryId = sender.nurseryId;
+  if(target==="class" && TREE_CLASSES.length>0) payload.classId = TREE_CLASSES[0]._id;
+  if(target==="nursery") payload.nurseryId = user.nurseryId;
 
-  try{
-    const res = await fetch(`${API}/messages/send`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
-    if(res.ok){ alert("Message sent!"); msgModal.style.display="none"; }
-    else alert("Failed to send message");
-  } catch(err){ console.error(err); alert("Error sending message"); }
+  try {
+    await fetch(`${API}/messages/send`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    alert("Message sent!");
+    closeMessageModal();
+  } catch(err){
+    console.error(err);
+    alert("Failed to send message");
+  }
 };
 
 /* =====================================
@@ -281,18 +549,14 @@ document.getElementById("msgSendBtn").onclick = async ()=>{
 ===================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
-  document.getElementById("nurseryTitle").textContent = user?.nurseryName||"Happy Kids Nursery";
-  document.getElementById("userName").textContent = user?.name?`Hello, ${user.name}!`:"Hello, User";
+  document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
+  document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
   loadTreeClasses();
 });
 
 /* BACK + LOGOUT */
-document.getElementById("backBtn").onclick = ()=>window.location.href="sch-choose.html";
-document.getElementById("logoutBtn").onclick = ()=>{
-  localStorage.removeItem("user");
-  window.location.href="sch-signin.html";
-};
+document.getElementById("backBtn").onclick = () => window.location.href="sch-choose.html";
+document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
 </script>
-
 </body>
 </html>
