@@ -387,10 +387,22 @@ async function loadWeeklyClassReport(cls) {
 
     // ----- FAMILY DATA -----
     for (const kid of Object.values(kids)) {
-      if (!kid.familyMemberId) {
-        console.warn(`No familyMemberId for kid ${kid.name} (schoolMemberId: ${kid.schoolMemberId}), skipping family data.`);
-        continue;
-      }
+
+  console.log(
+    "Family lookup →",
+    kid.name,
+    "schoolMemberId:",
+    kid.schoolMemberId,
+    "familyMemberId:",
+    kid.familyMemberId
+  );
+
+  if (!kid.familyMemberId) {
+    console.warn(
+      `No familyMemberId for kid ${kid.name} (schoolMemberId: ${kid.schoolMemberId})`
+    );
+    continue;
+  }
 
       // Family routines
       try {
