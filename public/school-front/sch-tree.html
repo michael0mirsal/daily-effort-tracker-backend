@@ -17,13 +17,13 @@
 
 /* RESET */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-/* ================= ZOOM WRAPPER ================= */
+/* ZOOM WRAPPER */
 #zoomWrapper { width: 100%; height: 100%; overflow: auto; padding: 20px; }
-/* ================= SCALED CONTAINER ================= */
+/* SCALED CONTAINER */
 #container { transform: scale(0.75); transform-origin: top left; width: calc(100% / 0.75); min-height: calc(100% / 0.75); display: flex; height: auto; align-items: flex-start; }
-/* ================= LEFT TREE PANEL ================= */
+/* LEFT TREE PANEL */
 #treePanel { width: 320px; background: linear-gradient(180deg, #ffffff, #f1f3f6); border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
 #nurseryTitle { text-align: center; font-size: 1.4rem; margin-bottom: 20px; color: var(--primary); font-weight: 700; }
 .class-branch { background: #fff; border-radius: 14px; padding: 12px 15px; margin-bottom: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: 0.25s; }
@@ -33,14 +33,15 @@ html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", Roboto, Ar
 .tree-section-title { font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
 .teacher-box { background: #eef3ff; border-left: 4px solid var(--secondary); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; }
 .member-box { background: #f9fafb; border-left: 4px solid var(--success); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; }
-/* ================= RIGHT REPORT PANEL ================= */
+
+/* RIGHT REPORT PANEL */
 #rightPanel { flex: 1; padding: 25px; overflow-y: auto; }
 /* TOP BAR */
 #topButtons { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
 button { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; }
 #backBtn { background: #ecf0f1; }
 #logoutBtn { background: var(--danger); color: white; }
-/* ================= REPORT ================= */
+/* REPORT */
 #classReport h2 { margin-top: 0; }
 .report-header { background: linear-gradient(135deg, var(--primary), #1f2d3a); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display:flex; justify-content:space-between; align-items:center; }
 .report-header h2 { margin: 0; font-size: 1.8rem; }
@@ -62,6 +63,7 @@ tr:hover td { background: #eef4ff; }
 .badge-success { background: var(--success); }
 .badge-primary { background: var(--secondary); }
 .empty { color: #888; font-style: italic; }
+
 /* MESSAGE MODAL */
 #msgModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000; }
 #msgModalContent { background:white; padding:25px; border-radius:12px; width:400px; max-width:90%; display:flex; flex-direction:column; gap:10px; }
@@ -113,230 +115,136 @@ tr:hover td { background: #eef4ff; }
 
 <script>
 const API = "http://localhost:3000/api";
-
-/* =====================================
-   GLOBAL STATE
-===================================== */
 let TREE_CLASSES = [];
-let MEMBERS_MAP = {};   // kidId -> name
-let TEACHERS_MAP = {};  // teacherId -> name
+let MEMBERS_MAP = {};
+let TEACHERS_MAP = {};
+const msgModal = document.getElementById("msgModal");
+const closeMessageModal = () => msgModal.style.display="none";
+document.getElementById("closeMsgBtn").onclick = closeMessageModal;
 
-/* =====================================
-   COMBINED REPORT (must be defined BEFORE buildTree)
-===================================== */
-async function loadCombinedClassReport(cls) {
+async function loadCombinedClassReport(cls){
   const area = document.getElementById("reportContent");
-  if (!area) return;
+  if(!area) return;
+  const date = new Date().toISOString().slice(0,10);
 
-  const date = new Date().toISOString().slice(0, 10);
-  area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
+  // render header with Send Message button
+  area.innerHTML = `
+    <div class="report-header">
+      <div>
+        <h2>${cls.name} – Daily Performance Report</h2>
+        <span>Date: ${date}</span>
+      </div>
+      <button id="headerMsgBtn" style="padding:8px 16px; border:none; border-radius:8px; background:var(--secondary); color:white; cursor:pointer; font-weight:600;">✉ Send Message</button>
+    </div>
+  `;
+  document.getElementById("headerMsgBtn").onclick = ()=>{ msgModal.style.display="flex"; msgModal.dataset.classId = cls._id; };
 
-  try {
-    const [rRes, aRes] = await Promise.all([
+  try{
+    const [rRes,aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
     ]);
+    const routines = rRes.ok?await rRes.json():[];
+    const activities = aRes.ok?await aRes.json():[];
 
-    const routines = rRes.ok ? await rRes.json() : [];
-    const activities = aRes.ok ? await aRes.json() : [];
-
-    const kids = {};
-    const kidsByName = {};
-
-    cls.members.forEach(mid => {
-      const id = String(mid._id || mid);
-      const name = MEMBERS_MAP[id] || mid.name || "Unknown";
-      kids[id] = { id, name, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
-      kidsByName[name.toLowerCase()] = kids[id];
+    const kids = {}; const kidsByName = {};
+    (cls.members||[]).forEach(mid=>{
+      const id = String(mid._id||mid);
+      const name = MEMBERS_MAP[id]||mid.name||"Unknown";
+      kids[id]={id,name,totalTime:0,routineStars:0,activityStars:0,routines:[],activities:[]};
+      kidsByName[name.toLowerCase()]=kids[id];
     });
 
-    activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
+    activities.forEach(doc=>{
+      const kidId = String(doc.schoolMember||doc.schoolMemberId||doc.kidmember);
       const kid = kids[kidId]; if(!kid) return;
-      (doc.items||[]).forEach(it=>{
-        kid.totalTime += Number(it.timeMin||0);
-        kid.activityStars += Number(it.evaluation||0);
-        kid.activities.push(it);
-      });
+      (doc.items||[]).forEach(it=>{ kid.totalTime += Number(it.timeMin||0); kid.activityStars += Number(it.evaluation||0); kid.activities.push(it); });
     });
 
     routines.forEach(r=>{
-      const kidId = String(r.kidmember || r.kidId);
+      const kidId = String(r.kidmember||r.kidId);
       const nameKey = (r.kidName||"").toLowerCase();
-      const kid = kids[kidId] || kidsByName[nameKey];
-      if(!kid) return;
-      (r.items||[]).forEach(it=>{
-        if(it.done!==true) return;
-        kid.routineStars += 1;
-        kid.routines.push({ task: it.task, section: it.section });
-      });
+      const kid = kids[kidId]||kidsByName[nameKey]; if(!kid) return;
+      (r.items||[]).forEach(it=>{ if(it.done!==true) return; kid.routineStars+=1; kid.routines.push({task:it.task,section:it.section}); });
     });
-
-    // render
-    area.innerHTML = `<div class="report-header">
-      <h2>${cls.name} – Daily Performance Report</h2>
-      <span>Date: ${date}</span>
-    </div>`;
 
     Object.values(kids).forEach(k=>{
-      const totalStars = k.routineStars + k.activityStars;
-      const grouped = {};
-      k.routines.forEach(r=>{
-        if(!grouped[r.section]) grouped[r.section]=[];
-        grouped[r.section].push(r.task);
-      });
-
-      area.innerHTML += `<div class="child-card">
-        <div class="child-title">
-          <h3>🧒 ${k.name}</h3>
-          <span class="badge badge-primary">${totalStars} ⭐ Total</span>
-        </div>
-        <div class="kpi-grid">
-          <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
-          <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
-          <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
-        </div>
-        <div class="section-title">✅ Completed Routines</div>
-        ${k.routines.length ? Object.entries(grouped).map(([s,tasks])=>`<strong>${s.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`).join("") : `<p class="empty">No completed routines</p>`}
-        <div class="section-title">📊 Activities</div>
-        ${k.activities.length ? `<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${k.activities.map(a=>`<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note||"-"}</td></tr>`).join("")}</table>` : `<p class="empty">No activities recorded</p>`}
-      </div>`;
-    });
-
-  } catch(err){
-    console.error(err);
-    area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`;
-  }
-}
-
-/* =====================================
-   BUILD TREE
-===================================== */
-function buildTree() {
-  const tree = document.getElementById("classTree");
-  if (!tree) return;
-  tree.innerHTML = "";
-
-  TREE_CLASSES.forEach(cls => {
-    const classDiv = document.createElement("div");
-    classDiv.className = "class-branch";
-    classDiv.textContent = cls.name;
-
-    const childBox = document.createElement("div");
-    childBox.className = "child-items";
-    childBox.style.display = "none";
-
-    classDiv.onclick = async () => {
-      const open = childBox.style.display === "block";
-      childBox.style.display = open ? "none" : "block";
-      if (open) return;
-
-      childBox.innerHTML = `
-        <div class="tree-section">
-          <div class="tree-section-title">👩‍🏫 Teachers</div>
-          ${(cls.teachers || []).map(tid => `<div class="teacher-box">${TEACHERS_MAP[tid._id || tid]||"Teacher"}</div>`).join("")}
-        </div>
-        <div class="tree-section">
-          <div class="tree-section-title">🧒 Kids</div>
-          ${(cls.members || []).map(mid => `<div class="member-box" data-member="${mid._id||mid}">${MEMBERS_MAP[mid._id||mid]||"Kid"}</div>`).join("")}
+      const totalStars = k.routineStars+k.activityStars;
+      const grouped = {}; k.routines.forEach(r=>{ if(!grouped[r.section]) grouped[r.section]=[]; grouped[r.section].push(r.task); });
+      area.innerHTML += `
+        <div class="child-card">
+          <div class="child-title"><h3>🧒 ${k.name}</h3><span class="badge badge-primary">${totalStars} ⭐ Total</span></div>
+          <div class="kpi-grid">
+            <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
+            <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
+            <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
+          </div>
+          <div class="section-title">✅ Completed Routines</div>
+          ${k.routines.length?Object.entries(grouped).map(([s,tasks])=>`<strong>${s.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`).join(""):`<p class="empty">No completed routines</p>`}
+          <div class="section-title">📊 Activities</div>
+          ${k.activities.length?`<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${k.activities.map(a=>`<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note||"-"}</td></tr>`).join("")}</table>`:`<p class="empty">No activities recorded</p>`}
         </div>
       `;
+    });
 
+  } catch(err){ console.error(err); area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`; }
+}
+
+async function loadTreeClasses(){
+  const user = JSON.parse(localStorage.getItem("user")); if(!user) return;
+  try{
+    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+    const data = await res.json(); TREE_CLASSES = data.classes||[];
+    const memberIds = new Set(), teacherIds = new Set();
+    TREE_CLASSES.forEach(cls=>{ (cls.members||[]).forEach(id=>memberIds.add(String(id._id||id))); (cls.teachers||[]).forEach(id=>teacherIds.add(String(id._id||id))); });
+    if(memberIds.size){ const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`); const list = await r.json(); list.forEach(m=>MEMBERS_MAP[m._id]=m.name); }
+    if(teacherIds.size){ const r = await fetch(`${API}/teachers?ids=${[...teacherIds].join(",")}`); const list = await r.json(); list.forEach(t=>TEACHERS_MAP[t._id]=t.name); }
+    buildTree();
+  }catch(err){ console.error("❌ Tree load failed",err);}
+}
+
+function buildTree(){
+  const tree = document.getElementById("classTree"); if(!tree) return; tree.innerHTML="";
+  TREE_CLASSES.forEach(cls=>{
+    const classDiv = document.createElement("div"); classDiv.className="class-branch"; classDiv.textContent=cls.name;
+    const childBox = document.createElement("div"); childBox.className="child-items"; childBox.style.display="none";
+    classDiv.onclick = async()=>{
+      const open = childBox.style.display==="block";
+      childBox.style.display = open?"none":"block"; if(open) return;
+      childBox.innerHTML = `
+        <div class="tree-section"><div class="tree-section-title">👩‍🏫 Teachers</div>${(cls.teachers||[]).map(tid=>`<div class="teacher-box">${TEACHERS_MAP[tid._id||tid]||"Teacher"}</div>`).join("")}</div>
+        <div class="tree-section"><div class="tree-section-title">🧒 Kids</div>${(cls.members||[]).map(mid=>`<div class="member-box">${MEMBERS_MAP[mid._id||mid]||"Kid"}</div>`).join("")}</div>`;
       loadCombinedClassReport(cls);
     };
-
-    tree.appendChild(classDiv);
-    tree.appendChild(childBox);
+    tree.appendChild(classDiv); tree.appendChild(childBox);
   });
 }
 
-/* =====================================
-   LOAD TREE CLASSES
-===================================== */
-async function loadTreeClasses() {
+window.addEventListener("DOMContentLoaded",()=>{
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
-
-  try {
-    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-    const data = await res.json();
-    TREE_CLASSES = data.classes || [];
-
-    const memberIds = new Set();
-    const teacherIds = new Set();
-
-    TREE_CLASSES.forEach(cls => {
-      (cls.members || []).forEach(id => memberIds.add(String(id._id || id)));
-      (cls.teachers || []).forEach(id => teacherIds.add(String(id._id || id)));
-    });
-
-    if (memberIds.size) {
-      const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
-    }
-
-    if (teacherIds.size) {
-      const r = await fetch(`${API}/teachers?ids=${[...teacherIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(t => TEACHERS_MAP[t._id] = t.name);
-    }
-
-    buildTree();
-  } catch (err) {
-    console.error("❌ Tree load failed", err);
-  }
-}
-
-/* =====================================
-   MESSAGE MODAL LOGIC
-===================================== */
-const msgModal = document.getElementById("msgModal");
-document.getElementById("sendMsgBtn").onclick = () => { msgModal.style.display = "flex"; };
-function closeMessageModal() { msgModal.style.display = "none"; }
-
-document.getElementById("msgSendBtn").onclick = async () => {
-  const title = document.getElementById("msgTitle").value;
-  const message = document.getElementById("msgBody").value;
-  const target = document.getElementById("msgTarget").value;
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  const payload = {
-    senderId: user.id,
-    senderModel: "StaffMember",
-    title,
-    message
-  };
-  if(target==="class" && TREE_CLASSES.length>0) payload.classId = TREE_CLASSES[0]._id;
-  if(target==="nursery") payload.nurseryId = user.nurseryId;
-
-  try {
-    await fetch(`${API}/messages/send`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    alert("Message sent!");
-    closeMessageModal();
-  } catch(err){
-    console.error(err);
-    alert("Failed to send message");
-  }
-};
-
-/* =====================================
-   INIT
-===================================== */
-window.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
-  document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
+  document.getElementById("nurseryTitle").textContent = user?.nurseryName||"Happy Kids Nursery";
+  document.getElementById("userName").textContent = user?.name?`Hello, ${user.name}!`:"Hello, User";
   loadTreeClasses();
 });
 
-/* BACK + LOGOUT */
-document.getElementById("backBtn").onclick = () => window.location.href="sch-choose.html";
-document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
+document.getElementById("backBtn").onclick = ()=>window.location.href="sch-choose.html";
+document.getElementById("logoutBtn").onclick = ()=>{ localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
+
+// send message logic
+document.getElementById("sendMsgBtn").onclick = async()=>{
+  const title = document.getElementById("msgTitle").value.trim();
+  const message = document.getElementById("msgBody").value.trim();
+  const target = document.getElementById("msgTarget").value;
+  if(!title||!message){ alert("Please enter title and message"); return; }
+  const payload = { senderId:"adminId", senderModel:"StaffMember", title, message };
+  if(target==="class") payload.classId = msgModal.dataset.classId;
+  else payload.nurseryId = JSON.parse(localStorage.getItem("user")).nurseryId;
+  try{
+    await fetch(`${API}/msg/send`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
+    alert("Message sent successfully");
+    closeMessageModal();
+  }catch(err){ console.error(err); alert("Failed to send message"); }
+};
 </script>
 </body>
 </html>
