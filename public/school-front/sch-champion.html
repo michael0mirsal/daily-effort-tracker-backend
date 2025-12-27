@@ -243,11 +243,13 @@ body {
 </div>
 
 <script>
+// ================= CONFIG =================
 const API = "http://localhost:3000/api";
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
 let SELECTED_CLASS = null;
 
+// ================= LOAD CLASSES =================
 async function loadTreeClasses() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return alert("User not logged in");
@@ -281,6 +283,7 @@ async function loadTreeClasses() {
   }
 }
 
+// ================= BUILD CLASS LIST =================
 function buildClassList() {
   const area = document.getElementById("classList");
   area.innerHTML = "";
@@ -291,8 +294,7 @@ function buildClassList() {
     div.textContent = cls.name;
 
     div.onclick = () => {
-      document.querySelectorAll(".class-item")
-        .forEach(e => e.classList.remove("active"));
+      document.querySelectorAll(".class-item").forEach(e => e.classList.remove("active"));
       div.classList.add("active");
 
       SELECTED_CLASS = cls;
@@ -303,14 +305,22 @@ function buildClassList() {
   });
 }
 
+// ================= WEEKLY REPORT =================
 async function loadWeeklyClassReport(cls) {
-  const kids = {};
-  const schoolToFamily = {};
+  console.log("Class members:", cls.members);
 
+  const kids = {}; // familyId → kid object
+  const schoolToFamily = {}; // schoolMemberId → familyId
+
+  // ---------------- INIT KIDS ----------------
   (cls.members || []).forEach(m => {
     const schoolId = String(m._id);
-    const familyId = String(m.member || m.family);
-    if (!familyId) return; // skip if no familyId
+    // Use family ID if exists, fallback to member ID
+    const familyId = m.member || m.family || m._id;
+    if (!familyId) {
+      console.warn("Skipping member with no valid ID:", m);
+      return;
+    }
 
     schoolToFamily[schoolId] = familyId;
 
@@ -324,13 +334,14 @@ async function loadWeeklyClassReport(cls) {
     };
   });
 
-  // Week range Fri → Thu
+  // ---------------- WEEK RANGE (Fri → Thu) ----------------
   const today = new Date();
   const day = today.getDay();
   const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
+  // ---------------- LOOP 7 DAYS ----------------
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
@@ -371,33 +382,29 @@ async function loadWeeklyClassReport(cls) {
     for (const kid of Object.values(kids)) {
       if (!kid.id) continue;
 
+      // Family routines
       try {
         const famRoutineRes = await fetch(`${API}/routines/search?memberId=${kid.id}&date=${date}`);
+        if (!famRoutineRes.ok) console.warn("Routine fetch failed for", kid.name, kid.id, date);
         const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
-        familyRoutines.forEach(r => {
-          (r.items || []).forEach(it => {
-            if (it.done) kid.familyRoutineStars++;
-          });
-        });
+        familyRoutines.forEach(r => (r.items || []).forEach(it => { if(it.done) kid.familyRoutineStars++; }));
       } catch (err) {
-        console.warn("Failed to load family routines for", kid.name, err);
+        console.error("Failed to load family routines for", kid.name, kid.id, err);
       }
 
+      // Family activities
       try {
         const famActivityRes = await fetch(`${API}/efforts/searchByFamilyId?memberId=${kid.id}&date=${date}`);
+        if (!famActivityRes.ok) console.warn("Activity fetch failed for", kid.name, kid.id, date);
         const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
-        familyActivities.forEach(doc => {
-          (doc.items || []).forEach(it => {
-            kid.familyActivityStars += Number(it.evaluation || 0);
-          });
-        });
+        familyActivities.forEach(doc => (doc.items || []).forEach(it => kid.familyActivityStars += Number(it.evaluation || 0)));
       } catch (err) {
-        console.warn("Failed to load family activities for", kid.name, err);
+        console.error("Failed to load family activities for", kid.name, kid.id, err);
       }
     }
   }
 
-  // TOTAL STARS
+  // ---------------- TOTAL STARS ----------------
   Object.values(kids).forEach(k => {
     k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars;
   });
@@ -405,6 +412,7 @@ async function loadWeeklyClassReport(cls) {
   renderWeeklyReport(Object.values(kids), friday);
 }
 
+// ================= RENDER =================
 function renderWeeklyReport(kids, friday) {
   const champ = document.getElementById("weeklyChampion");
   const list = document.getElementById("weeklyKids");
@@ -457,8 +465,10 @@ function renderWeeklyReport(kids, friday) {
   });
 }
 
+// ================= INIT =================
 window.addEventListener("DOMContentLoaded", loadTreeClasses);
 </script>
+
 
 
 
