@@ -15,6 +15,36 @@ import crypto from "crypto";
 const router = express.Router();
 
 
+// for champion page:
+
+router.get("/sch-members/with-family", async (req, res) => {
+  try {
+    const { ids } = req.query;
+    if (!ids) return res.status(400).json({ error: "Missing ids" });
+
+    const idArray = ids
+      .split(",")
+      .filter(id => mongoose.isValidObjectId(id));
+
+    const members = await SchoolMember.find({ _id: { $in: idArray } })
+      .populate("member", "name")
+      .lean();
+
+    const result = members.map(m => ({
+      _id: m._id,                     // schoolMemberId
+      name: m.member?.name || "Unknown",
+      familyMemberId: m.member?._id   // ✅ required for champion
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error("❌ /sch-members/with-family error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+
 
 
 router.post("/sch-routine/save", async (req, res) => {
