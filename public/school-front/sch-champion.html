@@ -269,7 +269,7 @@ async function loadTreeClasses() {
     );
 
     if (schoolMemberIds.size) {
-      const r = await fetch(`${API}/sch-members?ids=${[...schoolMemberIds].join(",")}`);
+      const r = await fetch(`${API}/sch-members/with-family?ids=${[...schoolMemberIds].join(",")}`);
       const list = await r.json();
       console.log("School members fetched:", list);
 
