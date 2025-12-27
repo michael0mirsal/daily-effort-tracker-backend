@@ -58,17 +58,29 @@ app.get("/api/efforts/searchByFamilyId", async (req, res) => {
     const { memberId, date } = req.query;
 
     if (!memberId) {
-      return res.status(400).json({ error: "Missing required query parameter: memberId" });
+      return res.status(400).json({ error: "Missing memberId" });
     }
 
     const query = { member: memberId };
     if (date && date !== "all") query.date = date;
 
-    const results = await Task.find(query).populate("member");
-    res.json(results);
+    const tasks = await Task
+      .find(query)
+      .populate("member");
 
+    const result = tasks
+      .filter(t => t.member)
+      .map(t => ({
+        memberId: t.member._id,
+        name: t.member.name,
+        date: t.date,
+        items: t.items,
+        checkedData: t.checkedData
+      }));
+
+    res.json(result);
   } catch (err) {
-    console.error(err);
+    console.error("Effort search error:", err);
     res.status(500).json({ error: "Server error searching efforts" });
   }
 });
@@ -82,26 +94,29 @@ app.get("/api/routines/search", async (req, res) => {
     const { memberId, date } = req.query;
 
     if (!memberId) {
-      return res.status(400).json({ error: "Missing required query parameter: memberId" });
+      return res.status(400).json({ error: "Missing memberId" });
     }
 
     const query = { member: memberId };
     if (date && date !== "all") query.date = date;
 
-    const routines = await Routine.find(query).populate("member");
+    const routines = await Routine
+      .find(query)
+      .populate("member");
 
-    const result = routines.map(r => ({
-      memberId: r.member._id,
-      name: r.member.name,
-      date: r.date,
-      items: r.items,
-      checkedData: r.checkedData
-    }));
+    const result = routines
+      .filter(r => r.member) // ✅ CRITICAL
+      .map(r => ({
+        memberId: r.member._id,
+        name: r.member.name,
+        date: r.date,
+        items: r.items,
+        checkedData: r.checkedData
+      }));
 
     res.json(result);
-
   } catch (err) {
-    console.error(err);
+    console.error("Routine search error:", err);
     res.status(500).json({ error: "Server error searching routines" });
   }
 });
