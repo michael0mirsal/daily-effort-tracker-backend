@@ -262,20 +262,24 @@ async function loadTreeClasses() {
     const data = await res.json();
     TREE_CLASSES = data.classes || [];
 
-    const memberIds = new Set();
+    const schoolMemberIds = new Set();
     TREE_CLASSES.forEach(cls =>
-      (cls.members || []).forEach(m => memberIds.add(String(m._id || m)))
+      (cls.members || []).forEach(m => schoolMemberIds.add(String(m._id)))
     );
 
-    if (memberIds.size) {
-      const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
+    if (schoolMemberIds.size) {
+      const r = await fetch(
+        `${API}/sch-members?ids=${[...schoolMemberIds].join(",")}`
+      );
       const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+      list.forEach(m => {
+        MEMBERS_MAP[String(m.member)] = m.member?.name || m.name;
+      });
     }
 
     buildClassList();
   } catch (err) {
-    console.error(err);
+    console.error("Load classes error:", err);
   }
 }
 
@@ -290,8 +294,10 @@ function buildClassList() {
     div.textContent = cls.name;
 
     div.onclick = () => {
-      document.querySelectorAll(".class-item").forEach(e => e.classList.remove("active"));
+      document.querySelectorAll(".class-item")
+        .forEach(e => e.classList.remove("active"));
       div.classList.add("active");
+
       SELECTED_CLASS = cls;
       loadWeeklyClassReport(cls);
     };
@@ -302,43 +308,48 @@ function buildClassList() {
 
 // ================= WEEKLY REPORT =================
 async function loadWeeklyClassReport(cls) {
-  const kids = {};
-  const kidsByName = {};
 
-  // ---------------- INIT KIDS ----------------
+  // ------------------------------------------------
+  // 1️⃣ BUILD ID MAPS
+  // ------------------------------------------------
+  const kids = {};              // FamilyMember._id → kid object
+  const schoolToFamily = {};    // SchoolMember._id → FamilyMember._id
+
   (cls.members || []).forEach(m => {
-  const id = String(m.member || m._id); // ✅ FIX
-  const name = MEMBERS_MAP[id] || m.name || "Unknown";
-  const familyId = m.family || null;
+    const familyId = String(m.member);
+    const schoolId = String(m._id);
 
-  kids[id] = {
-    id, // family memberId
-    name,
-    familyId,
-    routineStars: 0,
-    activityStars: 0,
-    familyRoutineStars: 0,
-    familyActivityStars: 0
-  };
+    schoolToFamily[schoolId] = familyId;
 
-  kidsByName[name.toLowerCase()] = kids[id];
-});
+    kids[familyId] = {
+      id: familyId,
+      name: m.name || MEMBERS_MAP[familyId] || "Unknown",
+      familyId: m.family || null,
+      routineStars: 0,
+      activityStars: 0,
+      familyRoutineStars: 0,
+      familyActivityStars: 0
+    };
+  });
 
-
-  // ---------------- WEEK RANGE (Fri → Thu) ----------------
+  // ------------------------------------------------
+  // 2️⃣ WEEK RANGE (Fri → Thu)
+  // ------------------------------------------------
   const today = new Date();
   const day = today.getDay();
   const diff = day >= 5 ? day - 5 : day + 2;
   const friday = new Date(today);
   friday.setDate(today.getDate() - diff);
 
-  // ---------------- LOOP 7 DAYS ----------------
+  // ------------------------------------------------
+  // 3️⃣ LOOP 7 DAYS
+  // ------------------------------------------------
   for (let i = 0; i < 7; i++) {
     const d = new Date(friday);
     d.setDate(friday.getDate() + i);
     const date = d.toISOString().slice(0, 10);
 
-    // 🔹 FETCH SCHOOL DATA
+    // ---------- SCHOOL DATA ----------
     const [schRoutineRes, schActivityRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -347,10 +358,10 @@ async function loadWeeklyClassReport(cls) {
     const schoolRoutines = schRoutineRes.ok ? await schRoutineRes.json() : [];
     const schoolActivities = schActivityRes.ok ? await schActivityRes.json() : [];
 
-    // ---------------- SCHOOL ROUTINES ----------------
+    // ---------- SCHOOL ROUTINES ----------
     schoolRoutines.forEach(r => {
-      const kidId = String(r.kidmember || r.kidId);
-      const kid = kids[kidId] || kidsByName[(r.kidName || "").toLowerCase()];
+      const familyId = schoolToFamily[String(r.schoolMember)];
+      const kid = kids[familyId];
       if (!kid) return;
 
       (r.items || []).forEach(it => {
@@ -358,10 +369,10 @@ async function loadWeeklyClassReport(cls) {
       });
     });
 
-    // ---------------- SCHOOL ACTIVITIES ----------------
+    // ---------- SCHOOL ACTIVITIES ----------
     schoolActivities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.kidmember);
-      const kid = kids[kidId] || kidsByName[(doc.kidName || "").toLowerCase()];
+      const familyId = schoolToFamily[String(doc.schoolMember)];
+      const kid = kids[familyId];
       if (!kid) return;
 
       (doc.items || []).forEach(it => {
@@ -369,47 +380,42 @@ async function loadWeeklyClassReport(cls) {
       });
     });
 
-    // ---------------- FAMILY DATA PER KID ----------------
+    // ---------- FAMILY DATA ----------
     for (const kid of Object.values(kids)) {
-      if (!kid.familyId) continue; // skip if no familyId
 
-      // Fetch family routines
       // Family routines
-       const famRoutineRes = await fetch(
+      const famRoutineRes = await fetch(
         `${API}/routines/search?memberId=${kid.id}&date=${date}`
-            );
-      const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
+      );
+      const familyRoutines = famRoutineRes.ok
+        ? await famRoutineRes.json()
+        : [];
 
       familyRoutines.forEach(r => {
-  const kid = kids[String(r.memberId)];
-  if (!kid) return;
+        (r.items || []).forEach(it => {
+          if (it.done) kid.familyRoutineStars++;
+        });
+      });
 
-  (r.items || []).forEach(it => {
-    if (it.done) kid.familyRoutineStars++;
-  });
-});
-
-      
-
-      // Fetch family activities
+      // Family activities
       const famActivityRes = await fetch(
         `${API}/efforts/searchByFamilyId?memberId=${kid.id}&date=${date}`
-        );
-      const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
+      );
+      const familyActivities = famActivityRes.ok
+        ? await famActivityRes.json()
+        : [];
 
       familyActivities.forEach(doc => {
-  const kid = kids[String(doc.memberId)];
-  if (!kid) return;
-
-  (doc.items || []).forEach(it => {
-    kid.familyActivityStars += Number(it.evaluation || 0);
-  });
-});
-
+        (doc.items || []).forEach(it => {
+          kid.familyActivityStars += Number(it.evaluation || 0);
+        });
+      });
     }
   }
 
-  // ---------------- TOTAL STARS ----------------
+  // ------------------------------------------------
+  // 4️⃣ TOTAL STARS
+  // ------------------------------------------------
   Object.values(kids).forEach(k => {
     k.totalStars =
       k.routineStars +
@@ -432,42 +438,50 @@ function renderWeeklyReport(kids, friday) {
     return;
   }
 
-  kids.forEach(k => k.totalStars = k.routineStars + k.activityStars + k.familyRoutineStars + k.familyActivityStars);
   kids.sort((a, b) => b.totalStars - a.totalStars);
 
-  // Ranks & Medals
   let rank = 0, lastStars = null, medalRank = 0;
   kids.forEach((k, i) => {
-    if (k.totalStars !== lastStars) { rank = i + 1; medalRank++; }
+    if (k.totalStars !== lastStars) {
+      rank = i + 1;
+      medalRank++;
+    }
     lastStars = k.totalStars;
+
     let medal = "";
     if (medalRank === 1) medal = "🥇";
     else if (medalRank === 2) medal = "🥈";
     else if (medalRank === 3) medal = "🥉";
+
     k.rankDisplay = `${medal} Rank ${rank}`;
   });
 
   const winner = kids[0];
-  const end = new Date(friday); end.setDate(friday.getDate() + 6);
-  champ.innerHTML = `👑 Champion: <strong>${winner.name}</strong> ⭐ ${winner.totalStars} Stars<br>📅 ${friday.toDateString()} → ${end.toDateString()}`;
+  const end = new Date(friday);
+  end.setDate(friday.getDate() + 6);
 
-  // Render kids with progress bar
+  champ.innerHTML = `
+    👑 Champion: <strong>${winner.name}</strong>
+    ⭐ ${winner.totalStars} Stars<br>
+    📅 ${friday.toDateString()} → ${end.toDateString()}
+  `;
+
   kids.forEach((k, i) => {
-    const maxStars = Math.max(...kids.map(kk => kk.totalStars)) || 1;
+    const maxStars = kids[0].totalStars || 1;
     const barPercent = (k.totalStars / maxStars) * 100;
 
     list.innerHTML += `
-      <div class="kid-card ${i === 0 ? 'champion' : ''}">
+      <div class="kid-card ${i === 0 ? "champion" : ""}">
         <div class="rank">${k.rankDisplay}</div>
         <h3>🧒 ${k.name}</h3>
         <div class="progress-container">
           <div class="progress-bar" style="width:${barPercent}%"></div>
         </div>
         <div class="badge">${k.totalStars} ⭐ Total</div>
-        <p class="p-stats">Routine: ${k.routineStars}</p>
-        <p class="p-stats">Activities: ${k.activityStars}</p>
-        <p class="p-stats">Family Routine: ${k.familyRoutineStars}</p>
-        <p class="p-stats">Family Activity: ${k.familyActivityStars}</p>
+        <p>Routine: ${k.routineStars}</p>
+        <p>Activities: ${k.activityStars}</p>
+        <p>Family Routine: ${k.familyRoutineStars}</p>
+        <p>Family Activity: ${k.familyActivityStars}</p>
       </div>
     `;
   });
