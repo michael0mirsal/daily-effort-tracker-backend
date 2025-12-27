@@ -381,13 +381,15 @@ async function loadWeeklyClassReport(cls) {
       const familyRoutines = famRoutineRes.ok ? await famRoutineRes.json() : [];
 
       familyRoutines.forEach(r => {
-        const kidId = String(r.memberId);
-        const k = kids[kidId] || kidsByName[(r.name || "").toLowerCase()];
-        if (!k) return;
-        (r.items || []).forEach(it => {
-          if (it.done) k.familyRoutineStars++;
-        });
-      });
+  const kid = kids[String(r.memberId)];
+  if (!kid) return;
+
+  (r.items || []).forEach(it => {
+    if (it.done) kid.familyRoutineStars++;
+  });
+});
+
+      
 
       // Fetch family activities
       const famActivityRes = await fetch(
@@ -396,13 +398,14 @@ async function loadWeeklyClassReport(cls) {
       const familyActivities = famActivityRes.ok ? await famActivityRes.json() : [];
 
       familyActivities.forEach(doc => {
-        const kidId = String(doc.memberId);
-        const k = kids[kidId] || kidsByName[(doc.name || "").toLowerCase()];
-        if (!k) return;
-        (doc.items || []).forEach(it => {
-          k.familyActivityStars += Number(it.evaluation || 0);
-        });
-      });
+  const kid = kids[String(doc.memberId)];
+  if (!kid) return;
+
+  (doc.items || []).forEach(it => {
+    kid.familyActivityStars += Number(it.evaluation || 0);
+  });
+});
+
     }
   }
 
