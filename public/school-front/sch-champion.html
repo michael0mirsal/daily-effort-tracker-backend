@@ -315,24 +315,19 @@ async function loadWeeklyClassReport(cls) {
   // ---------------- INIT KIDS ----------------
   (cls.members || []).forEach(m => {
     const schoolId = String(m._id);
-    // Use family ID if exists, fallback to member ID
-    const familyId = m.member || m.family || m._id;
-    if (!familyId) {
-      console.warn("Skipping member with no valid ID:", m);
-      return;
-    }
-
+    const familyId = String(m._id); // fallback to _id
     schoolToFamily[schoolId] = familyId;
 
     kids[familyId] = {
       id: familyId,
-      name: m.name || MEMBERS_MAP[schoolId] || "Unknown",
+      name: MEMBERS_MAP[schoolId] || "Unknown",
       routineStars: 0,
       activityStars: 0,
       familyRoutineStars: 0,
       familyActivityStars: 0
     };
-  });
+});
+
 
   // ---------------- WEEK RANGE (Fri → Thu) ----------------
   const today = new Date();
