@@ -516,63 +516,92 @@ async function loadCombinedClassReport(cls) {
 async function sendMessage(payload) {
   try {
     const res = await fetch(`${API}/msg/send`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
-    if(!res.ok) throw new Error("Network response was not ok");
+    if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
     return await res.json();
-  } catch(err) {
+  } catch (err) {
     console.error("Send Message Error:", err);
     throw err;
   }
 }
+
+async function loadClassMembers(cls) {
+  const memberSelect = document.getElementById("memberSelect");
+  let membersList = (cls.members || []).map(m => {
+    if (typeof m === "string") return { _id: m, name: null };
+    return { _id: m._id, name: m.name || null };
+  });
+
+  const missingIds = membersList.filter(m => !m.name).map(m => m._id);
+  if (missingIds.length) {
+    try {
+      const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
+      const data = await res.json();
+      data.forEach(m => {
+        const idx = membersList.findIndex(mem => mem._id === m._id);
+        if (idx > -1) membersList[idx].name = m.name;
+      });
+    } catch (err) {
+      console.error("Failed fetching member names:", err);
+    }
+  }
+
+  memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name || "Unknown"}</option>`).join("");
+  return membersList;
+}
+
 
 /* ===================================== MESSAGE MODAL LOGIC ==================================== */
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   const memberSelect = document.getElementById("memberSelect");
 
-  document.getElementById("closeMsgBtn").onclick = () => { 
-    msgModal.style.display = "none"; 
-    delete msgModal.dataset.classId; 
+  document.getElementById("closeMsgBtn").onclick = () => {
+    msgModal.style.display = "none";
+    delete msgModal.dataset.classId;
   };
 
   document.getElementById("msgTarget").onchange = function() {
-    memberSelect.style.display = (this.value==="individual")?"block":"none";
+    memberSelect.style.display = this.value === "individual" ? "block" : "none";
   };
 
   document.getElementById("sendMsgBtn").onclick = async () => {
     const title = document.getElementById("msgTitle").value.trim();
     const message = document.getElementById("msgBody").value.trim();
     const target = document.getElementById("msgTarget").value;
-    if(!title||!message) return alert("Please fill title and message");
-    if(!msgModal.dataset.classId) return alert("Class not selected");
+    if (!title || !message) return alert("Please fill title and message");
+    if (!msgModal.dataset.classId) return alert("Class not selected");
 
     const user = JSON.parse(localStorage.getItem("user"));
-    const payload = { senderId:user?._id||"adminId", senderModel:"StaffMember", title, message, classId:msgModal.dataset.classId };
-
-    if(target==="individual") {
-      const memId = memberSelect.value;
-      if(!memId) return alert("Select a member");
-      payload.members = [memId];
-    } else payload.members="all";
+    const payload = {
+      senderId: user?._id || "adminId",
+      senderModel: "StaffMember",
+      title,
+      message,
+      classId: msgModal.dataset.classId,
+      members: target === "individual" ? [memberSelect.value] : "all"
+    };
 
     try {
       await sendMessage(payload);
       alert("Message sent successfully!");
-      msgModal.style.display="none";
-      document.getElementById("msgTitle").value="";
-      document.getElementById("msgBody").value="";
-      document.getElementById("msgTarget").value="class";
-      memberSelect.style.display="none";
-    } catch(err) { alert("Failed to send message"); }
+      msgModal.style.display = "none";
+      document.getElementById("msgTitle").value = "";
+      document.getElementById("msgBody").value = "";
+      document.getElementById("msgTarget").value = "class";
+      memberSelect.style.display = "none";
+    } catch (err) {
+      alert("Failed to send message: " + err.message);
+    }
   };
 }
 
+// -------------------- ATTACH BUTTON --------------------
 function attachMessageButton(cls) {
   const msgBtn = document.getElementById("headerMsgBtn");
-  const memberSelect = document.getElementById("memberSelect");
   if (!msgBtn) return;
 
   msgBtn.onclick = async () => {
@@ -580,39 +609,17 @@ function attachMessageButton(cls) {
     msgModal.style.display = "flex";
 
     try {
-      let membersList = (cls.members || []).map(m => {
-        if (typeof m === "string") return { _id: m, name: null }; // ID only, name unknown
-        return { _id: m._id, name: m.name || null };
-      });
-
-      // Fetch names for members with missing names
-      const missingIds = membersList.filter(m => !m.name).map(m => m._id);
-      if (missingIds.length) {
-        const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
-        const data = await res.json();
-        data.forEach(m => {
-          const idx = membersList.findIndex(mem => mem._id === m._id);
-          if (idx > -1) membersList[idx].name = m.name;
-        });
-      }
-
-      // Fill select
-      memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name || "Unknown"}</option>`).join("");
+      await loadClassMembers(cls);
     } catch (err) {
-      console.error("Failed to load members for modal:", err);
-      memberSelect.innerHTML = "<option disabled>Error loading members</option>";
+      console.error("Error loading members for modal:", err);
+      document.getElementById("memberSelect").innerHTML = "<option disabled>Error loading members</option>";
     }
   };
 }
 
-
-/* ===================================== INIT ==================================== */
+// -------------------- INIT --------------------
 window.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
-  document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
   initMessageModal();
-  loadTreeClasses();
 });
 
 /* BACK + LOGOUT */
