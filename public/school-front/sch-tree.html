@@ -114,233 +114,229 @@ tr:hover td { background: #eef4ff; }
 </div>
 
 <script>
-/* ===============================
-   CONFIG
-================================ */
 const API = "http://localhost:3000/api";
 
-/* ===============================
+/* ============================
    GLOBAL STATE
-================================ */
+============================ */
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
 let TEACHERS_MAP = {};
-let CURRENT_CLASS = null;
 
-/* ===============================
-   DOM READY
-================================ */
-document.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+console.log("[INIT] Script loaded");
 
-  document.getElementById("nurseryTitle").textContent =
-    user?.nurseryName || "Happy Kids Nursery";
+/* ============================
+   MESSAGE MODAL SAFE ACCESS
+============================ */
+const msgModal = document.getElementById("msgModal");
+const closeBtn = document.getElementById("closeMsgBtn");
+const sendBtn = document.getElementById("sendMsgBtn");
 
-  document.getElementById("userName").textContent =
-    user?.name ? `Hello, ${user.name}!` : "Hello, User";
+if (!msgModal) console.warn("[MSG] msgModal not found");
+if (!sendBtn) console.warn("[MSG] sendMsgBtn not found");
 
-  wireGlobalButtons();
-  loadTreeClasses();
-});
-
-/* ===============================
-   WIRE TOP BUTTONS
-================================ */
-function wireGlobalButtons() {
-  const backBtn = document.getElementById("backBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  if (backBtn) backBtn.onclick = () => window.location.href = "sch-choose.html";
-  if (logoutBtn) logoutBtn.onclick = logout;
+function openMessageModal(classId) {
+  if (!msgModal) return;
+  console.log("[MSG] Open modal for class:", classId);
+  msgModal.dataset.classId = classId;
+  msgModal.style.display = "flex";
 }
 
-function logout() {
-  localStorage.removeItem("user");
-  window.location.href = "sch-signin.html";
+function closeMessageModal() {
+  if (!msgModal) return;
+  console.log("[MSG] Close modal");
+  msgModal.style.display = "none";
 }
 
-/* ===============================
-   LOAD TREE DATA
-================================ */
-async function loadTreeClasses() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
-
-  try {
-    const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-    const data = await res.json();
-    TREE_CLASSES = data.classes || [];
-
-    const memberIds = new Set();
-    const teacherIds = new Set();
-
-    TREE_CLASSES.forEach(cls => {
-      (cls.members || []).forEach(id => memberIds.add(String(id._id || id)));
-      (cls.teachers || []).forEach(id => teacherIds.add(String(id._id || id)));
-    });
-
-    if (memberIds.size) {
-      const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
-    }
-
-    if (teacherIds.size) {
-      const r = await fetch(`${API}/teachers?ids=${[...teacherIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(t => TEACHERS_MAP[t._id] = t.name);
-    }
-
-    buildTree();
-  } catch (err) {
-    console.error("❌ Failed to load tree", err);
-  }
+if (closeBtn) {
+  closeBtn.onclick = closeMessageModal;
 }
 
-/* ===============================
-   BUILD TREE
-================================ */
-function buildTree() {
-  const tree = document.getElementById("classTree");
-  tree.innerHTML = "";
-
-  TREE_CLASSES.forEach(cls => {
-    const classDiv = document.createElement("div");
-    classDiv.className = "class-branch";
-    classDiv.textContent = cls.name;
-
-    const childBox = document.createElement("div");
-    childBox.className = "child-items";
-    childBox.style.display = "none";
-
-    classDiv.onclick = () => {
-      const open = childBox.style.display === "block";
-      childBox.style.display = open ? "none" : "block";
-      if (open) return;
-
-      CURRENT_CLASS = cls;
-
-      childBox.innerHTML = `
-        <div class="tree-section">
-          <div class="tree-section-title">👩‍🏫 Teachers</div>
-          ${(cls.teachers || []).map(t =>
-            `<div class="teacher-box">${TEACHERS_MAP[t._id || t] || "Teacher"}</div>`
-          ).join("")}
-        </div>
-        <div class="tree-section">
-          <div class="tree-section-title">🧒 Kids</div>
-          ${(cls.members || []).map(m =>
-            `<div class="member-box">${MEMBERS_MAP[m._id || m] || "Kid"}</div>`
-          ).join("")}
-        </div>
-      `;
-
-      loadCombinedClassReport(cls);
-    };
-
-    tree.appendChild(classDiv);
-    tree.appendChild(childBox);
-  });
-}
-
-/* ===============================
-   REPORT + HEADER MESSAGE BUTTON
-================================ */
+/* ============================
+   LOAD COMBINED REPORT
+============================ */
 async function loadCombinedClassReport(cls) {
+  console.log("[REPORT] Loading report for class:", cls.name);
+
   const area = document.getElementById("reportContent");
+  if (!area) {
+    console.error("[REPORT] reportContent not found");
+    return;
+  }
+
   const date = new Date().toISOString().slice(0, 10);
 
+  /* HEADER WITH MESSAGE BUTTON */
   area.innerHTML = `
-    <div class="report-header">
+    <div class="report-header" style="display:flex;justify-content:space-between;align-items:center;">
       <div>
         <h2>${cls.name} – Daily Performance Report</h2>
-        <div>Date: ${date}</div>
+        <span>Date: ${date}</span>
       </div>
       <button id="headerMsgBtn"
-        style="background:var(--secondary);color:white;
-               padding:8px 16px;border-radius:8px;border:none;
-               font-weight:600;cursor:pointer;">
+        style="padding:8px 16px;border:none;border-radius:8px;
+        background:var(--secondary);color:white;font-weight:600;cursor:pointer;">
         ✉ Send Message
       </button>
     </div>
   `;
 
-  // ✅ VERY IMPORTANT: attach handler AFTER render
-  document.getElementById("headerMsgBtn").onclick = openMessageModal;
-
-  // (report data loading continues as before — no changes)
-}
-
-/* ===============================
-   MESSAGE MODAL LOGIC
-================================ */
-const msgModal = document.getElementById("msgModal");
-
-function openMessageModal() {
-  console.log("📩 Open message modal");
-  if (!CURRENT_CLASS) {
-    alert("Please select a class first");
-    return;
-  }
-  msgModal.style.display = "flex";
-}
-
-function closeMessageModal() {
-  msgModal.style.display = "none";
-}
-
-document.getElementById("closeMsgBtn").onclick = closeMessageModal;
-
-/* ===============================
-   SEND MESSAGE
-================================ */
-document.getElementById("sendMsgBtn").onclick = async () => {
-  console.log("📨 Send message clicked");
-
-  const title = document.getElementById("msgTitle").value.trim();
-  const message = document.getElementById("msgBody").value.trim();
-  const target = document.getElementById("msgTarget").value;
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  if (!title || !message) {
-    alert("Please enter title and message");
-    return;
-  }
-
-  const payload = {
-    senderId: user.id || user._id,
-    senderModel: "StaffMember",
-    title,
-    message
-  };
-
-  if (target === "class") {
-    payload.classId = CURRENT_CLASS._id;
+  /* 🔒 SAFE BIND AFTER RENDER */
+  const headerBtn = document.getElementById("headerMsgBtn");
+  if (headerBtn) {
+    headerBtn.onclick = () => openMessageModal(cls._id);
+    console.log("[MSG] Header send button bound");
   } else {
-    payload.nurseryId = user.nurseryId;
+    console.error("[MSG] headerMsgBtn missing");
   }
-
-  console.log("📦 Sending payload:", payload);
 
   try {
-    const res = await fetch(`${API}/msg/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    const [rRes, aRes] = await Promise.all([
+      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+    ]);
+
+    const routines = rRes.ok ? await rRes.json() : [];
+    const activities = aRes.ok ? await aRes.json() : [];
+
+    console.log("[DATA] routines:", routines.length, "activities:", activities.length);
+
+    const kids = {};
+    const kidsByName = {};
+
+    (cls.members || []).forEach(mid => {
+      const id = String(mid._id || mid);
+      const name = MEMBERS_MAP[id] || "Unknown";
+      kids[id] = { id, name, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
+      kidsByName[name.toLowerCase()] = kids[id];
     });
 
-    if (!res.ok) throw new Error("Send failed");
+    activities.forEach(doc => {
+      const kid = kids[String(doc.schoolMember)];
+      if (!kid) return;
+      (doc.items || []).forEach(it => {
+        kid.totalTime += Number(it.timeMin || 0);
+        kid.activityStars += Number(it.evaluation || 0);
+        kid.activities.push(it);
+      });
+    });
 
-    alert("✅ Message sent successfully");
-    closeMessageModal();
-    document.getElementById("msgTitle").value = "";
-    document.getElementById("msgBody").value = "";
+    routines.forEach(r => {
+      const kid = kids[String(r.kidmember)] || kidsByName[(r.kidName || "").toLowerCase()];
+      if (!kid) return;
+      (r.items || []).forEach(it => {
+        if (it.done !== true) return;
+        kid.routineStars++;
+        kid.routines.push(it);
+      });
+    });
+
+    Object.values(kids).forEach(k => {
+      area.innerHTML += `
+        <div class="child-card">
+          <div class="child-title">
+            <h3>🧒 ${k.name}</h3>
+            <span class="badge badge-primary">${k.routineStars + k.activityStars} ⭐</span>
+          </div>
+        </div>
+      `;
+    });
 
   } catch (err) {
-    console.error("❌ Send message error", err);
-    alert("Failed to send message");
+    console.error("[REPORT] Error:", err);
+    area.innerHTML += `<p style="color:red;">Failed to load report</p>`;
   }
-};
+}
+
+/* ============================
+   TREE
+============================ */
+async function loadTreeClasses() {
+  console.log("[TREE] Loading classes");
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+  const data = await res.json();
+  TREE_CLASSES = data.classes || [];
+
+  console.log("[TREE] Classes:", TREE_CLASSES.length);
+
+  buildTree();
+}
+
+function buildTree() {
+  const tree = document.getElementById("classTree");
+  if (!tree) return;
+
+  tree.innerHTML = "";
+
+  TREE_CLASSES.forEach(cls => {
+    const div = document.createElement("div");
+    div.className = "class-branch";
+    div.textContent = cls.name;
+
+    div.onclick = () => {
+      console.log("[TREE] Class clicked:", cls.name);
+      loadCombinedClassReport(cls);
+    };
+
+    tree.appendChild(div);
+  });
+}
+
+/* ============================
+   SEND MESSAGE
+============================ */
+if (sendBtn) {
+  sendBtn.onclick = async () => {
+    console.log("[MSG] Send button clicked");
+
+    const title = document.getElementById("msgTitle")?.value.trim();
+    const message = document.getElementById("msgBody")?.value.trim();
+    const classId = msgModal?.dataset.classId;
+
+    if (!title || !message) {
+      alert("Title & message required");
+      return;
+    }
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const payload = {
+      senderId: user._id,
+      senderModel: "StaffMember",
+      title,
+      message,
+      classId
+    };
+
+    console.log("[MSG] Payload:", payload);
+
+    try {
+      await fetch(`${API}/msg/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      alert("Message sent");
+      closeMessageModal();
+    } catch (e) {
+      console.error("[MSG] Send failed", e);
+      alert("Failed to send");
+    }
+  };
+}
+
+/* ============================
+   INIT
+============================ */
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("[INIT] DOM ready");
+  loadTreeClasses();
+});
 </script>
 
 </body>
