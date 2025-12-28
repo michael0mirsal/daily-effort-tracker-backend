@@ -528,12 +528,17 @@ async function sendMessage(payload) {
 
 async function loadClassMembers(cls) {
   const memberSelect = document.getElementById("memberSelect");
+  memberSelect.disabled = true;
+  memberSelect.style.display = "block";
+  memberSelect.innerHTML = `<option>Loading members...</option>`;
+
   let membersList = (cls.members || []).map(m => {
     if (typeof m === "string") return { _id: m, name: null };
     return { _id: m._id, name: m.name || null };
   });
 
   const missingIds = membersList.filter(m => !m.name).map(m => m._id);
+
   if (missingIds.length) {
     try {
       const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
@@ -544,12 +549,41 @@ async function loadClassMembers(cls) {
       });
     } catch (err) {
       console.error("Failed fetching member names:", err);
+      memberSelect.innerHTML = "<option disabled>Error loading members</option>";
+      return [];
     }
   }
 
+  // If no members exist
+  if (!membersList.length) {
+    memberSelect.innerHTML = `<option disabled>No members in this class</option>`;
+    return [];
+  }
+
   memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name || "Unknown"}</option>`).join("");
+  memberSelect.disabled = false;
   return membersList;
 }
+
+function attachMessageButton(cls) {
+  const msgBtn = document.getElementById("headerMsgBtn");
+  if (!msgBtn) return;
+
+  msgBtn.onclick = async () => {
+    msgModal.dataset.classId = cls._id;
+    msgModal.style.display = "flex";
+
+    try {
+      await loadClassMembers(cls);
+    } catch (err) {
+      console.error("Error loading members for modal:", err);
+      const memberSelect = document.getElementById("memberSelect");
+      memberSelect.innerHTML = "<option disabled>Error loading members</option>";
+      memberSelect.style.display = "block";
+    }
+  };
+}
+
 
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
