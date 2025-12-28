@@ -4,85 +4,61 @@
 <meta charset="UTF-8">
 <title>Nursery Tree</title>
 <style>
-:root {
-  --primary: #2c3e50;
-  --secondary: #3498db;
-  --success: #27ae60;
-  --warning: #f39c12;
-  --danger: #e74c3c;
-  --bg: #f4f6f8;
-  --card: #ffffff;
-  --text: #2d3436;
-}
-
-/* RESET */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-
-/* ZOOM WRAPPER */
-#zoomWrapper { width: 100%; height: 100%; overflow: auto; padding: 20px; }
-/* SCALED CONTAINER */
-#container { transform: scale(0.75); transform-origin: top left; width: calc(100% / 0.75); min-height: calc(100% / 0.75); display: flex; height: auto; align-items: flex-start; }
-/* LEFT TREE PANEL */
-#treePanel { width: 320px; background: linear-gradient(180deg, #ffffff, #f1f3f6); border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
-#nurseryTitle { text-align: center; font-size: 1.4rem; margin-bottom: 20px; color: var(--primary); font-weight: 700; }
-.class-branch { background: #fff; border-radius: 14px; padding: 12px 15px; margin-bottom: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: 0.25s; }
-.class-branch:hover { background: #f0f6ff; transform: translateX(4px); }
-.child-items { margin: 8px 0 15px 15px; }
-.tree-section { margin-top: 10px; margin-left: 12px; border-left: 2px dashed #dcdde1; padding-left: 10px; }
-.tree-section-title { font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.teacher-box { background: #eef3ff; border-left: 4px solid var(--secondary); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; }
-.member-box { background: #f9fafb; border-left: 4px solid var(--success); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; }
-
-/* RIGHT REPORT PANEL */
-#rightPanel { flex: 1; padding: 25px; overflow-y: auto; }
-/* TOP BAR */
-#topButtons { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
-button { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; }
-#backBtn { background: #ecf0f1; }
-#logoutBtn { background: var(--danger); color: white; }
-/* REPORT */
-#classReport h2 { margin-top: 0; }
-.report-header { background: linear-gradient(135deg, var(--primary), #1f2d3a); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display:flex; justify-content:space-between; align-items:center; }
-.report-header h2 { margin: 0; font-size: 1.8rem; }
-.child-card { background: var(--card); border-radius: 18px; padding: 22px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-.child-title { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-.child-title h3 { margin: 0; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin: 20px 0; }
-.kpi { background: #f9fafb; border-radius: 14px; padding: 15px; text-align: center; }
-.kpi h4 { margin: 0; font-size: 0.9rem; color: #777; }
-.kpi strong { display: block; margin-top: 8px; font-size: 1.4rem; }
-.section-title { margin-top: 25px; margin-bottom: 10px; font-size: 1.1rem; color: var(--primary); border-left: 4px solid var(--secondary); padding-left: 10px; }
-table { width: 100%; border-collapse: collapse; margin-top: 12px; border: 1px solid #dcdde1; border-radius: 10px; overflow: hidden; }
-th { background: #f1f3f6; font-weight: 700; color: #2c3e50; border-bottom: 2px solid #dcdde1; }
-th, td { padding: 12px; border-right: 1px solid #e0e0e0; }
-tr td:last-child, tr th:last-child { border-right: none; }
-tr:nth-child(even) td { background: #fafbfc; }
-tr:hover td { background: #eef4ff; }
-.badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; color: white; }
-.badge-success { background: var(--success); }
-.badge-primary { background: var(--secondary); }
-.empty { color: #888; font-style: italic; }
-
-/* MESSAGE MODAL */
-#msgModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000; }
-#msgModalContent { background:white; padding:25px; border-radius:12px; width:400px; max-width:90%; display:flex; flex-direction:column; gap:10px; }
-#msgModalContent input, #msgModalContent textarea, #msgModalContent select { width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; }
-#msgModalContent button { padding:8px 12px; border:none; border-radius:8px; cursor:pointer; }
+:root { --primary:#2c3e50;--secondary:#3498db;--success:#27ae60;--warning:#f39c12;--danger:#e74c3c;--bg:#f4f6f8;--card:#ffffff;--text:#2d3436; }
+* { box-sizing: border-box; margin:0; padding:0;}
+html, body { height:100%; overflow:hidden; font-family:"Segoe UI", Roboto, Arial, sans-serif; background:var(--bg); color:var(--text);}
+#zoomWrapper { width:100%; height:100%; overflow:auto; padding:20px;}
+#container { transform:scale(0.75); transform-origin:top left; width:calc(100%/0.75); min-height:calc(100%/0.75); display:flex; align-items:flex-start;}
+#treePanel { width:320px; background:linear-gradient(180deg,#fff,#f1f3f6); border-right:1px solid #ddd; padding:20px; overflow-y:auto; box-shadow:4px 0 15px rgba(0,0,0,0.05);}
+#nurseryTitle { text-align:center; font-size:1.4rem; margin-bottom:20px; color:var(--primary); font-weight:700;}
+.class-branch { background:#fff; border-radius:14px; padding:12px 15px; margin-bottom:10px; font-weight:600; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.08); transition:0.25s;}
+.class-branch:hover { background:#f0f6ff; transform:translateX(4px);}
+.child-items { margin:8px 0 15px 15px;}
+.tree-section { margin-top:10px; margin-left:12px; border-left:2px dashed #dcdde1; padding-left:10px;}
+.tree-section-title { font-size:0.85rem; font-weight:700; color:#555; margin-bottom:6px; display:flex; align-items:center; gap:6px;}
+.teacher-box { background:#eef3ff; border-left:4px solid var(--secondary); border-radius:8px; padding:6px 10px; margin-bottom:4px;}
+.member-box { background:#f9fafb; border-left:4px solid var(--success); border-radius:8px; padding:6px 10px; margin-bottom:4px;}
+#rightPanel { flex:1; padding:25px; overflow-y:auto;}
+#topButtons { display:flex; justify-content:flex-end; gap:10px; margin-bottom:20px;}
+button { padding:10px 18px; border-radius:10px; border:none; cursor:pointer; font-weight:600;}
+#backBtn { background:#ecf0f1;}
+#logoutBtn { background:var(--danger); color:white;}
+#classReport h2 { margin-top:0;}
+.report-header { background:linear-gradient(135deg,var(--primary),#1f2d3a); color:white; padding:25px; border-radius:16px; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center;}
+.report-header h2 { margin:0; font-size:1.8rem;}
+.child-card { background:var(--card); border-radius:18px; padding:22px; margin-bottom:30px; box-shadow:0 8px 25px rgba(0,0,0,0.08);}
+.child-title { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px;}
+.child-title h3 { margin:0;}
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:15px; margin:20px 0;}
+.kpi { background:#f9fafb; border-radius:14px; padding:15px; text-align:center;}
+.kpi h4 { margin:0; font-size:0.9rem; color:#777;}
+.kpi strong { display:block; margin-top:8px; font-size:1.4rem;}
+.section-title { margin-top:25px; margin-bottom:10px; font-size:1.1rem; color:var(--primary); border-left:4px solid var(--secondary); padding-left:10px;}
+table { width:100%; border-collapse:collapse; margin-top:12px; border:1px solid #dcdde1; border-radius:10px; overflow:hidden;}
+th { background:#f1f3f6; font-weight:700; color:#2c3e50; border-bottom:2px solid #dcdde1;}
+th, td { padding:12px; border-right:1px solid #e0e0e0;}
+tr td:last-child, tr th:last-child { border-right:none;}
+tr:nth-child(even) td { background:#fafbfc;}
+tr:hover td { background:#eef4ff;}
+.badge { padding:4px 10px; border-radius:20px; font-size:0.8rem; color:white;}
+.badge-success { background:var(--success);}
+.badge-primary { background:var(--secondary);}
+.empty { color:#888; font-style:italic;}
+#msgModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;}
+#msgModalContent { background:white; padding:25px; border-radius:12px; width:400px; max-width:90%; display:flex; flex-direction:column; gap:10px;}
+#msgModalContent input, #msgModalContent textarea, #msgModalContent select { width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;}
+#msgModalContent button { padding:8px 12px; border:none; border-radius:8px; cursor:pointer;}
 </style>
 </head>
 <body>
 
 <div id="zoomWrapper">
   <div id="container">
-    <!-- LEFT TREE -->
     <div id="treePanel">
       <h2 id="nurseryTitle">Loading...</h2>
-      <p id="userName" style="text-align:center; margin-bottom: 15px; font-weight:600; color:var(--secondary);">Hello, User</p>
+      <p id="userName" style="text-align:center; margin-bottom:15px; font-weight:600; color:var(--secondary);">Hello, User</p>
       <div id="classTree"></div>
     </div>
-
-    <!-- RIGHT PANEL -->
     <div id="rightPanel">
       <div id="topButtons">
         <button id="backBtn">⬅ Back</button>
@@ -98,14 +74,11 @@ tr:hover td { background: #eef4ff; }
 
 <!-- MESSAGE MODAL -->
 <div id="msgModal">
-  <!-- MESSAGE MODAL -->
-<div id="msgModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-     background: rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; display:flex;">
-  <div id="msgModalContent" style="background:white; padding:20px; border-radius:8px; width:400px;">
+  <div id="msgModalContent">
     <h3>Send Message</h3>
-    <input type="text" id="msgTitle" placeholder="Title" style="width:100%; margin-bottom:10px;"/>
-    <textarea id="msgBody" placeholder="Message" style="width:100%; height:100px; margin-bottom:10px;"></textarea>
-    <select id="msgTarget" style="width:100%; margin-bottom:10px;">
+    <input type="text" id="msgTitle" placeholder="Title"/>
+    <textarea id="msgBody" placeholder="Message"></textarea>
+    <select id="msgTarget">
       <option value="class">All Class Members</option>
       <option value="nursery">All Nursery Members</option>
     </select>
@@ -118,342 +91,132 @@ tr:hover td { background: #eef4ff; }
 
 <script>
 const API = "http://localhost:3000/api";
+let TREE_CLASSES=[], MEMBERS_MAP={}, TEACHERS_MAP={}, msgModal=null;
 
-/* =====================================
-   GLOBAL STATE
-===================================== */
-let TREE_CLASSES = [];
-let MEMBERS_MAP = {};
-let TEACHERS_MAP = {};
-let msgModal = null;
+function getSelectedDate(){ const el=document.getElementById("filterDate"); return el?.value||new Date().toISOString().slice(0,10); }
 
-/* =====================================
-   DATE HELPER
-===================================== */
-function getSelectedDate() {
-  const el = document.getElementById("filterDate");
-  return el?.value || new Date().toISOString().slice(0, 10);
-}
-
-/* =====================================
-   INIT MESSAGE MODAL
-===================================== */
-function initMessageModal() {
+function initMessageModal(){
   msgModal = document.getElementById("msgModal");
-  if (!msgModal) {
-    console.error("Message modal element not found!");
-    return;
-  }
-
-  const closeBtn = document.getElementById("closeMsgBtn");
-  if (closeBtn) closeBtn.onclick = () => {
-    delete msgModal.dataset.classId;
-    msgModal.style.display = "none";
-  };
-
-  const sendBtn = document.getElementById("sendMsgBtn");
-  if (sendBtn) sendBtn.onclick = async () => {
-    const title = document.getElementById("msgTitle").value.trim();
-    const message = document.getElementById("msgBody").value.trim();
-    const target = document.getElementById("msgTarget").value;
-
-    if (!title || !message) return alert("Please fill title and message");
-
+  if(!msgModal){ console.error("Modal not found"); return; }
+  document.getElementById("closeMsgBtn").onclick = ()=>{ delete msgModal.dataset.classId; msgModal.style.display="none"; };
+  document.getElementById("sendMsgBtn").onclick = async ()=>{
+    const title=document.getElementById("msgTitle").value.trim();
+    const message=document.getElementById("msgBody").value.trim();
+    const target=document.getElementById("msgTarget").value;
+    if(!title||!message) return alert("Please fill title and message");
     const user = JSON.parse(localStorage.getItem("user"));
-    const payload = {
-      senderId: user?._id || "adminId",
-      senderModel: "StaffMember",
-      title,
-      message
-    };
-
-    if (target === "class") {
-      if (!msgModal.dataset.classId) return alert("Class ID missing!");
-      payload.classId = msgModal.dataset.classId;
-    } else {
-      payload.nurseryId = user?.nurseryId;
-    }
-
-    console.log("Sending message payload:", payload);
-
-    try {
-      const res = await fetch(`${API}/msg/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+    const payload={senderId:user?._id||"adminId", senderModel:"StaffMember", title, message};
+    if(target==="class"){ if(!msgModal.dataset.classId) return alert("Class ID missing"); payload.classId=msgModal.dataset.classId; }
+    else payload.nurseryId=user?.nurseryId;
+    try{
+      const res = await fetch(`${API}/msg/send`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)});
       const data = await res.json();
-      console.log("Server response:", data);
-      alert("Message sent successfully!");
-      msgModal.style.display = "none";
-
-      // clear inputs
-      document.getElementById("msgTitle").value = "";
-      document.getElementById("msgBody").value = "";
-      document.getElementById("msgTarget").value = "class";
+      alert("Message sent successfully!"); 
+      msgModal.style.display="none"; 
+      document.getElementById("msgTitle").value=""; document.getElementById("msgBody").value=""; document.getElementById("msgTarget").value="class";
       delete msgModal.dataset.classId;
-
-    } catch (err) {
-      console.error("Message send failed:", err);
-      alert("Failed to send message. Check console.");
-    }
+    }catch(err){ console.error(err); alert("Failed to send message."); }
   };
 }
 
-/* =====================================
-   ATTACH MESSAGE BUTTON
-===================================== */
-function attachMessageButton(cls) {
-  const msgBtn = document.getElementById("headerMsgBtn");
-  if (!msgBtn) return;
-
-  msgBtn.onclick = () => {
-    if (!msgModal) return alert("Message modal not initialized");
-    msgModal.dataset.classId = cls._id;
-    msgModal.style.display = "flex";
-    console.log("Opening message modal for class:", cls.name, cls._id);
-  };
+function attachMessageButton(cls){
+  const msgBtn=document.getElementById("headerMsgBtn");
+  if(!msgBtn) return;
+  msgBtn.onclick=()=>{ if(!msgModal) return alert("Modal not initialized"); msgModal.dataset.classId=cls._id; msgModal.style.display="flex"; };
 }
 
-/* =====================================
-   LOAD CLASSES + MEMBERS + TEACHERS
-===================================== */
-async function loadTreeClasses() {
+async function loadTreeClasses(){
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
-
-  try {
+  if(!user) return;
+  try{
     const res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
     const data = await res.json();
-    TREE_CLASSES = data.classes || [];
-
-    const memberIds = new Set();
-    const teacherIds = new Set();
-
-    TREE_CLASSES.forEach(cls => {
-      (cls.members || []).forEach(id => memberIds.add(String(id._id || id)));
-      (cls.teachers || []).forEach(id => teacherIds.add(String(id._id || id)));
-    });
-
-    if (memberIds.size) {
+    TREE_CLASSES = data.classes||[];
+    const memberIds=new Set(), teacherIds=new Set();
+    TREE_CLASSES.forEach(cls=>{ (cls.members||[]).forEach(id=>memberIds.add(String(id._id||id))); (cls.teachers||[]).forEach(id=>teacherIds.add(String(id._id||id))); });
+    if(memberIds.size){
       const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+      const list = await r.json(); list.forEach(m=>MEMBERS_MAP[m._id]=m.name);
     }
-
-    if (teacherIds.size) {
+    if(teacherIds.size){
       const r = await fetch(`${API}/teachers?ids=${[...teacherIds].join(",")}`);
-      const list = await r.json();
-      list.forEach(t => TEACHERS_MAP[t._id] = t.name);
+      const list = await r.json(); list.forEach(t=>TEACHERS_MAP[t._id]=t.name);
     }
-
     buildTree();
-  } catch (err) {
-    console.error("❌ Tree load failed", err);
-  }
+  }catch(err){ console.error("Tree load failed", err);}
 }
 
-/* =====================================
-   BUILD TREE
-===================================== */
-function buildTree() {
-  const tree = document.getElementById("classTree");
-  if (!tree) return;
-
-  tree.innerHTML = "";
-
-  TREE_CLASSES.forEach(cls => {
-    const classDiv = document.createElement("div");
-    classDiv.className = "class-branch";
-    classDiv.textContent = cls.name;
-
-    const childBox = document.createElement("div");
-    childBox.className = "child-items";
-    childBox.style.display = "none";
-
-    classDiv.onclick = () => {
-      const open = childBox.style.display === "block";
-      childBox.style.display = open ? "none" : "block";
-      if (open) return;
-
-      childBox.innerHTML = `
+function buildTree(){
+  const tree = document.getElementById("classTree"); if(!tree) return; tree.innerHTML="";
+  TREE_CLASSES.forEach(cls=>{
+    const classDiv=document.createElement("div"); classDiv.className="class-branch"; classDiv.textContent=cls.name;
+    const childBox=document.createElement("div"); childBox.className="child-items"; childBox.style.display="none";
+    classDiv.onclick=()=>{
+      const open=childBox.style.display==="block"; childBox.style.display=open?"none":"block"; if(open) return;
+      childBox.innerHTML=`
         <div class="tree-section">
           <div class="tree-section-title">👩‍🏫 Teachers</div>
-          ${(cls.teachers || []).map(t =>
-            `<div class="teacher-box">${TEACHERS_MAP[t._id || t] || "Teacher"}</div>`
-          ).join("")}
+          ${(cls.teachers||[]).map(t=>`<div class="teacher-box">${TEACHERS_MAP[t._id||t]||"Teacher"}</div>`).join("")}
         </div>
         <div class="tree-section">
           <div class="tree-section-title">🧒 Kids</div>
-          ${(cls.members || []).map(m =>
-            `<div class="member-box">${MEMBERS_MAP[m._id || m] || "Kid"}</div>`
-          ).join("")}
-        </div>
-      `;
-
+          ${(cls.members||[]).map(m=>`<div class="member-box">${MEMBERS_MAP[m._id||m]||"Kid"}</div>`).join("")}
+        </div>`;
       loadCombinedClassReport(cls);
     };
-
-    tree.appendChild(classDiv);
-    tree.appendChild(childBox);
+    tree.appendChild(classDiv); tree.appendChild(childBox);
   });
 }
 
-/* =====================================
-   COMBINED REPORT
-===================================== */
-async function loadCombinedClassReport(cls) {
-  const area = document.getElementById("reportContent");
-  if (!area) return;
-
-  const date = getSelectedDate();
-
-  // Header + message button
-  area.innerHTML = `
+async function loadCombinedClassReport(cls){
+  const area=document.getElementById("reportContent"); if(!area) return;
+  const date=getSelectedDate();
+  area.innerHTML=`
     <div class="report-header">
       <div>
         <h2>${cls.name} – Daily Performance Report</h2>
         <span>Date: ${date}</span>
       </div>
       <button id="headerMsgBtn">✉ Send Message</button>
-    </div>
-  `;
-
+    </div>`;
   attachMessageButton(cls);
-
-  try {
-    const [rRes, aRes] = await Promise.all([
-      fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
-      fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
-    ]);
-
-    const routines = rRes.ok ? await rRes.json() : [];
-    const activities = aRes.ok ? await aRes.json() : [];
-
-    const kids = {};
-    const kidsByName = {};
-
-    cls.members.forEach(mid => {
-      const id = String(mid._id || mid);
-      const name = MEMBERS_MAP[id] || mid.name || "Unknown";
-
-      kids[id] = {
-        id,
-        name,
-        totalTime: 0,
-        routineStars: 0,
-        activityStars: 0,
-        routines: [],
-        activities: []
-      };
-
-      kidsByName[name.toLowerCase()] = kids[id];
-    });
-
-    // Merge activities
-    activities.forEach(doc => {
-      const kid = kids[String(doc.schoolMember || doc.schoolMemberId)];
-      if (!kid) return;
-      (doc.items || []).forEach(it => {
-        kid.totalTime += Number(it.timeMin || 0);
-        kid.activityStars += Number(it.evaluation || 0);
-        kid.activities.push(it);
-      });
-    });
-
-    // Merge routines
-    routines.forEach(r => {
-      const kid = kids[String(r.kidmember)] || kidsByName[(r.kidName || "").toLowerCase()];
-      if (!kid) return;
-      (r.items || []).forEach(it => {
-        if (it.done === true) {
-          kid.routineStars++;
-          kid.routines.push(it);
-        }
-      });
-    });
-
-    // Render full report
-    Object.values(kids).forEach(k => {
-      const totalStars = k.routineStars + k.activityStars;
-      const grouped = {};
-      k.routines.forEach(r => {
-        if (!grouped[r.section]) grouped[r.section] = [];
-        grouped[r.section].push(r.task);
-      });
-
-      area.innerHTML += `
-        <div class="child-card">
-
-          <div class="child-title">
-            <h3>🧒 ${k.name}</h3>
-            <span class="badge badge-primary">${totalStars} ⭐ Total</span>
-          </div>
-
-          <div class="kpi-grid">
-            <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
-            <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
-            <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
-          </div>
-
-          <div class="section-title">✅ Completed Routines</div>
-          ${
-            k.routines.length
-              ? Object.entries(grouped).map(([section, tasks]) => `
-                  <strong>${section.toUpperCase()}</strong>
-                  <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>
-                `).join("")
-              : `<p class="empty">No completed routines</p>`
-          }
-
-          <div class="section-title">📊 Activities</div>
-          ${
-            k.activities.length
-              ? `<table>
-                  <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
-                  ${k.activities.map(a => `
-                    <tr>
-                      <td>${a.activity}</td>
-                      <td>${a.timeMin} min</td>
-                      <td><span class="badge badge-success">${a.evaluation} ⭐</span></td>
-                      <td>${a.note || "-"}</td>
-                    </tr>
-                  `).join("")}
-                </table>`
-              : `<p class="empty">No activities recorded</p>`
-          }
-
+  try{
+    const [rRes,aRes]=await Promise.all([fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`), fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)]);
+    const routines=rRes.ok?await rRes.json():[], activities=aRes.ok?await aRes.json():[];
+    const kids={}, kidsByName={};
+    cls.members.forEach(mid=>{ const id=String(mid._id||mid); const name=MEMBERS_MAP[id]||mid.name||"Unknown"; kids[id]={id,name,totalTime:0,routineStars:0,activityStars:0,routines:[],activities:[]}; kidsByName[name.toLowerCase()]=kids[id]; });
+    activities.forEach(doc=>{ const kid=kids[String(doc.schoolMember||doc.schoolMemberId)]; if(!kid) return; (doc.items||[]).forEach(it=>{ kid.totalTime+=Number(it.timeMin||0); kid.activityStars+=Number(it.evaluation||0); kid.activities.push(it); }); });
+    routines.forEach(r=>{ const kid=kids[String(r.kidmember)]||kidsByName[(r.kidName||"").toLowerCase()]; if(!kid) return; (r.items||[]).forEach(it=>{ if(it.done===true){ kid.routineStars++; kid.routines.push(it); } }); });
+    Object.values(kids).forEach(k=>{
+      const totalStars=k.routineStars+k.activityStars;
+      const grouped={}; k.routines.forEach(r=>{ if(!grouped[r.section]) grouped[r.section]=[]; grouped[r.section].push(r.task); });
+      area.innerHTML+=`
+      <div class="child-card">
+        <div class="child-title"><h3>🧒 ${k.name}</h3><span class="badge badge-primary">${totalStars} ⭐ Total</span></div>
+        <div class="kpi-grid">
+          <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
+          <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
+          <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
         </div>
-      `;
+        <div class="section-title">✅ Completed Routines</div>
+        ${k.routines.length?Object.entries(grouped).map(([sec,tasks])=>`<strong>${sec.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`).join(""):`<p class="empty">No completed routines</p>`}
+        <div class="section-title">📊 Activities</div>
+        ${k.activities.length?`<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${k.activities.map(a=>`<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note||"-"}</td></tr>`).join("")}</table>`:`<p class="empty">No activities recorded</p>`}
+      </div>`;
     });
-
-  } catch (err) {
-    console.error("Combined report error:", err);
-    area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
-  }
+  }catch(err){ console.error("Report error:", err); area.innerHTML+=`<p style="color:red;">Error loading report ⚠️</p>`;}
 }
 
-/* =====================================
-   INIT APP
-===================================== */
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded",()=>{
   const user = JSON.parse(localStorage.getItem("user"));
-  document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Nursery";
-  document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello";
-
-  initMessageModal();  // MUST run first
-  loadTreeClasses();   // Load tree safely
+  document.getElementById("nurseryTitle").textContent=user?.nurseryName||"Nursery";
+  document.getElementById("userName").textContent=user?.name?`Hello, ${user.name}!`:"Hello";
+  initMessageModal();
+  loadTreeClasses();
 });
 
-/* BACK + LOGOUT */
-document.getElementById("backBtn").onclick = () => location.href = "sch-choose.html";
-document.getElementById("logoutBtn").onclick = () => {
-  localStorage.removeItem("user");
-  location.href = "sch-signin.html";
-};
+document.getElementById("backBtn").onclick=()=>location.href="sch-choose.html";
+document.getElementById("logoutBtn").onclick=()=>{ localStorage.removeItem("user"); location.href="sch-signin.html"; };
 </script>
-
-
-
 </body>
 </html>
