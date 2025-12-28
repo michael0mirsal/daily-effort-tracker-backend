@@ -686,8 +686,8 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
 
   initMessageModal();
+  loadTreeClasses();
 });
-
 
 document.getElementById("backBtn").onclick = () => window.location.href="sch-choose.html";
 document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
