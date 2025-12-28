@@ -117,7 +117,7 @@ tr:hover td { background: #eef4ff; }
 const API = "http://localhost:3000/api";
 
 /* =====================================
-   GLOBAL STATE (SAFE)
+   GLOBAL STATE
 ===================================== */
 let TREE_CLASSES = [];
 let MEMBERS_MAP = {};
@@ -125,7 +125,7 @@ let TEACHERS_MAP = {};
 let msgModal = null;
 
 /* =====================================
-   DATE HELPER (ONE VERSION ONLY)
+   DATE HELPER
 ===================================== */
 function getSelectedDate() {
   const el = document.getElementById("filterDate");
@@ -171,7 +171,7 @@ async function loadTreeClasses() {
 }
 
 /* =====================================
-   BUILD TREE (OLD WORKING LOGIC)
+   BUILD TREE
 ===================================== */
 function buildTree() {
   const tree = document.getElementById("classTree");
@@ -218,7 +218,7 @@ function buildTree() {
 }
 
 /* =====================================
-   COMBINED REPORT (SAFE)
+   COMBINED REPORT (FULL OLD RENDER)
 ===================================== */
 async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
@@ -226,6 +226,7 @@ async function loadCombinedClassReport(cls) {
 
   const date = getSelectedDate();
 
+  // Header with message button
   area.innerHTML = `
     <div class="report-header">
       <div>
@@ -236,10 +237,11 @@ async function loadCombinedClassReport(cls) {
     </div>
   `;
 
-  // Message button (SAFE – optional)
+  // Safe message button
   const msgBtn = document.getElementById("headerMsgBtn");
-  if (msgBtn && msgModal) {
+  if (msgBtn) {
     msgBtn.onclick = () => {
+      if (!msgModal) return alert("Message modal not initialized");
       msgModal.dataset.classId = cls._id;
       msgModal.style.display = "flex";
     };
@@ -259,11 +261,22 @@ async function loadCombinedClassReport(cls) {
 
     cls.members.forEach(mid => {
       const id = String(mid._id || mid);
-      const name = MEMBERS_MAP[id] || "Unknown";
-      kids[id] = { id, name, totalTime: 0, routineStars: 0, activityStars: 0, routines: [], activities: [] };
+      const name = MEMBERS_MAP[id] || mid.name || "Unknown";
+
+      kids[id] = {
+        id,
+        name,
+        totalTime: 0,
+        routineStars: 0,
+        activityStars: 0,
+        routines: [],
+        activities: []
+      };
+
       kidsByName[name.toLowerCase()] = kids[id];
     });
 
+    // Merge activities
     activities.forEach(doc => {
       const kid = kids[String(doc.schoolMember || doc.schoolMemberId)];
       if (!kid) return;
@@ -274,6 +287,7 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
+    // Merge routines
     routines.forEach(r => {
       const kid = kids[String(r.kidmember)] || kidsByName[(r.kidName || "").toLowerCase()];
       if (!kid) return;
@@ -285,30 +299,100 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
+    // Render full report (old style)
     Object.values(kids).forEach(k => {
-      area.innerHTML += `<div class="child-card"><h3>${k.name}</h3></div>`;
+      const totalStars = k.routineStars + k.activityStars;
+
+      const grouped = {};
+      k.routines.forEach(r => {
+        if (!grouped[r.section]) grouped[r.section] = [];
+        grouped[r.section].push(r.task);
+      });
+
+      area.innerHTML += `
+        <div class="child-card">
+
+          <div class="child-title">
+            <h3>🧒 ${k.name}</h3>
+            <span class="badge badge-primary">${totalStars} ⭐ Total</span>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi">
+              <h4>Total Time</h4>
+              <strong>${k.totalTime} min</strong>
+            </div>
+            <div class="kpi">
+              <h4>Routine Stars</h4>
+              <strong>${k.routineStars} ⭐</strong>
+            </div>
+            <div class="kpi">
+              <h4>Activity Stars</h4>
+              <strong>${k.activityStars} ⭐</strong>
+            </div>
+          </div>
+
+          <div class="section-title">✅ Completed Routines</div>
+          ${
+            k.routines.length
+              ? Object.entries(grouped).map(([section, tasks]) => `
+                  <strong>${section.toUpperCase()}</strong>
+                  <ul>
+                    ${tasks.map(t => `<li>${t}</li>`).join("")}
+                  </ul>
+                `).join("")
+              : `<p class="empty">No completed routines</p>`
+          }
+
+          <div class="section-title">📊 Activities</div>
+          ${
+            k.activities.length
+              ? `
+                <table>
+                  <tr>
+                    <th>Activity</th>
+                    <th>Time</th>
+                    <th>Stars</th>
+                    <th>Note</th>
+                  </tr>
+                  ${k.activities.map(a => `
+                    <tr>
+                      <td>${a.activity}</td>
+                      <td>${a.timeMin} min</td>
+                      <td><span class="badge badge-success">${a.evaluation} ⭐</span></td>
+                      <td>${a.note || "-"}</td>
+                    </tr>
+                  `).join("")}
+                </table>
+              `
+              : `<p class="empty">No activities recorded</p>`
+          }
+
+        </div>
+      `;
     });
 
   } catch (err) {
     console.error("Report error:", err);
+    area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
   }
 }
 
 /* =====================================
-   MESSAGE MODAL (ISOLATED)
+   MESSAGE MODAL
 ===================================== */
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   if (!msgModal) return;
 
   const closeBtn = document.getElementById("closeMsgBtn");
-  closeBtn.onclick = () => {
+  if (closeBtn) closeBtn.onclick = () => {
     delete msgModal.dataset.classId;
     msgModal.style.display = "none";
   };
 
   const sendBtn = document.getElementById("sendMsgBtn");
-  sendBtn.onclick = async () => {
+  if (sendBtn) sendBtn.onclick = async () => {
     const title = document.getElementById("msgTitle").value.trim();
     const message = document.getElementById("msgBody").value.trim();
     const target = document.getElementById("msgTarget").value;
@@ -331,15 +415,15 @@ function initMessageModal() {
 }
 
 /* =====================================
-   INIT (ONE ENTRY POINT)
+   INIT
 ===================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Nursery";
   document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello";
 
-  initMessageModal();   // optional
-  loadTreeClasses();    // MUST NEVER FAIL
+  initMessageModal();   // Must run first
+  loadTreeClasses();    // Safe
 });
 
 /* BACK + LOGOUT */
@@ -349,6 +433,7 @@ document.getElementById("logoutBtn").onclick = () => {
   location.href = "sch-signin.html";
 };
 </script>
+
 
 </body>
 </html>
