@@ -136,6 +136,86 @@ function getSelectedDate() {
 }
 
 /* =====================================
+   INIT MESSAGE MODAL
+===================================== */
+function initMessageModal() {
+  msgModal = document.getElementById("msgModal");
+  if (!msgModal) {
+    console.error("Message modal element not found!");
+    return;
+  }
+
+  const closeBtn = document.getElementById("closeMsgBtn");
+  if (closeBtn) closeBtn.onclick = () => {
+    delete msgModal.dataset.classId;
+    msgModal.style.display = "none";
+  };
+
+  const sendBtn = document.getElementById("sendMsgBtn");
+  if (sendBtn) sendBtn.onclick = async () => {
+    const title = document.getElementById("msgTitle").value.trim();
+    const message = document.getElementById("msgBody").value.trim();
+    const target = document.getElementById("msgTarget").value;
+
+    if (!title || !message) return alert("Please fill title and message");
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    const payload = {
+      senderId: user?._id || "adminId",
+      senderModel: "StaffMember",
+      title,
+      message
+    };
+
+    if (target === "class") {
+      if (!msgModal.dataset.classId) return alert("Class ID missing!");
+      payload.classId = msgModal.dataset.classId;
+    } else {
+      payload.nurseryId = user?.nurseryId;
+    }
+
+    console.log("Sending message payload:", payload);
+
+    try {
+      const res = await fetch(`${API}/msg/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      console.log("Server response:", data);
+      alert("Message sent successfully!");
+      msgModal.style.display = "none";
+
+      // clear inputs
+      document.getElementById("msgTitle").value = "";
+      document.getElementById("msgBody").value = "";
+      document.getElementById("msgTarget").value = "class";
+      delete msgModal.dataset.classId;
+
+    } catch (err) {
+      console.error("Message send failed:", err);
+      alert("Failed to send message. Check console.");
+    }
+  };
+}
+
+/* =====================================
+   ATTACH MESSAGE BUTTON
+===================================== */
+function attachMessageButton(cls) {
+  const msgBtn = document.getElementById("headerMsgBtn");
+  if (!msgBtn) return;
+
+  msgBtn.onclick = () => {
+    if (!msgModal) return alert("Message modal not initialized");
+    msgModal.dataset.classId = cls._id;
+    msgModal.style.display = "flex";
+    console.log("Opening message modal for class:", cls.name, cls._id);
+  };
+}
+
+/* =====================================
    LOAD CLASSES + MEMBERS + TEACHERS
 ===================================== */
 async function loadTreeClasses() {
@@ -203,7 +283,6 @@ function buildTree() {
             `<div class="teacher-box">${TEACHERS_MAP[t._id || t] || "Teacher"}</div>`
           ).join("")}
         </div>
-
         <div class="tree-section">
           <div class="tree-section-title">🧒 Kids</div>
           ${(cls.members || []).map(m =>
@@ -221,7 +300,7 @@ function buildTree() {
 }
 
 /* =====================================
-   COMBINED REPORT (FULL OLD RENDER)
+   COMBINED REPORT
 ===================================== */
 async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
@@ -229,7 +308,7 @@ async function loadCombinedClassReport(cls) {
 
   const date = getSelectedDate();
 
-  // Header with message button
+  // Header + message button
   area.innerHTML = `
     <div class="report-header">
       <div>
@@ -240,15 +319,7 @@ async function loadCombinedClassReport(cls) {
     </div>
   `;
 
-  // Safe message button
-  const msgBtn = document.getElementById("headerMsgBtn");
-  if (msgBtn) {
-    msgBtn.onclick = () => {
-      if (!msgModal) return alert("Message modal not initialized");
-      msgModal.dataset.classId = cls._id;
-      msgModal.style.display = "flex";
-    };
-  }
+  attachMessageButton(cls);
 
   try {
     const [rRes, aRes] = await Promise.all([
@@ -302,10 +373,9 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // Render full report (old style)
+    // Render full report
     Object.values(kids).forEach(k => {
       const totalStars = k.routineStars + k.activityStars;
-
       const grouped = {};
       k.routines.forEach(r => {
         if (!grouped[r.section]) grouped[r.section] = [];
@@ -321,18 +391,9 @@ async function loadCombinedClassReport(cls) {
           </div>
 
           <div class="kpi-grid">
-            <div class="kpi">
-              <h4>Total Time</h4>
-              <strong>${k.totalTime} min</strong>
-            </div>
-            <div class="kpi">
-              <h4>Routine Stars</h4>
-              <strong>${k.routineStars} ⭐</strong>
-            </div>
-            <div class="kpi">
-              <h4>Activity Stars</h4>
-              <strong>${k.activityStars} ⭐</strong>
-            </div>
+            <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
+            <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
+            <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
           </div>
 
           <div class="section-title">✅ Completed Routines</div>
@@ -340,9 +401,7 @@ async function loadCombinedClassReport(cls) {
             k.routines.length
               ? Object.entries(grouped).map(([section, tasks]) => `
                   <strong>${section.toUpperCase()}</strong>
-                  <ul>
-                    ${tasks.map(t => `<li>${t}</li>`).join("")}
-                  </ul>
+                  <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>
                 `).join("")
               : `<p class="empty">No completed routines</p>`
           }
@@ -350,14 +409,8 @@ async function loadCombinedClassReport(cls) {
           <div class="section-title">📊 Activities</div>
           ${
             k.activities.length
-              ? `
-                <table>
-                  <tr>
-                    <th>Activity</th>
-                    <th>Time</th>
-                    <th>Stars</th>
-                    <th>Note</th>
-                  </tr>
+              ? `<table>
+                  <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
                   ${k.activities.map(a => `
                     <tr>
                       <td>${a.activity}</td>
@@ -366,8 +419,7 @@ async function loadCombinedClassReport(cls) {
                       <td>${a.note || "-"}</td>
                     </tr>
                   `).join("")}
-                </table>
-              `
+                </table>`
               : `<p class="empty">No activities recorded</p>`
           }
 
@@ -376,57 +428,21 @@ async function loadCombinedClassReport(cls) {
     });
 
   } catch (err) {
-    console.error("Report error:", err);
+    console.error("Combined report error:", err);
     area.innerHTML += `<p style="color:red;">Error loading report ⚠️</p>`;
   }
 }
 
 /* =====================================
-   MESSAGE MODAL
-===================================== */
-function initMessageModal() {
-  msgModal = document.getElementById("msgModal");
-  if (!msgModal) return;
-
-  const closeBtn = document.getElementById("closeMsgBtn");
-  if (closeBtn) closeBtn.onclick = () => {
-    delete msgModal.dataset.classId;
-    msgModal.style.display = "none";
-  };
-
-  const sendBtn = document.getElementById("sendMsgBtn");
-  if (sendBtn) sendBtn.onclick = async () => {
-    const title = document.getElementById("msgTitle").value.trim();
-    const message = document.getElementById("msgBody").value.trim();
-    const target = document.getElementById("msgTarget").value;
-
-    if (!title || !message) return alert("Missing fields");
-
-    const payload = { senderId: "adminId", senderModel: "StaffMember", title, message };
-
-    if (target === "class") payload.classId = msgModal.dataset.classId;
-    else payload.nurseryId = JSON.parse(localStorage.getItem("user")).nurseryId;
-
-    await fetch(`${API}/msg/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    msgModal.style.display = "none";
-  };
-}
-
-/* =====================================
-   INIT
+   INIT APP
 ===================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Nursery";
   document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello";
 
-  initMessageModal();   // Must run first
-  loadTreeClasses();    // Safe
+  initMessageModal();  // MUST run first
+  loadTreeClasses();   // Load tree safely
 });
 
 /* BACK + LOGOUT */
@@ -436,6 +452,7 @@ document.getElementById("logoutBtn").onclick = () => {
   location.href = "sch-signin.html";
 };
 </script>
+
 
 
 </body>
