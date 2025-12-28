@@ -512,16 +512,23 @@ async function loadCombinedClassReport(cls) {
   } catch (err) { console.error(err); area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`; }
 }
 
-/* ===================================== MESSAGE MODAL LOGIC ==================================== */
+/* ===================================== MESSAGE MODAL LOGIC WITH DEBUG ==================================== */
+
 async function sendMessage(payload) {
+  console.log("sendMessage called with payload:", payload);
   try {
     const res = await fetch(`${API}/msg/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
+
+    console.log("API response status:", res.status);
+
     if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
-    return await res.json();
+    const data = await res.json();
+    console.log("Message send success:", data);
+    return data;
   } catch (err) {
     console.error("Send Message Error:", err);
     throw err;
@@ -529,6 +536,8 @@ async function sendMessage(payload) {
 }
 
 async function loadClassMembers(cls) {
+  console.log("loadClassMembers called for class:", cls);
+
   const memberSelect = document.getElementById("memberSelect");
   if (!memberSelect) {
     console.error("Member select element not found!");
@@ -544,13 +553,19 @@ async function loadClassMembers(cls) {
     return { _id: m._id || m.id, name: m.name || null };
   });
 
+  console.log("Initial membersList:", membersList);
+
   const missingIds = membersList.filter(m => !m.name).map(m => m._id);
+  console.log("Members missing names:", missingIds);
 
   if (missingIds.length) {
     try {
       const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
+      console.log("Fetch members API status:", res.status);
       if (!res.ok) throw new Error(`Failed to fetch members: ${res.status}`);
       const data = await res.json();
+      console.log("Fetched members data:", data);
+
       data.forEach(m => {
         const idx = membersList.findIndex(mem => mem._id === (m._id || m.id));
         if (idx > -1) membersList[idx].name = m.name;
@@ -564,19 +579,29 @@ async function loadClassMembers(cls) {
 
   if (!membersList.length) {
     memberSelect.innerHTML = `<option disabled>No members in this class</option>`;
+    console.warn("No members in class", cls);
     return [];
   }
 
   memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name || "Unknown"}</option>`).join("");
   memberSelect.disabled = false;
+  console.log("Members loaded into select:", membersList);
+
   return membersList;
 }
 
 function attachMessageButton(cls) {
   const msgBtn = document.getElementById("headerMsgBtn");
-  if (!msgBtn) return;
+  if (!msgBtn) {
+    console.error("headerMsgBtn not found!");
+    return;
+  }
 
   msgBtn.onclick = async () => {
+    debugger; // <-- execution will pause here if DevTools open
+
+    console.log("Send Message button clicked for class:", cls._id);
+
     if (!msgModal) {
       console.error("Message modal not initialized!");
       return;
@@ -587,6 +612,7 @@ function attachMessageButton(cls) {
 
     try {
       await loadClassMembers(cls);
+      console.log("Class members loaded successfully for modal.");
     } catch (err) {
       console.error("Error loading members for modal:", err);
       const memberSelect = document.getElementById("memberSelect");
@@ -595,24 +621,33 @@ function attachMessageButton(cls) {
   };
 }
 
-/* ===================================== INIT ==================================== */
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
+  if (!msgModal) console.error("msgModal not found!");
+
   const memberSelect = document.getElementById("memberSelect");
+  if (!memberSelect) console.error("memberSelect not found!");
 
   document.getElementById("closeMsgBtn").onclick = () => {
+    console.log("Closing message modal");
     msgModal.style.display = "none";
     delete msgModal.dataset.classId;
   };
 
   document.getElementById("msgTarget").onchange = function() {
+    console.log("Message target changed:", this.value);
     memberSelect.style.display = this.value === "individual" ? "block" : "none";
   };
 
   document.getElementById("sendMsgBtn").onclick = async () => {
+    console.log("SendMsgBtn clicked");
+
     const title = document.getElementById("msgTitle").value.trim();
     const message = document.getElementById("msgBody").value.trim();
     const target = document.getElementById("msgTarget").value;
+
+    console.log({ title, message, target });
+
     if (!title || !message) return alert("Please fill title and message");
     if (!msgModal.dataset.classId) return alert("Class not selected");
 
@@ -626,28 +661,33 @@ function initMessageModal() {
       members: target === "individual" ? [memberSelect.value] : "all"
     };
 
+    console.log("Payload ready to send:", payload);
+
     try {
       await sendMessage(payload);
       alert("Message sent successfully!");
+      console.log("Message sent successfully");
       msgModal.style.display = "none";
       document.getElementById("msgTitle").value = "";
       document.getElementById("msgBody").value = "";
       document.getElementById("msgTarget").value = "class";
       memberSelect.style.display = "none";
     } catch (err) {
+      console.error("Failed to send message:", err);
       alert("Failed to send message: " + err.message);
     }
   };
 }
 
+// Initialize modal on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
   document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
 
   initMessageModal();
-  loadTreeClasses();
 });
+
 
 document.getElementById("backBtn").onclick = () => window.location.href="sch-choose.html";
 document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
