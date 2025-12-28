@@ -573,29 +573,38 @@ function initMessageModal() {
 function attachMessageButton(cls) {
   const msgBtn = document.getElementById("headerMsgBtn");
   const memberSelect = document.getElementById("memberSelect");
-  if(!msgBtn) return;
+  if (!msgBtn) return;
 
   msgBtn.onclick = async () => {
     msgModal.dataset.classId = cls._id;
     msgModal.style.display = "flex";
 
     try {
-      let membersList = cls.members || [];
-      // fetch missing names if necessary
-      const needFetch = membersList.some(m => typeof m === "string");
-      if(needFetch) {
-        const ids = membersList.map(m => typeof m==="string"? m : m._id);
-        const res = await fetch(`${API}/sch-members?ids=${ids.join(",")}`);
+      let membersList = (cls.members || []).map(m => {
+        if (typeof m === "string") return { _id: m, name: null }; // ID only, name unknown
+        return { _id: m._id, name: m.name || null };
+      });
+
+      // Fetch names for members with missing names
+      const missingIds = membersList.filter(m => !m.name).map(m => m._id);
+      if (missingIds.length) {
+        const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
         const data = await res.json();
-        membersList = data.map(m => ({_id:m._id, name:m.name}));
+        data.forEach(m => {
+          const idx = membersList.findIndex(mem => mem._id === m._id);
+          if (idx > -1) membersList[idx].name = m.name;
+        });
       }
-      memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name}</option>`).join("");
-    } catch(err) {
+
+      // Fill select
+      memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name || "Unknown"}</option>`).join("");
+    } catch (err) {
       console.error("Failed to load members for modal:", err);
       memberSelect.innerHTML = "<option disabled>Error loading members</option>";
     }
   };
 }
+
 
 /* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
