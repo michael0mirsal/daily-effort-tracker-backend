@@ -231,19 +231,52 @@ document.getElementById("backBtn").onclick = ()=>window.location.href="sch-choos
 document.getElementById("logoutBtn").onclick = ()=>{ localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
 
 // send message logic
-document.getElementById("sendMsgBtn").onclick = async()=>{
+document.getElementById("sendMsgBtn").onclick = async () => {
+  console.log("📨 Send message clicked");
+
   const title = document.getElementById("msgTitle").value.trim();
   const message = document.getElementById("msgBody").value.trim();
   const target = document.getElementById("msgTarget").value;
-  if(!title||!message){ alert("Please enter title and message"); return; }
-  const payload = { senderId:"adminId", senderModel:"StaffMember", title, message };
-  if(target==="class") payload.classId = msgModal.dataset.classId;
-  else payload.nurseryId = JSON.parse(localStorage.getItem("user")).nurseryId;
-  try{
-    await fetch(`${API}/msg/send`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
-    alert("Message sent successfully");
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!title || !message) {
+    alert("Please enter title and message");
+    return;
+  }
+
+  const payload = {
+    senderId: user.id || user._id,
+    senderModel: "StaffMember",
+    title,
+    message
+  };
+
+  if (target === "class") {
+    payload.classId = CURRENT_CLASS._id;
+  } else {
+    payload.nurseryId = user.nurseryId;
+  }
+
+  console.log("📦 Sending payload:", payload);
+
+  try {
+    const res = await fetch(`${API}/msg/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("Send failed");
+
+    alert("✅ Message sent successfully");
     closeMessageModal();
-  }catch(err){ console.error(err); alert("Failed to send message"); }
+    document.getElementById("msgTitle").value = "";
+    document.getElementById("msgBody").value = "";
+
+  } catch (err) {
+    console.error("❌ Send message error", err);
+    alert("Failed to send message");
+  }
 };
 </script>
 </body>
