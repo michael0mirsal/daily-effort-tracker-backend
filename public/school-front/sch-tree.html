@@ -351,9 +351,7 @@ let msgModal = null;
 /* ===================================== DATE HELPER ==================================== */
 function getSelectedDate() {
   const el = document.getElementById("filterDate");
-  return el && el.value
-    ? el.value
-    : new Date().toISOString().slice(0, 10);
+  return el && el.value ? el.value : new Date().toISOString().slice(0, 10);
 }
 
 /* ===================================== LOAD CLASSES + MEMBERS + TEACHERS ==================================== */
@@ -512,7 +510,7 @@ async function loadCombinedClassReport(cls) {
   } catch (err) { console.error(err); area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`; }
 }
 
-/* ===================================== STANDALONE ASYNC MESSAGE FUNCTION ==================================== */
+/* ===================================== MESSAGE MODAL LOGIC ==================================== */
 async function sendMessage(payload) {
   try {
     const res = await fetch(`${API}/msg/send`, {
@@ -553,8 +551,6 @@ async function loadClassMembers(cls) {
   return membersList;
 }
 
-
-/* ===================================== MESSAGE MODAL LOGIC ==================================== */
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   const memberSelect = document.getElementById("memberSelect");
@@ -599,7 +595,6 @@ function initMessageModal() {
   };
 }
 
-// -------------------- ATTACH BUTTON --------------------
 function attachMessageButton(cls) {
   const msgBtn = document.getElementById("headerMsgBtn");
   if (!msgBtn) return;
@@ -617,9 +612,14 @@ function attachMessageButton(cls) {
   };
 }
 
-// -------------------- INIT --------------------
+/* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
+  document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
+
   initMessageModal();
+  loadTreeClasses();
 });
 
 /* BACK + LOGOUT */
