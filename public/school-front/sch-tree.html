@@ -220,14 +220,19 @@ function buildTree(){
   });
 }
 
+
+
 window.addEventListener("DOMContentLoaded", () => {
   const sendBtn = document.getElementById("sendMsgBtn");
-  if (!sendBtn) return;
+  if (!sendBtn) {
+    console.error("sendMsgBtn not found");
+    return;
+  }
 
   sendBtn.onclick = async () => {
-    const title = document.getElementById("msgTitle").value.trim();
-    const message = document.getElementById("msgBody").value.trim();
-    const target = document.getElementById("msgTarget").value;
+    const title = msgTitle.value.trim();
+    const message = msgBody.value.trim();
+    const target = msgTarget.value;
 
     if (!title || !message) {
       alert("Please enter title and message");
@@ -243,7 +248,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (target === "class") {
       if (!msgModal.dataset.classId) {
-        alert("No class selected");
+        alert("Please select a class first");
         return;
       }
       payload.classId = msgModal.dataset.classId;
@@ -258,12 +263,15 @@ window.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
 
       alert("Message sent successfully");
       closeMessageModal();
     } catch (err) {
-      console.error(err);
+      console.error("Send failed:", err);
       alert("Failed to send message");
     }
   };
@@ -273,39 +281,6 @@ window.addEventListener("DOMContentLoaded", () => {
 document.getElementById("backBtn").onclick = ()=>window.location.href="sch-choose.html";
 document.getElementById("logoutBtn").onclick = ()=>{ localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
 
-// send message logic
-document.getElementById("sendMsgBtn").onclick = async()=>{
-  const title = document.getElementById("msgTitle").value.trim();
-  const message = document.getElementById("msgBody").value.trim();
-  const target = document.getElementById("msgTarget").value;
-  if(!title||!message){ alert("Please enter title and message"); return; }
-  const payload = { senderId:"adminId", senderModel:"StaffMember", title, message };
-  if (target === "class") {
-  if (!msgModal.dataset.classId) {
-    alert("No class selected");
-    return;
-  }
-  payload.classId = msgModal.dataset.classId;
-}
-
-  else payload.nurseryId = JSON.parse(localStorage.getItem("user")).nurseryId;
-  try{
-    const res = await fetch(`${API}/msg/send`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload)
-});
-
-if (!res.ok) {
-  const err = await res.text();
-  console.error("Send failed:", err);
-  alert("Message failed to send");
-  return;
-}
-
-    closeMessageModal();
-  }catch(err){ console.error(err); alert("Failed to send message"); }
-};
 </script>
 </body>
 </html>
