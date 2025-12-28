@@ -10,7 +10,7 @@ import Member from "../models/Member.js";
 import SchRoutine from "../models/sch-Routine.js"; 
 import schActivity from "../models/sch-activity.js"; 
 import crypto from "crypto";
-import msgRoutes from "./routes/msg.routes.js";
+import Msg from "../models/GeneralMSG.js"; 
 
 
 const router = express.Router();
