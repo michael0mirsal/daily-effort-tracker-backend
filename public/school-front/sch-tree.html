@@ -432,14 +432,19 @@ function buildTree() {
 }
 
 /* ===================================== COMBINED REPORT ==================================== */
+/* ===================================== COMBINED REPORT WITH SEND MESSAGE FIX ==================================== */
 async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
-  if (!area) return;
+  if (!area) {
+    console.error("Report content area not found!");
+    return;
+  }
 
   const date = getSelectedDate();
-  area.innerHTML = `<h2>${cls.name} – Combined Report (${date})</h2>`;
+  area.innerHTML = `<h2>${cls.name} – Loading Report (${date})...</h2>`;
 
   try {
+    // Fetch routines and activities concurrently
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -448,19 +453,22 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
+    // Prepare kids mapping for report display
     const kids = {};
     const kidsByName = {};
 
-    cls.members.forEach(mid => {
-      const id = String(mid._id || mid.id || mid);
+    (cls.members || []).forEach(mid => {
+      const id = String(mid._id || mid);
       const name = MEMBERS_MAP[id] || mid.name || "Unknown";
-      kids[id] = { id, name, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
+      kids[id] = { id, name, totalTime: 0, routineStars: 0, activityStars: 0, routines: [], activities: [] };
       kidsByName[name.toLowerCase()] = kids[id];
     });
 
+    // Populate activity data
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-      const kid = kids[kidId]; if(!kid) return;
+      const kid = kids[kidId];
+      if (!kid) return;
       (doc.items || []).forEach(it => {
         kid.totalTime += Number(it.timeMin || 0);
         kid.activityStars += Number(it.evaluation || 0);
@@ -468,14 +476,19 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
+    // Populate routine data
     routines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
       const nameKey = (r.kidName || "").toLowerCase();
       const kid = kids[kidId] || kidsByName[nameKey];
       if (!kid) return;
-      (r.items || []).forEach(it => { if(it.done===true) { kid.routineStars+=1; kid.routines.push({task:it.task, section:it.section}); } });
+      (r.items || []).forEach(it => {
+        if (it.done === true) kid.routineStars += 1;
+        if (it.done === true) kid.routines.push({ task: it.task, section: it.section });
+      });
     });
 
+    // Build report header with Send Message button
     area.innerHTML = `
       <div class="report-header">
         <h2>${cls.name} – Daily Performance Report</h2>
@@ -483,12 +496,17 @@ async function loadCombinedClassReport(cls) {
       </div>
     `;
 
+    // Attach Send Message button AFTER it exists
     attachMessageButton(cls);
 
+    // Render each kid's report
     Object.values(kids).forEach(k => {
       const totalStars = k.routineStars + k.activityStars;
       const grouped = {};
-      k.routines.forEach(r => { if(!grouped[r.section]) grouped[r.section]=[]; grouped[r.section].push(r.task); });
+      k.routines.forEach(r => {
+        if (!grouped[r.section]) grouped[r.section] = [];
+        grouped[r.section].push(r.task);
+      });
 
       area.innerHTML += `
         <div class="child-card">
@@ -502,16 +520,61 @@ async function loadCombinedClassReport(cls) {
             <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
           </div>
           <div class="section-title">✅ Completed Routines</div>
-          ${k.routines.length ? Object.entries(grouped).map(([section, tasks])=>`<strong>${section.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`).join("") : `<p class="empty">No completed routines</p>`}
+          ${k.routines.length
+            ? Object.entries(grouped).map(([section, tasks]) =>
+                `<strong>${section.toUpperCase()}</strong><ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
+              ).join("")
+            : `<p class="empty">No completed routines</p>`}
           <div class="section-title">📊 Activities</div>
-          ${k.activities.length ? `<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${k.activities.map(a=>`<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note||"-"}</td></tr>`).join("")}</table>` : `<p class="empty">No activities recorded</p>`}
+          ${k.activities.length
+            ? `<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${
+                k.activities.map(a =>
+                  `<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note || "-"}</td></tr>`
+                ).join("")
+              }</table>`
+            : `<p class="empty">No activities recorded</p>`}
         </div>
       `;
     });
 
-  } catch (err) { console.error(err); area.innerHTML += `<p style="color:red;">Error loading combined report ⚠️</p>`; }
+  } catch (err) {
+    console.error("Error loading combined report:", err);
+    area.innerHTML = `<p style="color:red;">Error loading report ⚠️</p>`;
+  }
 }
 
+/* ===================================== ATTACH MESSAGE BUTTON ==================================== */
+function attachMessageButton(cls) {
+  const msgBtn = document.getElementById("headerMsgBtn");
+  if (!msgBtn) {
+    console.error("Send Message button not found in DOM!");
+    return;
+  }
+
+  console.log("Attaching Send Message button for class:", cls._id);
+
+  msgBtn.onclick = async () => {
+    debugger; // pauses execution for debugging
+    console.log("Send Message button clicked for class:", cls._id);
+
+    if (!msgModal) {
+      console.error("Message modal not initialized!");
+      return;
+    }
+
+    msgModal.dataset.classId = cls._id;
+    msgModal.style.display = "flex";
+
+    try {
+      await loadClassMembers(cls);
+      console.log("Class members loaded in modal");
+    } catch (err) {
+      console.error("Error loading members for modal:", err);
+      const memberSelect = document.getElementById("memberSelect");
+      if (memberSelect) memberSelect.innerHTML = "<option disabled>Error loading members</option>";
+    }
+  };
+}
 /* ===================================== MESSAGE MODAL LOGIC WITH DEBUG ==================================== */
 
 async function sendMessage(payload) {
@@ -595,36 +658,6 @@ async function loadClassMembers(cls) {
 }
 
 
-function attachMessageButton(cls) {
-  const msgBtn = document.getElementById("headerMsgBtn");
-  if (!msgBtn) {
-    console.error("headerMsgBtn not found!");
-    return;
-  }
-
-  msgBtn.onclick = async () => {
-    debugger; // <-- execution will pause here if DevTools open
-
-    console.log("Send Message button clicked for class:", cls._id);
-
-    if (!msgModal) {
-      console.error("Message modal not initialized!");
-      return;
-    }
-
-    msgModal.dataset.classId = cls._id;
-    msgModal.style.display = "flex";
-
-    try {
-      await loadClassMembers(cls);
-      console.log("Class members loaded successfully for modal.");
-    } catch (err) {
-      console.error("Error loading members for modal:", err);
-      const memberSelect = document.getElementById("memberSelect");
-      if (memberSelect) memberSelect.innerHTML = "<option disabled>Error loading members</option>";
-    }
-  };
-}
 
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
