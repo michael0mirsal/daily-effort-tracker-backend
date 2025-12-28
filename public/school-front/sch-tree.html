@@ -535,9 +535,8 @@ async function sendMessage(payload) {
   }
 }
 
+/* ===================================== LOAD CLASS MEMBERS FOR MESSAGE MODAL ==================================== */
 async function loadClassMembers(cls) {
-  console.log("loadClassMembers called for class:", cls);
-
   const memberSelect = document.getElementById("memberSelect");
   if (!memberSelect) {
     console.error("Member select element not found!");
@@ -548,30 +547,34 @@ async function loadClassMembers(cls) {
   memberSelect.style.display = "block";
   memberSelect.innerHTML = `<option>Loading members...</option>`;
 
+  // Build members list with only _id and name
   let membersList = (cls.members || []).map(m => {
-    if (typeof m === "string") return { _id: m, name: null };
-    return { _id: m._id || m.id, name: m.name || null };
+    if (typeof m === "string") {
+      const id = String(m);
+      return { _id: id, name: MEMBERS_MAP[id] || "Unknown" };
+    }
+    const id = String(m._id || m.id);
+    return { _id: id, name: MEMBERS_MAP[id] || m.name || "Unknown" };
   });
 
-  console.log("Initial membersList:", membersList);
+  console.log("Initial membersList for modal:", membersList);
 
-  const missingIds = membersList.filter(m => !m.name).map(m => m._id);
-  console.log("Members missing names:", missingIds);
-
+  // Check for missing names and fetch from API if needed
+  const missingIds = membersList.filter(m => !m.name || m.name === "Unknown").map(m => m._id);
   if (missingIds.length) {
     try {
       const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
-      console.log("Fetch members API status:", res.status);
       if (!res.ok) throw new Error(`Failed to fetch members: ${res.status}`);
       const data = await res.json();
-      console.log("Fetched members data:", data);
+      console.log("Fetched member data:", data);
 
+      // Update names in membersList
       data.forEach(m => {
         const idx = membersList.findIndex(mem => mem._id === (m._id || m.id));
-        if (idx > -1) membersList[idx].name = m.name;
+        if (idx > -1) membersList[idx].name = m.name || "Unknown";
       });
     } catch (err) {
-      console.error("Failed fetching member names:", err);
+      console.error("Failed fetching member names for modal:", err);
       memberSelect.innerHTML = "<option disabled>Error loading members</option>";
       return [];
     }
@@ -583,12 +586,14 @@ async function loadClassMembers(cls) {
     return [];
   }
 
-  memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name || "Unknown"}</option>`).join("");
+  // Populate the select dropdown
+  memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name}</option>`).join("");
   memberSelect.disabled = false;
-  console.log("Members loaded into select:", membersList);
+  console.log("Members loaded into modal select:", membersList);
 
   return membersList;
 }
+
 
 function attachMessageButton(cls) {
   const msgBtn = document.getElementById("headerMsgBtn");
