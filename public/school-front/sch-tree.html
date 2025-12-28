@@ -368,20 +368,22 @@ async function loadTreeClasses() {
     const teacherIds = new Set();
 
     TREE_CLASSES.forEach(cls => {
-      (cls.members || []).forEach(id => memberIds.add(String(id._id || id)));
-      (cls.teachers || []).forEach(id => teacherIds.add(String(id._id || id)));
+      (cls.members || []).forEach(id => memberIds.add(String((id._id || id.id || id))));
+      (cls.teachers || []).forEach(id => teacherIds.add(String((id._id || id.id || id))));
     });
 
     if (memberIds.size) {
       const r = await fetch(`${API}/sch-members?ids=${[...memberIds].join(",")}`);
+      if (!r.ok) throw new Error(`Failed to fetch members: ${r.status}`);
       const list = await r.json();
-      list.forEach(m => MEMBERS_MAP[m._id] = m.name);
+      list.forEach(m => MEMBERS_MAP[m._id || m.id] = m.name);
     }
 
     if (teacherIds.size) {
       const r = await fetch(`${API}/teachers?ids=${[...teacherIds].join(",")}`);
+      if (!r.ok) throw new Error(`Failed to fetch teachers: ${r.status}`);
       const list = await r.json();
-      list.forEach(t => TEACHERS_MAP[t._id] = t.name);
+      list.forEach(t => TEACHERS_MAP[t._id || t.id] = t.name);
     }
 
     buildTree();
@@ -413,11 +415,11 @@ function buildTree() {
       childBox.innerHTML = `
         <div class="tree-section">
           <div class="tree-section-title">👩‍🏫 Teachers</div>
-          ${(cls.teachers || []).map(tid => `<div class="teacher-box">${TEACHERS_MAP[tid._id || tid] || "Teacher"}</div>`).join("")}
+          ${(cls.teachers || []).map(tid => `<div class="teacher-box">${TEACHERS_MAP[tid._id || tid.id || tid] || "Teacher"}</div>`).join("")}
         </div>
         <div class="tree-section">
           <div class="tree-section-title">🧒 Kids</div>
-          ${(cls.members || []).map(mid => `<div class="member-box">${MEMBERS_MAP[mid._id || mid] || "Kid"}</div>`).join("")}
+          ${(cls.members || []).map(mid => `<div class="member-box">${MEMBERS_MAP[mid._id || mid.id || mid] || "Kid"}</div>`).join("")}
         </div>
       `;
 
@@ -450,7 +452,7 @@ async function loadCombinedClassReport(cls) {
     const kidsByName = {};
 
     cls.members.forEach(mid => {
-      const id = String(mid._id || mid);
+      const id = String(mid._id || mid.id || mid);
       const name = MEMBERS_MAP[id] || mid.name || "Unknown";
       kids[id] = { id, name, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
       kidsByName[name.toLowerCase()] = kids[id];
@@ -528,13 +530,18 @@ async function sendMessage(payload) {
 
 async function loadClassMembers(cls) {
   const memberSelect = document.getElementById("memberSelect");
+  if (!memberSelect) {
+    console.error("Member select element not found!");
+    return [];
+  }
+
   memberSelect.disabled = true;
   memberSelect.style.display = "block";
   memberSelect.innerHTML = `<option>Loading members...</option>`;
 
   let membersList = (cls.members || []).map(m => {
     if (typeof m === "string") return { _id: m, name: null };
-    return { _id: m._id, name: m.name || null };
+    return { _id: m._id || m.id, name: m.name || null };
   });
 
   const missingIds = membersList.filter(m => !m.name).map(m => m._id);
@@ -542,9 +549,10 @@ async function loadClassMembers(cls) {
   if (missingIds.length) {
     try {
       const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
+      if (!res.ok) throw new Error(`Failed to fetch members: ${res.status}`);
       const data = await res.json();
       data.forEach(m => {
-        const idx = membersList.findIndex(mem => mem._id === m._id);
+        const idx = membersList.findIndex(mem => mem._id === (m._id || m.id));
         if (idx > -1) membersList[idx].name = m.name;
       });
     } catch (err) {
@@ -554,7 +562,6 @@ async function loadClassMembers(cls) {
     }
   }
 
-  // If no members exist
   if (!membersList.length) {
     memberSelect.innerHTML = `<option disabled>No members in this class</option>`;
     return [];
@@ -570,6 +577,11 @@ function attachMessageButton(cls) {
   if (!msgBtn) return;
 
   msgBtn.onclick = async () => {
+    if (!msgModal) {
+      console.error("Message modal not initialized!");
+      return;
+    }
+
     msgModal.dataset.classId = cls._id;
     msgModal.style.display = "flex";
 
@@ -578,13 +590,12 @@ function attachMessageButton(cls) {
     } catch (err) {
       console.error("Error loading members for modal:", err);
       const memberSelect = document.getElementById("memberSelect");
-      memberSelect.innerHTML = "<option disabled>Error loading members</option>";
-      memberSelect.style.display = "block";
+      if (memberSelect) memberSelect.innerHTML = "<option disabled>Error loading members</option>";
     }
   };
 }
 
-
+/* ===================================== INIT ==================================== */
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   const memberSelect = document.getElementById("memberSelect");
@@ -629,24 +640,6 @@ function initMessageModal() {
   };
 }
 
-function attachMessageButton(cls) {
-  const msgBtn = document.getElementById("headerMsgBtn");
-  if (!msgBtn) return;
-
-  msgBtn.onclick = async () => {
-    msgModal.dataset.classId = cls._id;
-    msgModal.style.display = "flex";
-
-    try {
-      await loadClassMembers(cls);
-    } catch (err) {
-      console.error("Error loading members for modal:", err);
-      document.getElementById("memberSelect").innerHTML = "<option disabled>Error loading members</option>";
-    }
-  };
-}
-
-/* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
@@ -656,9 +649,9 @@ window.addEventListener("DOMContentLoaded", () => {
   loadTreeClasses();
 });
 
-/* BACK + LOGOUT */
 document.getElementById("backBtn").onclick = () => window.location.href="sch-choose.html";
 document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
 </script>
+
 </body>
 </html>
