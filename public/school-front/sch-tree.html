@@ -632,9 +632,21 @@ async function loadMailboxMessages(classId, type = "inbox") {
   view.innerHTML = `<div class="mailbox-empty">Select a message to read</div>`;
 
   try {
-    // Add type parameter to API: inbox or sent
-    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}&type=${type}`);
-    const messages = await res.json();
+    // Fetch all class messages for the selected date
+    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}`);
+    let messages = await res.json();
+
+    // Filter based on tab type
+    if (type === "inbox") {
+      messages = messages.filter(msg =>
+        msg.receivers?.some(r => r.id === CURRENT_USER_ID)
+      );
+    } else if (type === "sent") {
+      messages = messages.filter(msg =>
+        msg.sender === CURRENT_USER_ID &&
+        ["Supervisor", "Teacher", "Manager"].includes(msg.senderModel)
+      );
+    }
 
     list.innerHTML = "";
 
@@ -644,7 +656,7 @@ async function loadMailboxMessages(classId, type = "inbox") {
     }
 
     messages.forEach(msg => {
-      const unread = type === "inbox" && msg.receivers?.some(r => !r.read);
+      const unread = type === "inbox" && msg.receivers?.some(r => r.id === CURRENT_USER_ID && !r.read);
 
       const li = document.createElement("li");
       li.className = `msg-row ${unread ? "unread" : ""}`;
