@@ -72,4 +72,32 @@ router.post("/send", async (req, res) => {
   }
 });
 
+router.get("/list", async (req, res) => {
+  try {
+    const { classId, date } = req.query;
+    if (!classId) return res.status(400).json({ error: "classId is required" });
+
+    // Date range
+    const start = new Date(date || new Date());
+    start.setHours(0,0,0,0);
+    const end = new Date(start);
+    end.setHours(23,59,59,999);
+
+    // Find messages for this class and date
+    const messages = await Msg.find({
+      classId,
+      sentAt: { $gte: start, $lte: end }
+    })
+    .populate("sender") // populate sender for display
+    .sort({ sentAt: 1 })
+    .lean();
+
+    res.json(messages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 export default router;
