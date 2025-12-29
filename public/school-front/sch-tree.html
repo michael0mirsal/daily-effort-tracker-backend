@@ -646,38 +646,43 @@ function initMessageModal() {
     memberSelect.style.display = this.value === "individual" ? "block" : "none";
   };
 
-  document.getElementById("sendMsgBtn").onclick = async () => {
-    const title = document.getElementById("msgTitle").value.trim();
-    const message = document.getElementById("msgBody").value.trim();
-    const target = document.getElementById("msgTarget").value;
+document.getElementById("sendMsgBtn").onclick = async () => {
+  const title = document.getElementById("msgTitle").value.trim();
+  const message = document.getElementById("msgBody").value.trim();
+  const target = document.getElementById("msgTarget").value;
 
-    if (!title || !message) return alert("Please fill title and message");
-    if (!msgModal.dataset.classId) return alert("Class not selected");
+  if (!title || !message) return alert("Please fill title and message");
+  if (!msgModal.dataset.classId) return alert("Class not selected");
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    const payload = {
-      senderId: user?._id || "adminId",
-      senderModel: "StaffMember",
-      title,
-      message,
-      classId: msgModal.dataset.classId,
-      members: target === "individual" ? [memberSelect.value] : "all"
-    };
+  const user = JSON.parse(localStorage.getItem("user"));
 
-    try {
-      await sendMessage(payload);
-      alert("Message sent successfully!");
-      msgModal.style.display = "none";
-      document.getElementById("msgTitle").value = "";
-      document.getElementById("msgBody").value = "";
-      document.getElementById("msgTarget").value = "class";
-      memberSelect.style.display = "none";
-    } catch (err) {
-      alert("Failed to send message: " + err.message);
-    }
+  // Payload for backend
+  const payload = {
+    senderId: user?._id || "adminId",
+    senderModel: "StaffMember",
+    title,
+    message,
+    classId: msgModal.dataset.classId
   };
-}
 
+  // If individual member selected
+  if (target === "individual") {
+    payload.targetSchoolMember = memberSelect.value;
+  }
+
+  try {
+    await sendMessage(payload);
+    alert("Message sent successfully!");
+    msgModal.style.display = "none";
+    document.getElementById("msgTitle").value = "";
+    document.getElementById("msgBody").value = "";
+    document.getElementById("msgTarget").value = "class";
+    memberSelect.style.display = "none";
+  } catch (err) {
+    alert("Failed to send message: " + err.message);
+  }
+};
+}
 /* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
