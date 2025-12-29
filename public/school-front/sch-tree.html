@@ -660,9 +660,6 @@ function initMessageModal() {
   const memberSelect = document.getElementById("memberSelect");
   const familySelect = document.getElementById("familySelect");
   const prioritySelect = document.getElementById("prioritySelect");
-  const msgTarget = document.getElementById("msgTarget");
-  const msgTitle = document.getElementById("msgTitle");
-  const msgBody = document.getElementById("msgBody");
 
   // Close modal
   document.getElementById("closeMsgBtn").onclick = () => {
@@ -673,29 +670,39 @@ function initMessageModal() {
     delete msgModal.dataset.nurseryId;
   };
 
-  // Target type change
-  msgTarget.onchange = function() {
-    memberSelect.style.display = this.value === "individual" ? "block" : "none";
-    familySelect.style.display = this.value === "family" ? "block" : "none";
+  // Show/hide member or family selects
+  document.getElementById("msgTarget").onchange = function() {
+    const val = this.value;
+    memberSelect.style.display = val === "individual" ? "block" : "none";
+    familySelect.style.display = val === "family" ? "block" : "none";
   };
 
   // Send message
   document.getElementById("sendMsgBtn").onclick = async () => {
-    const title = msgTitle.value.trim();
-    const message = msgBody.value.trim();
-    const target = msgTarget.value;
+    const title = document.getElementById("msgTitle").value.trim();
+    const message = document.getElementById("msgBody").value.trim();
+    const target = document.getElementById("msgTarget").value;
     const priority = prioritySelect.value || "normal";
 
     if (!title || !message) return alert("Please fill title and message");
+
     if (!msgModal.dataset.classId && !msgModal.dataset.nurseryId) {
       return alert("Class or nursery must be selected!");
     }
 
+    // Get logged-in user
     const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return alert("User not found!");
+
+    // Determine senderModel dynamically
+    let senderModel = user.role; // role must match schema enum: "Supervisor", "Teacher", "Manager"
+    if (!["Supervisor", "Teacher", "Manager"].includes(senderModel)) {
+      senderModel = "Teacher"; // fallback if role mismatches
+    }
 
     const payload = {
       sender: user._id,
-      senderModel: "StaffMember",
+      senderModel,
       title,
       message,
       priority,
@@ -703,6 +710,7 @@ function initMessageModal() {
       nurseryId: msgModal.dataset.nurseryId || undefined
     };
 
+    // Handle targets
     if (target === "individual") {
       payload.targetSchoolMember = memberSelect.value;
     } else if (target === "family") {
@@ -721,21 +729,22 @@ function initMessageModal() {
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(`Error: ${res.status}`);
+
       alert("Message sent successfully!");
 
       // Reset modal
       msgModal.style.display = "none";
-      msgTitle.value = "";
-      msgBody.value = "";
-      msgTarget.value = "class";
+      document.getElementById("msgTitle").value = "";
+      document.getElementById("msgBody").value = "";
+      document.getElementById("msgTarget").value = "class";
       memberSelect.style.display = "none";
       familySelect.style.display = "none";
-      prioritySelect.value = "normal";
     } catch (err) {
       alert("Failed to send message: " + err.message);
     }
   };
 }
+
 
 /* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
