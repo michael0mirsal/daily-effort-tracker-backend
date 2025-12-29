@@ -327,17 +327,32 @@ tr:hover td { background: #eef4ff; }
     <h3>Send Message</h3>
     <input type="text" id="msgTitle" placeholder="Title"/>
     <textarea id="msgBody" placeholder="Message"></textarea>
+
+    <!-- Target type -->
     <select id="msgTarget">
       <option value="class">All Class Members</option>
       <option value="individual">Select Member</option>
+      <option value="family">Select Family</option>
     </select>
+
+    <!-- Member & Family selection -->
     <select id="memberSelect" multiple style="display:none;"></select>
+    <select id="familySelect" multiple style="display:none;"></select>
+
+    <!-- Priority -->
+    <select id="prioritySelect">
+      <option value="normal">Normal</option>
+      <option value="high">High</option>
+      <option value="urgent">Urgent</option>
+    </select>
+
     <div style="display:flex; justify-content:flex-end; gap:10px;">
       <button id="sendMsgBtn" style="background:var(--secondary); color:white;">Send</button>
       <button id="closeMsgBtn" style="background:#ccc;">Cancel</button>
     </div>
   </div>
 </div>
+
 
 <script>
 const API = "http://localhost:3000/api";
@@ -643,78 +658,85 @@ async function loadClassMembers(cls) {
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   const memberSelect = document.getElementById("memberSelect");
+  const familySelect = document.getElementById("familySelect");
+  const prioritySelect = document.getElementById("prioritySelect");
+  const msgTarget = document.getElementById("msgTarget");
+  const msgTitle = document.getElementById("msgTitle");
+  const msgBody = document.getElementById("msgBody");
 
+  // Close modal
   document.getElementById("closeMsgBtn").onclick = () => {
     msgModal.style.display = "none";
     msgModal.style.opacity = "0";
     msgModal.style.pointerEvents = "none";
     delete msgModal.dataset.classId;
+    delete msgModal.dataset.nurseryId;
   };
 
-  document.getElementById("msgTarget").onchange = function() {
-  const memberSelect = document.getElementById("memberSelect");
-  if (this.value === "individual") {
-    memberSelect.style.display = "block"; // show dropdown
-  } else {
-    memberSelect.style.display = "none";  // hide dropdown
-    memberSelect.value = "";               // reset selection
-  }
-};
+  // Target type change
+  msgTarget.onchange = function() {
+    memberSelect.style.display = this.value === "individual" ? "block" : "none";
+    familySelect.style.display = this.value === "family" ? "block" : "none";
+  };
 
-
+  // Send message
   document.getElementById("sendMsgBtn").onclick = async () => {
-  const title = document.getElementById("msgTitle").value.trim();
-  const message = document.getElementById("msgBody").value.trim();
-  const target = document.getElementById("msgTarget").value;
+    const title = msgTitle.value.trim();
+    const message = msgBody.value.trim();
+    const target = msgTarget.value;
+    const priority = prioritySelect.value || "normal";
 
-  if (!title || !message) return alert("Please fill title and message");
-  if (!msgModal.dataset.classId) return alert("Class not selected");
+    if (!title || !message) return alert("Please fill title and message");
+    if (!msgModal.dataset.classId && !msgModal.dataset.nurseryId) {
+      return alert("Class or nursery must be selected!");
+    }
 
-  const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem("user"));
 
-  let receivers = [];
+    const payload = {
+      sender: user._id,
+      senderModel: "StaffMember",
+      title,
+      message,
+      priority,
+      classId: msgModal.dataset.classId || undefined,
+      nurseryId: msgModal.dataset.nurseryId || undefined
+    };
 
-  if (target === "individual") {
-    // Single selected member
-    receivers.push({
-      receiverId: memberSelect.value,
-      receiverType: "SchoolMember"
-    });
-  } else {
-    // All class members
-    const cls = TREE_CLASSES.find(c => c._id === msgModal.dataset.classId);
-    if (!cls || !cls.members) return alert("No members in this class");
+    if (target === "individual") {
+      payload.targetSchoolMember = memberSelect.value;
+    } else if (target === "family") {
+      payload.targetFamilies = Array.from(familySelect.selectedOptions).map(o => o.value);
+    }
 
-    receivers = cls.members.map(m => ({
-      receiverId: m._id || m.id || m,
-      receiverType: "SchoolMember"
-    }));
-  }
+    if (!payload.targetSchoolMember && (!payload.targetFamilies || payload.targetFamilies.length === 0) &&
+        !payload.classId && !payload.nurseryId) {
+      return alert("Please select at least one target!");
+    }
 
-  const payload = {
-    sender: user?._id || "adminId",
-    senderModel: "StaffMember", // adjust if needed
-    classId: msgModal.dataset.classId,
-    title,
-    message,
-    receivers,
-    attachments: [],
-    priority: "normal"
+    try {
+      const res = await fetch(`${API}/msg/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      alert("Message sent successfully!");
+
+      // Reset modal
+      msgModal.style.display = "none";
+      msgTitle.value = "";
+      msgBody.value = "";
+      msgTarget.value = "class";
+      memberSelect.style.display = "none";
+      familySelect.style.display = "none";
+      prioritySelect.value = "normal";
+    } catch (err) {
+      alert("Failed to send message: " + err.message);
+    }
   };
-
-  try {
-    await sendMessage(payload);
-    alert("Message sent successfully!");
-    msgModal.style.display = "none";
-    document.getElementById("msgTitle").value = "";
-    document.getElementById("msgBody").value = "";
-    document.getElementById("msgTarget").value = "class";
-    memberSelect.style.display = "none";
-  } catch (err) {
-    alert("Failed to send message: " + err.message);
-  }
-};
 }
+
 /* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
