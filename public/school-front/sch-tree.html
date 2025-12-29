@@ -677,64 +677,70 @@ function initMessageModal() {
 
   // Send message
   document.getElementById("sendMsgBtn").onclick = async () => {
-    const title = document.getElementById("msgTitle").value.trim();
-    const message = document.getElementById("msgBody").value.trim();
-    const target = document.getElementById("msgTarget").value;
-    const priority = document.getElementById("prioritySelect").value || "normal";
+  const title = document.getElementById("msgTitle").value.trim();
+  const message = document.getElementById("msgBody").value.trim();
+  const target = document.getElementById("msgTarget").value;
+  const priority = document.getElementById("prioritySelect").value || "normal";
 
-    if (!title || !message) return alert("Please fill title and message");
-    if (!msgModal.dataset.classId && !msgModal.dataset.nurseryId) {
-      return alert("Class or nursery must be selected!");
-    }
+  if (!title || !message) return alert("Please fill title and message");
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) return alert("User not found!");
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user || !user._id || !user.role) return alert("User not logged in properly");
 
-    const payload = {
-      senderId: user._id,               // matches backend
-      senderModel: user.role || "StaffMember", // dynamically from user
-      title,
-      message,
-      priority,
-      classId: msgModal.dataset.classId || undefined,
-      nurseryId: msgModal.dataset.nurseryId || undefined
-    };
+  // Prepare payload
+  const payload = {
+    senderId: user._id,
+    senderModel: user.role, // must match backend enum: "Supervisor", "Teacher", "Manager"
+    title,
+    message,
+    priority,
+    classId: msgModal.dataset.classId || undefined,
+    nurseryId: msgModal.dataset.nurseryId || undefined
+  };
 
-    // Handle target selection
-    if (target === "individual") {
-      payload.targetSchoolMember = memberSelect.value;
-    } else if (target === "family") {
-      payload.targetFamily = Array.from(familySelect.selectedOptions).map(o => o.value);
-    }
+  // Add target
+  if (target === "individual") {
+    const memberId = document.getElementById("memberSelect").value;
+    if (memberId) payload.targetSchoolMember = memberId;
+  } else if (target === "family") {
+    const familyIds = Array.from(document.getElementById("familySelect").selectedOptions)
+                           .map(o => o.value)
+                           .filter(v => v);
+    if (familyIds.length) payload.targetFamily = familyIds;
+  }
 
-    if (!payload.targetSchoolMember && (!payload.targetFamily || payload.targetFamily.length === 0) &&
-        !payload.classId && !payload.nurseryId) {
-      return alert("Please select at least one target!");
-    }
+  // Validation: at least one target required
+  if (!payload.targetSchoolMember &&
+      (!payload.targetFamily || payload.targetFamily.length === 0) &&
+      !payload.classId &&
+      !payload.nurseryId) {
+    return alert("Please select at least one target!");
+  }
 
-    try {
-      const res = await fetch(`${API}/msg/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `Server error ${res.status}`);
-      }
+  try {
+    const res = await fetch(`${API}/msg/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
 
-      alert("Message sent successfully!");
-      msgModal.style.display = "none";
-      document.getElementById("msgTitle").value = "";
-      document.getElementById("msgBody").value = "";
-      document.getElementById("msgTarget").value = "class";
-      memberSelect.style.display = "none";
-      familySelect.style.display = "none";
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
 
-    } catch (err) {
-      alert("Failed to send message: " + err.message);
-      console.error("Send Message Error:", err);
-    }
+    alert(`Message sent successfully! Receivers: ${data.receiversCount}`);
+    // Reset modal
+    msgModal.style.display = "none";
+    document.getElementById("msgTitle").value = "";
+    document.getElementById("msgBody").value = "";
+    document.getElementById("msgTarget").value = "class";
+    document.getElementById("memberSelect").style.display = "none";
+    document.getElementById("familySelect").style.display = "none";
+    document.getElementById("prioritySelect").value = "normal";
+
+  } catch (err) {
+    console.error("Send Message Error:", err);
+    alert("Failed to send message: " + err.message);
+  }
   };
 }
 
