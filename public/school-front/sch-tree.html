@@ -50,6 +50,38 @@
   border-radius: 6px;
   border: 1px solid #ccc;
 }
+.mailbox-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #3498db; /* primary blue */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+/* Hover effect */
+.mailbox-btn:hover {
+  background-color: #2980b9;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
+}
+
+/* Active click effect */
+.mailbox-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Icon style */
+.mailbox-btn .icon {
+  font-size: 18px;
+}
 
 #msgInbox {
   list-style: none;
