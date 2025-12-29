@@ -564,6 +564,18 @@ function attachMessageButton(cls) {
 
     msgModal.dataset.classId = cls._id;
     msgModal.style.display = "flex";
+msgModal.style.visibility = "visible";
+msgModal.style.opacity = "1";
+msgModal.style.pointerEvents = "auto";
+msgModal.style.zIndex = "9999";
+
+console.log("Modal styles after show:", {
+  display: msgModal.style.display,
+  visibility: msgModal.style.visibility,
+  opacity: msgModal.style.opacity,
+  zIndex: msgModal.style.zIndex
+});
+
 
     try {
       await loadClassMembers(cls);
@@ -667,10 +679,13 @@ function initMessageModal() {
   if (!memberSelect) console.error("memberSelect not found!");
 
   document.getElementById("closeMsgBtn").onclick = () => {
-    console.log("Closing message modal");
-    msgModal.style.display = "none";
-    delete msgModal.dataset.classId;
-  };
+  console.log("Closing message modal");
+  msgModal.style.display = "none";
+  msgModal.style.opacity = "0";
+  msgModal.style.pointerEvents = "none";
+  delete msgModal.dataset.classId;
+};
+
 
   document.getElementById("msgTarget").onchange = function() {
     console.log("Message target changed:", this.value);
