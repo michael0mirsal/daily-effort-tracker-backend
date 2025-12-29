@@ -331,7 +331,7 @@ tr:hover td { background: #eef4ff; }
       <option value="class">All Class Members</option>
       <option value="individual">Select Member</option>
     </select>
-    <select id="memberSelect" style="display:none;"></select>
+    <select id="memberSelect" multiple style="display:none;"></select>
     <div style="display:flex; justify-content:flex-end; gap:10px;">
       <button id="sendMsgBtn" style="background:var(--secondary); color:white;">Send</button>
       <button id="closeMsgBtn" style="background:#ccc;">Cancel</button>
@@ -592,6 +592,7 @@ async function sendMessage(payload) {
   }
 }
 
+
 async function loadClassMembers(cls) {
   const memberSelect = document.getElementById("memberSelect");
   if (!memberSelect) return [];
@@ -605,6 +606,7 @@ async function loadClassMembers(cls) {
     return { _id: id, name: MEMBERS_MAP[id] || m.name || "Unknown" };
   });
 
+  // Fetch missing names if needed
   const missingIds = membersList.filter(m => !m.name || m.name === "Unknown").map(m => m._id);
   if (missingIds.length) {
     try {
@@ -626,7 +628,10 @@ async function loadClassMembers(cls) {
     return [];
   }
 
-  memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name}</option>`).join("");
+  // multi-select enabled
+  memberSelect.innerHTML = membersList
+    .map(m => `<option value="${m._id}">${m.name}</option>`)
+    .join("");
   memberSelect.disabled = false;
   return membersList;
 }
@@ -646,42 +651,42 @@ function initMessageModal() {
     memberSelect.style.display = this.value === "individual" ? "block" : "none";
   };
 
-document.getElementById("sendMsgBtn").onclick = async () => {
-  const title = document.getElementById("msgTitle").value.trim();
-  const message = document.getElementById("msgBody").value.trim();
-  const target = document.getElementById("msgTarget").value;
+  document.getElementById("sendMsgBtn").onclick = async () => {
+    const title = document.getElementById("msgTitle").value.trim();
+    const message = document.getElementById("msgBody").value.trim();
+    const target = document.getElementById("msgTarget").value;
 
-  if (!title || !message) return alert("Please fill title and message");
-  if (!msgModal.dataset.classId) return alert("Class not selected");
+    if (!title || !message) return alert("Please fill title and message");
+    if (!msgModal.dataset.classId) return alert("Class not selected");
 
-  const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem("user"));
+    const payload = {
+      senderId: user?._id || "adminId",
+      senderModel: "StaffMember",
+      title,
+      message,
+      classId: msgModal.dataset.classId
+    };
 
-  // Payload for backend
-  const payload = {
-    senderId: user?._id || "adminId",
-    senderModel: "StaffMember",
-    title,
-    message,
-    classId: msgModal.dataset.classId
+    if (target === "individual") {
+      // send multiple selected members
+      const selectedIds = [...memberSelect.selectedOptions].map(opt => opt.value);
+      if (!selectedIds.length) return alert("Please select at least one member");
+      payload.targetSchoolMember = selectedIds.length === 1 ? selectedIds[0] : selectedIds;
+    }
+
+    try {
+      await sendMessage(payload);
+      alert("Message sent successfully!");
+      msgModal.style.display = "none";
+      document.getElementById("msgTitle").value = "";
+      document.getElementById("msgBody").value = "";
+      document.getElementById("msgTarget").value = "class";
+      memberSelect.style.display = "none";
+    } catch (err) {
+      alert("Failed to send message: " + err.message);
+    }
   };
-
-  // If individual member selected
-  if (target === "individual") {
-    payload.targetSchoolMember = memberSelect.value;
-  }
-
-  try {
-    await sendMessage(payload);
-    alert("Message sent successfully!");
-    msgModal.style.display = "none";
-    document.getElementById("msgTitle").value = "";
-    document.getElementById("msgBody").value = "";
-    document.getElementById("msgTarget").value = "class";
-    memberSelect.style.display = "none";
-  } catch (err) {
-    alert("Failed to send message: " + err.message);
-  }
-};
 }
 /* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
