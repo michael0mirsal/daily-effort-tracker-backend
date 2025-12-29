@@ -324,22 +324,26 @@ tr:hover td { background: #eef4ff; }
 <!-- MESSAGE MODAL -->
 <div id="msgModal">
   <div id="msgModalContent">
+    <h3>Messages</h3>
+    <div id="msgList" style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:8px; border-radius:6px; background:#f9f9f9;">
+      Loading messages...
+    </div>
+
+    <hr style="margin:10px 0;">
+
     <h3>Send Message</h3>
     <input type="text" id="msgTitle" placeholder="Title"/>
     <textarea id="msgBody" placeholder="Message"></textarea>
 
-    <!-- Target type -->
     <select id="msgTarget">
       <option value="class">All Class Members</option>
       <option value="individual">Select Member</option>
       <option value="family">Select Family</option>
     </select>
 
-    <!-- Member & Family selection -->
     <select id="memberSelect" multiple style="display:none;"></select>
     <select id="familySelect" multiple style="display:none;"></select>
 
-    <!-- Priority -->
     <select id="prioritySelect">
       <option value="normal">Normal</option>
       <option value="high">High</option>
@@ -352,6 +356,7 @@ tr:hover td { background: #eef4ff; }
     </div>
   </div>
 </div>
+
 
 
 <script>
@@ -675,6 +680,39 @@ function initMessageModal() {
     memberSelect.style.display = this.value === "individual" ? "block" : "none";
     familySelect.style.display = this.value === "family" ? "block" : "none";
   };
+
+async function loadMessages(classId) {
+  const listEl = document.getElementById("msgList");
+  listEl.innerHTML = "Loading messages...";
+
+  const date = getSelectedDate(); // today by default
+
+  try {
+    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}`);
+    if (!res.ok) throw new Error(`Failed to load messages: ${res.status}`);
+    const messages = await res.json();
+
+    if (!messages.length) {
+      listEl.innerHTML = `<p class="empty">No messages for this date</p>`;
+      return;
+    }
+
+    messages.sort((a,b) => new Date(a.sentAt) - new Date(b.sentAt));
+
+    listEl.innerHTML = messages.map(m => `
+      <div style="margin-bottom:6px; padding:6px; border-bottom:1px solid #eee;">
+        <strong>${m.title}</strong> 
+        <small style="color:#888;">[${new Date(m.sentAt).toLocaleString()}]</small>
+        <p style="margin:4px 0;">${m.message}</p>
+        <small style="color:#555;">From: ${m.sender?.name || m.senderModel}</small>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error(err);
+    listEl.innerHTML = `<p class="empty">Failed to load messages</p>`;
+  }
+}
 
   // Send message
   document.getElementById("sendMsgBtn").onclick = async () => {
