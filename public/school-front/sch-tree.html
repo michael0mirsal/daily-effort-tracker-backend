@@ -170,6 +170,28 @@
   color: #555;
 }
 
+#openMailboxBtn {
+  position: relative;
+}
+
+#mailboxBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+#openMailboxBtn:hover .icon {
+  transform: rotate(-15deg);
+  transition: transform 0.3s ease;
+}
+
+
 @keyframes pop {
   from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
@@ -473,7 +495,9 @@ tr:hover td { background: #eef4ff; }
       <button id="openMailboxBtn" title="Messages" class="mailbox-btn">
   <span class="icon">📥</span>
   <span class="label">Mailbox</span>
+  <span class="badge" id="mailboxBadge" style="display:none;">0</span>
 </button>
+
       <div id="topButtons">
         <button id="backBtn">⬅ Back</button>
         <button id="logoutBtn">Logout</button>
@@ -486,13 +510,23 @@ tr:hover td { background: #eef4ff; }
   </div>
 </div>
 
-<!-- ================= MAILBOX MODAL ================= -->
-<div id="mailboxModal">
-  <div id="mailboxModalContent">
-    <span id="closeMailbox">✖</span>
-    <div id="mailboxContainer"></div>
+box.innerHTML = `
+  <div class="mailbox">
+    <div class="mailbox-list">
+      <div class="mailbox-header">
+        <h3>📥 Class Messages</h3>
+        <div id="mailboxClassName" style="font-weight:600; margin-top:5px;"></div>
+        <input type="date" id="mailboxDate"/>
+      </div>
+      <ul id="msgInbox"></ul>
+    </div>
+
+    <div class="mailbox-view" id="msgView">
+      <div class="mailbox-empty">Select a message to read</div>
+    </div>
   </div>
-</div>
+`;
+
 
 
 <!-- MESSAGE MODAL -->
@@ -615,6 +649,21 @@ async function loadMailboxMessages(classId) {
 
 function openMailboxMessage(msg) {
   const view = document.getElementById("msgView");
+openBtn.onclick = () => {
+  if (!ACTIVE_CLASS_ID) {
+    alert("Please select a class first");
+    return;
+  }
+
+  const cls = TREE_CLASSES.find(c => c._id === ACTIVE_CLASS_ID);
+  if (cls) {
+    const nameEl = document.getElementById("mailboxClassName");
+    if (nameEl) nameEl.textContent = cls.name;
+  }
+
+  modal.style.display = "flex";
+  renderMailbox(ACTIVE_CLASS_ID);
+};
 
   view.innerHTML = `
     <h2>${msg.title}</h2>
