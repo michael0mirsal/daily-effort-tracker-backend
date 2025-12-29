@@ -21,111 +21,36 @@ const router = express.Router();
 ================================ */
 router.post("/send", async (req, res) => {
   try {
-    const {
-      senderId,
-      senderModel,
-      title,
-      message,
-      classId,
-      nurseryId,
-      targetSchoolMember,
-      targetFamily,
-      priority = "normal",
-      attachments = []
-    } = req.body;
+    const { senderId, senderModel, title, message, classId, nurseryId, targetSchoolMember, targetFamily, priority = "normal", attachments = [] } = req.body;
 
-    /* ================================
-       BASIC VALIDATION
-    ================================ */
     if (!senderId || !senderModel || !title || !message) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    console.log("[MSG] Incoming:", req.body);
+    const msg = new Msg({ sender: senderId, senderModel, title, message, classId, nurseryId, targetSchoolMember, targetFamily, priority, attachments, receivers: [] });
 
-    const msg = new Msg({
-      sender: senderId,
-      senderModel,
-      title,
-      message,
-      classId,
-      nurseryId,
-      targetSchoolMember,
-      targetFamily,
-      priority,
-      attachments,
-      receivers: []
-    });
-
-    /* ================================
-       RESOLVE RECEIVERS
-    ================================ */
-
-    // 1️⃣ Direct to single school member
-    if (targetSchoolMember) {
-      msg.receivers.push({
-        receiver: targetSchoolMember
-      });
-    }
-
-    // 2️⃣ Direct to families → resolve kids
+    // resolve receivers
+    if (targetSchoolMember) msg.receivers.push({ receiver: targetSchoolMember });
     else if (Array.isArray(targetFamily) && targetFamily.length) {
-      const kids = await SchoolMember.find({
-        family: { $in: targetFamily }
-      }).select("_id");
-
-      kids.forEach(k => {
-        msg.receivers.push({ receiver: k._id });
-      });
-    }
-
-    // 3️⃣ Class-wide message
-    else if (classId) {
-      const cls = await Class.findById(classId).select("members");
-      if (!cls) {
-        return res.status(404).json({ error: "Class not found" });
-      }
-
-      cls.members.forEach(memberId => {
-        msg.receivers.push({ receiver: memberId });
-      });
-    }
-
-    // 4️⃣ Nursery-wide message
-    else if (nurseryId) {
+      const kids = await SchoolMember.find({ family: { $in: targetFamily } }).select("_id");
+      kids.forEach(k => msg.receivers.push({ receiver: k._id }));
+    } else if (classId) {
+      const cls = await ClassModel.findById(classId).select("members");
+      if (!cls) return res.status(404).json({ error: "Class not found" });
+      cls.members.forEach(memberId => msg.receivers.push({ receiver: memberId }));
+    } else if (nurseryId) {
       const members = await SchoolMember.find({ nursery: nurseryId }).select("_id");
+      members.forEach(m => msg.receivers.push({ receiver: m._id }));
+    } else return res.status(400).json({ error: "No valid target specified" });
 
-      members.forEach(m => {
-        msg.receivers.push({ receiver: m._id });
-      });
-    }
-
-    // ❌ No target resolved
-    else {
-      return res.status(400).json({ error: "No valid target specified" });
-    }
-
-    /* ================================
-       SAVE
-    ================================ */
     await msg.save();
-
-    console.log("[MSG] Saved:", msg._id, "Receivers:", msg.receivers.length);
-
-    res.json({
-      success: true,
-      messageId: msg._id,
-      receiversCount: msg.receivers.length
-    });
+    res.json({ success: true, messageId: msg._id, receiversCount: msg.receivers.length });
 
   } catch (err) {
     console.error("[MSG] Send failed:", err);
     res.status(500).json({ error: "Failed to send message" });
   }
 });
-
-
-
 
 
 
