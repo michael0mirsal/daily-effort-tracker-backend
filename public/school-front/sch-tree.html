@@ -753,6 +753,7 @@ async function loadCombinedClassReport(cls) {
     });
 
     area.innerHTML = html;
+    renderMailbox(cls._id);   
     attachMessageButton(cls);
 
   } catch (err) {
