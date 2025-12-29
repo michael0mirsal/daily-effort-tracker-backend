@@ -10,7 +10,7 @@ import { connectDB } from "./db.js"; // 🌐 MongoDB connection
 import familyRoutes from "./routes/familyRoutes.js"; // 🌳 Family System
 import schoolRoutes from "./routes/schoolRoutes.js";
 import schTaskRoutes from "./routes/schTaskRoutes.js";
-
+import msgRoutes from "./routes/msgRoutes.js";
 
 
 // Import MongoDB models
@@ -37,6 +37,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "public/school-front")));
 app.use("/api", schoolRoutes);
 app.use("/api", schTaskRoutes);
+app.use("/api/msg", msgRoutes);
 // Serve welcome page
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public/school-front", "ask-user.html"));
