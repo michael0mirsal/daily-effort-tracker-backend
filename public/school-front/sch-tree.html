@@ -652,45 +652,68 @@ function initMessageModal() {
   };
 
   document.getElementById("msgTarget").onchange = function() {
-    memberSelect.style.display = this.value === "individual" ? "block" : "none";
-  };
+  const memberSelect = document.getElementById("memberSelect");
+  if (this.value === "individual") {
+    memberSelect.style.display = "block"; // show dropdown
+  } else {
+    memberSelect.style.display = "none";  // hide dropdown
+    memberSelect.value = "";               // reset selection
+  }
+};
+
 
   document.getElementById("sendMsgBtn").onclick = async () => {
-    const title = document.getElementById("msgTitle").value.trim();
-    const message = document.getElementById("msgBody").value.trim();
-    const target = document.getElementById("msgTarget").value;
+  const title = document.getElementById("msgTitle").value.trim();
+  const message = document.getElementById("msgBody").value.trim();
+  const target = document.getElementById("msgTarget").value;
 
-    if (!title || !message) return alert("Please fill title and message");
-    if (!msgModal.dataset.classId) return alert("Class not selected");
+  if (!title || !message) return alert("Please fill title and message");
+  if (!msgModal.dataset.classId) return alert("Class not selected");
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    const payload = {
-      senderId: user?._id || "adminId",
-      senderModel: "StaffMember",
-      title,
-      message,
-      classId: msgModal.dataset.classId
-    };
+  const user = JSON.parse(localStorage.getItem("user"));
 
-    if (target === "individual") {
-      // send multiple selected members
-      const selectedIds = [...memberSelect.selectedOptions].map(opt => opt.value);
-      if (!selectedIds.length) return alert("Please select at least one member");
-      payload.targetSchoolMember = selectedIds.length === 1 ? selectedIds[0] : selectedIds;
-    }
+  let receivers = [];
 
-    try {
-      await sendMessage(payload);
-      alert("Message sent successfully!");
-      msgModal.style.display = "none";
-      document.getElementById("msgTitle").value = "";
-      document.getElementById("msgBody").value = "";
-      document.getElementById("msgTarget").value = "class";
-      memberSelect.style.display = "none";
-    } catch (err) {
-      alert("Failed to send message: " + err.message);
-    }
+  if (target === "individual") {
+    // Single selected member
+    receivers.push({
+      receiverId: memberSelect.value,
+      receiverType: "SchoolMember"
+    });
+  } else {
+    // All class members
+    const cls = TREE_CLASSES.find(c => c._id === msgModal.dataset.classId);
+    if (!cls || !cls.members) return alert("No members in this class");
+
+    receivers = cls.members.map(m => ({
+      receiverId: m._id || m.id || m,
+      receiverType: "SchoolMember"
+    }));
+  }
+
+  const payload = {
+    sender: user?._id || "adminId",
+    senderModel: "StaffMember", // adjust if needed
+    classId: msgModal.dataset.classId,
+    title,
+    message,
+    receivers,
+    attachments: [],
+    priority: "normal"
   };
+
+  try {
+    await sendMessage(payload);
+    alert("Message sent successfully!");
+    msgModal.style.display = "none";
+    document.getElementById("msgTitle").value = "";
+    document.getElementById("msgBody").value = "";
+    document.getElementById("msgTarget").value = "class";
+    memberSelect.style.display = "none";
+  } catch (err) {
+    alert("Failed to send message: " + err.message);
+  }
+};
 }
 /* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
