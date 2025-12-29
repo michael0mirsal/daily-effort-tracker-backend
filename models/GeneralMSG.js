@@ -1,51 +1,66 @@
 import mongoose from "mongoose";
 
 const MsgSchema = new mongoose.Schema({
+  // Sender polymorphic
   sender: { 
     type: mongoose.Schema.Types.ObjectId, 
-    refPath: 'senderModel', 
+    refPath: "senderModel", 
     required: true 
   },
   senderModel: { 
     type: String, 
     required: true, 
-    enum: ['FamilyMember', 'SchoolMember', 'Teacher', 'StaffMember'] 
+    enum: ["Supervisor", "Teacher", "Manager"] 
   },
 
-  // Optional automatic targets
-  targetSchoolMember: { type: mongoose.Schema.Types.ObjectId, ref: 'SchoolMember' },
-  targetFamily: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Family' }],
+  // Optional direct targets
+  targetSchoolMember: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember" },
+  targetFamilies: [{ type: mongoose.Schema.Types.ObjectId, ref: "FamilyMember" }],
 
-  // Receivers array (auto-populated if targetSchoolMember/targetFamily/classId/nurseryId is set)
+  // Actual receivers (auto-populated)
   receivers: [{
-    receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'SchoolMember' },
+    receiver: { type: mongoose.Schema.Types.ObjectId, ref: "SchoolMember" },
     read: { type: Boolean, default: false },
     readAt: { type: Date }
   }],
 
+  // Message content
   title: { type: String, required: true },
   message: { type: String, required: true },
 
-  // Optional attachments
+  // Attachments
   attachments: [{
-    url: { type: String },
-    type: { type: String, enum: ['image', 'pdf', 'doc', 'other'], default: 'other' },
+    url: { type: String, required: true },
+    type: { type: String, enum: ["image", "pdf", "doc", "other"], default: "other" },
     name: { type: String }
   }],
 
-  // Class-wide message
-  classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' },
+  // Optional scopes
+  classId: { type: mongoose.Schema.Types.ObjectId, ref: "Class" },       // Class-wide message
+  nurseryId: { type: mongoose.Schema.Types.ObjectId, ref: "Nursery" },   // Nursery-wide message
 
-  // Nursery-wide message
-  nurseryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Nursery' },
+  // Priority
+  priority: { type: String, enum: ["normal", "high", "urgent"], default: "normal" },
 
-  // Priority for urgent messages
-  priority: { type: String, enum: ['normal', 'high', 'urgent'], default: 'normal' },
+  // Sent timestamp
+  sentAt: { type: Date, default: Date.now }
 
-  // Timestamps
-  sentAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+}, { 
+  timestamps: true
+});
 
-}, { timestamps: true });
+// ===== Custom validation =====
+// Ensure at least one target exists
+MsgSchema.pre("validate", function(next) {
+  if (
+    !this.targetSchoolMember &&
+    (!this.targetFamilies || this.targetFamilies.length === 0) &&
+    !this.classId &&
+    !this.nurseryId
+  ) {
+    return next(new Error("Message must have at least one target: targetSchoolMember, targetFamilies, classId, or nurseryId."));
+  }
+  next();
+});
 
 export default mongoose.model("Msg", MsgSchema);
