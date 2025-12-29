@@ -598,7 +598,6 @@ async function loadClassMembers(cls) {
   if (!memberSelect) return [];
 
   memberSelect.disabled = true;
-  memberSelect.style.display = "block";
   memberSelect.innerHTML = `<option>Loading members...</option>`;
 
   let membersList = (cls.members || []).map(m => {
@@ -625,14 +624,19 @@ async function loadClassMembers(cls) {
 
   if (!membersList.length) {
     memberSelect.innerHTML = `<option disabled>No members in this class</option>`;
+    memberSelect.disabled = false;
+    memberSelect.style.display = "none"; // hide by default
     return [];
   }
 
   // multi-select enabled
-  memberSelect.innerHTML = membersList
-    .map(m => `<option value="${m._id}">${m.name}</option>`)
-    .join("");
+  memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name}</option>`).join("");
   memberSelect.disabled = false;
+
+  // **Show only if "individual" is selected**
+  const target = document.getElementById("msgTarget").value;
+  memberSelect.style.display = target === "individual" ? "block" : "none";
+  
   return membersList;
 }
 
