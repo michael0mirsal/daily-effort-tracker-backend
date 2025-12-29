@@ -659,8 +659,9 @@ function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   const memberSelect = document.getElementById("memberSelect");
   const familySelect = document.getElementById("familySelect");
+  const prioritySelect = document.getElementById("prioritySelect");
 
-  // Close button
+  // Close modal
   document.getElementById("closeMsgBtn").onclick = () => {
     msgModal.style.display = "none";
     msgModal.style.opacity = "0";
@@ -669,7 +670,7 @@ function initMessageModal() {
     delete msgModal.dataset.nurseryId;
   };
 
-  // Target selector change
+  // Show member or family selects based on target
   document.getElementById("msgTarget").onchange = function() {
     memberSelect.style.display = this.value === "individual" ? "block" : "none";
     familySelect.style.display = this.value === "family" ? "block" : "none";
@@ -677,70 +678,72 @@ function initMessageModal() {
 
   // Send message
   document.getElementById("sendMsgBtn").onclick = async () => {
-  const title = document.getElementById("msgTitle").value.trim();
-  const message = document.getElementById("msgBody").value.trim();
-  const target = document.getElementById("msgTarget").value;
-  const priority = document.getElementById("prioritySelect").value || "normal";
+    const title = document.getElementById("msgTitle").value.trim();
+    const message = document.getElementById("msgBody").value.trim();
+    const target = document.getElementById("msgTarget").value;
+    const priority = prioritySelect.value || "normal";
 
-  if (!title || !message) return alert("Please fill title and message");
+    if (!title || !message) return alert("Please fill title and message");
+    if (!msgModal.dataset.classId && !msgModal.dataset.nurseryId) {
+      return alert("Class or nursery must be selected!");
+    }
 
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user || !user._id || !user.role) return alert("User not logged in properly");
+    const user = JSON.parse(localStorage.getItem("user"));
 
-  // Prepare payload
-  const payload = {
-    senderId: user._id,
-    senderModel: user.role, // must match backend enum: "Supervisor", "Teacher", "Manager"
-    title,
-    message,
-    priority,
-    classId: msgModal.dataset.classId || undefined,
-    nurseryId: msgModal.dataset.nurseryId || undefined
-  };
+    // Map user.role to schema enum
+    let senderModel;
+    switch ((user.role || "").toLowerCase()) {
+      case "teacher": senderModel = "Teacher"; break;
+      case "supervisor": senderModel = "Supervisor"; break;
+      case "manager": senderModel = "Manager"; break;
+      default: senderModel = "Teacher"; // fallback
+    }
 
-  // Add target
-  if (target === "individual") {
-    const memberId = document.getElementById("memberSelect").value;
-    if (memberId) payload.targetSchoolMember = memberId;
-  } else if (target === "family") {
-    const familyIds = Array.from(document.getElementById("familySelect").selectedOptions)
-                           .map(o => o.value)
-                           .filter(v => v);
-    if (familyIds.length) payload.targetFamily = familyIds;
-  }
+    const payload = {
+      sender: user._id,
+      senderModel,
+      title,
+      message,
+      priority,
+      classId: msgModal.dataset.classId || undefined,
+      nurseryId: msgModal.dataset.nurseryId || undefined
+    };
 
-  // Validation: at least one target required
-  if (!payload.targetSchoolMember &&
-      (!payload.targetFamily || payload.targetFamily.length === 0) &&
-      !payload.classId &&
-      !payload.nurseryId) {
-    return alert("Please select at least one target!");
-  }
+    // Handle targets
+    if (target === "individual") {
+      const val = memberSelect.value;
+      if (!val) return alert("Please select a member");
+      payload.targetSchoolMember = val;
+    } else if (target === "family") {
+      const vals = Array.from(familySelect.selectedOptions).map(o => o.value);
+      if (!vals.length) return alert("Please select at least one family");
+      payload.targetFamilies = vals;
+    }
 
-  try {
-    const res = await fetch(`${API}/msg/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch(`${API}/msg/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || `Error: ${res.status}`);
+      }
 
-    alert(`Message sent successfully! Receivers: ${data.receiversCount}`);
-    // Reset modal
-    msgModal.style.display = "none";
-    document.getElementById("msgTitle").value = "";
-    document.getElementById("msgBody").value = "";
-    document.getElementById("msgTarget").value = "class";
-    document.getElementById("memberSelect").style.display = "none";
-    document.getElementById("familySelect").style.display = "none";
-    document.getElementById("prioritySelect").value = "normal";
-
-  } catch (err) {
-    console.error("Send Message Error:", err);
-    alert("Failed to send message: " + err.message);
-  }
+      alert("Message sent successfully!");
+      // Reset modal
+      msgModal.style.display = "none";
+      document.getElementById("msgTitle").value = "";
+      document.getElementById("msgBody").value = "";
+      document.getElementById("msgTarget").value = "class";
+      memberSelect.style.display = "none";
+      familySelect.style.display = "none";
+    } catch (err) {
+      console.error("Send Message Error:", err);
+      alert("Failed to send message: " + err.message);
+    }
   };
 }
 
