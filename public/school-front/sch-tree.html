@@ -40,7 +40,7 @@ html, body {
 
 /* ================= SCALED CONTAINER ================= */
 #container {
- /* transform: scale(0.75);*/
+  transform: scale(0.75);
   transform-origin: top left;
   width: calc(100% / 0.75);
   min-height: calc(100% / 0.75);
@@ -436,7 +436,7 @@ function buildTree() {
 async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) {
-    console.error("Report content area not found!");
+    console.error("❌ reportContent not found");
     return;
   }
 
@@ -444,7 +444,7 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Loading Report (${date})...</h2>`;
 
   try {
-    // Fetch routines and activities concurrently
+    /* ================= FETCH DATA ================= */
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -453,22 +453,33 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    // Prepare kids mapping for report display
+    /* ================= PREPARE KIDS MAP ================= */
     const kids = {};
     const kidsByName = {};
 
-    (cls.members || []).forEach(mid => {
-      const id = String(mid._id || mid);
-      const name = MEMBERS_MAP[id] || mid.name || "Unknown";
-      kids[id] = { id, name, totalTime: 0, routineStars: 0, activityStars: 0, routines: [], activities: [] };
+    (cls.members || []).forEach(m => {
+      const id = String(m._id || m);
+      const name = MEMBERS_MAP[id] || m.name || "Unknown";
+
+      kids[id] = {
+        id,
+        name,
+        totalTime: 0,
+        routineStars: 0,
+        activityStars: 0,
+        routines: [],
+        activities: []
+      };
+
       kidsByName[name.toLowerCase()] = kids[id];
     });
 
-    // Populate activity data
+    /* ================= APPLY ACTIVITIES ================= */
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
       const kid = kids[kidId];
       if (!kid) return;
+
       (doc.items || []).forEach(it => {
         kid.totalTime += Number(it.timeMin || 0);
         kid.activityStars += Number(it.evaluation || 0);
@@ -476,69 +487,99 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    // Populate routine data
+    /* ================= APPLY ROUTINES ================= */
     routines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
       const nameKey = (r.kidName || "").toLowerCase();
       const kid = kids[kidId] || kidsByName[nameKey];
       if (!kid) return;
+
       (r.items || []).forEach(it => {
-        if (it.done === true) kid.routineStars += 1;
-        if (it.done === true) kid.routines.push({ task: it.task, section: it.section });
+        if (it.done === true) {
+          kid.routineStars += 1;
+          kid.routines.push({ task: it.task, section: it.section });
+        }
       });
     });
 
-    // Build report header with Send Message button
-    area.innerHTML = `
+    /* ================= BUILD HTML ONCE ================= */
+    let html = `
       <div class="report-header">
         <h2>${cls.name} – Daily Performance Report</h2>
         <button id="headerMsgBtn">✉ Send Message</button>
       </div>
     `;
 
-    // Attach Send Message button AFTER it exists
-    attachMessageButton(cls);
+    if (!Object.keys(kids).length) {
+      html += `<p class="empty">No members in this class</p>`;
+    }
 
-    // Render each kid's report
     Object.values(kids).forEach(k => {
       const totalStars = k.routineStars + k.activityStars;
       const grouped = {};
+
       k.routines.forEach(r => {
         if (!grouped[r.section]) grouped[r.section] = [];
         grouped[r.section].push(r.task);
       });
 
-      area.innerHTML += `
+      html += `
         <div class="child-card">
           <div class="child-title">
             <h3>🧒 ${k.name}</h3>
             <span class="badge badge-primary">${totalStars} ⭐ Total</span>
           </div>
+
           <div class="kpi-grid">
             <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
             <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
             <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
           </div>
+
           <div class="section-title">✅ Completed Routines</div>
-          ${k.routines.length
-            ? Object.entries(grouped).map(([section, tasks]) =>
-                `<strong>${section.toUpperCase()}</strong><ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
-              ).join("")
-            : `<p class="empty">No completed routines</p>`}
+          ${
+            k.routines.length
+              ? Object.entries(grouped)
+                  .map(([section, tasks]) =>
+                    `<strong>${section.toUpperCase()}</strong>
+                     <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
+                  )
+                  .join("")
+              : `<p class="empty">No completed routines</p>`
+          }
+
           <div class="section-title">📊 Activities</div>
-          ${k.activities.length
-            ? `<table><tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>${
-                k.activities.map(a =>
-                  `<tr><td>${a.activity}</td><td>${a.timeMin} min</td><td><span class="badge badge-success">${a.evaluation} ⭐</span></td><td>${a.note || "-"}</td></tr>`
-                ).join("")
-              }</table>`
-            : `<p class="empty">No activities recorded</p>`}
+          ${
+            k.activities.length
+              ? `<table>
+                  <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
+                  ${k.activities
+                    .map(a =>
+                      `<tr>
+                        <td>${a.activity}</td>
+                        <td>${a.timeMin} min</td>
+                        <td><span class="badge badge-success">${a.evaluation} ⭐</span></td>
+                        <td>${a.note || "-"}</td>
+                      </tr>`
+                    )
+                    .join("")}
+                </table>`
+              : `<p class="empty">No activities recorded</p>`
+          }
         </div>
       `;
     });
 
+    /* ================= COMMIT DOM ONCE ================= */
+    area.innerHTML = html;
+
+    /* ================= ATTACH BUTTON AFTER RENDER ================= */
+    attachMessageButton(cls);
+
+    console.log("✅ Report rendered safely for class:", cls._id);
+
   } catch (err) {
-    console.error("Error loading combined report:", err);
+    console.error("❌ Failed loading combined report:", err);
     area.innerHTML = `<p style="color:red;">Error loading report ⚠️</p>`;
   }
 }
