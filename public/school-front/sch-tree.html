@@ -659,9 +659,8 @@ function initMessageModal() {
   msgModal = document.getElementById("msgModal");
   const memberSelect = document.getElementById("memberSelect");
   const familySelect = document.getElementById("familySelect");
-  const prioritySelect = document.getElementById("prioritySelect");
 
-  // Close modal
+  // Close button
   document.getElementById("closeMsgBtn").onclick = () => {
     msgModal.style.display = "none";
     msgModal.style.opacity = "0";
@@ -670,11 +669,10 @@ function initMessageModal() {
     delete msgModal.dataset.nurseryId;
   };
 
-  // Show/hide member or family selects
+  // Target selector change
   document.getElementById("msgTarget").onchange = function() {
-    const val = this.value;
-    memberSelect.style.display = val === "individual" ? "block" : "none";
-    familySelect.style.display = val === "family" ? "block" : "none";
+    memberSelect.style.display = this.value === "individual" ? "block" : "none";
+    familySelect.style.display = this.value === "family" ? "block" : "none";
   };
 
   // Send message
@@ -682,27 +680,19 @@ function initMessageModal() {
     const title = document.getElementById("msgTitle").value.trim();
     const message = document.getElementById("msgBody").value.trim();
     const target = document.getElementById("msgTarget").value;
-    const priority = prioritySelect.value || "normal";
+    const priority = document.getElementById("prioritySelect").value || "normal";
 
     if (!title || !message) return alert("Please fill title and message");
-
     if (!msgModal.dataset.classId && !msgModal.dataset.nurseryId) {
       return alert("Class or nursery must be selected!");
     }
 
-    // Get logged-in user
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) return alert("User not found!");
 
-    // Determine senderModel dynamically
-    let senderModel = user.role; // role must match schema enum: "Supervisor", "Teacher", "Manager"
-    if (!["Supervisor", "Teacher", "Manager"].includes(senderModel)) {
-      senderModel = "Teacher"; // fallback if role mismatches
-    }
-
     const payload = {
-      sender: user._id,
-      senderModel,
+      senderId: user._id,               // matches backend
+      senderModel: user.role || "StaffMember", // dynamically from user
       title,
       message,
       priority,
@@ -710,14 +700,14 @@ function initMessageModal() {
       nurseryId: msgModal.dataset.nurseryId || undefined
     };
 
-    // Handle targets
+    // Handle target selection
     if (target === "individual") {
       payload.targetSchoolMember = memberSelect.value;
     } else if (target === "family") {
-      payload.targetFamilies = Array.from(familySelect.selectedOptions).map(o => o.value);
+      payload.targetFamily = Array.from(familySelect.selectedOptions).map(o => o.value);
     }
 
-    if (!payload.targetSchoolMember && (!payload.targetFamilies || payload.targetFamilies.length === 0) &&
+    if (!payload.targetSchoolMember && (!payload.targetFamily || payload.targetFamily.length === 0) &&
         !payload.classId && !payload.nurseryId) {
       return alert("Please select at least one target!");
     }
@@ -728,22 +718,26 @@ function initMessageModal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || `Server error ${res.status}`);
+      }
 
       alert("Message sent successfully!");
-
-      // Reset modal
       msgModal.style.display = "none";
       document.getElementById("msgTitle").value = "";
       document.getElementById("msgBody").value = "";
       document.getElementById("msgTarget").value = "class";
       memberSelect.style.display = "none";
       familySelect.style.display = "none";
+
     } catch (err) {
       alert("Failed to send message: " + err.message);
+      console.error("Send Message Error:", err);
     }
   };
 }
+
 
 
 /* ===================================== INIT ==================================== */
