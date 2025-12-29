@@ -700,14 +700,14 @@ function initMessageModal() {
     }
 
     const payload = {
-      sender: user._id,
-      senderModel,
-      title,
-      message,
-      priority,
-      classId: msgModal.dataset.classId || undefined,
-      nurseryId: msgModal.dataset.nurseryId || undefined
-    };
+  senderId: user._id,  // <-- changed from sender
+  senderModel,
+  title,
+  message,
+  priority,
+  classId: msgModal.dataset.classId || undefined,
+  nurseryId: msgModal.dataset.nurseryId || undefined
+};
 
     // Handle targets
     if (target === "individual") {
