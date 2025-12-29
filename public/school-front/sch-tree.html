@@ -722,13 +722,26 @@ window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
   document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
+const backBtn = document.getElementById("backBtn");
+  if (backBtn) {
+    backBtn.onclick = () => {
+      window.location.href = "sch-choose.html";
+    };
+  }
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      localStorage.removeItem("user");
+      window.location.href = "sch-signin.html";
+    };
+  }
 
   initMessageModal();
   loadTreeClasses();
 });
 
-document.getElementById("backBtn").onclick = () => window.location.href="sch-choose.html";
-document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("user"); window.location.href="sch-signin.html"; };
+
 </script>
 
 </body>
