@@ -72,10 +72,12 @@ router.post("/send", async (req, res) => {
   }
 });
 
+// GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 router.get("/list", async (req, res) => {
   try {
-    const { classId, date } = req.query;
+    const { classId, date, type, userId } = req.query;
     if (!classId) return res.status(400).json({ error: "classId is required" });
+    if (!userId) return res.status(400).json({ error: "userId is required" });
 
     // Date range
     const start = new Date(date || new Date());
@@ -83,14 +85,20 @@ router.get("/list", async (req, res) => {
     const end = new Date(start);
     end.setHours(23,59,59,999);
 
-    // Find messages for this class and date
-    const messages = await Msg.find({
-      classId,
-      sentAt: { $gte: start, $lte: end }
-    })
-    .populate("sender") // populate sender for display
-    .sort({ sentAt: 1 })
-    .lean();
+    let filter = { classId, sentAt: { $gte: start, $lte: end } };
+
+    if (type === "inbox") {
+      // Only messages where current user is a receiver
+      filter["receivers.id"] = userId;
+    } else if (type === "sent") {
+      // Only messages sent by current user
+      filter.sender = userId;
+    }
+
+    const messages = await Msg.find(filter)
+      .populate("sender") // populate sender info
+      .lean()
+      .sort({ sentAt: 1 });
 
     res.json(messages);
   } catch (err) {
