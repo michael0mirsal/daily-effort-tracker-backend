@@ -432,7 +432,6 @@ function buildTree() {
 }
 
 /* ===================================== COMBINED REPORT ==================================== */
-/* ===================================== COMBINED REPORT WITH SEND MESSAGE FIX ==================================== */
 async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
   if (!area) {
@@ -444,7 +443,6 @@ async function loadCombinedClassReport(cls) {
   area.innerHTML = `<h2>${cls.name} – Loading Report (${date})...</h2>`;
 
   try {
-    /* ================= FETCH DATA ================= */
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
@@ -453,33 +451,20 @@ async function loadCombinedClassReport(cls) {
     const routines = rRes.ok ? await rRes.json() : [];
     const activities = aRes.ok ? await aRes.json() : [];
 
-    /* ================= PREPARE KIDS MAP ================= */
     const kids = {};
     const kidsByName = {};
 
     (cls.members || []).forEach(m => {
       const id = String(m._id || m);
       const name = MEMBERS_MAP[id] || m.name || "Unknown";
-
-      kids[id] = {
-        id,
-        name,
-        totalTime: 0,
-        routineStars: 0,
-        activityStars: 0,
-        routines: [],
-        activities: []
-      };
-
+      kids[id] = { id, name, totalTime: 0, routineStars: 0, activityStars: 0, routines: [], activities: [] };
       kidsByName[name.toLowerCase()] = kids[id];
     });
 
-    /* ================= APPLY ACTIVITIES ================= */
     activities.forEach(doc => {
       const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
       const kid = kids[kidId];
       if (!kid) return;
-
       (doc.items || []).forEach(it => {
         kid.totalTime += Number(it.timeMin || 0);
         kid.activityStars += Number(it.evaluation || 0);
@@ -487,13 +472,11 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    /* ================= APPLY ROUTINES ================= */
     routines.forEach(r => {
       const kidId = String(r.kidmember || r.kidId);
       const nameKey = (r.kidName || "").toLowerCase();
       const kid = kids[kidId] || kidsByName[nameKey];
       if (!kid) return;
-
       (r.items || []).forEach(it => {
         if (it.done === true) {
           kid.routineStars += 1;
@@ -502,7 +485,6 @@ async function loadCombinedClassReport(cls) {
       });
     });
 
-    /* ================= BUILD HTML ONCE ================= */
     let html = `
       <div class="report-header">
         <h2>${cls.name} – Daily Performance Report</h2>
@@ -517,7 +499,6 @@ async function loadCombinedClassReport(cls) {
     Object.values(kids).forEach(k => {
       const totalStars = k.routineStars + k.activityStars;
       const grouped = {};
-
       k.routines.forEach(r => {
         if (!grouped[r.section]) grouped[r.section] = [];
         grouped[r.section].push(r.task);
@@ -529,40 +510,32 @@ async function loadCombinedClassReport(cls) {
             <h3>🧒 ${k.name}</h3>
             <span class="badge badge-primary">${totalStars} ⭐ Total</span>
           </div>
-
           <div class="kpi-grid">
             <div class="kpi"><h4>Total Time</h4><strong>${k.totalTime} min</strong></div>
             <div class="kpi"><h4>Routine Stars</h4><strong>${k.routineStars} ⭐</strong></div>
             <div class="kpi"><h4>Activity Stars</h4><strong>${k.activityStars} ⭐</strong></div>
           </div>
-
           <div class="section-title">✅ Completed Routines</div>
           ${
             k.routines.length
-              ? Object.entries(grouped)
-                  .map(([section, tasks]) =>
-                    `<strong>${section.toUpperCase()}</strong>
-                     <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
-                  )
-                  .join("")
+              ? Object.entries(grouped).map(([section, tasks]) =>
+                  `<strong>${section.toUpperCase()}</strong>
+                   <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
+                ).join("")
               : `<p class="empty">No completed routines</p>`
           }
-
           <div class="section-title">📊 Activities</div>
           ${
             k.activities.length
               ? `<table>
                   <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
-                  ${k.activities
-                    .map(a =>
-                      `<tr>
-                        <td>${a.activity}</td>
-                        <td>${a.timeMin} min</td>
-                        <td><span class="badge badge-success">${a.evaluation} ⭐</span></td>
-                        <td>${a.note || "-"}</td>
-                      </tr>`
-                    )
-                    .join("")}
+                  ${k.activities.map(a =>
+                    `<tr>
+                      <td>${a.activity}</td>
+                      <td>${a.timeMin} min</td>
+                      <td><span class="badge badge-success">${a.evaluation} ⭐</span></td>
+                      <td>${a.note || "-"}</td>
+                    </tr>`).join("")}
                 </table>`
               : `<p class="empty">No activities recorded</p>`
           }
@@ -570,13 +543,8 @@ async function loadCombinedClassReport(cls) {
       `;
     });
 
-    /* ================= COMMIT DOM ONCE ================= */
     area.innerHTML = html;
-
-    /* ================= ATTACH BUTTON AFTER RENDER ================= */
     attachMessageButton(cls);
-
-    console.log("✅ Report rendered safely for class:", cls._id);
 
   } catch (err) {
     console.error("❌ Failed loading combined report:", err);
@@ -587,110 +555,67 @@ async function loadCombinedClassReport(cls) {
 /* ===================================== ATTACH MESSAGE BUTTON ==================================== */
 function attachMessageButton(cls) {
   const msgBtn = document.getElementById("headerMsgBtn");
-  if (!msgBtn) {
-    console.error("Send Message button not found in DOM!");
-    return;
-  }
-
-  console.log("Attaching Send Message button for class:", cls._id);
+  if (!msgBtn) return;
 
   msgBtn.onclick = async () => {
-    debugger; // pauses execution for debugging
-    console.log("Send Message button clicked for class:", cls._id);
-
-    if (!msgModal) {
-      console.error("Message modal not initialized!");
-      return;
-    }
+    if (!msgModal) return;
 
     msgModal.dataset.classId = cls._id;
     msgModal.style.display = "flex";
-msgModal.style.visibility = "visible";
-msgModal.style.opacity = "1";
-msgModal.style.pointerEvents = "auto";
-msgModal.style.zIndex = "9999";
-
-console.log("Modal styles after show:", {
-  display: msgModal.style.display,
-  visibility: msgModal.style.visibility,
-  opacity: msgModal.style.opacity,
-  zIndex: msgModal.style.zIndex
-});
-
+    msgModal.style.visibility = "visible";
+    msgModal.style.opacity = "1";
+    msgModal.style.pointerEvents = "auto";
+    msgModal.style.zIndex = "9999";
 
     try {
       await loadClassMembers(cls);
-      console.log("Class members loaded in modal");
     } catch (err) {
-      console.error("Error loading members for modal:", err);
       const memberSelect = document.getElementById("memberSelect");
       if (memberSelect) memberSelect.innerHTML = "<option disabled>Error loading members</option>";
     }
   };
 }
-/* ===================================== MESSAGE MODAL LOGIC WITH DEBUG ==================================== */
 
+/* ===================================== MESSAGE MODAL LOGIC ==================================== */
 async function sendMessage(payload) {
-  console.log("sendMessage called with payload:", payload);
   try {
     const res = await fetch(`${API}/msg/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-
-    console.log("API response status:", res.status);
-
     if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
-    const data = await res.json();
-    console.log("Message send success:", data);
-    return data;
+    return await res.json();
   } catch (err) {
     console.error("Send Message Error:", err);
     throw err;
   }
 }
 
-/* ===================================== LOAD CLASS MEMBERS FOR MESSAGE MODAL ==================================== */
 async function loadClassMembers(cls) {
   const memberSelect = document.getElementById("memberSelect");
-  if (!memberSelect) {
-    console.error("Member select element not found!");
-    return [];
-  }
+  if (!memberSelect) return [];
 
   memberSelect.disabled = true;
   memberSelect.style.display = "block";
   memberSelect.innerHTML = `<option>Loading members...</option>`;
 
-  // Build members list with only _id and name
   let membersList = (cls.members || []).map(m => {
-    if (typeof m === "string") {
-      const id = String(m);
-      return { _id: id, name: MEMBERS_MAP[id] || "Unknown" };
-    }
-    const id = String(m._id || m.id);
+    const id = String(m._id || m.id || m);
     return { _id: id, name: MEMBERS_MAP[id] || m.name || "Unknown" };
   });
 
-  console.log("Initial membersList for modal:", membersList);
-
-  // Check for missing names and fetch from API if needed
   const missingIds = membersList.filter(m => !m.name || m.name === "Unknown").map(m => m._id);
   if (missingIds.length) {
     try {
       const res = await fetch(`${API}/sch-members?ids=${missingIds.join(",")}`);
       if (!res.ok) throw new Error(`Failed to fetch members: ${res.status}`);
       const data = await res.json();
-      console.log("Fetched member data:", data);
-
-      // Update names in membersList
       data.forEach(m => {
         const idx = membersList.findIndex(mem => mem._id === (m._id || m.id));
         if (idx > -1) membersList[idx].name = m.name || "Unknown";
       });
     } catch (err) {
-      console.error("Failed fetching member names for modal:", err);
       memberSelect.innerHTML = "<option disabled>Error loading members</option>";
       return [];
     }
@@ -698,49 +623,33 @@ async function loadClassMembers(cls) {
 
   if (!membersList.length) {
     memberSelect.innerHTML = `<option disabled>No members in this class</option>`;
-    console.warn("No members in class", cls);
     return [];
   }
 
-  // Populate the select dropdown
   memberSelect.innerHTML = membersList.map(m => `<option value="${m._id}">${m.name}</option>`).join("");
   memberSelect.disabled = false;
-  console.log("Members loaded into modal select:", membersList);
-
   return membersList;
 }
 
-
-
 function initMessageModal() {
   msgModal = document.getElementById("msgModal");
-  if (!msgModal) console.error("msgModal not found!");
-
   const memberSelect = document.getElementById("memberSelect");
-  if (!memberSelect) console.error("memberSelect not found!");
 
   document.getElementById("closeMsgBtn").onclick = () => {
-  console.log("Closing message modal");
-  msgModal.style.display = "none";
-  msgModal.style.opacity = "0";
-  msgModal.style.pointerEvents = "none";
-  delete msgModal.dataset.classId;
-};
-
+    msgModal.style.display = "none";
+    msgModal.style.opacity = "0";
+    msgModal.style.pointerEvents = "none";
+    delete msgModal.dataset.classId;
+  };
 
   document.getElementById("msgTarget").onchange = function() {
-    console.log("Message target changed:", this.value);
     memberSelect.style.display = this.value === "individual" ? "block" : "none";
   };
 
   document.getElementById("sendMsgBtn").onclick = async () => {
-    console.log("SendMsgBtn clicked");
-
     const title = document.getElementById("msgTitle").value.trim();
     const message = document.getElementById("msgBody").value.trim();
     const target = document.getElementById("msgTarget").value;
-
-    console.log({ title, message, target });
 
     if (!title || !message) return alert("Please fill title and message");
     if (!msgModal.dataset.classId) return alert("Class not selected");
@@ -755,50 +664,40 @@ function initMessageModal() {
       members: target === "individual" ? [memberSelect.value] : "all"
     };
 
-    console.log("Payload ready to send:", payload);
-
     try {
       await sendMessage(payload);
       alert("Message sent successfully!");
-      console.log("Message sent successfully");
       msgModal.style.display = "none";
       document.getElementById("msgTitle").value = "";
       document.getElementById("msgBody").value = "";
       document.getElementById("msgTarget").value = "class";
       memberSelect.style.display = "none";
     } catch (err) {
-      console.error("Failed to send message:", err);
       alert("Failed to send message: " + err.message);
     }
   };
 }
 
-// Initialize modal on DOM ready
+/* ===================================== INIT ==================================== */
 window.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   document.getElementById("nurseryTitle").textContent = user?.nurseryName || "Happy Kids Nursery";
   document.getElementById("userName").textContent = user?.name ? `Hello, ${user.name}!` : "Hello, User";
-const backBtn = document.getElementById("backBtn");
-  if (backBtn) {
-    backBtn.onclick = () => {
-      window.location.href = "sch-choose.html";
-    };
-  }
+
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.onclick = () => window.location.href = "sch-choose.html";
 
   const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.onclick = () => {
-      localStorage.removeItem("user");
-      window.location.href = "sch-signin.html";
-    };
-  }
+  if (logoutBtn) logoutBtn.onclick = () => {
+    localStorage.removeItem("user");
+    window.location.href = "sch-signin.html";
+  };
 
   initMessageModal();
   loadTreeClasses();
 });
-
-
 </script>
+
 
 </body>
 </html>
