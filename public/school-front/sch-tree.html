@@ -565,6 +565,7 @@ let ACTIVE_CLASS_ID = null;
 
 
 /* ===================================== MAILBOX ==================================== */
+/* ===================================== MAILBOX ==================================== */
 async function renderMailbox(classId) {
   const box = document.getElementById("mailboxContainer");
   if (!box) return;
@@ -577,6 +578,10 @@ async function renderMailbox(classId) {
           <div id="mailboxClassName" style="font-weight:600; margin-top:5px;"></div>
           <input type="date" id="mailboxDate"/>
         </div>
+        <div class="mailbox-tabs">
+          <button id="tabInbox" class="active">Inbox</button>
+          <button id="tabSent">Sent</button>
+        </div>
         <ul id="msgInbox"></ul>
       </div>
       <div class="mailbox-view" id="msgView">
@@ -587,7 +592,27 @@ async function renderMailbox(classId) {
 
   const mailboxDate = document.getElementById("mailboxDate");
   mailboxDate.value = getSelectedDate();
-  mailboxDate.onchange = () => loadMailboxMessages(classId);
+
+  const tabInbox = document.getElementById("tabInbox");
+  const tabSent = document.getElementById("tabSent");
+
+  let activeTab = "inbox";
+
+  tabInbox.onclick = () => {
+    activeTab = "inbox";
+    tabInbox.classList.add("active");
+    tabSent.classList.remove("active");
+    loadMailboxMessages(classId, activeTab);
+  };
+
+  tabSent.onclick = () => {
+    activeTab = "sent";
+    tabSent.classList.add("active");
+    tabInbox.classList.remove("active");
+    loadMailboxMessages(classId, activeTab);
+  };
+
+  mailboxDate.onchange = () => loadMailboxMessages(classId, activeTab);
 
   const cls = TREE_CLASSES.find(c => c._id === classId);
   if (cls) {
@@ -595,10 +620,10 @@ async function renderMailbox(classId) {
     if (nameEl) nameEl.textContent = cls.name;
   }
 
-  loadMailboxMessages(classId);
+  loadMailboxMessages(classId, activeTab);
 }
 
-async function loadMailboxMessages(classId) {
+async function loadMailboxMessages(classId, type = "inbox") {
   const list = document.getElementById("msgInbox");
   const view = document.getElementById("msgView");
   const date = getSelectedDate();
@@ -607,7 +632,8 @@ async function loadMailboxMessages(classId) {
   view.innerHTML = `<div class="mailbox-empty">Select a message to read</div>`;
 
   try {
-    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}`);
+    // Add type parameter to API: inbox or sent
+    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}&type=${type}`);
     const messages = await res.json();
 
     list.innerHTML = "";
@@ -618,7 +644,7 @@ async function loadMailboxMessages(classId) {
     }
 
     messages.forEach(msg => {
-      const unread = msg.receivers?.some(r => !r.read);
+      const unread = type === "inbox" && msg.receivers?.some(r => !r.read);
 
       const li = document.createElement("li");
       li.className = `msg-row ${unread ? "unread" : ""}`;
@@ -631,15 +657,14 @@ async function loadMailboxMessages(classId) {
             : ""}
         </div>
         <div class="msg-meta">
-          ${msg.sender?.name || msg.senderModel} •
+          ${type === "inbox" 
+            ? `${msg.sender?.name || msg.senderModel}` 
+            : `To: ${msg.receivers?.map(r => r.name).join(", ") || "N/A"}`} •
           ${new Date(msg.sentAt).toLocaleTimeString()}
         </div>
       `;
 
-      li.onclick = () => {
-        openMailboxMessage(msg, li);
-      };
-
+      li.onclick = () => openMailboxMessage(msg, li);
       list.appendChild(li);
     });
   } catch (err) {
@@ -647,6 +672,7 @@ async function loadMailboxMessages(classId) {
     list.innerHTML = `<li class="msg-row">Error loading messages</li>`;
   }
 }
+
 
 function openMailboxMessage(msg, li) {
   const view = document.getElementById("msgView");
