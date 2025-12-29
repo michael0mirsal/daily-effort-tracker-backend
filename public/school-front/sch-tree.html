@@ -510,22 +510,13 @@ tr:hover td { background: #eef4ff; }
   </div>
 </div>
 
-box.innerHTML = `
-  <div class="mailbox">
-    <div class="mailbox-list">
-      <div class="mailbox-header">
-        <h3>📥 Class Messages</h3>
-        <div id="mailboxClassName" style="font-weight:600; margin-top:5px;"></div>
-        <input type="date" id="mailboxDate"/>
-      </div>
-      <ul id="msgInbox"></ul>
-    </div>
-
-    <div class="mailbox-view" id="msgView">
-      <div class="mailbox-empty">Select a message to read</div>
-    </div>
+<!-- ================= MAILBOX MODAL ================= -->
+<div id="mailboxModal">
+  <div id="mailboxModalContent">
+    <span id="closeMailbox">✖</span>
+    <div id="mailboxContainer"></div>
   </div>
-`;
+</div>
 
 
 
@@ -579,20 +570,22 @@ async function renderMailbox(classId) {
   if (!box) return;
 
   box.innerHTML = `
-    <div class="mailbox">
-      <div class="mailbox-list">
-        <div class="mailbox-header">
-          <h3>📥 Class Messages</h3>
-          <input type="date" id="mailboxDate"/>
-        </div>
-        <ul id="msgInbox"></ul>
+  <div class="mailbox">
+    <div class="mailbox-list">
+      <div class="mailbox-header">
+        <h3>📥 Class Messages</h3>
+        <div id="mailboxClassName" style="font-weight:600; margin-top:5px;"></div>
+        <input type="date" id="mailboxDate"/>
       </div>
-
-      <div class="mailbox-view" id="msgView">
-        <div class="mailbox-empty">Select a message to read</div>
-      </div>
+      <ul id="msgInbox"></ul>
     </div>
-  `;
+
+    <div class="mailbox-view" id="msgView">
+      <div class="mailbox-empty">Select a message to read</div>
+    </div>
+  </div>
+`;
+
 
   document.getElementById("mailboxDate").value = getSelectedDate();
   document.getElementById("mailboxDate").onchange = () => loadMailboxMessages(classId);
@@ -664,6 +657,7 @@ openBtn.onclick = () => {
   modal.style.display = "flex";
   renderMailbox(ACTIVE_CLASS_ID);
 };
+
 
   view.innerHTML = `
     <h2>${msg.title}</h2>
