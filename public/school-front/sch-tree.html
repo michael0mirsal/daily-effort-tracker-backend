@@ -564,39 +564,44 @@ let msgModal = null;
 let ACTIVE_CLASS_ID = null;
 
 
-/* ================= MAILBOX FUNCTION ================= */
+/* ===================================== MAILBOX ==================================== */
 async function renderMailbox(classId) {
   const box = document.getElementById("mailboxContainer");
   if (!box) return;
 
   box.innerHTML = `
-  <div class="mailbox">
-    <div class="mailbox-list">
-      <div class="mailbox-header">
-        <h3>📥 Class Messages</h3>
-        <div id="mailboxClassName" style="font-weight:600; margin-top:5px;"></div>
-        <input type="date" id="mailboxDate"/>
+    <div class="mailbox">
+      <div class="mailbox-list">
+        <div class="mailbox-header">
+          <h3>📥 Class Messages</h3>
+          <div id="mailboxClassName" style="font-weight:600; margin-top:5px;"></div>
+          <input type="date" id="mailboxDate"/>
+        </div>
+        <ul id="msgInbox"></ul>
       </div>
-      <ul id="msgInbox"></ul>
+      <div class="mailbox-view" id="msgView">
+        <div class="mailbox-empty">Select a message to read</div>
+      </div>
     </div>
+  `;
 
-    <div class="mailbox-view" id="msgView">
-      <div class="mailbox-empty">Select a message to read</div>
-    </div>
-  </div>
-`;
+  const mailboxDate = document.getElementById("mailboxDate");
+  mailboxDate.value = getSelectedDate();
+  mailboxDate.onchange = () => loadMailboxMessages(classId);
 
-
-  document.getElementById("mailboxDate").value = getSelectedDate();
-  document.getElementById("mailboxDate").onchange = () => loadMailboxMessages(classId);
+  const cls = TREE_CLASSES.find(c => c._id === classId);
+  if (cls) {
+    const nameEl = document.getElementById("mailboxClassName");
+    if (nameEl) nameEl.textContent = cls.name;
+  }
 
   loadMailboxMessages(classId);
 }
 
 async function loadMailboxMessages(classId) {
-  const date = document.getElementById("mailboxDate").value;
   const list = document.getElementById("msgInbox");
   const view = document.getElementById("msgView");
+  const date = getSelectedDate();
 
   list.innerHTML = `<li class="msg-row">Loading...</li>`;
   view.innerHTML = `<div class="mailbox-empty">Select a message to read</div>`;
@@ -631,7 +636,10 @@ async function loadMailboxMessages(classId) {
         </div>
       `;
 
-      li.onclick = () => openMailboxMessage(msg);
+      li.onclick = () => {
+        openMailboxMessage(msg, li);
+      };
+
       list.appendChild(li);
     });
   } catch (err) {
@@ -640,25 +648,8 @@ async function loadMailboxMessages(classId) {
   }
 }
 
-function openMailboxMessage(msg) {
+function openMailboxMessage(msg, li) {
   const view = document.getElementById("msgView");
-openBtn.onclick = () => {
-  if (!ACTIVE_CLASS_ID) {
-    alert("Please select a class first");
-    return;
-  }
-
-  const cls = TREE_CLASSES.find(c => c._id === ACTIVE_CLASS_ID);
-  if (cls) {
-    const nameEl = document.getElementById("mailboxClassName");
-    if (nameEl) nameEl.textContent = cls.name;
-  }
-
-  modal.style.display = "flex";
-  renderMailbox(ACTIVE_CLASS_ID);
-};
-
-
   view.innerHTML = `
     <h2>${msg.title}</h2>
     <div class="msg-meta">
@@ -667,16 +658,39 @@ openBtn.onclick = () => {
     </div>
     <hr style="margin:10px 0"/>
     <div style="white-space:pre-wrap;">${msg.message}</div>
-
-    ${
-      msg.attachments?.length
-        ? `<h4>Attachments</h4>
-           ${msg.attachments.map(a =>
-             `<a href="${a.url}" target="_blank">📎 ${a.name || a.type}</a>`
-           ).join("")}`
-        : ""
-    }
+    ${msg.attachments?.length
+      ? `<h4>Attachments</h4>${msg.attachments.map(a => `<a href="${a.url}" target="_blank">📎 ${a.name || a.type}</a>`).join("")}`
+      : ""}
   `;
+
+  // mark as read visually
+  if (li) li.classList.remove("unread");
+}
+
+/* ===================================== MAILBOX MODAL ==================================== */
+function initMailboxModal() {
+  const modal = document.getElementById("mailboxModal");
+  const openBtn = document.getElementById("openMailboxBtn");
+  const closeBtn = document.getElementById("closeMailbox");
+
+  openBtn.onclick = () => {
+    if (!ACTIVE_CLASS_ID) return alert("Please select a class first");
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    renderMailbox(ACTIVE_CLASS_ID);
+  };
+
+  closeBtn.onclick = () => {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  };
+
+  modal.onclick = e => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+      document.body.style.overflow = "auto";
+    }
+  };
 }
 
 
