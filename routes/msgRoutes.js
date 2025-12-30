@@ -80,16 +80,16 @@ router.get("/list", async (req, res) => {
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const userObjId = mongoose.Types.ObjectId(userId);
+    const userObjId = new mongoose.Types.ObjectId(userId);
 
     const start = new Date(date || new Date());
-    start.setHours(0, 0, 0, 0);
+    start.setHours(0,0,0,0);
     const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(23,59,59,999);
 
     let filter = { 
-      classId: mongoose.Types.ObjectId(classId),
-      sentAt: { $gte: start, $lte: end }
+      classId: new mongoose.Types.ObjectId(classId), 
+      sentAt: { $gte: start, $lte: end } 
     };
 
     if (type === "inbox") {
