@@ -79,24 +79,30 @@ router.get("/list", async (req, res) => {
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    const userObjId = mongoose.Types.ObjectId(userId);
+
     // Date range
     const start = new Date(date || new Date());
-    start.setHours(0,0,0,0);
+    start.setHours(0, 0, 0, 0);
     const end = new Date(start);
-    end.setHours(23,59,59,999);
+    end.setHours(23, 59, 59, 999);
 
-    let filter = { classId, sentAt: { $gte: start, $lte: end } };
+    let filter = { 
+      classId: mongoose.Types.ObjectId(classId),
+      sentAt: { $gte: start, $lte: end }
+    };
 
     if (type === "inbox") {
       // Only messages where current user is a receiver
-      filter["receivers.id"] = userId;
+      filter["receivers.receiver"] = userObjId;
     } else if (type === "sent") {
       // Only messages sent by current user
-      filter.sender = userId;
+      filter.sender = userObjId;
     }
 
     const messages = await Msg.find(filter)
-      .populate("sender") // populate sender info
+      .populate("sender")       // populate sender info
+      .populate("receivers.receiver") // optional: populate receiver info
       .lean()
       .sort({ sentAt: 1 });
 
