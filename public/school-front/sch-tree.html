@@ -633,8 +633,9 @@ async function loadMailboxMessages(classId, type = "inbox") {
 
   try {
     // Fetch all class messages for the selected date
-    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}`);
-    let messages = await res.json();
+    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}&type=${type}&userId=${CURRENT_USER_ID}`);
+    const messages = await res.json();
+
 
     // Filter based on tab type
     if (type === "inbox") {
