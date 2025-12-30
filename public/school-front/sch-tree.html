@@ -632,18 +632,21 @@ async function loadMailboxMessages(classId, type = "inbox") {
   view.innerHTML = `<div class="mailbox-empty">Select a message to read</div>`;
 
   try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user?._id) throw new Error("User not found in localStorage");
+
     // Fetch all class messages for the selected date
-    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}&type=${type}&userId=${CURRENT_USER_ID}`);
+    const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}&type=${type}&userId=${user._id}`);
     let messages = await res.json();
 
-    // Filter based on tab type
+    // Filter messages based on tab type
     if (type === "inbox") {
       messages = messages.filter(msg =>
-        msg.receivers?.some(r => r.receiver._id === CURRENT_USER_ID)
+        msg.receivers?.some(r => r.receiver?._id === user._id)
       );
     } else if (type === "sent") {
       messages = messages.filter(msg =>
-        msg.sender?._id === CURRENT_USER_ID &&
+        msg.sender?._id === user._id &&
         ["Supervisor", "Teacher", "Manager"].includes(msg.senderModel)
       );
     }
@@ -656,7 +659,7 @@ async function loadMailboxMessages(classId, type = "inbox") {
     }
 
     messages.forEach(msg => {
-      const unread = type === "inbox" && msg.receivers?.some(r => r.receiver._id === CURRENT_USER_ID && !r.read);
+      const unread = type === "inbox" && msg.receivers?.some(r => r.receiver?._id === user._id && !r.read);
 
       const li = document.createElement("li");
       li.className = `msg-row ${unread ? "unread" : ""}`;
