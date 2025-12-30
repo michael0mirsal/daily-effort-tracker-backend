@@ -1,5 +1,6 @@
 // routes/msgRoutes.js
 import express from "express";
+import mongoose from "mongoose"; 
 import Msg from "../models/GeneralMSG.js";
 import ClassModel from "../models/Class.js";
 import SchoolMember from "../models/sch-Member.js";
