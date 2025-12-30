@@ -634,17 +634,16 @@ async function loadMailboxMessages(classId, type = "inbox") {
   try {
     // Fetch all class messages for the selected date
     const res = await fetch(`${API}/msg/list?classId=${classId}&date=${date}&type=${type}&userId=${CURRENT_USER_ID}`);
-    const messages = await res.json();
-
+    let messages = await res.json();
 
     // Filter based on tab type
     if (type === "inbox") {
       messages = messages.filter(msg =>
-        msg.receivers?.some(r => r.id === CURRENT_USER_ID)
+        msg.receivers?.some(r => r.receiver._id === CURRENT_USER_ID)
       );
     } else if (type === "sent") {
       messages = messages.filter(msg =>
-        msg.sender === CURRENT_USER_ID &&
+        msg.sender?._id === CURRENT_USER_ID &&
         ["Supervisor", "Teacher", "Manager"].includes(msg.senderModel)
       );
     }
@@ -657,7 +656,7 @@ async function loadMailboxMessages(classId, type = "inbox") {
     }
 
     messages.forEach(msg => {
-      const unread = type === "inbox" && msg.receivers?.some(r => r.id === CURRENT_USER_ID && !r.read);
+      const unread = type === "inbox" && msg.receivers?.some(r => r.receiver._id === CURRENT_USER_ID && !r.read);
 
       const li = document.createElement("li");
       li.className = `msg-row ${unread ? "unread" : ""}`;
@@ -672,8 +671,8 @@ async function loadMailboxMessages(classId, type = "inbox") {
         <div class="msg-meta">
           ${type === "inbox" 
             ? `${msg.sender?.name || msg.senderModel}` 
-            : `To: ${msg.receivers?.map(r => r.name).join(", ") || "N/A"}`} •
-          ${new Date(msg.sentAt).toLocaleTimeString()}
+            : `To: ${msg.receivers?.map(r => r.receiver?.name || "N/A").join(", ")}`}
+          • ${new Date(msg.sentAt).toLocaleTimeString()}
         </div>
       `;
 
@@ -685,6 +684,7 @@ async function loadMailboxMessages(classId, type = "inbox") {
     list.innerHTML = `<li class="msg-row">Error loading messages</li>`;
   }
 }
+
 
 
 function openMailboxMessage(msg, li) {
