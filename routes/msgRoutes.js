@@ -93,10 +93,13 @@ router.get("/list", async (req, res) => {
     };
 
     if (type === "inbox") {
-      filter["receivers.receiver"] = userObjId;
-    } else if (type === "sent") {
-      filter.sender = userObjId;
-    }
+  filter.$or = [
+    { "receivers.receiver": userObjId },
+    { classId: new mongoose.Types.ObjectId(classId) },      // class-wide messages
+    { nurseryId: userObjId.nurseryId }                     // optional: nursery-wide
+  ];
+}
+
 
     const messages = await Msg.find(filter)
       .populate("sender")
