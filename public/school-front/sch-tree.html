@@ -498,11 +498,6 @@ tr:hover td { background: #eef4ff; }
       </div>
       <div id="classReport">
         <h2>Select a class to view full report</h2>
-            <button id="openMailboxBtn" title="Messages" class="mailbox-btn">
-  <span class="icon">📥</span>
-  <span class="label">Mailbox</span>
-  <span class="badge" id="mailboxBadge" style="display:none;">0</span>
-</button>
         <div id="reportContent"></div>
       </div>
     </div>
@@ -878,6 +873,11 @@ async function loadCombinedClassReport(cls) {
       <div class="report-header">
         <h2>${cls.name} – Daily Performance Report</h2>
         <button id="headerMsgBtn">✉ Send Message</button>
+                   <button id="openMailboxBtn" title="Messages" class="mailbox-btn">
+  <span class="icon">📥</span>
+  <span class="label">Mailbox</span>
+  <span class="badge" id="mailboxBadge" style="display:none;">0</span>
+</button>
       </div>
     `;
 
