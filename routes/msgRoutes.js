@@ -81,7 +81,6 @@ router.get("/list", async (req, res) => {
 
     const userObjId = mongoose.Types.ObjectId(userId);
 
-    // Date range
     const start = new Date(date || new Date());
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -93,16 +92,14 @@ router.get("/list", async (req, res) => {
     };
 
     if (type === "inbox") {
-      // Only messages where current user is a receiver
       filter["receivers.receiver"] = userObjId;
     } else if (type === "sent") {
-      // Only messages sent by current user
       filter.sender = userObjId;
     }
 
     const messages = await Msg.find(filter)
-      .populate("sender")       // populate sender info
-      .populate("receivers.receiver") // optional: populate receiver info
+      .populate("sender")
+      .populate("receivers.receiver")
       .lean()
       .sort({ sentAt: 1 });
 
@@ -112,6 +109,5 @@ router.get("/list", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 export default router;
