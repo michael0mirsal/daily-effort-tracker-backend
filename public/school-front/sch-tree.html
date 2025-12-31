@@ -760,7 +760,7 @@ function openMailboxMessage(msg, li) {
         <div class="msg-meta">
           ${type === "inbox" 
             ? `${msg.sender?.name || msg.senderModel}` 
-            : `To: ${msg.receivers?.map(r => r.receiver?.name || "N/A").join(", ")}`}
+            : `To: ${msg.receivers?.map(r => r.receiver?.member?.name || "N/A").join(", ")}`}
           • ${new Date(msg.sentAt).toLocaleTimeString()}
         </div>
       `;
