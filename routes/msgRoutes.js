@@ -18,7 +18,7 @@ router.post("/send", async (req, res) => {
       classId,
       nurseryId,
       targetSchoolMember,
-      targetFamily,
+      targetFamilies,
       priority = "normal",
       attachments = []
     } = req.body;
@@ -36,7 +36,7 @@ router.post("/send", async (req, res) => {
       classId,
       nurseryId,
       targetSchoolMember,
-      targetFamily,
+      targetFamilies,
       priority,
       attachments,
       receivers: []
@@ -45,9 +45,13 @@ router.post("/send", async (req, res) => {
     // Resolve receivers
     if (targetSchoolMember) {
       msg.receivers.push({ receiver: targetSchoolMember });
-    } else if (Array.isArray(targetFamily) && targetFamily.length) {
-      const kids = await SchoolMember.find({ family: { $in: targetFamily } }).select("_id");
-      kids.forEach(k => msg.receivers.push({ receiver: k._id }));
+    }  else if (Array.isArray(targetFamilies) && targetFamilies.length) {
+  const kids = await SchoolMember
+    .find({ family: { $in: targetFamilies } })
+    .select("_id");
+
+  kids.forEach(k => msg.receivers.push({ receiver: k._id }));
+
     } else if (classId) {
       const cls = await ClassModel.findById(classId).select("members");
       if (!cls) return res.status(404).json({ error: "Class not found" });
