@@ -78,42 +78,49 @@ router.post("/send", async (req, res) => {
 });
 
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
+// GET /api/msg/list?classId=&date=&type=inbox|sent&userId=
 router.get("/list", async (req, res) => {
   try {
-    const { classId, date, type, userId } = req.query;
+    const { classId, date, type = "inbox", userId } = req.query;
+
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    const classObjId = new mongoose.Types.ObjectId(classId);
     const userObjId = new mongoose.Types.ObjectId(userId);
 
-    const start = new Date(date || new Date());
-    start.setHours(0,0,0,0);
-    const end = new Date(start);
-    end.setHours(23,59,59,999);
+    const filter = { classId: classObjId };
 
-    let filter = { 
-      classId: new mongoose.Types.ObjectId(classId), 
-      sentAt: { $gte: start, $lte: end } 
-    };
+    // ✅ SAFE date filter (optional)
+    if (date) {
+      const start = new Date(date + "T00:00:00.000Z");
+      const end = new Date(date + "T23:59:59.999Z");
+      filter.sentAt = { $gte: start, $lte: end };
+    }
 
+    // 📥 INBOX
     if (type === "inbox") {
-  filter.$or = [
-    { "receivers.receiver": userObjId },
-    { classId: new mongoose.Types.ObjectId(classId) },      // class-wide messages
-    { nurseryId: userObjId.nurseryId }                     // optional: nursery-wide
-  ];
-}
+      filter.$or = [
+        { "receivers.receiver": userObjId }, // direct receiver
+        { receivers: { $size: 0 } }          // class-wide broadcast
+      ];
+    }
 
+    // 📤 SENT
+    if (type === "sent") {
+      filter.sender = userObjId;
+    }
 
     const messages = await Msg.find(filter)
       .populate("sender")
       .populate("receivers.receiver")
-      .lean()
-      .sort({ sentAt: 1 });
+      .sort({ sentAt: -1 })
+      .lean();
 
     res.json(messages);
+
   } catch (err) {
-    console.error(err);
+    console.error("[MSG LIST ERROR]", err);
     res.status(500).json({ error: err.message });
   }
 });
