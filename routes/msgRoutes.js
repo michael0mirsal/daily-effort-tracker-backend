@@ -95,28 +95,18 @@ router.get("/list", async (req, res) => {
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const user = await SchoolMember.findById(userId)
-      .populate("member", "name")
-      .lean();
+    const user = await SchoolMember.findById(userId).lean();
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    const start = new Date(date || new Date());
+    const start = date ? new Date(date) : new Date();
     start.setHours(0, 0, 0, 0);
-
     const end = new Date(start);
     end.setHours(23, 59, 59, 999);
 
-    // Base filter: class and date
-    let filter = {
-      classId: new mongoose.Types.ObjectId(classId),
-      sentAt: { $gte: start, $lte: end }
-    };
+    let filter = { sentAt: { $gte: start, $lte: end } };
 
-
-
-    // include messages for class
-    if (classId) {
-      filter.classId = classId;
-    }
+    // include messages for the class
+    if (classId) filter.classId = classId;
 
     if (type === "inbox") {
       if (user.role === "nursery") {
@@ -131,23 +121,18 @@ router.get("/list", async (req, res) => {
       } else {
         filter.$or = [
           { "receivers.receiver": user._id },
-          { classId: user.class }
+          ...(user.class ? [{ classId: user.class }] : [])
         ];
       }
     }
 
-
-
     const messages = await Msg.find(filter)
-      .populate("sender", "name") // populate sender name
-      .populate({
-        path: "receivers.receiver",
-        populate: { path: "member", select: "name" } // populate member.name inside SchoolMember
-      })
+      .populate("sender", "name")
+      .populate("receivers.receiver", "name")
       .lean()
-      .sort({ sentAt: 1 });
+      .sort({ sentAt: -1 });
 
-    res.json(messages);
+    res.json(Array.isArray(messages) ? messages : []);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
