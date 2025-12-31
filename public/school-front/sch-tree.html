@@ -1217,11 +1217,6 @@ function initMailboxModal() {
 
   if (!openBtn) return;
   
-mailboxDate.onchange = () => {
-  loadMailboxMessages(classId, activeTab);
-  updateMailboxBadge(classId);
-};
-
   openBtn.onclick = () => {
     if (!ACTIVE_CLASS_ID) {
       alert("Please select a class first");
