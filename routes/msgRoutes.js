@@ -90,44 +90,58 @@ if (targetSchoolMember) {
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 router.get("/list", async (req, res) => {
   try {
-    const { classId, date, type = "inbox", userId } = req.query;
-    if (!classId || !userId) {
-      return res.status(400).json({ error: "classId and userId are required" });
+    const { classId, date, type, userId } = req.query;
+
+    if (!classId) {
+      return res.status(400).json({ error: "classId is required" });
     }
 
-    const user = await SchoolMember.findById(userId).lean();
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
 
+    const classObjId = new mongoose.Types.ObjectId(classId);
+    const userObjId  = new mongoose.Types.ObjectId(userId);
+
+    /* ===================== DATE RANGE ===================== */
     const start = new Date(date || new Date());
     start.setHours(0, 0, 0, 0);
+
     const end = new Date(start);
     end.setHours(23, 59, 59, 999);
 
-    let filter = {
-      classId,
+    /* ===================== BASE FILTER ===================== */
+    const filter = {
+      classId: classObjId,
       sentAt: { $gte: start, $lte: end }
     };
 
-    if (type === "sent") {
-      filter.sender = user._id;
-    }
-
+    /* ===================== INBOX LOGIC ===================== */
     if (type === "inbox") {
-      filter.sender = { $ne: user._id };
+      filter.$or = [
+        { "receivers.receiver": userObjId }, // direct messages
+        { classId: classObjId }               // class-wide messages
+        // add nursery-wide condition here only if you really store nurseryId in Msg
+      ];
     }
 
+    /* ===================== QUERY ===================== */
     const messages = await Msg.find(filter)
       .populate("sender", "name")
       .populate({
         path: "receivers.receiver",
-        populate: { path: "member", select: "name" }
+        populate: {
+          path: "member",
+          select: "name"
+        }
       })
-      .sort({ sentAt: -1 })
+      .sort({ sentAt: 1 })
       .lean();
 
     res.json(messages);
+
   } catch (err) {
-    console.error(err);
+    console.error("GET /api/msg/list error:", err);
     res.status(500).json({ error: err.message });
   }
 });
