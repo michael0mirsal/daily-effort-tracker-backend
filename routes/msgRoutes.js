@@ -81,45 +81,56 @@ router.post("/send", async (req, res) => {
 router.get("/list", async (req, res) => {
   try {
     const { classId, date, type, userId } = req.query;
-    if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const userObjId = new mongoose.Types.ObjectId(userId);
+    const user = await SchoolMember.findById(userId).populate("member", "name").lean();
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     const start = new Date(date || new Date());
-    start.setHours(0,0,0,0);
+    start.setHours(0, 0, 0, 0);
     const end = new Date(start);
-    end.setHours(23,59,59,999);
+    end.setHours(23, 59, 59, 999);
 
-    let filter = { 
-      classId: new mongoose.Types.ObjectId(classId), 
-      sentAt: { $gte: start, $lte: end } 
-    };
+    let filter = { sentAt: { $gte: start, $lte: end } };
 
     if (type === "inbox") {
-  filter.$or = [
-    { "receivers.receiver": userObjId },
-    { classId: new mongoose.Types.ObjectId(classId) },      // class-wide messages
-    { nurseryId: userObjId.nurseryId }                     // optional: nursery-wide
-  ];
-}
-
+      if (user.role === "nursery") {
+        // Nursery user sees all messages for their nursery
+        const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
+        filter.$or = [
+          { nurseryId: user.nursery },
+          { "receivers.receiver": { $in: nurseryMemberIds } }
+        ];
+      } else if (user.class) {
+        // Regular class member
+        filter.$or = [
+          { "receivers.receiver": user._id },
+          { classId: user.class },
+          { nurseryId: user.nursery }
+        ];
+      } else {
+        // fallback: show messages sent directly to the user
+        filter.$or = [{ "receivers.receiver": user._id }];
+      }
+    } else if (type === "sent") {
+      filter.sender = user._id;
+    }
 
     const messages = await Msg.find(filter)
-  .populate("sender", "name")  // sender
-  .populate({
-    path: "receivers.receiver", 
-    populate: { path: "member", select: "name" } // populate the member.name inside SchoolMember
-  })
-  .lean()
-  .sort({ sentAt: 1 });
-
+      .populate("sender", "name") // sender name
+      .populate({
+        path: "receivers.receiver",
+        populate: { path: "member", select: "name" } // populate receiver.member.name
+      })
+      .lean()
+      .sort({ sentAt: 1 });
 
     res.json(messages);
   } catch (err) {
-    console.error(err);
+    console.error("[MSG] List failed:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 export default router;
