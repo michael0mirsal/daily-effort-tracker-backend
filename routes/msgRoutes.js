@@ -107,7 +107,7 @@ router.get("/list", async (req, res) => {
 
     const messages = await Msg.find(filter)
       .populate("sender")
-      .populate("receivers.receiver")
+      .populate("receivers.receiver", "name")  // <-- ensures front-end sees names
       .lean()
       .sort({ sentAt: 1 });
 
