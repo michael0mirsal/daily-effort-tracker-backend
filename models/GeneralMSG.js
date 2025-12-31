@@ -10,7 +10,7 @@ const MsgSchema = new mongoose.Schema({
   senderModel: { 
     type: String, 
     required: true, 
-    enum: ["Supervisor", "Teacher", "Manager"] 
+    enum: ["Supervisor", "Teacher", "Manager" , "FamilyMember"] 
   },
 
   // Optional direct targets
