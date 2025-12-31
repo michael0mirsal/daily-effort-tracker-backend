@@ -88,7 +88,7 @@ if (targetSchoolMember) {
 
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
-router.get("/list", async (req, res) => {
+router.get("/msg/list", async (req, res) => {
   try {
     const { classId, date, type = "inbox", userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
