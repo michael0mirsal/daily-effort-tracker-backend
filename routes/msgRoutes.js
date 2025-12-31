@@ -89,10 +89,11 @@ if (targetSchoolMember) {
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 router.get("/list", async (req, res) => {
-     console.log("📩 /api/msg/list HIT", req.query);
   try {
     const { classId, date, type = "inbox", userId } = req.query;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (!classId || !userId) {
+      return res.status(400).json({ error: "classId and userId are required" });
+    }
 
     const user = await SchoolMember.findById(userId).lean();
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -102,24 +103,25 @@ router.get("/list", async (req, res) => {
     const end = new Date(start);
     end.setHours(23, 59, 59, 999);
 
-    let filter = { sentAt: { $gte: start, $lte: end } };
+    let filter = {
+      classId,
+      sentAt: { $gte: start, $lte: end }
+    };
 
     if (type === "sent") {
       filter.sender = user._id;
-      if (classId) filter.classId = classId;
     }
 
     if (type === "inbox") {
-      filter.$or = [
-        { "receivers.receiver": user._id },
-        { targetSchoolMember: user._id },
-        ...(classId ? [{ classId }] : [])
-      ];
+      filter.sender = { $ne: user._id };
     }
 
     const messages = await Msg.find(filter)
       .populate("sender", "name")
-      .populate("receivers.receiver", "name")
+      .populate({
+        path: "receivers.receiver",
+        populate: { path: "member", select: "name" }
+      })
       .sort({ sentAt: -1 })
       .lean();
 
@@ -129,6 +131,7 @@ router.get("/list", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 export default router;
