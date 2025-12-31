@@ -96,7 +96,7 @@ router.get("/list", async (req, res) => {
     const user = await SchoolMember.findById(userId).lean();
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const start = date ? new Date(date) : new Date();
+    const start = new Date(date || new Date());
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setHours(23, 59, 59, 999);
@@ -112,7 +112,7 @@ router.get("/list", async (req, res) => {
       filter.$or = [
         { "receivers.receiver": user._id },
         { targetSchoolMember: user._id },
-        ...(user.class ? [{ classId: user.class }] : [])
+        ...(classId ? [{ classId }] : [])
       ];
     }
 
@@ -128,7 +128,6 @@ router.get("/list", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 
 export default router;
