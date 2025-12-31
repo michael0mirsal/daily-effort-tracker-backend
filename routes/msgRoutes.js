@@ -81,19 +81,22 @@ router.post("/send", async (req, res) => {
 router.get("/list", async (req, res) => {
   try {
     const { classId, date, type, userId } = req.query;
+    if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const user = await SchoolMember.findById(userId).populate("member", "name").lean();
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const userObjId = new mongoose.Types.ObjectId(userId);
 
     const start = new Date(date || new Date());
-    start.setHours(0, 0, 0, 0);
+    start.setHours(0,0,0,0);
     const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(23,59,59,999);
 
-    let filter = { sentAt: { $gte: start, $lte: end } };
+    let filter = { 
+      classId: new mongoose.Types.ObjectId(classId), 
+      sentAt: { $gte: start, $lte: end } 
+    };
 
-    if (type === "inbox") {
+   if (type === "inbox") {
       if (user.role === "nursery") {
         // Nursery user sees all messages for their nursery
         const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
@@ -112,25 +115,24 @@ router.get("/list", async (req, res) => {
         // fallback: show messages sent directly to the user
         filter.$or = [{ "receivers.receiver": user._id }];
       }
-    } else if (type === "sent") {
-      filter.sender = user._id;
-    }
+}
+
 
     const messages = await Msg.find(filter)
-      .populate("sender", "name") // sender name
-      .populate({
-        path: "receivers.receiver",
-        populate: { path: "member", select: "name" } // populate receiver.member.name
-      })
-      .lean()
-      .sort({ sentAt: 1 });
+  .populate("sender", "name")  // sender
+  .populate({
+    path: "receivers.receiver", 
+    populate: { path: "member", select: "name" } // populate the member.name inside SchoolMember
+  })
+  .lean()
+  .sort({ sentAt: 1 });
+
 
     res.json(messages);
   } catch (err) {
-    console.error("[MSG] List failed:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 export default router;
