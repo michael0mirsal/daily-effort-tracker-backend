@@ -705,6 +705,7 @@ function openMailboxMessage(msg, li) {
     <h2>${msg.title}</h2>
     <div class="msg-meta">
       From: ${msg.sender?.name || msg.senderModel}<br/>
+      To: ${msg.receivers?.map(r => r.receiver?.member?.name || "N/A").join(", ")}<br/>
       Sent: ${new Date(msg.sentAt).toLocaleString()}
     </div>
     <hr/>
