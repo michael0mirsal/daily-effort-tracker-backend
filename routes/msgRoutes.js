@@ -92,59 +92,51 @@ router.get("/list", async (req, res) => {
     const { classId, date, type, userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    // Get user info
     const user = await SchoolMember.findById(userId).populate("member", "name").lean();
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Date range for filtering
     const start = new Date(date || new Date());
-    start.setHours(0, 0, 0, 0);
+    start.setHours(0,0,0,0);
     const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(23,59,59,999);
 
-    // Base filter
     let filter = { sentAt: { $gte: start, $lte: end } };
 
     if (type === "inbox") {
-      // ================== Inbox Logic ==================
       if (user.role === "nursery") {
-        // Nursery-level user: see messages for their nursery or receivers in their nursery
         const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
         filter.$or = [
           { nurseryId: user.nursery },
           { "receivers.receiver": { $in: nurseryMemberIds } }
         ];
       } else if (user.role === "family") {
-        // Family user: see messages sent to their children
         const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
         filter.$or = [
           { "receivers.receiver": { $in: childrenIds } }
         ];
       } else if (user.class) {
-        // Regular class member: messages sent to them, their class, or nursery
         filter.$or = [
           { "receivers.receiver": user._id },
           { classId: user.class },
           { nurseryId: user.nursery }
         ];
       } else {
-        // Fallback: messages sent directly to the user
         filter.$or = [{ "receivers.receiver": user._id }];
       }
 
-    } else if (type === "sent") {
-      // ================== Sent Logic ==================
-      filter.sender = user._id;
-      // optional: filter by class if classId provided
+      // optional: filter by classId if provided in query
       if (classId) filter.classId = classId;
+
+    } else if (type === "sent") {
+      filter.sender = user._id;
+      if (classId) filter.classId = classId; // optional for sent messages
     }
 
-    // Fetch messages and populate sender & receiver names
     const messages = await Msg.find(filter)
-      .populate("sender", "name") // sender name
+      .populate("sender", "name")
       .populate({
         path: "receivers.receiver",
-        populate: { path: "member", select: "name" } // receiver.member.name
+        populate: { path: "member", select: "name" }
       })
       .lean()
       .sort({ sentAt: 1 });
@@ -156,6 +148,7 @@ router.get("/list", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 export default router;
