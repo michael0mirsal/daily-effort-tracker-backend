@@ -117,12 +117,16 @@ router.get("/list", async (req, res) => {
 
     /* ===================== INBOX LOGIC ===================== */
     if (type === "inbox") {
-  filter.$or = [
-    { "receivers.receiver": userObjId },         // messages sent directly to this user
-    { "targetFamilies": userObjId },             // messages for this family
-    { receivers: { $size: 0 }, classId: classObjId } // class-wide announcements
-  ];
-}
+      filter.$or = [
+        { "receivers.receiver": userObjId },                 // messages directly to this user
+        { senderModel: "FamilyMember", classId: classObjId }, // all FamilyMember messages in class
+        { receivers: { $size: 0 }, classId: classObjId }      // class-wide messages
+      ];
+    } else if (type === "sent") {
+      filter.sender = userObjId; // messages sent by this user
+    }
+
+    console.log("Inbox filter:", JSON.stringify(filter, null, 2));
 
 
     /* ===================== QUERY ===================== */
