@@ -111,29 +111,30 @@ router.get("/list", async (req, res) => {
       sentAt: { $gte: start, $lte: end }
     };
 
-    if (type === "inbox") {
-  if (user.role === "nursery") {
-    const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
 
-    filter.$or = [
-      { "receivers.receiver": { $in: nurseryMemberIds } }
-    ];
 
-    if (user.class) {
-      filter.$or.push({ classId: user.class });
+    // include messages for class
+    if (classId) {
+      filter.classId = classId;
     }
-  } else if (user.role === "family") {
-    const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
-    filter.$or = [
-      { "receivers.receiver": { $in: childrenIds } }
-    ];
-  } else {
-    filter.$or = [
-      { "receivers.receiver": user._id },
-      { classId: user.class }
-    ];
-  }
-}
+
+    if (type === "inbox") {
+      if (user.role === "nursery") {
+        const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
+        filter.$or = [
+          { "receivers.receiver": { $in: nurseryMemberIds } }
+        ];
+        if (user.class) filter.$or.push({ classId: user.class });
+      } else if (user.role === "family") {
+        const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
+        filter.$or = [{ "receivers.receiver": { $in: childrenIds } }];
+      } else {
+        filter.$or = [
+          { "receivers.receiver": user._id },
+          { classId: user.class }
+        ];
+      }
+    }
 
 
 
