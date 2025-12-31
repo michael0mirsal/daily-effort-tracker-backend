@@ -95,24 +95,23 @@ router.get("/list", async (req, res) => {
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    // Get user info
-    const user = await SchoolMember.findById(userId).populate("member", "name").lean();
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const user = await SchoolMember.findById(userId)
+      .populate("member", "name")
+      .lean();
 
-    // Date range
     const start = new Date(date || new Date());
-    start.setHours(0,0,0,0);
-    const end = new Date(start);
-    end.setHours(23,59,59,999);
+    start.setHours(0, 0, 0, 0);
 
-    // Base filter: always filter by classId and date
+    const end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+
+    // Base filter: class and date
     let filter = {
       classId: new mongoose.Types.ObjectId(classId),
       sentAt: { $gte: start, $lte: end }
     };
 
     if (type === "inbox") {
-      // Build $or based on role
       if (user.role === "nursery") {
         const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
         filter.$or = [
@@ -120,6 +119,7 @@ router.get("/list", async (req, res) => {
           { "receivers.receiver": { $in: nurseryMemberIds } }
         ];
       } else if (user.role === "family") {
+        // show messages sent to their children
         const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
         filter.$or = [
           { "receivers.receiver": { $in: childrenIds } }
@@ -134,9 +134,8 @@ router.get("/list", async (req, res) => {
       }
     }
 
-    // Fetch messages
     const messages = await Msg.find(filter)
-      .populate("sender", "name")  // sender name
+      .populate("sender", "name") // populate sender name
       .populate({
         path: "receivers.receiver",
         populate: { path: "member", select: "name" } // populate member.name inside SchoolMember
@@ -145,7 +144,6 @@ router.get("/list", async (req, res) => {
       .sort({ sentAt: 1 });
 
     res.json(messages);
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
