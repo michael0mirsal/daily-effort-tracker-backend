@@ -106,10 +106,14 @@ router.get("/list", async (req, res) => {
 
 
     const messages = await Msg.find(filter)
-      .populate("sender")
-      .populate("receivers.receiver", "name")  // <-- ensures front-end sees names
-      .lean()
-      .sort({ sentAt: 1 });
+  .populate("sender", "name")  // sender
+  .populate({
+    path: "receivers.receiver", 
+    populate: { path: "member", select: "name" } // populate the member.name inside SchoolMember
+  })
+  .lean()
+  .sort({ sentAt: 1 });
+
 
     res.json(messages);
   } catch (err) {
