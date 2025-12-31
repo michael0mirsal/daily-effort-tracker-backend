@@ -119,9 +119,9 @@ router.get("/list", async (req, res) => {
     /* ===================== INBOX LOGIC ===================== */
     if (type === "inbox") {
       filter.$or = [
-        { "receivers.receiver": userObjId }, // direct messages
-        { classId: classObjId }               // class-wide messages
-        // add nursery-wide condition here only if you really store nurseryId in Msg
+        { "receivers.receiver": userObjId },               // direct messages
+        { classId: classObjId },                           // class-wide messages
+        { senderModel: "FamilyMember", classId: classObjId } // family messages
       ];
     }
 
