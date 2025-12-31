@@ -138,6 +138,7 @@ router.get("/list", async (req, res) => {
       .sort({ sentAt: 1 })
       .lean();
 
+      console.log("Messages found:", messages.length, messages.map(m => ({ id: m._id, sender: m.senderModel, receivers: m.receivers.length })));
     res.json(messages);
 
   } catch (err) {
