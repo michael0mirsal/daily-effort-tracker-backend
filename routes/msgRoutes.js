@@ -98,6 +98,7 @@ router.get("/list", async (req, res) => {
     const user = await SchoolMember.findById(userId).lean();
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Date range
     const start = date ? new Date(date) : new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -105,15 +106,13 @@ router.get("/list", async (req, res) => {
 
     let filter = { sentAt: { $gte: start, $lte: end } };
 
-    // Include messages for the class
+    // Always include messages for the class
     if (classId) filter.classId = classId;
 
     if (type === "inbox") {
       if (user.role === "nursery") {
         const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
-        filter.$or = [
-          { "receivers.receiver": { $in: nurseryMemberIds } }
-        ];
+        filter.$or = [{ "receivers.receiver": { $in: nurseryMemberIds } }];
         if (user.class) filter.$or.push({ classId: user.class });
       } else if (user.role === "family") {
         const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
@@ -125,17 +124,16 @@ router.get("/list", async (req, res) => {
         ];
       }
     } else if (type === "sent") {
-      // Sent messages: messages where user is sender
+      // Sent messages: user is the sender
       filter.$or = [{ sender: user._id }];
     }
 
     const messages = await Msg.find(filter)
-      .populate("sender", "name") // populate sender name
-      .populate("receivers.receiver", "name") // populate receiver name only
+      .populate("sender", "name") 
+      .populate("receivers.receiver", "name")
       .lean()
       .sort({ sentAt: -1 }); // newest first
 
-    // Always return an array
     res.json(Array.isArray(messages) ? messages : []);
   } catch (err) {
     console.error(err);
