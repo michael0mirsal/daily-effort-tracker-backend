@@ -105,7 +105,7 @@ router.get("/list", async (req, res) => {
 
     let filter = { sentAt: { $gte: start, $lte: end } };
 
-    // include messages for the class
+    // Include messages for the class
     if (classId) filter.classId = classId;
 
     if (type === "inbox") {
@@ -124,14 +124,18 @@ router.get("/list", async (req, res) => {
           ...(user.class ? [{ classId: user.class }] : [])
         ];
       }
+    } else if (type === "sent") {
+      // Sent messages: messages where user is sender
+      filter.$or = [{ sender: user._id }];
     }
 
     const messages = await Msg.find(filter)
-      .populate("sender", "name")
-      .populate("receivers.receiver", "name")
+      .populate("sender", "name") // populate sender name
+      .populate("receivers.receiver", "name") // populate receiver name only
       .lean()
-      .sort({ sentAt: -1 });
+      .sort({ sentAt: -1 }); // newest first
 
+    // Always return an array
     res.json(Array.isArray(messages) ? messages : []);
   } catch (err) {
     console.error(err);
