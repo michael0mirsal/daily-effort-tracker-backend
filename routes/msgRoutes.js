@@ -93,7 +93,8 @@ router.get("/list", async (req, res) => {
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    const userObjId = new mongoose.Types.ObjectId(userId);
+    const user = await SchoolMember.findById(userId).populate("member", "name").lean();
+
 
     const start = new Date(date || new Date());
     start.setHours(0,0,0,0);
@@ -106,24 +107,26 @@ router.get("/list", async (req, res) => {
     };
 
    if (type === "inbox") {
-      if (user.role === "nursery") {
-        // Nursery user sees all messages for their nursery
-        const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
-        filter.$or = [
-          { nurseryId: user.nursery },
-          { "receivers.receiver": { $in: nurseryMemberIds } }
-        ];
-      } else if (user.class) {
-        // Regular class member
-        filter.$or = [
-          { "receivers.receiver": user._id },
-          { classId: user.class },
-          { nurseryId: user.nursery }
-        ];
-      } else {
-        // fallback: show messages sent directly to the user
-        filter.$or = [{ "receivers.receiver": user._id }];
-      }
+  if (user.role === "nursery") {
+    const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
+    filter.$or = [
+      { nurseryId: user.nursery },
+      { "receivers.receiver": { $in: nurseryMemberIds } }
+    ];
+  } else if (user.role === "family") {
+    // show messages sent to their children
+    const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
+    filter.$or = [
+      { "receivers.receiver": { $in: childrenIds } }
+    ];
+  } else {
+    // normal class member
+    filter.$or = [
+      { "receivers.receiver": user._id },
+      { classId: user.class },
+      { nurseryId: user.nursery }
+    ];
+  }
 }
 
 
