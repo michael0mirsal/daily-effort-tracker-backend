@@ -111,17 +111,16 @@ router.get("/list", async (req, res) => {
     end.setHours(23, 59, 59, 999);
 
     /* ===================== BASE FILTER ===================== */
-    const filter = {
-      classId: classObjId,
+    let filter = {
       sentAt: { $gte: start, $lte: end }
     };
 
     /* ===================== INBOX LOGIC ===================== */
     if (type === "inbox") {
       filter.$or = [
-        { "receivers.receiver": userObjId },               // direct messages
-        { classId: classObjId },                           // class-wide messages
-        { senderModel: "FamilyMember", classId: classObjId } // family messages
+        { "receivers.receiver": userObjId },             // direct messages
+        { senderModel: "FamilyMember", classId: classObjId }, // family messages
+        { receivers: { $size: 0 }, classId: classObjId }      // class-wide messages
       ];
     }
 
