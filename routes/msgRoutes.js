@@ -43,25 +43,34 @@ router.post("/send", async (req, res) => {
     });
 
     // Resolve receivers
-    if (targetSchoolMember) {
-      msg.receivers.push({ receiver: targetSchoolMember });
-    }  else if (Array.isArray(targetFamilies) && targetFamilies.length) {
+    // Resolve receivers
+if (targetSchoolMember) {
+  // direct individual
+  msg.receivers.push({ receiver: targetSchoolMember });
+} else if (Array.isArray(targetFamilies) && targetFamilies.length) {
+  // family-based: get all children of selected families
   const kids = await SchoolMember
     .find({ family: { $in: targetFamilies } })
     .select("_id");
-
   kids.forEach(k => msg.receivers.push({ receiver: k._id }));
+} else if (classId) {
+  if (senderModel === "FamilyMember") {
+    // find the child of this family in the class
+    const child = await SchoolMember.findOne({ family: senderId, class: classId }).select("_id");
+    if (child) msg.receivers.push({ receiver: child._id });
+  } else {
+    // Teacher/Manager: class-wide
+    const cls = await ClassModel.findById(classId).select("members");
+    if (!cls) return res.status(404).json({ error: "Class not found" });
+    cls.members.forEach(memberId => msg.receivers.push({ receiver: memberId }));
+  }
+} else if (nurseryId) {
+  const members = await SchoolMember.find({ nursery: nurseryId }).select("_id");
+  members.forEach(m => msg.receivers.push({ receiver: m._id }));
+} else {
+  return res.status(400).json({ error: "No valid target specified" });
+}
 
-    } else if (classId) {
-      const cls = await ClassModel.findById(classId).select("members");
-      if (!cls) return res.status(404).json({ error: "Class not found" });
-      cls.members.forEach(memberId => msg.receivers.push({ receiver: memberId }));
-    } else if (nurseryId) {
-      const members = await SchoolMember.find({ nursery: nurseryId }).select("_id");
-      members.forEach(m => msg.receivers.push({ receiver: m._id }));
-    } else {
-      return res.status(400).json({ error: "No valid target specified" });
-    }
 
     await msg.save();
 
