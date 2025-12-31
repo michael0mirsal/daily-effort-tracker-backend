@@ -729,7 +729,10 @@ function openMailboxMessage(msg, li) {
     // Filter messages based on tab type
     if (type === "inbox") {
       messages = messages.filter(msg =>
-        msg.receivers?.some(r => r.receiver?._id === user._id)
+    // include if direct to user OR sent by FamilyMember OR receivers empty
+    msg.receivers?.some(r => r.receiver?._id === user._id) ||
+    msg.senderModel === "FamilyMember" ||
+    (msg.receivers?.length === 0)
       );
     } else if (type === "sent") {
       messages = messages.filter(msg =>
