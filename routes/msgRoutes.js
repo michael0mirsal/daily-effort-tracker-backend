@@ -87,54 +87,59 @@ if (targetSchoolMember) {
 });
 
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
+// GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 router.get("/list", async (req, res) => {
   try {
     const { classId, date, type, userId } = req.query;
+
     if (!classId) return res.status(400).json({ error: "classId is required" });
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    // Get user info
     const user = await SchoolMember.findById(userId).populate("member", "name").lean();
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Date range
     const start = new Date(date || new Date());
     start.setHours(0,0,0,0);
     const end = new Date(start);
     end.setHours(23,59,59,999);
 
-    // ✅ Always include classId in filter
-    let filter = { 
-      classId: new mongoose.Types.ObjectId(classId), 
-      sentAt: { $gte: start, $lte: end } 
+    // Base filter: always filter by classId and date
+    let filter = {
+      classId: new mongoose.Types.ObjectId(classId),
+      sentAt: { $gte: start, $lte: end }
     };
 
     if (type === "inbox") {
-      const orFilters = [];
-
+      // Build $or based on role
       if (user.role === "nursery") {
         const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
-        orFilters.push({ nurseryId: user.nursery });
-        if (nurseryMemberIds.length) orFilters.push({ "receivers.receiver": { $in: nurseryMemberIds } });
+        filter.$or = [
+          { nurseryId: user.nursery },
+          { "receivers.receiver": { $in: nurseryMemberIds } }
+        ];
       } else if (user.role === "family") {
         const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
-        if (childrenIds.length) orFilters.push({ "receivers.receiver": { $in: childrenIds } });
+        filter.$or = [
+          { "receivers.receiver": { $in: childrenIds } }
+        ];
       } else {
         // normal class member
-        if (user._id) orFilters.push({ "receivers.receiver": user._id });
-        if (user.class) orFilters.push({ classId: user.class });
-        if (user.nursery) orFilters.push({ nurseryId: user.nursery });
+        filter.$or = [
+          { "receivers.receiver": user._id },
+          { classId: user.class },
+          { nurseryId: user.nursery }
+        ];
       }
-
-      if (orFilters.length > 0) filter.$or = orFilters;
-
-    } else if (type === "sent") {
-      filter.sender = user._id; // sent messages
     }
 
+    // Fetch messages
     const messages = await Msg.find(filter)
-      .populate("sender", "name")
+      .populate("sender", "name")  // sender name
       .populate({
         path: "receivers.receiver",
-        populate: { path: "member", select: "name" }
+        populate: { path: "member", select: "name" } // populate member.name inside SchoolMember
       })
       .lean()
       .sort({ sentAt: 1 });
@@ -142,7 +147,7 @@ router.get("/list", async (req, res) => {
     res.json(messages);
 
   } catch (err) {
-    console.error("[MSG] List failed:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
