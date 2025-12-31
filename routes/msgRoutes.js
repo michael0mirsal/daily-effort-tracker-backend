@@ -114,10 +114,14 @@ router.get("/list", async (req, res) => {
     if (type === "inbox") {
   if (user.role === "nursery") {
     const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
+
     filter.$or = [
-      { classId: new mongoose.Types.ObjectId(user.class) }, // messages for the nursery class
-      { "receivers.receiver": { $in: nurseryMemberIds } }   // messages sent directly to members
+      { "receivers.receiver": { $in: nurseryMemberIds } }
     ];
+
+    if (user.class) {
+      filter.$or.push({ classId: user.class });
+    }
   } else if (user.role === "family") {
     const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
     filter.$or = [
@@ -130,6 +134,7 @@ router.get("/list", async (req, res) => {
     ];
   }
 }
+
 
 
     const messages = await Msg.find(filter)
