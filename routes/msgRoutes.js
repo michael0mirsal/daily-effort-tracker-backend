@@ -92,51 +92,52 @@ router.get("/list", async (req, res) => {
     const { classId, date, type, userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    // Load the user
     const user = await SchoolMember.findById(userId).populate("member", "name").lean();
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Date range
     const start = new Date(date || new Date());
     start.setHours(0,0,0,0);
     const end = new Date(start);
     end.setHours(23,59,59,999);
 
+    // Base filter
     let filter = { sentAt: { $gte: start, $lte: end } };
 
     if (type === "inbox") {
+      const orFilters = [];
+
       if (user.role === "nursery") {
+        // Nursery users see all messages sent to their nursery or any member in their nursery
         const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
-        filter.$or = [
-          { nurseryId: user.nursery },
-          { "receivers.receiver": { $in: nurseryMemberIds } }
-        ];
+        orFilters.push({ nurseryId: user.nursery });
+        if (nurseryMemberIds.length) orFilters.push({ "receivers.receiver": { $in: nurseryMemberIds } });
       } else if (user.role === "family") {
+        // Family users see messages sent to their children
         const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
-        filter.$or = [
-          { "receivers.receiver": { $in: childrenIds } }
-        ];
-      } else if (user.class) {
-        filter.$or = [
-          { "receivers.receiver": user._id },
-          { classId: user.class },
-          { nurseryId: user.nursery }
-        ];
+        if (childrenIds.length) orFilters.push({ "receivers.receiver": { $in: childrenIds } });
       } else {
-        filter.$or = [{ "receivers.receiver": user._id }];
+        // Normal class members
+        if (user._id) orFilters.push({ "receivers.receiver": user._id });
+        if (user.class) orFilters.push({ classId: user.class });
+        if (user.nursery) orFilters.push({ nurseryId: user.nursery });
       }
 
-      // optional: filter by classId if provided in query
-      if (classId) filter.classId = classId;
-
+      if (orFilters.length === 0) {
+        return res.json([]); // nothing to show
+      }
+      filter.$or = orFilters;
     } else if (type === "sent") {
-      filter.sender = user._id;
-      if (classId) filter.classId = classId; // optional for sent messages
+      filter.sender = user._id; // only messages sent by this user
     }
 
+    // Fetch messages
     const messages = await Msg.find(filter)
-      .populate("sender", "name")
+      .populate("sender", "name")  // sender name
       .populate({
         path: "receivers.receiver",
-        populate: { path: "member", select: "name" }
+        populate: { path: "member", select: "name" } // receiver.member.name
       })
       .lean()
       .sort({ sentAt: 1 });
@@ -148,6 +149,7 @@ router.get("/list", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
