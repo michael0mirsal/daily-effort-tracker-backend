@@ -90,15 +90,12 @@ if (targetSchoolMember) {
 // GET /api/msg/list?classId=...&date=...&type=inbox|sent&userId=...
 router.get("/list", async (req, res) => {
   try {
-    const { classId, date, type, userId } = req.query;
-
-    if (!classId) return res.status(400).json({ error: "classId is required" });
+    const { classId, date, type = "inbox", userId } = req.query;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     const user = await SchoolMember.findById(userId).lean();
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Date range
     const start = date ? new Date(date) : new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -106,41 +103,31 @@ router.get("/list", async (req, res) => {
 
     let filter = { sentAt: { $gte: start, $lte: end } };
 
-    // Always include messages for the class
-    if (classId) filter.classId = classId;
+    if (type === "sent") {
+      filter.sender = user._id;
+      if (classId) filter.classId = classId;
+    }
 
     if (type === "inbox") {
-      if (user.role === "nursery") {
-        const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
-        filter.$or = [{ "receivers.receiver": { $in: nurseryMemberIds } }];
-        if (user.class) filter.$or.push({ classId: user.class });
-      } else if (user.role === "family") {
-        const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
-        filter.$or = [{ "receivers.receiver": { $in: childrenIds } }];
-      } else {
-        filter.$or = [
-          { "receivers.receiver": user._id },
-          ...(user.class ? [{ classId: user.class }] : [])
-        ];
-      }
-    } else if (type === "sent") {
-      // Sent messages: user is the sender
-      filter.$or = [{ sender: user._id }];
+      filter.$or = [
+        { "receivers.receiver": user._id },
+        { targetSchoolMember: user._id },
+        ...(user.class ? [{ classId: user.class }] : [])
+      ];
     }
 
     const messages = await Msg.find(filter)
-      .populate("sender", "name") 
+      .populate("sender", "name")
       .populate("receivers.receiver", "name")
-      .lean()
-      .sort({ sentAt: -1 }); // newest first
+      .sort({ sentAt: -1 })
+      .lean();
 
-    res.json(Array.isArray(messages) ? messages : []);
+    res.json(messages);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 
 
