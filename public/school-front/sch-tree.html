@@ -591,8 +591,47 @@ let TEACHERS_MAP = {};  // teacherId -> name
 let msgModal = null;
 let ACTIVE_CLASS_ID = null;
 
+const CURRENT_USER_ID = LOGGED_IN_SCHOOL_MEMBER_ID;
 
 /* ===================================== MAILBOX ==================================== */
+async function updateMailboxBadge(classId) {
+  const badge = document.getElementById("mailboxBadge");
+  if (!badge || !classId) return;
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user?._id) return;
+
+  try {
+    const date = getSelectedDate();
+
+    const res = await fetch(
+      `${API}/msg/list?classId=${classId}&date=${date}&type=inbox&userId=${user._id}`
+    );
+
+    if (!res.ok) throw new Error(res.status);
+
+    const messages = await res.json();
+
+    // 🔴 Count unread messages for this user
+    const unreadCount = messages.filter(msg =>
+      msg.receivers?.some(r =>
+        r.receiver?._id === user._id && r.read === false
+      )
+    ).length;
+
+    // 🎯 Update badge
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+
+  } catch (err) {
+    console.error("Mailbox badge error:", err);
+  }
+}
+
 /* ===================================== MAILBOX ==================================== */
 async function renderMailbox(classId) {
   const box = document.getElementById("mailboxContainer");
@@ -658,6 +697,25 @@ async function loadMailboxMessages(classId, type = "inbox") {
 
   list.innerHTML = `<li class="msg-row">Loading...</li>`;
   view.innerHTML = `<div class="mailbox-empty">Select a message to read</div>`;
+
+function openMailboxMessage(msg, li) {
+  const view = document.getElementById("msgView");
+
+  view.innerHTML = `
+    <h2>${msg.title}</h2>
+    <div class="msg-meta">
+      From: ${msg.sender?.name || msg.senderModel}<br/>
+      Sent: ${new Date(msg.sentAt).toLocaleString()}
+    </div>
+    <hr/>
+    <div style="white-space:pre-wrap;">${msg.message}</div>
+  `;
+
+  if (li) li.classList.remove("unread");
+
+  // 🔄 Refresh badge after reading
+  updateMailboxBadge(ACTIVE_CLASS_ID);
+}
 
   try {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -852,6 +910,8 @@ function buildTree() {
 async function loadCombinedClassReport(cls) {
   const area = document.getElementById("reportContent");
   ACTIVE_CLASS_ID = cls._id;
+  updateMailboxBadge(cls._id);
+
   if (!area) {
     console.error("❌ reportContent not found");
     return;
@@ -1156,6 +1216,11 @@ function initMailboxModal() {
   const closeBtn = document.getElementById("closeMailbox");
 
   if (!openBtn) return;
+  
+mailboxDate.onchange = () => {
+  loadMailboxMessages(classId, activeTab);
+  updateMailboxBadge(classId);
+};
 
   openBtn.onclick = () => {
     if (!ACTIVE_CLASS_ID) {
