@@ -112,27 +112,25 @@ router.get("/list", async (req, res) => {
     };
 
     if (type === "inbox") {
-      if (user.role === "nursery") {
-        const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
-        filter.$or = [
-          { nurseryId: user.nursery },
-          { "receivers.receiver": { $in: nurseryMemberIds } }
-        ];
-      } else if (user.role === "family") {
-        // show messages sent to their children
-        const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
-        filter.$or = [
-          { "receivers.receiver": { $in: childrenIds } }
-        ];
-      } else {
-        // normal class member
-        filter.$or = [
-          { "receivers.receiver": user._id },
-          { classId: user.class },
-          { nurseryId: user.nursery }
-        ];
-      }
-    }
+  if (user.role === "nursery") {
+    const nurseryMemberIds = await SchoolMember.find({ nursery: user.nursery }).distinct("_id");
+    filter.$or = [
+      { classId: new mongoose.Types.ObjectId(user.class) }, // messages for the nursery class
+      { "receivers.receiver": { $in: nurseryMemberIds } }   // messages sent directly to members
+    ];
+  } else if (user.role === "family") {
+    const childrenIds = await SchoolMember.find({ family: user.member }).distinct("_id");
+    filter.$or = [
+      { "receivers.receiver": { $in: childrenIds } }
+    ];
+  } else {
+    filter.$or = [
+      { "receivers.receiver": user._id },
+      { classId: user.class }
+    ];
+  }
+}
+
 
     const messages = await Msg.find(filter)
       .populate("sender", "name") // populate sender name
