@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>🌞 Welcome to My Daily Effort Tracker</title>
+  <script>
+    const user = localStorage.getItem("currentUser");
+    if (user) {
+      window.location.replace("welcome.html");
+    }
+  </script>
   <style>
     body {
       text-align: center;
@@ -157,11 +163,7 @@
   <script>
     const API_URL = "http://localhost:3000";// or 3000 if you use that
     // ✅ Redirect if already logged in
-    const user = localStorage.getItem("currentUser");
-    if (user) {
-      window.location.href = "welcome.html";
-    }
-
+    
     document.getElementById("startBtn").addEventListener("click", () => {
       window.location.href = "ask-user.html";
     });
