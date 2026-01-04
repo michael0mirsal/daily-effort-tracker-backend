@@ -129,6 +129,35 @@
   white-space: nowrap;
 }
 
+/* ===== Marketing CTA Button ===== */
+.cta-btn {
+  margin-top: 40px;
+  padding: 14px 42px;
+  font-size: 1.05em;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #fff;
+  background: linear-gradient(135deg, #4CAF50, #43a047);
+  border: none;
+  border-radius: 999px; /* pill shape */
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(67, 160, 71, 0.35);
+  transition: all 0.3s ease;
+}
+
+/* Hover */
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(67, 160, 71, 0.45);
+}
+
+/* Click */
+.cta-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 20px rgba(67, 160, 71, 0.3);
+}
+
+
 /* Sparkles 
 .sparkle {
   position: absolute;
@@ -172,7 +201,7 @@
     </div>
   </div>
 
-  <button id="startBtn">🚀 Start / Login</button>
+  <button id="startBtn" class="cta-btn">Start Growing</button>
   <script>
     const API_URL = "http://localhost:3000";// or 3000 if you use that
     // ✅ Redirect if already logged in
