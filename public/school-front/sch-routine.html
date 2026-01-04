@@ -936,28 +936,49 @@ async function initOnLoad() {
 
   // create new row
   const tr = document.createElement("tr");
+
+  // create row HTML with member box prefilled
   tr.innerHTML = `
     <td>${escapeHtml(task)}</td>
     <td><input type="checkbox" /></td>
     <td>
-      <div class="member-box"></div>
+      <div class="member-box">
+        ${members.map(m => `
+          <div class="member-tag" data-id="${m.id}">
+            <span>${escapeHtml(m.name)}</span>
+            <span class="remove">×</span>
+          </div>
+        `).join("")}
+      </div>
       <select class="member-select">
+        <option value="">Select member</option>
         ${members.map(m => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("")}
       </select>
       <button type="button" class="add-member-btn">Add</button>
     </td>
   `;
+
+  // append at the end of tbody
   body.appendChild(tr);
 
   // attach checkbox listener
   const cb = tr.querySelector("input[type='checkbox']");
   if (cb) cb.onchange = updateRoutineStars;
 
+  // attach remove functionality for member tags
+  tr.querySelectorAll(".member-tag .remove").forEach(btn => {
+    btn.onclick = e => btn.closest(".member-tag").remove();
+  });
+
   // attach add-member button
   const addBtn = tr.querySelector(".add-member-btn");
   if (addBtn) addBtn.onclick = () => addMemberFromBtn(addBtn);
 
+  // clear input
   input.value = "";
+
+  // update stars immediately
+  updateRoutineStars();
 }
 
 
