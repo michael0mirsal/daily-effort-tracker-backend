@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>🌞 Welcome to My Daily Effort Tracker</title>
 
   <!-- Preload font for faster render -->
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -43,7 +44,7 @@
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       transition: transform 0.3s, background 0.3s;
-      will-change: transform; /* optimization for animation */
+      will-change: transform;
     }
 
     button:hover {
@@ -69,20 +70,9 @@
       transition: opacity 0.5s;
     }
 
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* Growing Seed Animation */
     .seed {
@@ -121,14 +111,6 @@
       border-radius: 12px;
     }
 
-    .app-name {
-      font-size: 1.2em;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      color: #2c3e50;
-      white-space: nowrap;
-    }
-
     .cta-btn {
       margin-top: 40px;
       padding: 14px 44px;
@@ -149,6 +131,9 @@
     .cta-btn:active { transform: translateY(0); box-shadow: 0 10px 22px rgba(46, 125, 50, 0.3); }
 
     .hero-title { font-size: 2.2em; font-weight: 600; text-align: center; }
+
+    /* Optional sparkle (if you want animated sparkles later) */
+    .sparkle { opacity: 0; }
   </style>
 </head>
 <body>
@@ -168,25 +153,21 @@
 
   <div class="info-box">
     <div id="infoText" class="info-text">
-      💡 Track your child’s progress and celebrate small wins!
+      <!-- First message will be injected by JS -->
     </div>
   </div>
 
   <button id="startBtn" class="cta-btn">Grow With Us</button>
 
-  <!-- Optimized scripts at the end -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // ✅ Redirect if already logged in
+      // Redirect if logged in
       const user = localStorage.getItem("currentUser");
-      if (user) {
-        window.location.replace("welcome.html");
-      }
+      if (user) window.location.replace("welcome.html");
 
       // Button click
-      document.getElementById("startBtn").addEventListener("click", () => {
-        window.location.href = "ask-user.html";
-      });
+      const startBtn = document.getElementById("startBtn");
+      startBtn.addEventListener("click", () => window.location.href = "ask-user.html");
 
       // Rotating messages
       const messages = [
@@ -201,6 +182,10 @@
       const infoText = document.getElementById("infoText");
       let index = 0;
 
+      // Show first message immediately
+      infoText.innerHTML = messages[0];
+      infoText.style.opacity = 1;
+
       function rotateMessage() {
         infoText.style.opacity = 0;
         setTimeout(() => {
@@ -210,14 +195,13 @@
         }, 500);
       }
 
-      // Start rotation after first render
-      setInterval(rotateMessage, 4000);
-    });
+      // Start rotation after 4s
+      setTimeout(() => setInterval(rotateMessage, 4000), 4000);
 
-    // Optional: start infinite button bounce after load
-    window.addEventListener("load", () => {
-      const btn = document.getElementById("startBtn");
-      btn.style.animation = "bounceIn 2s infinite alternate";
+      // Start button bounce after page load
+      window.addEventListener("load", () => {
+        startBtn.style.animation = "bounceIn 2s infinite alternate";
+      });
     });
   </script>
 </body>
