@@ -904,34 +904,62 @@ async function initOnLoad() {
   ---------------------------- */
 
   function addTask(type) {
-    const input = document.getElementById(type + "Input");
-    if (!input) return;
-    const task = input.value.trim();
-    if (!task) return;
+  const input = document.getElementById(type + "Input");
+  if (!input) return;
+  const task = input.value.trim();
+  if (!task) return;
 
-    // pick body id
-    const mapping = {
-      morning: "morningBody",
-      after: "afterBody",
-      night: "nightBody",
-      classRoutine: "classRoutineBody"
-    };
-    const bodyId = mapping[type];
-    if (!bodyId) return;
+  // pick body id
+  const mapping = {
+    morning: "morningBody",
+    after: "afterBody",
+    night: "nightBody",
+    classRoutine: "classRoutineBody"
+  };
+  const bodyId = mapping[type];
+  if (!bodyId) return;
 
-    const body = document.getElementById(bodyId);
+  const body = document.getElementById(bodyId);
 
-    // prevent duplicates (case-insensitive)
-    const existing = Array.from(body.querySelectorAll("tr")).some(r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase());
-    if (existing) { alert("Task already exists!"); return; }
+  // prevent duplicates (case-insensitive)
+  const existing = Array.from(body.querySelectorAll("tr")).some(
+    r => r.children[0].textContent.trim().toLowerCase() === task.toLowerCase()
+  );
+  if (existing) { alert("Task already exists!"); return; }
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = createRowHTML(task);
-    body.appendChild(tr);
-    setupMemberSelector(tr);
-    attachCheckboxListeners();
-    input.value = "";
+  // make sure members are loaded
+  const members = Array.isArray(window.classMembersList) ? window.classMembersList : [];
+  if (!members.length) {
+    alert("⚠️ No members loaded yet. Please select a class first.");
+    return;
   }
+
+  // create new row
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${escapeHtml(task)}</td>
+    <td><input type="checkbox" /></td>
+    <td>
+      <div class="member-box"></div>
+      <select class="member-select">
+        ${members.map(m => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("")}
+      </select>
+      <button type="button" class="add-member-btn">Add</button>
+    </td>
+  `;
+  body.appendChild(tr);
+
+  // attach checkbox listener
+  const cb = tr.querySelector("input[type='checkbox']");
+  if (cb) cb.onchange = updateRoutineStars;
+
+  // attach add-member button
+  const addBtn = tr.querySelector(".add-member-btn");
+  if (addBtn) addBtn.onclick = () => addMemberFromBtn(addBtn);
+
+  input.value = "";
+}
+
 
   // simple escape to avoid HTML injection for task text
   function escapeHtml(str) {
