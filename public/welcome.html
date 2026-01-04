@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>🌞 Welcome to My Daily Effort Tracker</title>
 
-  <!-- Preload font for faster render -->
+  <!-- Preload font -->
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
   <style>
@@ -22,11 +22,8 @@
       margin: 0;
     }
 
-    /* Hide content initially for smooth fade-in */
-    #pageContent {
-      opacity: 0;
-      transition: opacity 1s ease;
-    }
+    /* Hide content until logo loads */
+    #pageContent { opacity: 0; transition: opacity 1s ease; }
 
     h1 {
       font-size: 2.2em;
@@ -53,10 +50,7 @@
       will-change: transform;
     }
 
-    button:hover {
-      background-color: #3e9e45;
-      transform: scale(1.05);
-    }
+    button:hover { background-color: #3e9e45; transform: scale(1.05); }
 
     .info-box {
       background: rgba(255, 255, 255, 0.85);
@@ -78,7 +72,7 @@
     @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Growing Seed Animation */
+    /* Seed animation */
     .seed {
       display: inline-block;
       transform-origin: center bottom;
@@ -109,11 +103,7 @@
       z-index: 1000;
     }
 
-    .app-logo {
-      width: 230px;
-      height: 150px;
-      border-radius: 12px;
-    }
+    .app-logo { width: 230px; height: 150px; border-radius: 12px; }
 
     .cta-btn {
       margin-top: 40px;
@@ -141,10 +131,7 @@
   <div id="pageContent">
     <!-- Logo -->
     <div class="logo-container">
-      <img src="images/comfort.png" alt="App Logo" class="app-logo" loading="lazy">
-      <div class="sparkle sparkle1">✨</div>
-      <div class="sparkle sparkle2">✨</div>
-      <div class="sparkle sparkle3">✨</div>
+      <img src="images/comfort.png" alt="App Logo" class="app-logo" loading="lazy" decoding="async">
     </div>
 
     <h1 class="hero-title">
@@ -161,42 +148,32 @@
   </div>
 
   <script>
-    window.addEventListener("load", () => {
-      const page = document.getElementById("pageContent");
+    const page = document.getElementById("pageContent");
+    const logo = document.querySelector(".app-logo");
+    const startBtn = document.getElementById("startBtn");
+    const infoText = document.getElementById("infoText");
 
-      // Fade in entire page
-      page.style.opacity = 1;
+    // Messages for rotation
+    const messages = [
+      "💡 Track your child’s progress and celebrate small wins!",
+      "👨‍👩‍👧 Build stronger family connections through shared goals.",
+      "⭐ Motivate your kids with stars and kind words of encouragement.",
+      "🎯 Teach consistency and commitment through daily effort.",
+      "🎁 Reward progress — even the small steps — to keep motivation high!",
+      "💬 Encourage open talk about goals, dreams, and challenges."
+    ];
 
-      // Redirect if logged in
-      const user = localStorage.getItem("currentUser");
-      if (user) window.location.replace("welcome.html");
+    // Show first message immediately
+    let index = 0;
+    infoText.innerHTML = messages[0];
+    infoText.style.opacity = 1;
 
-      // Button click
-      const startBtn = document.getElementById("startBtn");
-      startBtn.addEventListener("click", () => window.location.href = "ask-user.html");
+    // Wait for logo to load before showing everything
+    logo.addEventListener("load", () => {
+      page.style.opacity = 1; // fade-in page
+      startBtn.style.animation = "bounceIn 2s infinite alternate"; // start button animation
 
-      // Seed animation automatically runs via CSS
-
-      // Start button bounce after fade-in
-      startBtn.style.animation = "bounceIn 2s infinite alternate";
-
-      // Rotating messages
-      const messages = [
-        "💡 Track your child’s progress and celebrate small wins!",
-        "👨‍👩‍👧 Build stronger family connections through shared goals.",
-        "⭐ Motivate your kids with stars and kind words of encouragement.",
-        "🎯 Teach consistency and commitment through daily effort.",
-        "🎁 Reward progress — even the small steps — to keep motivation high!",
-        "💬 Encourage open talk about goals, dreams, and challenges."
-      ];
-
-      const infoText = document.getElementById("infoText");
-      let index = 0;
-
-      // Show first message immediately
-      infoText.innerHTML = messages[0];
-      infoText.style.opacity = 1;
-
+      // Rotate messages smoothly
       function rotateMessage() {
         infoText.style.opacity = 0;
         setTimeout(() => {
@@ -206,9 +183,15 @@
         }, 500);
       }
 
-      // Start rotating messages after initial fade-in
       setTimeout(() => setInterval(rotateMessage, 4000), 1000);
     });
+
+    // Button click
+    startBtn.addEventListener("click", () => window.location.href = "ask-user.html");
+
+    // Redirect if already logged in
+    const user = localStorage.getItem("currentUser");
+    if (user) window.location.replace("welcome.html");
   </script>
 </body>
 </html>
