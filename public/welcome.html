@@ -181,28 +181,29 @@
 /* ===== Growing Seed Animation ===== */
 .seed {
   display: inline-block;
-  margin-right: 6px;
-  animation: seedGrow 2.5s ease-out 1;
-  transform-origin: bottom center;
+  margin-right: 8px;
+  transform-origin: center bottom;
+  animation: sproutBreath 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-@keyframes seedGrow {
+@keyframes sproutBreath {
   0% {
-    transform: scale(0.7) translateY(6px);
-    opacity: 0.6;
+    transform: scale(0.75) translateY(6px);
+    opacity: 0.7;
   }
-  40% {
+  35% {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
-  70% {
-    transform: scale(1.08) translateY(-2px);
+  65% {
+    transform: scale(1.12) translateY(-3px);
   }
   100% {
-    transform: scale(0.7) translateY(6px);
-    opacity: 0.6;
+    transform: scale(0.75) translateY(6px);
+    opacity: 0.7;
   }
 }
+
 
 
   </style>
@@ -217,8 +218,8 @@
   </div>
 
   <p class="hero-subtitle">
-  <span class="seed">🌱</span>
-  <h1> Turning daily small-actions into lifelong growth</h1>
+  <span class="seed">🌱
+  <h1> Turning daily small-actions into lifelong growth</h1></span>
 </p>
 
   <p>Empowering families to grow, learn, and shine together ✨</p>
