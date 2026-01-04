@@ -11,7 +11,6 @@
     body {
       text-align: center;
       font-family: "Poppins", "Comic Sans MS", Arial, sans-serif;
-      padding-top: 0;
       background: white;
       color: #333;
       overflow: hidden;
@@ -20,18 +19,25 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      margin: 0;
+    }
+
+    /* Hide content initially for smooth fade-in */
+    #pageContent {
+      opacity: 0;
+      transition: opacity 1s ease;
     }
 
     h1 {
       font-size: 2.2em;
       margin-bottom: 10px;
-      animation: fadeInDown 1s ease-out;
+      animation: fadeInDown 1s ease-out forwards;
     }
 
     p {
       font-size: 1.2em;
       margin-bottom: 40px;
-      animation: fadeInUp 1.5s ease-out;
+      animation: fadeInUp 1.5s ease-out forwards;
     }
 
     button {
@@ -59,7 +65,6 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
       width: 60%;
       max-width: 600px;
-      animation: fadeIn 1.5s ease-in-out;
     }
 
     .info-text {
@@ -67,12 +72,11 @@
       color: #444;
       margin-top: 15px;
       min-height: 60px;
-      transition: opacity 0.5s;
+      transition: opacity 0.5s ease;
     }
 
     @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* Growing Seed Animation */
     .seed {
@@ -106,7 +110,7 @@
     }
 
     .app-logo {
-      width: 230px; /* smaller for faster load */
+      width: 230px;
       height: 150px;
       border-radius: 12px;
     }
@@ -131,36 +135,38 @@
     .cta-btn:active { transform: translateY(0); box-shadow: 0 10px 22px rgba(46, 125, 50, 0.3); }
 
     .hero-title { font-size: 2.2em; font-weight: 600; text-align: center; }
-
-    /* Optional sparkle (if you want animated sparkles later) */
-    .sparkle { opacity: 0; }
   </style>
 </head>
 <body>
-  <!-- Logo -->
-  <div class="logo-container">
-    <img src="images/comfort.png" alt="App Logo" class="app-logo" loading="lazy">
-    <div class="sparkle sparkle1">✨</div>
-    <div class="sparkle sparkle2">✨</div>
-    <div class="sparkle sparkle3">✨</div>
-  </div>
-
-  <h1 class="hero-title">
-    Turning daily small actions into lifelong gro<span class="seed">🌱</span>th
-  </h1>
-
-  <p>Empowering families to grow, learn, and shine together ✨</p>
-
-  <div class="info-box">
-    <div id="infoText" class="info-text">
-      <!-- First message will be injected by JS -->
+  <div id="pageContent">
+    <!-- Logo -->
+    <div class="logo-container">
+      <img src="images/comfort.png" alt="App Logo" class="app-logo" loading="lazy">
+      <div class="sparkle sparkle1">✨</div>
+      <div class="sparkle sparkle2">✨</div>
+      <div class="sparkle sparkle3">✨</div>
     </div>
-  </div>
 
-  <button id="startBtn" class="cta-btn">Grow With Us</button>
+    <h1 class="hero-title">
+      Turning daily small actions into lifelong gro<span class="seed">🌱</span>th
+    </h1>
+
+    <p>Empowering families to grow, learn, and shine together ✨</p>
+
+    <div class="info-box">
+      <div id="infoText" class="info-text"></div>
+    </div>
+
+    <button id="startBtn" class="cta-btn">Grow With Us</button>
+  </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("load", () => {
+      const page = document.getElementById("pageContent");
+
+      // Fade in entire page
+      page.style.opacity = 1;
+
       // Redirect if logged in
       const user = localStorage.getItem("currentUser");
       if (user) window.location.replace("welcome.html");
@@ -168,6 +174,11 @@
       // Button click
       const startBtn = document.getElementById("startBtn");
       startBtn.addEventListener("click", () => window.location.href = "ask-user.html");
+
+      // Seed animation automatically runs via CSS
+
+      // Start button bounce after fade-in
+      startBtn.style.animation = "bounceIn 2s infinite alternate";
 
       // Rotating messages
       const messages = [
@@ -195,13 +206,8 @@
         }, 500);
       }
 
-      // Start rotation after 4s
-      setTimeout(() => setInterval(rotateMessage, 4000), 4000);
-
-      // Start button bounce after page load
-      window.addEventListener("load", () => {
-        startBtn.style.animation = "bounceIn 2s infinite alternate";
-      });
+      // Start rotating messages after initial fade-in
+      setTimeout(() => setInterval(rotateMessage, 4000), 1000);
     });
   </script>
 </body>
