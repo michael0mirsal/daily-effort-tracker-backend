@@ -178,6 +178,31 @@
   50% { opacity: 0; transform: scale(1.3) translateY(-10px); }
 }
 */
+/* ===== Growing Seed Animation ===== */
+.seed {
+  display: inline-block;
+  margin-right: 6px;
+  animation: seedGrow 3.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes seedGrow {
+  0% {
+    transform: scale(0.7) translateY(6px);
+    opacity: 0.6;
+  }
+  40% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.08) translateY(-2px);
+  }
+  100% {
+    transform: scale(0.7) translateY(6px);
+    opacity: 0.6;
+  }
+}
 
 
   </style>
@@ -191,7 +216,11 @@
     <div class="sparkle sparkle3">✨</div>
   </div>
 
-  <h1>🌱 Turning daily small-actions into lifelong growth</h1>
+  <p class="hero-subtitle">
+  <span class="seed">🌱</span>
+  Turning daily small actions into lifelong growth
+</p>
+
   <p>Empowering families to grow, learn, and shine together ✨</p>
 
   <div class="info-box">
