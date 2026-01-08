@@ -8,7 +8,7 @@ import Member from "./models/Member.js";
 import Task from "./models/Task.js";
 import Routine from "./models/Routine.js";
 
-
+ /*
 dotenv.config({
  path: process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
     ? ".env.staging"
@@ -34,7 +34,22 @@ if (!MONGO_URI) {
 
   process.exit(1);
 }
+*/
+// Load .env only for local development
+if (process.env.NODE_ENV !== "production") {
+  const dotenv = await import("dotenv");
+  dotenv.config({ path: ".env.local" });
+}
 
+const MONGO_URI = process.env.MONGO_URI;
+
+console.log("NODE_ENV =", process.env.NODE_ENV);
+console.log("MONGO_URI loaded?", !!MONGO_URI);
+
+if (!MONGO_URI) {
+  console.error("❌ MongoDB URI is not defined!");
+  process.exit(1);
+}
 
 
 // Load JSON safely
@@ -54,9 +69,8 @@ const loadJSON = (filePath) => {
 async function migrate() {
   try {
     console.log("🚀 Connecting to MongoDB...");
-    await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    await mongoose.connect(MONGO_URI);
     console.log("✅ MongoDB connected.");
-    console.log("🌐 Connecting to MongoDB:", MONGO_URI.split("@")[0] + "@*****");
 
 
     // ---------- Families + Members ----------
