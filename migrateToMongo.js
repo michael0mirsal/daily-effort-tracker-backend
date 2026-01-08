@@ -42,12 +42,13 @@ if (!MONGO_URI) {
 // Only load local .env for development
 // 🔹 FIX: Only load dotenv for local development
 // Load dotenv only for local dev
+// Only load dotenv for local development
 if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
   const dotenv = await import("dotenv");
   dotenv.config({ path: ".env.local" });
 }
 
-// Choose MongoDB URI
+// Choose correct MongoDB URI
 const MONGO_URI = process.env.NODE_ENV === "production"
   ? process.env.MONGO_URI_PRODUCTION
   : process.env.MONGO_URI;
@@ -83,10 +84,11 @@ const loadJSON = (filePath) => {
 
 async function migrate() {
   try {
+    /*
     console.log("🚀 Connecting to MongoDB...");
     await mongoose.connect(MONGO_URI);
     console.log("✅ MongoDB connected.");
-
+*/
 
     // ---------- Families + Members ----------
     const familiesPath = path.join(process.cwd(), "data", "families.json");
