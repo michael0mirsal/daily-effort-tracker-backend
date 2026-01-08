@@ -38,20 +38,18 @@ if (!MONGO_URI) {
 // =============================
 // ✅ Load .env for local dev only
 // =============================
+// Load .env only if not in production
 if (process.env.NODE_ENV !== "production") {
   dotenv.config({ path: ".env.local" });
 }
 
-// =============================
-// ✅ FIXED: Select correct Mongo URI
-// =============================
-const MONGO_URI = 
-  process.env.NODE_ENV === "production"
-    ? process.env.MONGO_URI_PRODUCTION   // <<-- Highlight FIX: Use production URI in Render
-    : process.env.MONGO_URI;             // <<-- Local development URI
+// Choose Mongo URI
+const MONGO_URI = process.env.NODE_ENV === "production"
+  ? process.env.MONGO_URI_PRODUCTION   // <-- Use linked environment variable on Render
+  : process.env.MONGO_URI;             // <-- Local development
 
 console.log("NODE_ENV =", process.env.NODE_ENV);
-console.log("MONGO_URI loaded?", !!MONGO_URI); // <<-- Debug log to verify
+console.log("MONGO_URI loaded?", !!MONGO_URI);
 
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is not defined!");
