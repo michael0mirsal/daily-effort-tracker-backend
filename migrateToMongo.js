@@ -41,12 +41,12 @@ if (process.env.NODE_ENV !== "production") {
   dotenv.config({ path: ".env.local" });
 }
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI_PRODUCTION = process.env.MONGO_URI_PRODUCTION;
 
 console.log("NODE_ENV =", process.env.NODE_ENV);
 console.log("MONGO_URI loaded?", !!MONGO_URI);
 
-if (!MONGO_URI) {
+if (!MONGO_URI_PRODUCTION) {
   console.error("❌ MongoDB URI is not defined!");
   process.exit(1);
 }
