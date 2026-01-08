@@ -43,28 +43,39 @@ if (!MONGO_URI) {
 // 🔹 FIX: Only load dotenv for local development
 // Load dotenv only for local dev
 // Only load dotenv for local development
+// =============================
 if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
-  const dotenv = await import("dotenv");
-  dotenv.config({ path: ".env.local" });
+  const dotenv = await import("dotenv"); // 🔹 dynamic import
+  dotenv.config({ path: ".env.local" });  // 🔹 load only local env
+  console.log("✅ Loaded .env.local for development");
 }
 
-// Choose correct MongoDB URI
-const MONGO_URI = process.env.NODE_ENV === "production"
-  ? process.env.MONGO_URI_PRODUCTION
-  : process.env.MONGO_URI;
+// =============================
+// 🔹 Choose MongoDB URI based on environment
+// =============================
+const MONGO_URI =
+  process.env.NODE_ENV === "production"
+    ? process.env.MONGO_URI_PRODUCTION   // 🔹 production uses Render / Railway env
+    : process.env.NODE_ENV === "staging"
+      ? process.env.MONGO_URI_STAGING    // 🔹 staging
+      : process.env.MONGO_URI;           // 🔹 local dev
 
-console.log("NODE_ENV =", process.env.NODE_ENV);
-console.log("Using Mongo URI:", process.env.NODE_ENV === "production" ? "PRODUCTION" : "LOCAL");
+console.log("NODE_ENV =", process.env.NODE_ENV || "development");
+console.log("🔹 Using MongoDB URI:", process.env.NODE_ENV === "production" ? "PRODUCTION" : process.env.NODE_ENV === "staging" ? "STAGING" : "LOCAL");
 
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is not defined!");
   process.exit(1);
 }
 
-// Connect once
-await mongoose.connect(MONGO_URI);
+// =============================
+// 🔹 Connect to MongoDB once
+// =============================
+await mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 console.log(`✅ Connected to MongoDB (${process.env.NODE_ENV || "development"})`);
-
 
 
 
@@ -84,6 +95,7 @@ const loadJSON = (filePath) => {
 
 async function migrate() {
   try {
+    console.log("🚀 Starting migration...");
     /*
     console.log("🚀 Connecting to MongoDB...");
     await mongoose.connect(MONGO_URI);
