@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
+
 import fs from "fs";
 import path from "path";
 
@@ -40,26 +40,29 @@ if (!MONGO_URI) {
 // =============================
 // Load .env only if not in production
 // Only load local .env for development
+// 🔹 FIX: Only load dotenv for local development
 if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
-  dotenv.config({ path: ".env.local" });
+  const dotenv = await import("dotenv"); // 🔹 dynamic import
+  dotenv.config({ path: ".env.local" });  // 🔹 load only local env
 }
 
-// --- Choose MongoDB URI ---
+// 🔹 FIX: Use correct MongoDB URI based on environment
 const MONGO_URI = process.env.NODE_ENV === "production"
-  ? process.env.MONGO_URI_PRODUCTION   // Render will inject this automatically
-  : process.env.MONGO_URI;             // Local dev
+  ? process.env.MONGO_URI_PRODUCTION     // 🔹 production uses Render env
+  : process.env.MONGO_URI;               // 🔹 local dev
 
 console.log("NODE_ENV =", process.env.NODE_ENV);
-console.log("MONGO_URI loaded?", !!MONGO_URI);
+console.log("Mongo URI loaded?", !!MONGO_URI);
 
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is not defined!");
   process.exit(1);
 }
 
-// Connect to MongoDB
+// 🔹 FIX: Connect to MongoDB with correct URI
 await mongoose.connect(MONGO_URI);
-console.log(`✅ Connected to MongoDB (${process.env.NODE_ENV})`);
+console.log(`✅ Connected to MongoDB (${process.env.NODE_ENV || "development"})`);
+
 
 
 // Load JSON safely
