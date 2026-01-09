@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 import fs from "fs";
 import path from "path";
-
+import dotenv from "dotenv";
 import Family from "./models/Family.js";
 import Member from "./models/Member.js";
 import Task from "./models/Task.js";
@@ -44,38 +44,24 @@ if (!MONGO_URI) {
 // Load dotenv only for local dev
 // Only load dotenv for local development
 // =============================
-if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
-  const dotenv = await import("dotenv"); // 🔹 dynamic import
-  dotenv.config({ path: ".env.local" });  // 🔹 load only local env
-  console.log("✅ Loaded .env.local for development");
-}
-
-// =============================
-// 🔹 Choose MongoDB URI based on environment
-// =============================
-const MONGO_URI =
-  process.env.NODE_ENV === "production"
-    ? process.env.MONGO_URI_PRODUCTION   // 🔹 production uses Render / Railway env
+// ✅ FIX: Load .env for migration
+dotenv.config({
+  path: process.env.NODE_ENV === "production"
+    ? ".env.production"
     : process.env.NODE_ENV === "staging"
-      ? process.env.MONGO_URI_STAGING    // 🔹 staging
-      : process.env.MONGO_URI;           // 🔹 local dev
-
-console.log("NODE_ENV =", process.env.NODE_ENV || "development");
-console.log("🔹 Using MongoDB URI:", process.env.NODE_ENV === "production" ? "PRODUCTION" : process.env.NODE_ENV === "staging" ? "STAGING" : "LOCAL");
-
-if (!MONGO_URI) {
-  console.error("❌ MongoDB URI is not defined!");
-  process.exit(1);
-}
-
-// =============================
-// 🔹 Connect to MongoDB once
-// =============================
-await mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+      ? ".env.staging"
+      : ".env.local"
 });
-console.log(`✅ Connected to MongoDB (${process.env.NODE_ENV || "development"})`);
+
+const MONGO_URI = process.env.NODE_ENV === "production"
+  ? process.env.MONGO_URI_PRODUCTION
+  : process.env.NODE_ENV === "staging"
+    ? process.env.MONGO_URI_STAGING
+    : process.env.MONGO_URI;
+
+// ✅ Connect to MongoDB for migration
+await mongoose.connect(MONGO_URI);
+console.log(`✅ Connected to MongoDB for migration (${process.env.NODE_ENV || "development"})`);
 
 
 
