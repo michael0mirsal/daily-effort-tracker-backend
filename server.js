@@ -71,21 +71,7 @@ server.on("error", (err) => {
   process.exit(1);
 });
 
-// Graceful shutdown for platforms like Render / Railway
-process.on("SIGTERM", () => {
-  console.log("🛑 SIGTERM received: shutting down gracefully");
-  server.close(() => {
-    console.log("✅ Server closed");
-    process.exit(0);
-  });
-});
-process.on("SIGINT", () => {
-  console.log("🛑 SIGINT received: shutting down gracefully");
-  server.close(() => {
-    console.log("✅ Server closed");
-    process.exit(0);
-  });
-});
+
 // ======================================================
 // ✅ Family Routes
 // ======================================================
@@ -470,25 +456,7 @@ app.get("/api/kidsStars/week", async (req, res) => {
 
 
 
-// ======================================================
-// ✅ Health check
-// ======================================================
-app.get("/api/test", (req, res) => res.json({ message: "✅ Server is alive!" }));
 
-// ======================================================
-// ✅ Start server
-// ======================================================
-// Connect MongoDB and start server
-await connectDB();
-
-console.log("📡 Environment PORT =", process.env.PORT);
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
-});
-
-app.get('/health', (req, res) => {
-  res.send('OK');
-});
 
 // ======================================================
 // ✅ Helper
