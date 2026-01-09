@@ -24,12 +24,13 @@
     }
 
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      visibility: hidden; /* gated render */
-    }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #fff;
+}
+
 
     /* ===== Layout ===== */
     .page {
@@ -194,8 +195,7 @@
         return;
       }
 
-      // Show page after gate
-      document.body.style.visibility = "visible";
+
 
       // CTA
       document.getElementById("startBtn").addEventListener("click", () => {
