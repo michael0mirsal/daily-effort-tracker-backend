@@ -16,6 +16,14 @@
   <link rel="preload" as="image" href="images/comfort.png">
 
   <style>
+    /* Hide everything except preloader initially */
+body.loading *:not(#preloader) {
+  visibility: hidden;
+}
+body.loading {
+  background: #fff;
+}
+
     /* ===== Reset ===== */
 * {
   box-sizing: border-box;
@@ -171,7 +179,9 @@ body {
   </style>
 </head>
 
-<body>
+<body class="loading">
+
+
   <!-- Preloader -->
   <div id="preloader">
     <img src="images/comfort.png" alt="Loading..." class="preloader-logo">
@@ -209,14 +219,20 @@ body {
    // ---- Preloader ----
 window.addEventListener("load", () => {
   const preloader = document.getElementById("preloader");
+  
+  // Hide preloader
   preloader.classList.add("hidden");
 
+  // Show main content smoothly
+  document.body.classList.remove("loading");
+  
   // Redirect if user exists
   const user = localStorage.getItem("currentUser");
   if (user) {
     window.location.href = "welcome.html";
   }
 });
+
 
 // ---- CTA Button ----
 document.getElementById("startBtn").addEventListener("click", () => {
