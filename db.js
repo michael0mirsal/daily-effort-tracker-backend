@@ -53,10 +53,7 @@ export const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(MONGO_URI);
     console.log(`✅ Connected to MongoDB (${process.env.NODE_ENV || "development"})`);
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);
