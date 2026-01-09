@@ -3,35 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <title>🌞 Welcome to My Daily Effort Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
-    /* ===== Body & Layout ===== */
+    /* Hide body initially to prevent flash/hang */
     body {
+      visibility: hidden;
+      text-align: center;
       font-family: "Poppins", "Comic Sans MS", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
+      padding-top: 0px;
+      background: white;
+      color: #333;
+      overflow: hidden;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      text-align: center;
-      background: white;
-      color: #333;
-      overflow-x: hidden;
     }
 
-    h1.hero-title {
+    h1 {
       font-size: 2.2em;
-      font-weight: 600;
-      animation: fadeInDown 1s ease-out forwards;
+      margin-bottom: 10px;
+      animation: fadeInDown 1s ease-out;
     }
 
     p {
       font-size: 1.2em;
       margin-bottom: 40px;
-      animation: fadeInUp 1.5s ease-out forwards;
+      animation: fadeInUp 1.5s ease-out;
+    }
+
+    button {
+      padding: 15px 40px;
+      font-size: 1.2em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s, background 0.3s;
+      animation: bounceIn 2s infinite alternate;
+    }
+
+    button:hover {
+      background-color: #3e9e45;
+      transform: scale(1.05);
     }
 
     .info-box {
@@ -41,46 +57,43 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
       width: 60%;
       max-width: 600px;
-      animation: fadeIn 2s ease-in-out forwards;
+      animation: fadeIn 2s ease-in-out;
     }
 
     .info-text {
       font-size: 1.1em;
       color: #444;
+      margin-top: 15px;
       min-height: 60px;
-      opacity: 1;
-      transition: opacity 0.5s;
+      transition: opacity 1s;
     }
 
-    button.cta-btn {
-      padding: 14px 44px;
-      font-size: 1.05em;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, #4CAF50, #2e7d32);
-      border: none;
-      border-radius: 999px;
-      cursor: pointer;
-      box-shadow: 0 12px 30px rgba(46, 125, 50, 0.35);
-      transition: transform 0.3s, box-shadow 0.3s;
-      animation: bounceIn 2s 1s forwards; /* delayed to not block render */
+    /* ✨ Animations */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    button.cta-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 45px rgba(46, 125, 50, 0.45);
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    button.cta-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 10px 22px rgba(46, 125, 50, 0.3);
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
-    /* ===== Logo ===== */
+    @keyframes bounceIn {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+
+    /* ===== MARKETING LOGO (TOP-LEFT) ===== */
     .logo-container {
       position: fixed;
-      top: 20px;
-      left: 20px;
+      top: -50px;
+      left: -50px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -88,11 +101,42 @@
     }
 
     .app-logo {
-      width: 200px;  /* smaller for faster load */
-      height: auto;
+      width: 460px;
+      height: 300px;
       border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .app-name {
+      font-size: 1.2em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #2c3e50;
+      white-space: nowrap;
+    }
+
+    .cta-btn {
+      margin-top: 40px;
+      padding: 14px 44px;
+      font-size: 1.05em;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: #ffffff;
+      background: linear-gradient(135deg, #4CAF50, #2e7d32);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(46, 125, 50, 0.35);
+      transition: all 0.3s ease;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 45px rgba(46, 125, 50, 0.45);
+    }
+
+    .cta-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 10px 22px rgba(46, 125, 50, 0.3);
     }
 
     .seed {
@@ -107,23 +151,26 @@
       top: 1px;
     }
 
-    /* ===== Animations ===== */
-    @keyframes fadeInDown { from {opacity:0; transform:translateY(-30px);} to {opacity:1; transform:translateY(0);} }
-    @keyframes fadeInUp { from {opacity:0; transform:translateY(30px);} to {opacity:1; transform:translateY(0);} }
-    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-    @keyframes bounceIn { from {transform: translateY(0);} to {transform: translateY(-10px);} }
     @keyframes sproutOnce {
-      0% { transform: scale(0.3) translateY(8px); opacity:0; }
-      60% { transform: scale(0.6) translateY(-3px); opacity:1; }
+      0% { transform: scale(0.3) translateY(8px); opacity: 0; }
+      60% { transform: scale(0.6) translateY(-3px); opacity: 1; }
       100% { transform: scale(0.9) translateY(-3px); }
+    }
+
+    .hero-title {
+      font-size: 2.2em;
+      font-weight: 600;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-
-  <!-- Logo -->
+  <!-- Logo with magical glow -->
   <div class="logo-container">
-    <img src="images/comfort.png" alt="App Logo" class="app-logo" loading="lazy">
+    <img src="images/comfort.png" alt="App Logo" class="app-logo">
+    <div class="sparkle sparkle1">✨</div>
+    <div class="sparkle sparkle2">✨</div>
+    <div class="sparkle sparkle3">✨</div>
   </div>
 
   <h1 class="hero-title">
@@ -141,20 +188,23 @@
   <button id="startBtn" class="cta-btn">Grow With Us</button>
 
   <script>
-    // ===== Redirect if logged in =====
     document.addEventListener("DOMContentLoaded", () => {
+      // ✅ Redirect if logged in
       const user = localStorage.getItem("currentUser");
       if (user) {
         window.location.replace("welcome.html");
-        return;
+        return; // stop rendering this page
       }
+
+      // Show page after redirect check
+      document.body.style.visibility = "visible";
 
       // Button click
       document.getElementById("startBtn").addEventListener("click", () => {
         window.location.href = "ask-user.html";
       });
 
-      // Rotating messages
+      // Rotating motivational messages
       const messages = [
         "💡 Track your child’s progress and celebrate small wins!",
         "👨‍👩‍👧 Build stronger family connections through shared goals.",
@@ -171,12 +221,11 @@
         infoText.style.opacity = 0;
         setTimeout(() => {
           index = (index + 1) % messages.length;
-          infoText.textContent = messages[index];
+          infoText.innerHTML = messages[index];
           infoText.style.opacity = 1;
-        }, 500);
-      }, 3500); // slightly faster, smoother
+        }, 1000);
+      }, 4000);
     });
   </script>
-
 </body>
 </html>
