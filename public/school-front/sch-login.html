@@ -159,6 +159,7 @@
 </div>
 
 <script>
+const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 
 function goHome() { window.location.href = "welcome.html"; }
 
@@ -185,7 +186,7 @@ async function validateLicense() {
   licenseError.textContent = ''; // reset error
 
   try {
-    const res = await fetch('/api/nursery/validate-license', {
+    const res = await fetch(`${API_BASE}/api/nursery/validate-license`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ license: licenseInput.trim() }) // normalize case
