@@ -40,7 +40,7 @@ app.use("/api", schTaskRoutes);
 app.use("/api/msg", msgRoutes);
 // Serve welcome page
 app.get("/", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "public/school-front", "welcome.html"));
+  res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
 });
 app.get("/health", (req, res) => res.send("OK"));
 
