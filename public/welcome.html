@@ -1,169 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>🌞 Welcome to My Daily Effort Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Empower your family to grow, learn, and shine together. Track daily habits and celebrate small wins.">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="images/comfort.png" type="image/png">
 
-  <!-- Preload logo for faster paint -->
-  <link rel="preload" as="image" href="images/comfort.png" />
+  <!-- External CSS -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Preload Logo -->
+  <link rel="preload" as="image" href="images/comfort.png">
 
   <style>
     /* ===== Reset ===== */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    html, body {
-      height: 100%;
-      font-family: "Poppins", "Segoe UI", Arial, sans-serif;
-      background: #ffffff;
-      color: #333;
-    }
+html, body {
+  height: 100%;
+  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+  background: #ffffff;
+  color: #333;
+}
 
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
 
-    /* ===== Layout ===== */
-    .page {
-      max-width: 900px;
-      width: 100%;
-      padding: 40px 20px;
-      text-align: center;
-    }
+/* ===== Preloader ===== */
+#preloader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  z-index: 100;
+  transition: opacity 0.5s ease;
+}
 
-    /* ===== Logo ===== */
-    .logo-container {
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 10;
-    }
+#preloader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
 
-    .app-logo {
-      width: 140px;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    }
+.preloader-logo {
+  width: 120px;
+  height: auto;
+}
 
-    /* ===== Hero ===== */
-    .hero-title {
-      font-size: 2.4rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      opacity: 0;
-      transform: translateY(-20px);
-      animation: fadeDown 0.8s ease forwards;
-    }
+/* ===== Layout ===== */
+.page {
+  max-width: 900px;
+  width: 100%;
+  padding: 40px 20px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease forwards;
+  animation-delay: 0.2s;
+}
 
-    .hero-sub {
-      font-size: 1.2rem;
-      margin-bottom: 40px;
-      color: #555;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 0.8s ease forwards;
-      animation-delay: 0.15s;
-    }
+/* ===== Logo ===== */
+.logo-container {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
 
-    /* ===== Info Box ===== */
-    .info-box {
-      background: rgba(255, 255, 255, 0.9);
-      padding: 28px 36px;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      max-width: 620px;
-      margin: 0 auto 48px;
-      opacity: 0;
-      animation: fadeIn 1s ease forwards;
-      animation-delay: 0.3s;
-    }
+.app-logo {
+  width: 140px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
 
-    .info-text {
-      font-size: 1.1rem;
-      min-height: 48px;
-      transition: opacity 0.35s ease;
-    }
+/* ===== Hero ===== */
+.hero-title {
+  font-size: 2.4rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
 
-    /* ===== CTA ===== */
-    .cta-btn {
-      padding: 14px 44px;
-      font-size: 1.05rem;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      color: #fff;
-      background: linear-gradient(135deg, #4CAF50, #2e7d32);
-      border: none;
-      border-radius: 999px;
-      cursor: pointer;
-      box-shadow: 0 12px 28px rgba(46, 125, 50, 0.35);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      opacity: 0;
-      animation: fadeIn 1s ease forwards;
-      animation-delay: 0.45s;
-    }
+.hero-sub {
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+  color: #555;
+}
 
-    .cta-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 16px 40px rgba(46, 125, 50, 0.45);
-    }
+/* ===== Info Box ===== */
+.info-box {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 28px 36px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  max-width: 620px;
+  margin: 0 auto 48px;
+}
 
-    /* ===== Seed Animation ===== */
-    .seed {
-      display: inline-block;
-      transform-origin: center bottom;
-      animation: sproutOnce 2s ease-out forwards;
-      margin-left: 2px;
-    }
+.info-text {
+  font-size: 1.1rem;
+  min-height: 48px;
+  transition: opacity 0.35s ease;
+}
 
-    /* ===== Animations ===== */
-    @keyframes fadeDown {
-      to { opacity: 1; transform: translateY(0); }
-    }
+/* ===== CTA ===== */
+.cta-btn {
+  padding: 14px 44px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #fff;
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(46, 125, 50, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
 
-    @keyframes fadeUp {
-      to { opacity: 1; transform: translateY(0); }
-    }
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(46, 125, 50, 0.45);
+}
 
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
+/* ===== Seed Animation ===== */
+.seed {
+  display: inline-block;
+  transform-origin: center bottom;
+  animation: sproutOnce 2s ease-out forwards;
+  margin-left: 2px;
+}
 
-    @keyframes sproutOnce {
-      0% { transform: scale(0.3) translateY(8px); opacity: 0; }
-      60% { transform: scale(0.7) translateY(-2px); opacity: 1; }
-      100% { transform: scale(1) translateY(0); }
-    }
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+}
 
-    /* ===== Fade utility ===== */
-    .fade-out { opacity: 0; }
+@keyframes sproutOnce {
+  0% { transform: scale(0.3) translateY(8px); opacity: 0; }
+  60% { transform: scale(0.7) translateY(-2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); }
+}
 
-    /* ===== Responsive ===== */
-    @media (max-width: 600px) {
-      .hero-title { font-size: 1.8rem; }
-      .hero-sub { font-size: 1rem; }
-      .app-logo { width: 110px; }
-    }
+/* ===== Fade Utility ===== */
+.fade-out { opacity: 0; }
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .hero-title { font-size: 1.8rem; }
+  .hero-sub { font-size: 1rem; }
+  .app-logo { width: 110px; }
+}
+
   </style>
 </head>
 
 <body>
-  <!-- Logo -->
-  <div class="logo-container">
-    <img src="images/comfort.png" alt="App Logo" class="app-logo" width="140" height="90" />
+  <!-- Preloader -->
+  <div id="preloader">
+    <img src="images/comfort.png" alt="Loading..." class="preloader-logo">
   </div>
 
-  <!-- Page -->
+  <!-- Logo -->
+  <div class="logo-container">
+    <img src="images/comfort.png" alt="App Logo" class="app-logo" width="140" height="90">
+  </div>
+
+  <!-- Page Content -->
   <main class="page">
     <h1 class="hero-title">
       Turning daily small actions into lifelong gro<span class="seed">🌱</span>th
@@ -179,48 +198,52 @@
       </div>
     </div>
 
-    <button id="startBtn" class="cta-btn">
+    <button id="startBtn" class="cta-btn" aria-label="Start Tracking">
       Grow With Us
     </button>
   </main>
 
+  <!-- External JS -->
+
   <script>
-    // ---- Soft redirect AFTER paint (no flash, no block) ----
-    window.addEventListener("load", () => {
-      const user = localStorage.getItem("currentUser");
-      if (user) {
-        window.location.href = "welcome.html";
-      }
-    });
+   // ---- Preloader ----
+window.addEventListener("load", () => {
+  const preloader = document.getElementById("preloader");
+  preloader.classList.add("hidden");
 
-    // ---- CTA ----
-    document.getElementById("startBtn").addEventListener("click", () => {
-      window.location.href = "ask-user.html";
-    });
+  // Redirect if user exists
+  const user = localStorage.getItem("currentUser");
+  if (user) {
+    window.location.href = "welcome.html";
+  }
+});
 
-    // ---- Optimized Message Rotator ----
-    const messages = [
-      "💡 Track your child’s progress and celebrate small wins!",
-      "👨‍👩‍👧 Build stronger family connections through shared goals.",
-      "⭐ Motivate your kids with stars and kind words of encouragement.",
-      "🎯 Teach consistency and commitment through daily habits.",
-      "🎁 Reward progress — even the small steps — to keep motivation high!",
-      "💬 Encourage open talk about goals, dreams, and challenges."
-    ];
+// ---- CTA Button ----
+document.getElementById("startBtn").addEventListener("click", () => {
+  window.location.href = "ask-user.html";
+});
 
-    const infoText = document.getElementById("infoText");
-    let index = 0;
+// ---- Optimized Message Rotator ----
+const messages = [
+  "💡 Track your child’s progress and celebrate small wins!",
+  "👨‍👩‍👧 Build stronger family connections through shared goals.",
+  "⭐ Motivate your kids with stars and kind words of encouragement.",
+  "🎯 Teach consistency and commitment through daily habits.",
+  "🎁 Reward progress — even the small steps — to keep motivation high!",
+  "💬 Encourage open talk about goals, dreams, and challenges."
+];
 
-    setInterval(() => {
-      infoText.classList.add("fade-out");
+const infoText = document.getElementById("infoText");
+let index = 0;
 
-      setTimeout(() => {
-        index = (index + 1) % messages.length;
-        infoText.textContent = messages[index];
-        infoText.classList.remove("fade-out");
-      }, 350);
-
-    }, 4000);
+setInterval(() => {
+  infoText.classList.add("fade-out");
+  setTimeout(() => {
+    index = (index + 1) % messages.length;
+    infoText.textContent = messages[index];
+    infoText.classList.remove("fade-out");
+  }, 350);
+}, 4000);
   </script>
 </body>
 </html>
