@@ -361,7 +361,7 @@ app.post("/api/routines/save", async (req, res) => {
 
 
 // GET /api/routines/search
-app.get("/api/routines/search", async (req, res) => {
+app.get("/api/routines/getfam", async (req, res) => {
   try {
     const { name, date, family } = req.query;
 
