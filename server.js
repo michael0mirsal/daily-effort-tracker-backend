@@ -26,7 +26,7 @@ import mongoose from "mongoose";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-const PORT = process.env.PORT || 10000; // Railway prefers 8080
+const PORT = process.env.PORT; // ✅ use the platform-assigned port
 
 // ======================================================
 // ✅ Middleware
@@ -46,9 +46,26 @@ app.get("/health", (req, res) => res.send("OK"));
 
 // ✅ Connect MongoDB and start server
 await connectDB();
+console.log("📡 Environment PORT =", process.env.PORT);
 
-app.listen(PORT, "0.0.0.0", () => {
+// Use the platform-assigned port
+if (!PORT) {
+  console.error("❌ No PORT defined in environment variables!");
+  process.exit(1);
+}
+
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
+});
+
+// Graceful error handling
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`❌ Port ${PORT} is already in use. Try restarting the server.`);
+  } else {
+    console.error("❌ Server error:", err);
+  }
+  process.exit(1);
 });
 // ======================================================
 // ✅ Family Routes
