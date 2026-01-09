@@ -20,7 +20,7 @@ import Task from "./models/Task.js";
 import Routine from "./models/Routine.js";
 import mongoose from "mongoose";
 
-mongoose.set("debug", true);
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,7 +42,14 @@ app.use("/api/msg", msgRoutes);
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public/school-front", "ask-user.html"));
 });
+app.get("/health", (req, res) => res.send("OK"));
 
+// ✅ Connect MongoDB and start server
+await connectDB();
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
+});
 // ======================================================
 // ✅ Family Routes
 // ======================================================
