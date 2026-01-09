@@ -116,6 +116,8 @@
   </div>
 
   <script>
+    const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
+
     const form = document.getElementById('msgForm');
     const recipientType = document.getElementById('recipientType');
     const classInput = document.getElementById('classId');
@@ -130,7 +132,7 @@
 
     // Load messages from API
     async function loadMessages() {
-      const res = await fetch('/api/messages'); // Your backend route to get messages
+      const res = await fetch(`${API_BASE}/api/messages`); // Your backend route to get messages
       const msgs = await res.json();
       messageList.innerHTML = '';
       msgs.forEach(msg => {
@@ -178,7 +180,7 @@
       if (recipientType.value === 'class') data.classId = classInput.value;
       if (recipientType.value === 'nursery') data.nurseryId = "targetNurseryId"; // Replace dynamically
 
-      const res = await fetch('/api/messages/send', {
+      const res = await fetch(`${API_BASE}/api/messages/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
