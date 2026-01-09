@@ -5,7 +5,7 @@
   <title>🌞 Welcome to My Daily Effort Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Preload logo -->
+  <!-- Preload logo for faster paint -->
   <link rel="preload" as="image" href="images/comfort.png" />
 
   <style>
@@ -24,13 +24,11 @@
     }
 
     body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: #fff;
-}
-
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
     /* ===== Layout ===== */
     .page {
@@ -75,12 +73,12 @@
       opacity: 0;
       transform: translateY(20px);
       animation: fadeUp 0.8s ease forwards;
-      animation-delay: 0.2s;
+      animation-delay: 0.15s;
     }
 
     /* ===== Info Box ===== */
     .info-box {
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       padding: 28px 36px;
       border-radius: 18px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
@@ -88,13 +86,13 @@
       margin: 0 auto 48px;
       opacity: 0;
       animation: fadeIn 1s ease forwards;
-      animation-delay: 0.4s;
+      animation-delay: 0.3s;
     }
 
     .info-text {
       font-size: 1.1rem;
       min-height: 48px;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.35s ease;
     }
 
     /* ===== CTA ===== */
@@ -112,7 +110,7 @@
       transition: transform 0.25s ease, box-shadow 0.25s ease;
       opacity: 0;
       animation: fadeIn 1s ease forwards;
-      animation-delay: 0.6s;
+      animation-delay: 0.45s;
     }
 
     .cta-btn:hover {
@@ -124,7 +122,7 @@
     .seed {
       display: inline-block;
       transform-origin: center bottom;
-      animation: sproutOnce 2.2s ease-out forwards;
+      animation: sproutOnce 2s ease-out forwards;
       margin-left: 2px;
     }
 
@@ -187,45 +185,42 @@
   </main>
 
   <script>
-    // ---- Render Gate ----
-    document.addEventListener("DOMContentLoaded", () => {
+    // ---- Soft redirect AFTER paint (no flash, no block) ----
+    window.addEventListener("load", () => {
       const user = localStorage.getItem("currentUser");
       if (user) {
-        window.location.replace("welcome.html");
-        return;
+        window.location.href = "welcome.html";
       }
-
-
-
-      // CTA
-      document.getElementById("startBtn").addEventListener("click", () => {
-        window.location.href = "ask-user.html";
-      });
-
-      // Message rotator (optimized)
-      const messages = [
-        "💡 Track your child’s progress and celebrate small wins!",
-        "👨‍👩‍👧 Build stronger family connections through shared goals.",
-        "⭐ Motivate your kids with stars and kind words of encouragement.",
-        "🎯 Teach consistency and commitment through daily habits.",
-        "🎁 Reward progress — even the small steps — to keep motivation high!",
-        "💬 Encourage open talk about goals, dreams, and challenges."
-      ];
-
-      const infoText = document.getElementById("infoText");
-      let index = 0;
-
-      setInterval(() => {
-        infoText.classList.add("fade-out");
-
-        setTimeout(() => {
-          index = (index + 1) % messages.length;
-          infoText.textContent = messages[index];
-          infoText.classList.remove("fade-out");
-        }, 400);
-
-      }, 4000);
     });
+
+    // ---- CTA ----
+    document.getElementById("startBtn").addEventListener("click", () => {
+      window.location.href = "ask-user.html";
+    });
+
+    // ---- Optimized Message Rotator ----
+    const messages = [
+      "💡 Track your child’s progress and celebrate small wins!",
+      "👨‍👩‍👧 Build stronger family connections through shared goals.",
+      "⭐ Motivate your kids with stars and kind words of encouragement.",
+      "🎯 Teach consistency and commitment through daily habits.",
+      "🎁 Reward progress — even the small steps — to keep motivation high!",
+      "💬 Encourage open talk about goals, dreams, and challenges."
+    ];
+
+    const infoText = document.getElementById("infoText");
+    let index = 0;
+
+    setInterval(() => {
+      infoText.classList.add("fade-out");
+
+      setTimeout(() => {
+        index = (index + 1) % messages.length;
+        infoText.textContent = messages[index];
+        infoText.classList.remove("fade-out");
+      }, 350);
+
+    }, 4000);
   </script>
 </body>
 </html>
