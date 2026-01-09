@@ -33,15 +33,16 @@ const PORT = process.env.PORT; // ✅ use the platform-assigned port
 // ======================================================
 app.use(cors());
 app.use(express.json());
+// Serve welcome page
+app.get("/", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
+});
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "public/school-front")));
 app.use("/api", schoolRoutes);
 app.use("/api", schTaskRoutes);
 app.use("/api/msg", msgRoutes);
-// Serve welcome page
-app.get("/", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
-});
+
 app.get("/health", (req, res) => res.send("OK"));
 
 // ✅ Connect MongoDB and start server
