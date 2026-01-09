@@ -45,10 +45,13 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => res.send("OK"));
 
 // ✅ Connect MongoDB and start server
+// ======================================================
 await connectDB();
-console.log("📡 Environment PORT =", process.env.PORT);
+console.log("✅ MongoDB connected");
 
-// Use the platform-assigned port
+// ======================================================
+// ✅ Start server
+// ======================================================
 if (!PORT) {
   console.error("❌ No PORT defined in environment variables!");
   process.exit(1);
@@ -66,6 +69,22 @@ server.on("error", (err) => {
     console.error("❌ Server error:", err);
   }
   process.exit(1);
+});
+
+// Graceful shutdown for platforms like Render / Railway
+process.on("SIGTERM", () => {
+  console.log("🛑 SIGTERM received: shutting down gracefully");
+  server.close(() => {
+    console.log("✅ Server closed");
+    process.exit(0);
+  });
+});
+process.on("SIGINT", () => {
+  console.log("🛑 SIGINT received: shutting down gracefully");
+  server.close(() => {
+    console.log("✅ Server closed");
+    process.exit(0);
+  });
 });
 // ======================================================
 // ✅ Family Routes
