@@ -5,176 +5,92 @@
   <title>🌞 Welcome to My Daily Effort Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Empower your family to grow, learn, and shine together. Track daily habits and celebrate small wins.">
-  
+
   <!-- Favicon -->
   <link rel="icon" href="images/comfort.png" type="image/png">
 
-  <!-- External CSS -->
-  <link rel="stylesheet" href="styles.css">
-
-  <!-- Preload Logo -->
+  <!-- Preload Fonts & Logo -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="images/comfort.png">
 
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
   <style>
-    /* Hide everything except preloader initially */
+   /* ===== Hide all content initially except preloader ===== */
 body.loading *:not(#preloader) {
   visibility: hidden;
 }
 body.loading {
   background: #fff;
+  overflow: hidden;
 }
 
-    /* ===== Reset ===== */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  height: 100%;
-  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
-  background: #ffffff;
-  color: #333;
-}
+/* ===== Reset & Layout ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: "Poppins", "Segoe UI", Arial, sans-serif; color: #333; }
 
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  position: relative;
+  display: flex; align-items: center; justify-content: center; position: relative;
 }
 
 /* ===== Preloader ===== */
 #preloader {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  z-index: 100;
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; z-index: 100;
   transition: opacity 0.5s ease;
 }
-
-#preloader.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.preloader-logo {
-  width: 120px;
-  height: auto;
-}
-
-/* ===== Layout ===== */
-.page {
-  max-width: 900px;
-  width: 100%;
-  padding: 40px 20px;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 0.8s ease forwards;
-  animation-delay: 0.2s;
-}
+#preloader.hidden { opacity: 0; pointer-events: none; }
+.preloader-logo { width: 120px; height: auto; }
 
 /* ===== Logo ===== */
 .logo-container {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 10;
+  position: fixed; top: 16px; left: 16px;
+  display: flex; align-items: center; gap: 12px;
+  z-index: 10; opacity: 0; transition: opacity 0.5s ease;
 }
+body.loaded .logo-container { opacity: 1; }
 
-.app-logo {
-  width: 140px;
-  height: auto;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
+.app-logo { width: 140px; height: auto; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
 
-/* ===== Hero ===== */
-.hero-title {
-  font-size: 2.4rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
+/* ===== Page Content ===== */
+.page { max-width: 900px; width: 100%; padding: 40px 20px; text-align: center; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease forwards; animation-delay: 0.2s; }
+body.loaded .page { opacity: 1; transform: translateY(0); }
 
-.hero-sub {
-  font-size: 1.2rem;
-  margin-bottom: 40px;
-  color: #555;
-}
+/* Hero */
+.hero-title { font-size: 2.4rem; font-weight: 600; margin-bottom: 16px; }
+.hero-sub { font-size: 1.2rem; margin-bottom: 40px; color: #555; }
 
-/* ===== Info Box ===== */
-.info-box {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 28px 36px;
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  max-width: 620px;
-  margin: 0 auto 48px;
-}
+/* Info box */
+.info-box { background: rgba(255,255,255,0.95); padding: 28px 36px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 620px; margin: 0 auto 48px; }
+.info-text { font-size: 1.1rem; min-height: 48px; transition: opacity 0.35s ease; }
 
-.info-text {
-  font-size: 1.1rem;
-  min-height: 48px;
-  transition: opacity 0.35s ease;
-}
-
-/* ===== CTA ===== */
+/* CTA */
 .cta-btn {
-  padding: 14px 44px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  color: #fff;
-  background: linear-gradient(135deg, #4CAF50, #2e7d32);
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  box-shadow: 0 12px 28px rgba(46, 125, 50, 0.35);
+  padding: 14px 44px; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.3px;
+  color: #fff; background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  border: none; border-radius: 999px; cursor: pointer;
+  box-shadow: 0 12px 28px rgba(46,125,50,0.35);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(46,125,50,0.45); }
 
-.cta-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(46, 125, 50, 0.45);
-}
+/* Seed animation */
+.seed { display: inline-block; transform-origin: center bottom; animation: sproutOnce 2s ease-out forwards; margin-left: 2px; }
 
-/* ===== Seed Animation ===== */
-.seed {
-  display: inline-block;
-  transform-origin: center bottom;
-  animation: sproutOnce 2s ease-out forwards;
-  margin-left: 2px;
-}
-
-/* ===== Animations ===== */
-@keyframes fadeInUp {
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes sproutOnce {
-  0% { transform: scale(0.3) translateY(8px); opacity: 0; }
-  60% { transform: scale(0.7) translateY(-2px); opacity: 1; }
-  100% { transform: scale(1) translateY(0); }
-}
-
-/* ===== Fade Utility ===== */
+/* Animations */
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes sproutOnce { 0% { transform: scale(0.3) translateY(8px); opacity:0;} 60% { transform: scale(0.7) translateY(-2px); opacity:1;} 100% { transform: scale(1) translateY(0);} }
 .fade-out { opacity: 0; }
 
-/* ===== Responsive ===== */
+/* Responsive */
 @media (max-width: 600px) {
   .hero-title { font-size: 1.8rem; }
   .hero-sub { font-size: 1rem; }
   .app-logo { width: 110px; }
 }
+
 
   </style>
 </head>
@@ -182,12 +98,12 @@ body {
 <body class="loading">
 
 
-  <!-- Preloader -->
+ <!-- Preloader -->
   <div id="preloader">
-    <img src="images/comfort.png" alt="Loading..." class="preloader-logo">
+    <img src="images/comfort.png" alt="Loading..." class="preloader-logo" width="120" height="auto">
   </div>
 
-  <!-- Logo -->
+  <!-- Logo (hidden initially, fades in) -->
   <div class="logo-container">
     <img src="images/comfort.png" alt="App Logo" class="app-logo" width="140" height="90">
   </div>
@@ -216,30 +132,26 @@ body {
   <!-- External JS -->
 
   <script>
-   // ---- Preloader ----
+   // ---- Preloader & fade-in content ----
 window.addEventListener("load", () => {
   const preloader = document.getElementById("preloader");
-  
-  // Hide preloader
   preloader.classList.add("hidden");
 
-  // Show main content smoothly
+  // Show logo + page smoothly
   document.body.classList.remove("loading");
-  
+  document.body.classList.add("loaded");
+
   // Redirect if user exists
   const user = localStorage.getItem("currentUser");
-  if (user) {
-    window.location.href = "welcome.html";
-  }
+  if (user) window.location.href = "welcome.html";
 });
-
 
 // ---- CTA Button ----
 document.getElementById("startBtn").addEventListener("click", () => {
   window.location.href = "ask-user.html";
 });
 
-// ---- Optimized Message Rotator ----
+// ---- Rotating messages ----
 const messages = [
   "💡 Track your child’s progress and celebrate small wins!",
   "👨‍👩‍👧 Build stronger family connections through shared goals.",
@@ -251,7 +163,6 @@ const messages = [
 
 const infoText = document.getElementById("infoText");
 let index = 0;
-
 setInterval(() => {
   infoText.classList.add("fade-out");
   setTimeout(() => {
@@ -260,6 +171,7 @@ setInterval(() => {
     infoText.classList.remove("fade-out");
   }, 350);
 }, 4000);
+
   </script>
 </body>
 </html>
