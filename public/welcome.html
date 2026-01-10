@@ -3,175 +3,292 @@
 <head>
   <meta charset="UTF-8">
   <title>🌞 Welcome to My Daily Effort Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Empower your family to grow, learn, and shine together. Track daily habits and celebrate small wins.">
-
-  <!-- Favicon -->
-  <link rel="icon" href="images/comfort.png" type="image/png">
-
-  <!-- Preload Fonts & Logo -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" as="style">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="images/comfort.png">
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css">
+  <script>
+    const user = localStorage.getItem("currentUser");
+    if (user) {
+      window.location.replace("welcome.html");
+    }
+  </script>
   <style>
-   /* ===== Hide all content initially except preloader ===== */
-body.loading *:not(#preloader) {
-  visibility: hidden;
-}
-body.loading {
-  background: #fff;
-  overflow: hidden;
-}
+    body {
+      text-align: center;
+      font-family: "Poppins", "Comic Sans MS", Arial, sans-serif;
+      padding-top: 0px;
+      background :white;
+      /*background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);*/
+      color: #333;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-/* ===== Reset & Layout ===== */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: "Poppins", "Segoe UI", Arial, sans-serif; color: #333; }
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 10px;
+      animation: fadeInDown 1s ease-out;
+    }
 
-body {
-  display: flex; align-items: center; justify-content: center; position: relative;
-}
+    p {
+      font-size: 1.2em;
+      margin-bottom: 40px;
+      animation: fadeInUp 1.5s ease-out;
+    }
 
-/* ===== Preloader ===== */
-#preloader {
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: #fff; z-index: 100;
-  transition: opacity 0.5s ease;
-}
-#preloader.hidden { opacity: 0; pointer-events: none; }
-.preloader-logo { width: 120px; height: auto; }
+    button {
+      padding: 15px 40px;
+      font-size: 1.2em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s, background 0.3s;
+      animation: bounceIn 2s infinite alternate;
+    }
 
-/* ===== Logo ===== */
+    button:hover {
+      background-color: #3e9e45;
+      transform: scale(1.05);
+    }
+
+    .info-box {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 25px 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      width: 60%;
+      max-width: 600px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .info-text {
+      font-size: 1.1em;
+      color: #444;
+      margin-top: 15px;
+      min-height: 60px;
+      transition: opacity 1s;
+    }
+
+    /* ✨ Animations */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes bounceIn {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+
+/* ===== MARKETING LOGO (TOP-LEFT) ===== */
 .logo-container {
-  position: fixed; top: 16px; left: 16px;
-  display: flex; align-items: center; gap: 12px;
-  z-index: 10; opacity: 0; transition: opacity 0.5s ease;
+  position: fixed;
+  top: -50px;
+  left: -50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
 }
-body.loaded .logo-container { opacity: 1; }
 
-.app-logo { width: 140px; height: auto; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+/* Logo image */
+.app-logo {
+  width: 460px;
+  height: 300px;
+  border-radius: 12px;} /* modern rounded square 
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+*/
+/* Hover effect (marketing feel) 
+.logo-container:hover .app-logo {
+  transform: scale(1.05);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+}
+*/
+/* App name text */
+.app-name {
+  font-size: 1.2em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #2c3e50;
+  white-space: nowrap;
+}
 
-/* ===== Page Content ===== */
-.page { max-width: 900px; width: 100%; padding: 40px 20px; text-align: center; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease forwards; animation-delay: 0.2s; }
-body.loaded .page { opacity: 1; transform: translateY(0); }
-
-/* Hero */
-.hero-title { font-size: 2.4rem; font-weight: 600; margin-bottom: 16px; }
-.hero-sub { font-size: 1.2rem; margin-bottom: 40px; color: #555; }
-
-/* Info box */
-.info-box { background: rgba(255,255,255,0.95); padding: 28px 36px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 620px; margin: 0 auto 48px; }
-.info-text { font-size: 1.1rem; min-height: 48px; transition: opacity 0.35s ease; }
-
-/* CTA */
+/* ===== Marketing CTA Button ===== */
 .cta-btn {
-  padding: 14px 44px; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.3px;
-  color: #fff; background: linear-gradient(135deg, #4CAF50, #2e7d32);
-  border: none; border-radius: 999px; cursor: pointer;
-  box-shadow: 0 12px 28px rgba(46,125,50,0.35);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  margin-top: 40px;
+  padding: 14px 44px;
+  font-size: 1.05em;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(46, 125, 50, 0.35);
+  transition: all 0.3s ease;
 }
-.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(46,125,50,0.45); }
 
-/* Seed animation */
-.seed { display: inline-block; transform-origin: center bottom; animation: sproutOnce 2s ease-out forwards; margin-left: 2px; }
-
-/* Animations */
-@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-@keyframes sproutOnce { 0% { transform: scale(0.3) translateY(8px); opacity:0;} 60% { transform: scale(0.7) translateY(-2px); opacity:1;} 100% { transform: scale(1) translateY(0);} }
-.fade-out { opacity: 0; }
-
-/* Responsive */
-@media (max-width: 600px) {
-  .hero-title { font-size: 1.8rem; }
-  .hero-sub { font-size: 1rem; }
-  .app-logo { width: 110px; }
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 45px rgba(46, 125, 50, 0.45);
 }
+
+.cta-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 10px 22px rgba(46, 125, 50, 0.3);
+}
+
+
+
+/* Sparkles 
+.sparkle {
+  position: absolute;
+  font-size: 24px;
+  color: #fff;
+  text-shadow: 0 0 10px #fff, 0 0 20px #fffa, 0 0 30px #fffa;
+  opacity: 0.8;
+  animation: sparkleAnim 2s linear infinite;
+}
+*/
+/* Randomize sparkle positions 
+.sparkle1 { top: 10px; left: 20px; animation-delay: 0s; }
+.sparkle2 { top: 50px; left: 110px; animation-delay: 0.5s; }
+.sparkle3 { top: 120px; left: 60px; animation-delay: 1s; }
+*/
+/* Sparkle animation: blink and float 
+@keyframes sparkleAnim {
+  0%, 100% { opacity: 0.8; transform: scale(1) translateY(0); }
+  50% { opacity: 0; transform: scale(1.3) translateY(-10px); }
+}
+*/
+/* ===== Growing Seed Animation ===== */
+.seed {
+  display: inline-block;
+  transform-origin: center bottom;
+  animation: sproutOnce 2.8s ease-out forwards;
+  vertical-align: baseline;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  position: relative;
+  top: 1px; /* adjust ±1px if needed */
+}
+
+@keyframes sproutOnce {
+  0% {
+    transform: scale(0.3) translateY(8px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.6) translateY(-3px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9) translateY(-3px);
+  }
+}
+
+/* ===== HERO TITLE ===== */
+.hero-title {
+  font-size: 2.2em;
+  font-weight: 600;
+  text-align: center; /* keeps it centered */
+}
+
+/* ===== FEMTOGROW LOGO ===== */
+.logo-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  max-width: 420px;
+  width: 90%;
+  height: auto;
+  display: block;
+}
+
 
 
   </style>
 </head>
+<body>
+  <div class="logo-wrap">
+  <img
+    class="logo"
+    src="FemtoGrow.png"
+    alt="FemtoGrow — Track • Learn • Grow"
+    loading="eager"
+    decoding="async"
+  />
+</div>
 
-<body class="loading">
+
+ <h1 class="hero-title">
+  Turning daily small actions into lifelong gro<span class="seed">🌱</span>th
+</h1>
 
 
- <!-- Preloader -->
-  <div id="preloader">
-    <img src="images/comfort.png" alt="Loading..." class="preloader-logo" width="120" height="auto">
-  </div>
 
-  <!-- Logo (hidden initially, fades in) -->
-  <div class="logo-container">
-    <img src="images/comfort.png" alt="App Logo" class="app-logo" width="140" height="90">
-  </div>
 
-  <!-- Page Content -->
-  <main class="page">
-    <h1 class="hero-title">
-      Turning daily small actions into lifelong gro<span class="seed">🌱</span>th
-    </h1>
+  <p>Empowering families to grow, learn, and shine together ✨</p>
 
-    <p class="hero-sub">
-      Empowering families to grow, learn, and shine together ✨
-    </p>
-
-    <div class="info-box">
-      <div id="infoText" class="info-text">
-        💡 Track your child’s progress and celebrate small wins!
-      </div>
+  <div class="info-box">
+    <div id="infoText" class="info-text">
+      💡 Track your child’s progress and celebrate small wins!
     </div>
+  </div>
 
-    <button id="startBtn" class="cta-btn" aria-label="Start Tracking">
-      Grow With Us
-    </button>
-  </main>
-
-  <!-- External JS -->
-
+  <button id="startBtn" class="cta-btn">Grow With Us</button>
   <script>
-   // ---- Preloader & fade-in content ----
-window.addEventListener("load", () => {
-  const preloader = document.getElementById("preloader");
-  preloader.classList.add("hidden");
+    const API_URL = "https://daily-effort-tracker-backend.onrender.com";// or 3000 if you use that
+    // ✅ Redirect if already logged in
+    
+    document.getElementById("startBtn").addEventListener("click", () => {
+      window.location.href = "ask-user.html";
+    });
 
-  // Show logo + page smoothly
-  document.body.classList.remove("loading");
-  document.body.classList.add("loaded");
+    // ✨ Rotating motivational messages
+    const messages = [
+      "💡 Track your child’s progress and celebrate small wins!",
+      "👨‍👩‍👧 Build stronger family connections through shared goals.",
+      "⭐ Motivate your kids with stars and kind words of encouragement.",
+      "🎯 Teach consistency and commitment through daily habits.",
+      "🎁 Reward progress — even the small steps — to keep motivation high!",
+      "💬 Encourage open talk about goals, dreams, and challenges."
+    ];
 
-  // Redirect if user exists
-  const user = localStorage.getItem("currentUser");
-  if (user) window.location.href = "welcome.html";
-});
+    let index = 0;
+    const infoText = document.getElementById("infoText");
 
-// ---- CTA Button ----
-document.getElementById("startBtn").addEventListener("click", () => {
-  window.location.href = "ask-user.html";
-});
-
-// ---- Rotating messages ----
-const messages = [
-  "💡 Track your child’s progress and celebrate small wins!",
-  "👨‍👩‍👧 Build stronger family connections through shared goals.",
-  "⭐ Motivate your kids with stars and kind words of encouragement.",
-  "🎯 Teach consistency and commitment through daily habits.",
-  "🎁 Reward progress — even the small steps — to keep motivation high!",
-  "💬 Encourage open talk about goals, dreams, and challenges."
-];
-
-const infoText = document.getElementById("infoText");
-let index = 0;
-setInterval(() => {
-  infoText.classList.add("fade-out");
-  setTimeout(() => {
-    index = (index + 1) % messages.length;
-    infoText.textContent = messages[index];
-    infoText.classList.remove("fade-out");
-  }, 350);
-}, 4000);
-
+    setInterval(() => {
+      infoText.style.opacity = 0;
+      setTimeout(() => {
+        index = (index + 1) % messages.length;
+        infoText.innerHTML = messages[index];
+        infoText.style.opacity = 1;
+      }, 1000);
+    }, 4000);
   </script>
+
 </body>
 </html>
