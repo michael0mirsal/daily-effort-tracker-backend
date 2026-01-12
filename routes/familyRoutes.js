@@ -203,7 +203,7 @@ router.delete("/delete-member", async (req, res) => {
 
     // Find member
     const memberQuery = id ? { _id: id, family: familyDoc._id } : { name: { $regex: `^${name.trim()}$`, $options: "i" }, family: familyDoc._id };
-    const memberDoc = await Member.findOne(memberQuery);
+    const memberDoc = await FamilyMember.findOne(memberQuery);
     if (!memberDoc) return res.status(404).json({ message: "Member not found" });
 
     // Remove refs and document
@@ -263,6 +263,21 @@ router.patch("/update-avatar", async (req, res) => {
 });
 
 
+// ======================================================
+// 🔹 DEBUG - list all families
+// ======================================================
+router.get("/debug", async (req, res) => {
+  try {
+    const families = await Family.find();
+    res.json(families);
+  } catch (err) {
+    console.error("Debug error:", err);
+    res.status(500).json({ message: "Server error while fetching families" });
+  }
+});
+
+
+
 // Get family with members populated
 router.get("/:familyName", async (req, res) => {
   try {
@@ -271,7 +286,6 @@ router.get("/:familyName", async (req, res) => {
 
     let familyDoc;
 
-    // Only treat as ObjectId if it is 24 hex characters
     if (/^[0-9a-fA-F]{24}$/.test(familyName)) {
       familyDoc = await Family.findById(familyName).populate("members");
     } else {
@@ -296,17 +310,6 @@ router.get("/:familyName", async (req, res) => {
 
 
 
-// ======================================================
-// 🔹 DEBUG - list all families
-// ======================================================
-router.get("/debug", async (req, res) => {
-  try {
-    const families = await Family.find();
-    res.json(families);
-  } catch (err) {
-    console.error("Debug error:", err);
-    res.status(500).json({ message: "Server error while fetching families" });
-  }
-});
+
 
 export default router;
