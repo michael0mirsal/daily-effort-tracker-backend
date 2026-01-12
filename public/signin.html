@@ -162,6 +162,7 @@
         const user = {
           name,
           family: data.family.name,
+          familyId: data.family._id, 
           role: data.user.role, // backend detected role
           dad: data.family.dad,
           mom: data.family.mom,
