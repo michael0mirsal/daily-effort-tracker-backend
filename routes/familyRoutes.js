@@ -278,19 +278,13 @@ router.get("/debug", async (req, res) => {
 
 
 
-// Get family with members populated
+// ✅ Get family by name (safe, never cast to ObjectId unless explicitly needed)
 router.get("/:familyName", async (req, res) => {
   try {
     const familyName = req.params.familyName;
-    console.log("🔍 Requested family:", familyName);
+    console.log("🔍 Requested family by name:", familyName);
 
-    let familyDoc;
-
-    if (/^[0-9a-fA-F]{24}$/.test(familyName)) {
-      familyDoc = await Family.findById(familyName).populate("members");
-    } else {
-      familyDoc = await Family.findOne({ name: familyName }).populate("members");
-    }
+    const familyDoc = await Family.findOne({ name: familyName }).populate("members");
 
     if (!familyDoc) {
       return res.status(404).json({ message: "Family not found" });
@@ -305,6 +299,29 @@ router.get("/:familyName", async (req, res) => {
     });
   }
 });
+
+// ✅ Optional: Get family by _id explicitly
+router.get("/id/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("🔍 Requested family by ID:", id);
+
+    const familyDoc = await Family.findById(id).populate("members");
+
+    if (!familyDoc) {
+      return res.status(404).json({ message: "Family not found" });
+    }
+
+    res.json([familyDoc]);
+  } catch (err) {
+    console.error("❌ Get family by ID error:", err);
+    res.status(500).json({
+      message: "Server error while fetching family by ID",
+      error: err.message
+    });
+  }
+});
+
 
 
 
