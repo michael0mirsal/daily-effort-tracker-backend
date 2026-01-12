@@ -266,26 +266,32 @@ router.patch("/update-avatar", async (req, res) => {
 // Get family with members populated
 router.get("/:familyName", async (req, res) => {
   try {
-    const family = req.params.familyName;
+    const familyName = req.params.familyName;
+    console.log("🔍 Requested family:", familyName);
 
     let familyDoc;
 
-    if (mongoose.isValidObjectId(family)) {
-      familyDoc = await Family.findById(family).populate("members");
+    // Only treat as ObjectId if it is 24 hex characters
+    if (/^[0-9a-fA-F]{24}$/.test(familyName)) {
+      familyDoc = await Family.findById(familyName).populate("members");
     } else {
-      familyDoc = await Family.findOne({ name: family }).populate("members");
+      familyDoc = await Family.findOne({ name: familyName }).populate("members");
     }
 
     if (!familyDoc) {
       return res.status(404).json({ message: "Family not found" });
     }
 
-    res.json([familyDoc]); // same structure your frontend expects
+    res.json([familyDoc]);
   } catch (err) {
-    console.error("Get family error:", err);
-    res.status(500).json({ message: "Server error while fetching family" });
+    console.error("❌ Get family error:", err);
+    res.status(500).json({
+      message: "Server error while fetching family",
+      error: err.message
+    });
   }
 });
+
 
 
 
