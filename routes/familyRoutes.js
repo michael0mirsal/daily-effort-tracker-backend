@@ -277,7 +277,7 @@ router.get("/debug", async (req, res) => {
 });
 
 
-
+/*
 // ✅ Get family by name (safe, never cast to ObjectId unless explicitly needed)
 router.get("/:familyName", async (req, res) => {
   try {
@@ -299,7 +299,7 @@ router.get("/:familyName", async (req, res) => {
     });
   }
 });
-
+*/
 // ✅ Optional: Get family by _id explicitly
 router.get("/id/:id", async (req, res) => {
   try {
