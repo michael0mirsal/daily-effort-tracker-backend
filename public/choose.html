@@ -56,14 +56,94 @@ body{
 h1{margin:0;font-weight:900;font-size:28px;}
 footer{position:absolute;bottom:10px;font-size:0.9rem;color:rgba(80,50,20,0.6);}
 
-/* Tree */
-.tree ol{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;}
-.tree li{margin:12px 0;}
-.couple{display:flex;gap:14px;background:rgba(255,255,255,.15);padding:10px 14px;border-radius:20px;}
-.person{text-align: center;background:rgba(255,255,255,.2);padding:14px;border-radius:18px;min-width:160px;box-shadow:0 8px 20px rgba(0,0,0,.25);}
-.person.highlighted{box-shadow:0 0 25px gold;border:2px solid gold;}
-.name{font-weight:800;font-size:16px;}
-.meta{font-size:13px;color:#333;margin-top:6px;display:flex;gap:10px;justify-content:center}
+/* ================= Tree ================= */
+.tree{
+  width:100%;
+  flex:1;
+  max-height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+.tree ol{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:0;
+  margin:0;
+  list-style:none;
+}
+.tree li{
+  position:relative;
+  padding:10px 14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.tree li::before{
+  content:"";
+  position:absolute;
+  top:-12px;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background: var(--line);
+}
+.tree ol ol::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:50%;
+  width:2px;
+  height:20px;
+  background: var(--line);
+  border-radius:2px;
+}
+
+/* ================= Person Cards ================= */
+.person{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  min-width:140px;
+  max-width:100%;
+  padding:14px;
+  border-radius: var(--r);
+  border:1px solid var(--ring);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+}
+.person .top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+}
+.avatar{
+  width:44px; height:44px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  letter-spacing:.3px;
+  border:1px solid rgba(255,255,255,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+}
+.a1{ background: linear-gradient(135deg, rgba(124,58,237,.85), rgba(236,72,153,.65)); }
+.a2{ background: linear-gradient(135deg, rgba(6,182,212,.85), rgba(59,130,246,.65)); }
+.a3{ background: linear-gradient(135deg, rgba(34,197,94,.85), rgba(245,158,11,.60)); }
+.a4{ background: linear-gradient(135deg, rgba(245,158,11,.85), rgba(239,68,68,.65)); }
+.a5{ background: linear-gradient(135deg, rgba(59,130,246,.85), rgba(124,58,237,.65)); }
+.a6{ background: linear-gradient(135deg, rgba(236,72,153,.85), rgba(245,158,11,.55)); }
+
+.namebox{text-align:left; flex:1 1 auto; min-width:0;}
+.name{font-size:15px;font-weight:900;margin:0;line-height:1.1;white-space:normal;}
+.meta{margin-top:3px;color:var(--muted);font-size:12px;display:flex;gap:8px;flex-wrap:wrap;}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background: rgba(255,255,255,.06);}
+.pill b{color: rgba(255,255,255,.85); font-weight:800;}
+.note{width:100%;margin-top:2px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.18);color: rgba(255,255,255,.75);font-size:12px;line-height:1.35;text-align:left;}
 
 /* Right Panel */
 #starsBox,#motivationText{
