@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import Family from "../models/Family.js";
 import FamilyMember from "../models/Member.js";
 import SchoolMember from "../models/sch-Member.js";
+import { requireFamily } from "../middlewares/requireFamily.js";
 import mongoose from "mongoose";
 
 
@@ -324,10 +325,18 @@ router.get("/id/:id", async (req, res) => {
 });
 
 
+
+
+
+
 // ======================================================
 // ✅ GET /family/:id/school-info
 // ======================================================
-router.get("/:id/school-info", async (req, res) => {
+router.get("/:id/school-info", requireFamily, async (req, res) => {
+  if (req.familyId.toString() !== req.params.id.toString()) {
+  return res.status(403).json({ message: "Access denied" });
+}
+
   try {
     const { id } = req.params;
 
