@@ -145,6 +145,32 @@ footer{position:absolute;bottom:10px;font-size:0.9rem;color:rgba(80,50,20,0.6);}
 .pill b{color: rgba(255,255,255,.85); font-weight:800;}
 .note{width:100%;margin-top:2px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.18);color: rgba(255,255,255,.75);font-size:12px;line-height:1.35;text-align:left;}
 
+
+/* Couple */
+.couple{
+  display:flex; align-items:stretch; gap:10px;
+  position:relative; padding:8px 10px; border-radius:22px;
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 10px 28px rgba(0,0,0,.25);
+  flex-wrap:wrap;
+}
+.couple::after{
+  content:"👨‍👩‍👧"; position:absolute; left:50%; top:10%;
+  transform:translate(-50%,-50%);
+  width:30px;height:30px;
+  border-radius:999px;
+  display:grid; place-items:center;
+  background: rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.80);
+  font-size:14px;
+  pointer-events:none;
+}
+.couple .person{min-width:140px;flex:1 1 auto;}
+.couple .person .avatar{width:42px;height:42px;border-radius:13px;}
+
+
 /* Right Panel */
 #starsBox,#motivationText{
   border-radius:20px;
