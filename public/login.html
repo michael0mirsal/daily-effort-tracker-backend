@@ -332,8 +332,8 @@
       // localStorage is vulnerable to XSS — ensure your app prevents XSS site-wide.
       // ------------------------
       const safeUser = {
-        family: fam.name,
-        familyId: fam._id,
+        familyName: data.family.name,
+        familyId: data.family._id,
         name,
         role: detectedRole
         // do not store dad/mom/passhash unless you have a deliberate reason
