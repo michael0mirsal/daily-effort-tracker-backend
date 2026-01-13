@@ -7,5 +7,14 @@ const memberSchema = new mongoose.Schema({
   family: { type: mongoose.Schema.Types.ObjectId, ref: "Family", required: true },
   avatar: { type: String, default: '' }, // <-- new field
 }, { timestamps: true });
+memberSchema.virtual("schoolMember", {
+  ref: "SchoolMember",
+  localField: "_id",
+  foreignField: "member",
+  justOne: true, // each member has only one school record
+});
+
+memberSchema.set("toObject", { virtuals: true });
+memberSchema.set("toJSON", { virtuals: true });
 
 export default mongoose.model("FamilyMember", memberSchema);
