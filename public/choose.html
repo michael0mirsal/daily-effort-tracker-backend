@@ -1,86 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Choose Activity 🌻</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      background: linear-gradient(135deg, #fceabb, #f8b500);
-      font-family: "Comic Sans MS", cursive;
-      color: #333;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      overflow: hidden;
-    }
-    #familyTree { flex:0 0 35%; height:90%; position:relative; display:flex; justify-content:center; align-items:center; border-right:4px dashed rgba(255,255,255,0.7); background:rgba(255,255,255,0.3); border-radius:0 30px 30px 0; box-shadow:inset -5px 0 10px rgba(0,0,0,0.1); padding:20px; }
-    .tree { display:flex; flex-direction:column; align-items:center; position:relative; }
-    .member { background:#fff3cd; padding:10px 20px; border-radius:50%; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:1.1rem; color:#5c4033; margin:5px; transition:transform 0.3s ease, background 0.3s ease; }
-    .member:hover { transform:scale(1.1); background:#ffecb3; }
-    .highlighted { background:#ffeb3b !important; box-shadow:0 0 20px #ffcc00; }
-    .parents, .children { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Family Tree - Kids Style</title>
 
-    #mainContent { flex:0 0 65%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; position:relative; }
-    h1 { font-size:2.5rem; margin-bottom:5px; color:#ff6f00; text-shadow:2px 2px #fff; }
-    h2 { font-size:1.6rem; margin-top:25px; color:#8b4513; text-shadow:1px 1px #fff; }
-    #starsBox, #motivationText { border-radius:20px; padding:10px 25px; font-size:1.2rem; font-weight:bold; box-shadow:0 3px 10px rgba(0,0,0,0.2); margin-bottom:15px; }
-    #starsBox { display:none; background:rgba(255,255,255,0.6); color:#d35400; }
-    #starsCount { color:#ff4500; font-size:1.8rem; font-weight:bold; text-shadow:2px 2px 6px rgba(255,200,0,0.6); }
-    #motivationText { display:none; font-size:1.4rem; color:#2e8b57; text-shadow:1px 1px #fff; }
-
-    button { margin:15px; padding:15px 40px; font-size:1.2rem; border-radius:25px; border:none; cursor:pointer; background:linear-gradient(45deg, #fff3cd, #ffe082); box-shadow:0 4px 10px rgba(0,0,0,0.2); color:#5c4033; transition:all 0.3s ease; font-weight:bold; }
-    button:hover { transform:translateY(-4px) scale(1.05); background:linear-gradient(45deg, #fff9c4, #ffecb3); }
-    #logoutBtn { background:linear-gradient(45deg, #ffb3b3, #ff8080); color:white; margin-top:30px; }
-    #logoutBtn:hover { background:linear-gradient(45deg, #ff9999, #ff6666); }
-    footer { position:absolute; bottom:10px; font-size:0.9rem; color:rgba(80,50,20,0.6); }
-    @keyframes popIn {
-  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-  60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); }
+<style>
+:root{
+  --bg: #0b1220;
+  --panel: rgba(255,255,255,.06);
+  --panel2: rgba(255,255,255,.10);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.65);
+  --line: rgba(255,255,255,.22);
+  --ring: rgba(255,255,255,.25);
+  --r: 18px;
+  --shadow: 0 18px 50px rgba(0,0,0,.35);
 }
 
-.member img {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  color:var(--text);
+  font-family: system-ui, sans-serif;
+  background:
+    radial-gradient(900px 500px at 10% 5%, rgba(130,117,72,.15), transparent 60%),
+    radial-gradient(800px 450px at 95% 10%, rgba(6,182,212,.25), transparent 55%),
+    linear-gradient(180deg, #232621, #665443d1 10%, #96caa7);
 }
 
-.member:hover img {
-  transform: scale(1.2);
-  box-shadow: 0 0 15px #ffd700;
+/* Layout */
+.left-half{
+  width:30%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+.right-half{
+  width:70%;
+  background: linear-gradient(180deg, #8c9fc5, #dcdeaf);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  text-align:center;
+  position:relative;
 }
 
-.highlighted img {
-  animation: pulseGlow 1.5s infinite;
-  border-color: #ffcc00 !important;
-}
+/* Header */
+h1{margin:0;font-weight:900;font-size:28px;}
+footer{position:absolute;bottom:10px;font-size:0.9rem;color:rgba(80,50,20,0.6);}
 
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 10px #ffcc00; }
-  50% { box-shadow: 0 0 20px #ffeb3b; }
-}
+/* Tree */
+.tree ol{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;}
+.tree li{margin:12px 0;}
+.couple{display:flex;gap:14px;background:rgba(255,255,255,.15);padding:10px 14px;border-radius:20px;}
+.person{background:rgba(255,255,255,.2);padding:14px;border-radius:18px;min-width:160px;box-shadow:0 8px 20px rgba(0,0,0,.25);}
+.person.highlighted{box-shadow:0 0 25px gold;border:2px solid gold;}
+.name{font-weight:800;font-size:16px;}
+.meta{font-size:13px;color:#333;margin-top:6px;display:flex;gap:10px;justify-content:center}
 
-  </style>
+/* Right Panel */
+#starsBox,#motivationText{
+  border-radius:20px;
+  padding:10px 25px;
+  font-size:1.2rem;
+  font-weight:bold;
+  box-shadow:0 3px 10px rgba(0,0,0,0.2);
+  margin-bottom:15px;
+}
+#starsBox{display:none;background:rgba(255,255,255,0.6); color:#d35400;}
+#motivationText{display:none;font-size:1.4rem;color:#2e8b57;text-shadow:1px 1px #fff;}
+
+button{
+  margin:10px;
+  padding:15px 40px;
+  font-size:1.2rem;
+  border-radius:25px;
+  border:none;
+  cursor:pointer;
+  background:linear-gradient(45deg, #fff3cd, #ffe082);
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+  color:#5c4033;
+  transition:all 0.3s ease;
+  font-weight:bold;
+}
+button:hover{ transform:translateY(-4px) scale(1.05); }
+#logoutBtn{background:linear-gradient(45deg,#ffb3b3,#ff8080); color:white; margin-top:30px;}
+
+@media (max-width:900px){
+  body{flex-direction:column;}
+  .left-half, .right-half{width:100%;}
+}
+</style>
 </head>
+
 <body>
-  <div id="familyTree">
-    <div class="tree" id="treeContainer">Loading family tree...</div>
-  </div>
 
-  <div id="mainContent">
-    <h1 id="welcomeText">🌞 Welcome!</h1>
-    <div id="starsBox"></div>
-    <div id="motivationText">Keep supporting your kids! 🌟</div>
-    <div id="options"></div>
-    <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
-    <footer>Made with 🌻 Love and Joy</footer>
-  </div>
+<div class="left-half">
+  <h1>🌳 Family Tree</h1>
+  <section class="tree" id="treeContainer">Loading tree...</section>
+</div>
 
-  <script>
+<div class="right-half">
+  <h1 id="welcomeText">🌞 Welcome!</h1>
+  <div id="starsBox"></div>
+  <div id="motivationText">Keep supporting your kids! 🌟</div>
+  <div id="options"></div>
+  <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
+  <footer>Made with 🌻 Love and Joy</footer>
+</div>
+
+<script>
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
-const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
+const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 if (!user) {
   alert("Not logged in");
@@ -88,162 +126,117 @@ if (!user) {
 }
 
 document.getElementById("welcomeText").innerHTML =
-  `🌞 Hello <b>${user.name}</b>, <b>${user.family}'s Family</b>!`;
-
-const starsBox = document.getElementById("starsBox");
-
-function highlightUser() {
-  document.querySelectorAll('.member').forEach(m => {
-    if (m.textContent.toLowerCase().includes(user.name.toLowerCase())) {
-      m.classList.add('highlighted');
-    }
-  });
-}
+  `🌞 Hello <b>${user.name}</b>, <b>${user.family}</b> Family!`;
 
 
-
-// ✅ Load family tree
+// ================= Load Family Tree =================
 async function loadFamilyTree() {
   const treeDiv = document.getElementById("treeContainer");
   treeDiv.innerHTML = "Loading family tree...";
 
-// ✅ Load user safely
-  const rawUser = localStorage.getItem("currentUser");
-  if (!rawUser) {
-    treeDiv.innerHTML = "<p style='color:red;'>❌ No user session found</p>";
-    return;
-  }
-
-  const user = JSON.parse(rawUser);
-
-  console.log("Loaded user:", user);
-  console.log("Family ID:", user.familyId);
-
-  // ✅ Validate family ID
   if (!user.familyId || user.familyId.length !== 24) {
-    treeDiv.innerHTML = "<p style='color:red;'>❌ Invalid family ID</p>";
+    treeDiv.innerHTML = "❌ Invalid family ID";
     return;
   }
-  
-  try {
-    const res = await fetch(`${API_BASE}/api/families/id/${encodeURIComponent(user.familyId)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+  try {
+    const res = await fetch(`${API_BASE}/api/families/id/${user.familyId}`);
     const data = await res.json();
     const family = data[0];
 
-    // Parents avatars (optional)
-    const momAvatar = family.momAvatar || 'default-mom.png';
-    const dadAvatar = family.dadAvatar || 'default-dad.png';
-
     treeDiv.innerHTML = `
-      <div class="member" style="animation: popIn 0.6s ease;">👨‍👩‍👧 ${family.name}</div>
-      
-      <div class="parents">
-        <div class="member" style="animation: popIn 0.6s ease 0.2s;">
-          <img src="${momAvatar}" style="width:50px;height:50px;border-radius:50%;display:block;margin:auto;"/>
-          👩 ${family.mom}
-        </div>
-        <div class="member" style="animation: popIn 0.6s ease 0.4s;">
-          <img src="${dadAvatar}" style="width:50px;height:50px;border-radius:50%;display:block;margin:auto;"/>
-          👨 ${family.dad}
-        </div>
-      </div>
-
-      <div class="children">
-        ${family.members.map((k, i) => `
-          <div class="member ${k.name.toLowerCase() === user.name.toLowerCase() ? 'highlighted' : ''}" 
-               style="animation: popIn 0.6s ease ${0.5 + i*0.1}s;">
-            <img src="${k.avatar || 'default-avatar.png'}" 
-                 style="width:50px; height:50px; border-radius:50%; display:block; margin:auto; border: 2px solid ${k.name.toLowerCase() === user.name.toLowerCase() ? '#ffcc00' : '#fff3cd'}; box-shadow: 0 0 10px rgba(0,0,0,0.2);"/>
-            <div>🧒 ${k.name}</div>
-          </div>
-        `).join("")}
-      </div>
+      <ol>
+        <li>
+          <div class="person"><div class="name">👨‍👩‍👧 ${family.name}</div></div>
+          <ol>
+            <li>
+              <div class="couple">
+                <div class="person"><div class="name">👩 ${family.mom}</div></div>
+                <div class="person"><div class="name">👨 ${family.dad}</div></div>
+              </div>
+              <ol>
+                ${family.members.map(k=>`
+                  <li>
+                    <div class="person ${k.name.toLowerCase()===user.name.toLowerCase()?'highlighted':''}">
+                      <div class="name">🧒 ${k.name}</div>
+                      <div class="meta">
+                        <span>Age: ${k.age || "-"}</span>
+                        <span>Class: ${k.class || "-"}</span>
+                      </div>
+                    </div>
+                  </li>
+                `).join("")}
+              </ol>
+            </li>
+          </ol>
+        </li>
+      </ol>
     `;
-    highlightUser();
+
   } catch (err) {
-    treeDiv.innerHTML = "<p style='color:red;'>❌ Failed to load family tree</p>";
-    console.error("Error loading family tree:", err);
+    treeDiv.innerHTML = "❌ Failed to load family tree";
+    console.error(err);
   }
 }
 
 
-// ✅ Load today's stars
+// ================= Load Stars =================
 async function loadStars() {
+  const starsBox = document.getElementById("starsBox");
+
   try {
-    const res = await fetch(`${API_BASE}/api/kidsStars/week?family=${encodeURIComponent(user.family)}`);
-    if (!res.ok) throw new Error("Failed to fetch stars");
+    const res = await fetch(`${API_BASE}/api/kidsStars/week?family=${user.family}`);
     const allStars = await res.json();
 
     const today = new Date().toISOString().split("T")[0];
-
-    // 🔹 Filter by both name and family
     const kidData = allStars.find(k => k.name === user.name && k.family === user.family);
-    let todayStars = 0;
 
+    let todayStars = 0;
     if (kidData) {
       const todayRecord = kidData.starsPerDay.find(s => s.date === today);
       if (todayRecord) todayStars = todayRecord.stars;
     }
 
-    // ⭐ Show messages only for kid role
     if (user.role === "kid") {
-      if (todayStars === 0) {
-        starsBox.innerHTML = `🔥 Let's start today strong, ${user.name}! Earn your first star!`;
-      } else if (todayStars < 10) {
-        starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Keep going🔥`;
-      } else {
-        starsBox.innerHTML = `🌟 You earned <span id="starsCount">${todayStars}⭐</span> today! Amazing job!`;
-      }
-
       starsBox.style.display = "block";
-    } else {
-      // If user is not a kid → hide the box
-      starsBox.style.display = "none";
+      starsBox.innerHTML = `🌟 You earned <b>${todayStars}⭐</b> today!`;
     }
 
   } catch (err) {
-    console.error("Error loading stars:", err);
-
-    if (user.role === "kid") {
-      starsBox.innerHTML = "⚠️ Unable to load today's stars.";
-      starsBox.style.display = "block";
-    }
+    console.error(err);
   }
 }
 
 
-loadFamilyTree();
-loadStars();
-
-function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "signin.html";
-}
-
-// ✅ Role-based UI
+// ================= Role UI =================
 const optionsDiv = document.getElementById("options");
+
 if (user.role === "dad" || user.role === "mom") {
   document.getElementById("motivationText").style.display = "block";
   optionsDiv.innerHTML = `
     <h2>👩‍👧 Parent Options</h2>
     <button onclick="window.location.href='kids-charts.html'">📊 View Children's Efforts</button>
   `;
-} else if (user.role === "kid") {
+} 
+else if (user.role === "kid") {
   optionsDiv.innerHTML = `
     <h2>🧒 What would you like to do?</h2>
     <button onclick="window.location.href='index.html'">🌟 Daily Activities</button>
     <button onclick="window.location.href='routine.html'">📅 Daily Routine</button>
   `;
-} else {
-  optionsDiv.innerHTML = `<p style="color:red;">⚠️ Unknown role detected. Please log in again.</p>`;
 }
 
-// ✅ Helper: always include family for backend
-function appendFamily(data) {
-  return { ...data, family: user.family };
+
+// ================= Logout =================
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "signin.html";
 }
+
+
+// ================= Init =================
+loadFamilyTree();
+loadStars();
 </script>
 
 </body>
