@@ -332,7 +332,7 @@
       // localStorage is vulnerable to XSS — ensure your app prevents XSS site-wide.
       // ------------------------
       const safeUser = {
-        familyName: data.family.name,   // for display
+        family: data.family.name,   // for display
         familyId: data.family._id,      // for API calls
         name,
         role: detectedRole
