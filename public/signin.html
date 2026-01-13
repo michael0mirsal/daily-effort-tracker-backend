@@ -129,56 +129,103 @@
       mot.textContent = messages[i++ % messages.length];
     }, 6000);
 
-    // 🚀 STRICT MODE LOGIN
     async function login() {
-      const family = document.getElementById("family").value.trim();
-      const name = document.getElementById("name").value.trim();
-      const passkey = document.getElementById("passkey").value.trim();
+  const family = document.getElementById("family").value.trim();
+  const name = document.getElementById("name").value.trim();
+  const passkey = document.getElementById("passkey").value.trim();
 
-      if (!family || !name || !passkey) {
-        alert("❌ Please fill all fields");
-        return;
-      }
+  if (!family || !name || !passkey) {
+    alert("❌ Please fill all fields");
+    return;
+  }
 
-      try {
-        const res = await fetch(`${API_URL}/api/families/signin`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ family, name, passkey })
-        });
+  try {
+    const res = await fetch(`${API_URL}/api/families/signin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ family, name, passkey })
+    });
 
-        const data = await res.json();
+    const data = await res.json();
 
-        if (!res.ok) {
-          if (res.status === 404) alert("❌ Family not found");
-          else if (res.status === 401) alert("❌ Wrong passkey");
-          else if (res.status === 403) alert("❌ This name is not registered in this family");
-          else if (res.status === 429) alert("⏳ Too many attempts. Try again later.");
-          else alert("❌ " + (data.message || "Login failed"));
-          return;
-        }
-
-        // backend now assigns role automatically
-        const user = {
-          name,
-          family: data.family.name,
-          role: data.user.role, // backend detected role
-          dad: data.family.dad,
-          mom: data.family.mom,
-          members: data.family.members
-        };
-
-        localStorage.setItem("currentUser", JSON.stringify(user));
-        window.location.href = "choose.html";
-
-      } catch (err) {
-        alert("❌ Error: " + err.message);
-      }
+    if (!res.ok) {
+      if (res.status === 404) alert("❌ Family not found");
+      else if (res.status === 401) alert("❌ Wrong passkey");
+      else if (res.status === 403) alert("❌ This name is not registered in this family");
+      else if (res.status === 429) alert("⏳ Too many attempts. Try again later.");
+      else alert("❌ " + (data.message || "Login failed"));
+      return;
     }
 
-    function goHome() {
-      window.location.href = "welcome.html";
+    // =====================================================
+    // 🔥 FIX #1 — Normalize backend response safely
+    // Supports: { family:{} } OR [ {} ] OR { _id: ... }
+    // =====================================================
+    let familyObj = null;
+
+    if (data.family) {
+      familyObj = data.family;                  // ✅ preferred backend format
+    } else if (Array.isArray(data) && data.length === 1) {
+      familyObj = data[0];                     // ✅ fallback for array response
+    } else if (data._id) {
+      familyObj = data;                        // ✅ fallback for direct object
     }
+
+    // =====================================================
+    // 🔥 FIX #2 — Hard validation (prevents familyId undefined)
+    // =====================================================
+    if (!familyObj || !familyObj._id) {
+      console.error("Invalid signin response:", data);
+      alert("⚠️ Server returned invalid family data");
+      return;
+    }
+
+    // =====================================================
+    // 🔥 FIX #3 — Safe role detection (fallback if backend fails)
+    // =====================================================
+    let role = "kid";                           // ✅ default role
+    const nameLower = name.toLowerCase();
+
+    if ((familyObj.dad || "").toLowerCase() === nameLower) role = "dad";
+    else if ((familyObj.mom || "").toLowerCase() === nameLower) role = "mom";
+    else if (Array.isArray(familyObj.members)) {
+      const member = familyObj.members.find(
+        m => (m.name || "").toLowerCase() === nameLower
+      );
+      if (member) role = member.role || "kid";
+    }
+
+    // =====================================================
+    // 🔥 FIX #4 — Save a COMPLETE and SAFE session object
+    // This is what your family tree loader requires
+    // =====================================================
+    const user = {
+      name,
+      familyName: familyObj.name,
+      familyId: familyObj._id,        // ✅ CRITICAL FIX — was missing before
+      role,
+      dad: familyObj.dad,
+      mom: familyObj.mom,
+      members: familyObj.members
+    };
+
+    // =====================================================
+    // 🔥 FIX #5 — Store valid session
+    // =====================================================
+    localStorage.setItem("currentUser", JSON.stringify(user));
+
+    console.log("✅ Saved session:", user);
+
+    // =====================================================
+    // 🔥 FIX #6 — Redirect only after successful save
+    // =====================================================
+    window.location.href = "choose.html";
+
+  } catch (err) {
+    alert("❌ Error: " + err.message);
+  }
+}
+
   </script>
 
 </body>
