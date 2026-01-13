@@ -124,7 +124,7 @@ router.post("/signin", async (req, res) => {
     res.json({
       message: "Login successful (family mode)",
       family: {
-        id: found.id,
+        id: found._id,
         name: found.name,
         dad: found.dad,
         mom: found.mom,
