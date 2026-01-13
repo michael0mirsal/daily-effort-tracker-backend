@@ -107,6 +107,24 @@ async function loadFamilyTree() {
   const treeDiv = document.getElementById("treeContainer");
   treeDiv.innerHTML = "Loading family tree...";
 
+// ✅ Load user safely
+  const rawUser = localStorage.getItem("currentUser");
+  if (!rawUser) {
+    treeDiv.innerHTML = "<p style='color:red;'>❌ No user session found</p>";
+    return;
+  }
+
+  const user = JSON.parse(rawUser);
+
+  console.log("Loaded user:", user);
+  console.log("Family ID:", user.familyId);
+
+  // ✅ Validate family ID
+  if (!user.familyId || user.familyId.length !== 24) {
+    treeDiv.innerHTML = "<p style='color:red;'>❌ Invalid family ID</p>";
+    return;
+  }
+  
   try {
     const res = await fetch(`${API_BASE}/api/families/id/${encodeURIComponent(user.familyId)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
