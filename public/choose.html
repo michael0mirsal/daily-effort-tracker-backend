@@ -312,14 +312,29 @@ async function loadFamilyTree() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/families/id/${user.familyId}`);
+    // Fetch family + school info (members with class & nursery)
+    const res = await fetch(`${API_BASE}/api/families/${user.familyId}/school-info`, {
+      headers: {
+        "Content-Type": "application/json",
+        "x-family-id": user.familyId
+      }
+    });
+
     const data = await res.json();
-    const family = data[0];
+    if (!data.success) {
+      treeDiv.innerHTML = "❌ Failed to load family info";
+      return;
+    }
+
+    const family = data.family;
+    const members = data.members;
 
     treeDiv.innerHTML = `
       <ol>
         <li>
-          <div class="person"><div class="name">👨‍👩‍👧 ${family.name}</div></div>
+          <div class="person">
+            <div class="name">👨‍👩‍👧 ${family.name}</div>
+          </div>
           <ol>
             <li>
               <div class="couple">
@@ -327,13 +342,15 @@ async function loadFamilyTree() {
                 <div class="person"><div class="name">👨 ${family.dad}</div></div>
               </div>
               <ol>
-                ${family.members.map(k=>`
+                ${members.map(k => `
                   <li>
-                    <div class="person ${k.name.toLowerCase()===user.name.toLowerCase()?'highlighted':''}">
+                    <div class="person ${k.name.toLowerCase() === user.name.toLowerCase() ? 'highlighted' : ''}">
                       <div class="name">🧒 ${k.name}</div>
                       <div class="meta">
                         <span>Age: ${k.age || "-"}</span>
-                        <span>Class: ${k.class || "-"}</span>
+                        <span>Nursery: ${k.nursery?.name || "-"}</span>
+                        <span>Class: ${k.class?.name || "-"}</span>
+                        <span>Status: ${k.status || "-"}</span>
                       </div>
                     </div>
                   </li>
