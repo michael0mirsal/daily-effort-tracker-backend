@@ -3,6 +3,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import Family from "../models/Family.js";
 import FamilyMember from "../models/Member.js";
+import SchoolMember from "../models/sch-Member.js";
 import mongoose from "mongoose";
 
 
@@ -323,6 +324,60 @@ router.get("/id/:id", async (req, res) => {
 });
 
 
+// ======================================================
+// ✅ GET /family/:id/school-info
+// ======================================================
+router.get("/:id/school-info", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid family ID" });
+    }
+
+    // Get family
+    const family = await Family.findById(id)
+      .select("name dad mom")
+      .lean();
+
+    if (!family) return res.status(404).json({ message: "Family not found" });
+
+    // Get members + school info (via virtual)
+    const members = await FamilyMember.find({ family: id })
+      .select("name age role avatar")
+      .populate({
+        path: "schoolMember",
+        select: "status",
+        populate: [
+          { path: "nursery", select: "name address" },
+          { path: "class", select: "name" }
+        ]
+      })
+      .lean();
+
+    // Clean output
+    const result = members.map(m => ({
+      _id: m._id,
+      name: m.name,
+      age: m.age,
+      role: m.role,
+      avatar: m.avatar,
+      nursery: m.schoolMember?.nursery || null,
+      class: m.schoolMember?.class || null,
+      status: m.schoolMember?.status || null
+    }));
+
+    res.json({
+      success: true,
+      family,
+      members: result
+    });
+
+  } catch (err) {
+    console.error("Family school-info error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 
