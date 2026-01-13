@@ -56,48 +56,99 @@ body{
 h1{margin:0;font-weight:900;font-size:28px;}
 footer{position:absolute;bottom:10px;font-size:0.9rem;color:rgba(80,50,20,0.6);}
 
-/* ================= Tree ================= */
-.tree{
+/* ================= Tree Container ================= */
+.tree {
   width:100%;
-  flex:1;
-  max-height:100%;
   display:flex;
   justify-content:center;
   align-items:flex-start;
 }
-.tree ol{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+
+.tree ol {
+  list-style:none;
   padding:0;
   margin:0;
-  list-style:none;
-}
-.tree li{
-  position:relative;
-  padding:10px 14px;
   display:flex;
   flex-direction:column;
   align-items:center;
 }
-.tree li::before{
+
+.tree li {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:25px 15px;
+}
+
+/* ================= Vertical Line from Parent to Children ================= */
+.tree li > ol {
+  position:relative;
+  margin-top:20px;
+}
+
+/* vertical line down from parent to horizontal children line */
+.tree li > ol::before {
   content:"";
   position:absolute;
-  top:-12px;
-  width:12px;
-  height:12px;
-  border-radius:50%;
-  background: var(--line);
+  top:-20px;
+  left:50%;
+  transform:translateX(-50%);
+  width:2px;
+  height:20px;
+  background:rgba(255,255,255,.5);
+  border-radius:2px;
 }
-.tree ol ol::before{
+
+/* ================= Horizontal Connector for Children ================= */
+.tree li > ol::after {
   content:"";
   position:absolute;
   top:0;
+  left:5%;
+  width:90%;
+  height:2px;
+  background:rgba(255,255,255,.5);
+  border-radius:2px;
+}
+
+/* ================= Vertical Drop from Horizontal Line to Each Child ================= */
+.tree li > ol > li::before {
+  content:"";
+  position:absolute;
+  top:-20px;
   left:50%;
+  transform:translateX(-50%);
   width:2px;
   height:20px;
-  background: var(--line);
+  background:rgba(255,255,255,.5);
   border-radius:2px;
+}
+
+/* ================= Animations ================= */
+
+@keyframes growDown {
+  from { height: 0; opacity: 0; }
+  to   { height: 20px; opacity: 1; }
+}
+
+@keyframes growAcross {
+  from { width: 0; opacity: 0; }
+  to   { width: 30%; opacity: 1; }
+}
+
+/* Pulsing glow */
+@keyframes pulseGlow {
+  0%,100% { box-shadow: 0 0 8px rgba(255,255,255,.2); }
+  20%     { box-shadow: 0 0 18px rgba(255,255,255,.45); }
+}
+
+/* glow animation */
+.tree > ol > li > ol::before,
+.tree > ol > li > ol::before{
+  animation:
+    growDown .8s ease-out forwards,
+    pulseGlow 3s infinite alternate;
 }
 
 /* ================= Person Cards ================= */
