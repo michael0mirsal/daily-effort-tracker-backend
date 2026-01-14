@@ -405,7 +405,7 @@ if (user.role === "dad" || user.role === "mom") {
 
   // Save familyId for other pages
   // Save family info for other pages
-  localStorage.setItem('currentFamily', JSON.stringify({ family: user.family, familyId: user.familyId }));
+  localStorage.setItem('currentFamily', JSON.stringify({ family: user.family, passkey: user.passkey }));
 
   optionsDiv.innerHTML = `
     <h2>👩‍👧 Parent Options</h2>
