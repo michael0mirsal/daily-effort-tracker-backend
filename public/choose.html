@@ -404,7 +404,8 @@ if (user.role === "dad" || user.role === "mom") {
   document.getElementById("motivationText").style.display = "block";
 
   // Save familyId for other pages
-  localStorage.setItem('currentFamily', JSON.stringify({ family }));
+  // Save family info for other pages
+  localStorage.setItem('currentFamily', JSON.stringify({ family: user.family, familyId: user.familyId }));
 
   optionsDiv.innerHTML = `
     <h2>👩‍👧 Parent Options</h2>
