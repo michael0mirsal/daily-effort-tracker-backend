@@ -1,249 +1,601 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>👶 Manage Family Kids</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manage Family Kids</title>
+
   <style>
-    body {
-      font-family: 'Comic Sans MS', Arial, sans-serif;
-      text-align: center;
-      padding: 40px;
-      background: linear-gradient(135deg, #fff0f5, #ffe4e1);
-      min-height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.14);
+      --text:#EAF0FF;
+      --muted: rgba(234,240,255,.72);
+      --muted2: rgba(234,240,255,.55);
+
+      --primary:#7C5CFF;
+      --primary2:#A78BFA;
+      --accent:#2DD4BF;
+      --danger:#FF4D6D;
+      --warning:#FBBF24;
+      --success:#22C55E;
+
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --shadow2: 0 10px 30px rgba(0,0,0,.35);
+
+      --r12: 12px;
+      --r16: 16px;
+      --r20: 20px;
+
+      --w: 980px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 20%, rgba(124,92,255,.22), transparent 55%),
+        radial-gradient(900px 600px at 85% 15%, rgba(45,212,191,.16), transparent 52%),
+        radial-gradient(700px 500px at 80% 85%, rgba(255,77,109,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Subtle moving glow */
+    .ambient{
+      position: fixed;
+      inset: -20%;
+      background:
+        radial-gradient(closest-side at 30% 30%, rgba(124,92,255,.16), transparent 60%),
+        radial-gradient(closest-side at 70% 40%, rgba(45,212,191,.10), transparent 55%),
+        radial-gradient(closest-side at 60% 80%, rgba(255,77,109,.10), transparent 60%);
+      filter: blur(36px);
+      animation: drift 12s ease-in-out infinite alternate;
+      pointer-events:none;
+      z-index:0;
+    }
+    @keyframes drift{
+      from{ transform: translate3d(-2%, -1%, 0) scale(1.02); opacity:.9; }
+      to{   transform: translate3d( 2%,  2%, 0) scale(1.06); opacity:1; }
+    }
+
+    .wrap{
       position: relative;
+      z-index:1;
+      width: min(var(--w), 92vw);
+      margin: 28px auto 70px;
     }
 
-    h2 {
-      font-size: 2em;
-      color: #2c3e50;
-      margin-bottom: 20px;
-      animation: fadeInDown 1s ease;
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 16px;
+      margin-bottom: 18px;
     }
 
-    .form-box {
-      background: rgba(255,255,255,0.85);
-      padding: 25px 35px;
-      border-radius: 20px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      animation: fadeInUp 1s ease;
-      backdrop-filter: blur(6px);
+    .brand{
+      display:flex;
+      gap: 12px;
+      align-items:center;
     }
 
-    input, select {
-      padding: 10px;
-      margin: 8px;
-      font-size: 16px;
-      border-radius: 12px;
-      border: 2px solid #74b9ff;
-      width: 260px;
-      transition: transform 0.2s, box-shadow 0.3s;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      transform: scale(1.03);
-      box-shadow: 0 0 10px rgba(116,185,255,0.6);
-    }
-
-    button {
-      background-color: #ff7675;
-      color: white;
-      cursor: pointer;
-      border: none;
+    .logo{
+      width: 44px;
+      height: 44px;
       border-radius: 14px;
-      padding: 10px 20px;
-      margin-top: 10px;
-      font-size: 16px;
-      transition: transform 0.2s, background 0.3s;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.28), transparent 60%),
+        linear-gradient(135deg, rgba(124,92,255,1), rgba(45,212,191,1));
+      box-shadow: var(--shadow2);
+      border: 1px solid rgba(255,255,255,.18);
     }
 
-    button:hover {
-      background-color: #d63031;
-      transform: scale(1.1) rotate(-2deg);
-    }
-
-    #kidsList {
-      margin-top: 20px;
-      text-align: left;
-      width: 320px;
-    }
-
-    .kidItem {
-      background: rgba(255,255,255,0.9);
-      padding: 8px 10px;
-      border-radius: 10px;
-      margin: 5px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-    }
-
-    .kidActions button {
-      width: auto;
-      padding: 5px 10px;
-      margin-left: 5px;
-      font-size: 13px;
-      background-color: #74b9ff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      transition: transform 0.2s, background 0.3s;
-    }
-
-    .kidActions button:hover {
-      background-color: #0984e3;
-      transform: scale(1.05);
-    }
-
-    .message {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 1em;
-    }
-
-    .float {
-      position: absolute;
+    h1{
       font-size: 22px;
-      opacity: 0.8;
-      animation: floatUp 9s linear infinite;
-      pointer-events: none;
+      margin: 0;
+      letter-spacing: .2px;
     }
-    .hideUpload {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.5);
-}
-
-.showUpload {
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1);
-  transition: opacity 0.6s ease, transform 0.5s ease;
-  animation: popIn 0.4s ease;
-}
-
-@keyframes popIn {
-  0% { transform: scale(0.1); opacity:0; }
-  70% { transform: scale(1.2); opacity:1; }
-  100% { transform: scale(1); opacity:1; }
-}
-
-
-    @keyframes floatUp {
-      from { transform: translateY(100vh) scale(1); opacity: 1; }
-      to { transform: translateY(-10vh) scale(1.4); opacity: 0; }
+    .sub{
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
     }
 
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
+    .pill{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      padding: 10px 12px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      backdrop-filter: blur(10px);
+      white-space: nowrap;
+      height: fit-content;
+    }
+    .pill b{ color: var(--text); font-weight: 650; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      margin-top: 16px;
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
+    .card{
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: var(--r20);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
     }
 
-    #motivation {
-      position: absolute;
-      bottom: 15px;
-      font-size: 1.2em;
-      color: #d63031;
-      font-weight: bold;
-      opacity: 0;
-      animation: fadeText 7s infinite;
+    .card-h{
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .card-h .title{
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+    }
+    .card-h .title .t{
+      font-weight: 750;
+      letter-spacing: .2px;
+    }
+    .card-h .title .d{
+      color: var(--muted2);
+      font-size: 12.5px;
     }
 
-    @keyframes fadeText {
-      0%, 100% { opacity: 0; }
-      20%, 80% { opacity: 1; }
+    .card-b{ padding: 14px 16px 16px; }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 140px;
+      gap: 10px;
+      align-items:end;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap: 7px;
+    }
+    label{
+      color: var(--muted2);
+      font-size: 12.5px;
+    }
+
+    input, select{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline: none;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    input::placeholder{ color: rgba(234,240,255,.42); }
+    input:focus, select:focus{
+      border-color: rgba(124,92,255,.55);
+      box-shadow: 0 0 0 4px rgba(124,92,255,.18);
+      background: rgba(0,0,0,.26);
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 140px;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    button{
+      border: none;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      transition: transform .12s ease, filter .12s ease, background .18s ease, border-color .18s ease;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: white;
+      box-shadow: 0 12px 24px rgba(124,92,255,.22);
+    }
+    .btn-primary:hover{ filter: brightness(1.06); }
+
+    .btn-secondary{
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .btn-secondary:hover{ background: rgba(255,255,255,.14); }
+
+    .btn-ghost{
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+    }
+    .btn-ghost:hover{ background: rgba(255,255,255,.08); color: var(--text); }
+
+    .btn-danger{
+      background: rgba(255,77,109,.16);
+      border: 1px solid rgba(255,77,109,.30);
+      color: #FFD5DD;
+    }
+    .btn-danger:hover{ background: rgba(255,77,109,.22); }
+
+    .btn-small{
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 750;
+    }
+
+    .message{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      display:none;
+    }
+    .message.show{ display:block; }
+    .message.ok{
+      border-color: rgba(34,197,94,.28);
+      background: rgba(34,197,94,.10);
+      color: rgba(220,255,236,.92);
+    }
+    .message.err{
+      border-color: rgba(255,77,109,.30);
+      background: rgba(255,77,109,.10);
+      color: rgba(255,220,228,.92);
+    }
+    .message.info{
+      border-color: rgba(124,92,255,.28);
+      background: rgba(124,92,255,.10);
+      color: rgba(235,232,255,.92);
+    }
+
+    /* Kids section */
+    .kidsWrap{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .kidsGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kidCard{
+      background: var(--card2);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: var(--r16);
+      padding: 12px;
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      position: relative;
+      overflow:hidden;
+    }
+
+    .kidCard:before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background:
+        radial-gradient(350px 120px at 0% 0%, rgba(124,92,255,.18), transparent 55%),
+        radial-gradient(260px 110px at 100% 100%, rgba(45,212,191,.12), transparent 55%);
+      pointer-events:none;
+    }
+
+    .avatar{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      object-fit: cover;
+      flex: 0 0 auto;
+      background: rgba(0,0,0,.22);
+      position: relative;
+      z-index: 1;
+    }
+
+    .kidMain{
+      flex:1;
+      min-width:0;
+      position: relative;
+      z-index: 1;
+    }
+    .kidName{
+      font-weight: 800;
+      letter-spacing:.2px;
+      margin: 1px 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .kidMeta{
+      color: var(--muted2);
+      font-size: 12.5px;
+      margin-bottom: 10px;
+    }
+
+    .kidBtns{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items:center;
+    }
+
+    .fileWrap{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .fileInput{
+      display:none;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      background: rgba(255,255,255,.06);
+      margin-top: 8px;
+      width: fit-content;
+    }
+
+    .footerActions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+      margin-top: 10px;
+    }
+
+    .motivation{
+      margin-top: 10px;
+      color: rgba(234,240,255,.70);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    /* Floating particles (more subtle than emojis) */
+    .particle{
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      box-shadow: 0 0 18px rgba(124,92,255,.30);
+      animation: rise linear forwards;
+      pointer-events:none;
+      z-index:0;
+    }
+    @keyframes rise{
+      from{ transform: translateY(10vh) scale(1); opacity: .7; }
+      to{ transform: translateY(-110vh) scale(1.4); opacity: 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+      .kidsGrid{ grid-template-columns: 1fr; }
+      .form{ grid-template-columns: 1fr; }
+      .row{ grid-template-columns: 1fr; }
+      .actions{ justify-content: stretch; }
+      .actions button{ width: 100%; }
+      .footerActions button{ width: 100%; }
+      .pill{ display:none; }
     }
   </style>
 </head>
+
 <body>
+  <div class="ambient"></div>
 
-  <h2>👶 Manage Family Kids</h2>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Manage Family Kids</h1>
+          <p class="sub">Add your kids, upload avatars, and keep your family setup clean and organized.</p>
+        </div>
+      </div>
 
-  <div class="form-box">
-    <input id="kidName" placeholder="Kid's name" /><br/>
-    <input id="kidAge" placeholder="Age (optional)" type="number" /><br/>
-    <select id="kidRole">
-      <option value="kid">Kid 👧/👦</option>
-    </select><br/>
-    <button onclick="addKid()">➕ Add Kid</button>
-    <div class="message" id="msg"></div>
+      <div class="pill" id="familyPill" title="Current family context">
+        <span>Family:</span> <b id="familyName">—</b>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: Add kid -->
+      <section class="card">
+        <div class="card-h">
+          <div class="title">
+            <div class="t">Add a Kid</div>
+            <div class="d">Name + optional age. Save to sync IDs for avatar upload.</div>
+          </div>
+        </div>
+
+        <div class="card-b">
+          <div class="form">
+            <div class="field">
+              <label for="kidName">Kid name</label>
+              <input id="kidName" placeholder="e.g., Adam" autocomplete="off" />
+            </div>
+
+            <div class="field">
+              <label for="kidAge">Age (optional)</label>
+              <input id="kidAge" placeholder="e.g., 6" type="number" min="0" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="kidRole">Role</label>
+              <select id="kidRole">
+                <option value="kid">Kid</option>
+              </select>
+            </div>
+
+            <div class="actions">
+              <button class="btn-primary" onclick="addKid()">Add Kid</button>
+            </div>
+          </div>
+
+          <div class="message" id="msg"></div>
+
+          <div class="footerActions">
+            <button class="btn-secondary" onclick="save()">Save</button>
+            <button class="btn-ghost" onclick="finish()">Finish</button>
+          </div>
+
+          <div class="motivation" id="motivation">Encourage your kids and celebrate their daily efforts.</div>
+        </div>
+      </section>
+
+      <!-- Right: Kids list -->
+      <section class="card">
+        <div class="card-h">
+          <div class="title">
+            <div class="t">Kids List</div>
+            <div class="d">Edit, delete, and upload avatars once a kid has an ID.</div>
+          </div>
+        </div>
+
+        <div class="card-b kidsWrap">
+          <div id="kidsList" class="kidsGrid"></div>
+
+          <div class="tag" id="hintTag">Tip: Click “Save” first to enable avatar upload.</div>
+        </div>
+      </section>
+    </div>
   </div>
-
-  <div id="kidsList"></div>
-  <button onclick="save()" style="margin-top:20px;">✅ Save </button>
-  <button onclick="finish()" style="margin-top:20px;">✅ Finish </button>
-  <div id="motivation">🌟 Encourage your kids and celebrate their daily efforts!</div>
 
   <script>
     const API_URL = "https://daily-effort-tracker-backend.onrender.com";
+
     const msg = document.getElementById('msg');
     const kidsListDiv = document.getElementById('kidsList');
+    const familyPillName = document.getElementById('familyName');
+    const hintTag = document.getElementById('hintTag');
+
     const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
+
     if (!familyData.family || !familyData.passkey) {
       alert('Family info missing. Please create a family first.');
       window.location.href = 'signup.html';
     }
 
+    familyPillName.textContent = String(familyData.family);
+
     let kids = [];
 
-    async function handleAvatarUpload(index) {
-  const fileInput = document.getElementById(`avatarFile${index}`);
-  if (!fileInput.files.length) return alert("Please select a file!");
-  const file = fileInput.files[0];
-
-  const memberId = kids[index]?._id;
-  if (!memberId) return alert("Kid must be saved to server before uploading avatar.");
-
-  try {
-    const avatarUrl = await updateAvatar(memberId, file);
-
-    kids[index].avatar = avatarUrl;  // 🔥 REAL CLOUDINARY URL
-    renderKids();
-
-    alert(`Avatar for ${kids[index].name} updated successfully!`);
-  } catch (err) {
-    console.error(err);
-    alert("Failed to update avatar.");
-  }
-}
-
+    function showMsg(type, text){
+      msg.className = 'message show ' + (type || 'info');
+      msg.textContent = text;
+    }
+    function clearMsg(){
+      msg.className = 'message';
+      msg.textContent = '';
+    }
 
     async function updateAvatar(memberId, file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "familytracker");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "familytracker");
 
-  const cloudRes = await fetch(
-    "https://api.cloudinary.com/v1_1/djzj9op1f/image/upload",
-    { method: "POST", body: formData }
-  );
+      const cloudRes = await fetch(
+        "https://api.cloudinary.com/v1_1/djzj9op1f/image/upload",
+        { method: "POST", body: formData }
+      );
 
-  if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
+      if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
 
-  const cloudData = await cloudRes.json();
-  const avatarUrl = cloudData.secure_url;
+      const cloudData = await cloudRes.json();
+      const avatarUrl = cloudData.secure_url;
 
-  const res = await fetch(`${API_URL}/api/families/update-avatar`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ memberId, avatarUrl })
-  });
+      const res = await fetch(`${API_URL}/api/families/update-avatar`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, avatarUrl })
+      });
 
-  if (!res.ok) throw new Error("Backend update failed");
+      if (!res.ok) throw new Error("Backend update failed");
 
-  return avatarUrl; // 🔥 return URL
-}
+      return avatarUrl;
+    }
+
+    async function handleAvatarUpload(index) {
+      const fileInput = document.getElementById(`avatarFile${index}`);
+      if (!fileInput.files.length) return;
+
+      const file = fileInput.files[0];
+      const memberId = kids[index]?._id;
+      if (!memberId) {
+        alert("Kid must be saved to server before uploading avatar.");
+        return;
+      }
+
+      try {
+        // optimistic UI: show loading state by temporarily swapping avatar
+        const oldAvatar = kids[index].avatar;
+        kids[index].avatar = oldAvatar || "default-avatar.png";
+        renderKids();
+
+        const avatarUrl = await updateAvatar(memberId, file);
+        kids[index].avatar = avatarUrl;
+        renderKids();
+
+        showMsg('ok', `Avatar updated for ${kids[index].name}.`);
+      } catch (err) {
+        console.error(err);
+        showMsg('err', "Failed to update avatar. Please try again.");
+      } finally {
+        // allow re-upload same file by resetting input
+        fileInput.value = "";
+      }
+    }
 
     async function loadKids() {
       try {
@@ -260,71 +612,117 @@
     }
 
     function renderKids() {
-  kidsListDiv.innerHTML = '';
-  kids.forEach((k, index) => {
-    const div = document.createElement('div');
-    div.className = 'kidItem';
-    div.innerHTML = `
-      <img src="${k.avatar || 'default-avatar.png'}" width="40" height="40" style="border-radius:50%; margin-right:8px;" />
-      <span>${k.name}${k.age ? ' (' + k.age + ' yrs)' : ''}</span>
-      <div class="kidActions">
-        <button onclick="editKid(${index})">✏️ Edit</button>
-        <button onclick="deleteKid(${index})">🗑️ Delete</button>
+      kidsListDiv.innerHTML = '';
 
-        <input type="file" 
-               id="avatarFile${index}" 
-               style="display:none;" 
-               accept="image/*" 
-               onchange="handleAvatarUpload(${index})" />
+      const hasUnsaved = kids.some(k => !k._id);
+      hintTag.style.display = hasUnsaved ? 'inline-flex' : 'none';
 
-        <!-- 🔥 Upload Avatar with Animation -->
-        <button 
-          class="uploadBtn ${k._id ? 'showUpload' : 'hideUpload'}"
-          onclick="document.getElementById('avatarFile${index}').click();">
-          📤 Upload Avatar
-        </button>
-      </div>
-    `;
-    kidsListDiv.appendChild(div);
-  });
-}
-
-
-    function addKid() {
-      const name = document.getElementById('kidName').value.trim();
-      const age = document.getElementById('kidAge').value.trim();
-      const role = document.getElementById('kidRole').value;
-
-      if (!name) {
-        msg.style.color = 'red';
-        msg.textContent = '❌ Please enter kid\'s name';
+      if (kids.length === 0) {
+        kidsListDiv.innerHTML = `
+          <div style="
+            grid-column:1/-1;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px dashed rgba(255,255,255,.18);
+            color: rgba(234,240,255,.70);
+            background: rgba(255,255,255,.05);
+          ">
+            No kids added yet. Use the form on the left to add your first kid.
+          </div>
+        `;
         return;
       }
 
-      kids.push({ name, age: age || null, role });
+      kids.forEach((k, index) => {
+        const div = document.createElement('div');
+        div.className = 'kidCard';
+
+        const safeName = (k.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const ageText = k.age ? `${k.age} yrs` : 'Age not set';
+
+        div.innerHTML = `
+          <img class="avatar" src="${k.avatar || 'default-avatar.png'}" alt="Avatar" />
+
+          <div class="kidMain">
+            <div class="kidName" title="${safeName}">${safeName}</div>
+            <div class="kidMeta">${ageText}</div>
+
+            <div class="kidBtns">
+              <button class="btn-secondary btn-small" onclick="editKid(${index})">Edit</button>
+              <button class="btn-danger btn-small" onclick="deleteKid(${index})">Delete</button>
+
+              <input
+                class="fileInput"
+                type="file"
+                id="avatarFile${index}"
+                accept="image/*"
+                onchange="handleAvatarUpload(${index})"
+              />
+
+              <button
+                class="btn-primary btn-small"
+                onclick="triggerUpload(${index})"
+                ${k._id ? '' : 'disabled'}
+                title="${k._id ? 'Upload avatar' : 'Save first to enable upload'}"
+              >
+                Upload Avatar
+              </button>
+            </div>
+          </div>
+        `;
+
+        kidsListDiv.appendChild(div);
+      });
+    }
+
+    function triggerUpload(index){
+      const fileInput = document.getElementById(`avatarFile${index}`);
+      fileInput.click();
+    }
+
+    function addKid() {
+      const name = document.getElementById('kidName').value.trim();
+      const ageRaw = document.getElementById('kidAge').value.trim();
+      const role = document.getElementById('kidRole').value;
+
+      clearMsg();
+
+      if (!name) {
+        showMsg('err', "Please enter kid's name.");
+        return;
+      }
+
+      const age = ageRaw ? Number(ageRaw) : null;
+      kids.push({ name, age: Number.isFinite(age) ? age : null, role });
+
       renderKids();
+
       document.getElementById('kidName').value = '';
       document.getElementById('kidAge').value = '';
-      msg.textContent = '';
     }
 
     function editKid(index) {
       const kid = kids[index];
       const newName = prompt("Edit name:", kid.name);
       if (!newName) return;
-      const newAge = prompt("Edit age (optional):", kid.age || '');
+
+      const newAge = prompt("Edit age (optional):", kid.age ?? '');
       kids[index].name = newName.trim();
-      kids[index].age = newAge ? parseInt(newAge) : null;
+      kids[index].age = newAge ? parseInt(newAge, 10) : null;
+
       renderKids();
+      showMsg('info', `Updated ${kids[index].name}. Remember to Save.`);
     }
 
     async function deleteKid(index) {
       const kid = kids[index];
       if (!confirm(`Delete ${kid.name}?`)) return;
 
+      // Local-only
       if (!kid._id) {
         kids.splice(index, 1);
         renderKids();
+        showMsg('info', "Removed locally.");
         return;
       }
 
@@ -340,113 +738,105 @@
 
         kids.splice(index, 1);
         renderKids();
-
+        showMsg('ok', "Deleted successfully.");
       } catch (err) {
         console.error(err);
-        alert("Error deleting kid: " + err.message);
+        showMsg('err', "Error deleting kid: " + err.message);
       }
     }
 
     async function save() {
-  if (kids.length === 0) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Add at least one kid';
-    return;
-  }
+      clearMsg();
 
-  try {
-    const updatedKids = [];
-
-    for (const kid of kids) {
-      // If kid already saved → skip
-      if (kid._id) {
-        updatedKids.push(kid);
-        continue;
-      }
-
-      const res = await fetch(`${API_URL}/api/families/add-member`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          family: familyData.family,
-          name: kid.name,
-          role: kid.role,
-          age: kid.age || null
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to add kid');
-
-      // 🔥 Save returned _id back to local array
-      updatedKids.push({
-        ...kid,
-        _id: data.member._id,
-        avatar: data.member.avatar || ""
-      });
-    }
-
-    kids = updatedKids;
-    renderKids();
-
-    msg.style.color = 'green';
-    msg.textContent = '🎉 Kids saved successfully! (IDs synced)';
-
-  } catch (err) {
-    msg.style.color = 'red';
-    msg.textContent = '❌ Error: ' + err.message;
-    console.error(err);
-  }
-}
-
-
-    async function finish() {
       if (kids.length === 0) {
-        msg.style.color = 'red';
-        msg.textContent = '❌ Add at least one kid';
+        showMsg('err', 'Add at least one kid.');
         return;
       }
 
       try {
-        setTimeout(() => {
-          window.location.href = 'signin.html';
-        }, 1500);
+        const updatedKids = [];
+
+        for (const kid of kids) {
+          if (kid._id) {
+            updatedKids.push(kid);
+            continue;
+          }
+
+          const res = await fetch(`${API_URL}/api/families/add-member`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              family: familyData.family,
+              name: kid.name,
+              role: kid.role,
+              age: kid.age || null
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Failed to add kid');
+
+          updatedKids.push({
+            ...kid,
+            _id: data.member._id,
+            avatar: data.member.avatar || ""
+          });
+        }
+
+        kids = updatedKids;
+        renderKids();
+        showMsg('ok', 'Kids saved successfully. Avatar upload is now enabled.');
       } catch (err) {
-        msg.style.color = 'red';
-        msg.textContent = '❌ Error: ' + err.message;
         console.error(err);
+        showMsg('err', 'Error: ' + err.message);
       }
     }
 
-    loadKids();
+    async function finish() {
+      clearMsg();
 
-    const emojis = ['💖','⭐','✨','🌈','🎈','🍭'];
-    function createFloat() {
-      const el = document.createElement('div');
-      el.className = 'float';
-      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-      el.style.left = Math.random() * 100 + 'vw';
-      el.style.animationDuration = (6 + Math.random() * 5) + 's';
-      el.style.fontSize = (16 + Math.random() * 26) + 'px';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 9000);
+      if (kids.length === 0) {
+        showMsg('err', 'Add at least one kid.');
+        return;
+      }
+
+      // Optional: you can enforce save-before-finish if you want:
+      // if (kids.some(k => !k._id)) { showMsg('err', 'Please Save first.'); return; }
+
+      showMsg('ok', 'Done. Redirecting to sign in...');
+      setTimeout(() => window.location.href = 'signin.html', 900);
     }
-    setInterval(createFloat, 800);
 
-    const messages = [
-      "🌟 Encourage your kids daily!",
-      "🎯 Celebrate their achievements!",
-      "💖 Motivation + Love = Growth!",
-      "🎈 Make learning fun and joyful!",
-      "⭐ Track progress and inspire effort!"
-    ];
+    // Subtle particles
+    function spawnParticle(){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = (Math.random() * 100) + 'vw';
+      p.style.bottom = '-10vh';
+      p.style.opacity = (0.35 + Math.random()*0.45).toFixed(2);
+      p.style.animationDuration = (7 + Math.random()*6) + 's';
+      p.style.transform = `scale(${0.8 + Math.random()*1.2})`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 14000);
+    }
+    setInterval(spawnParticle, 900);
+
+    // Motivation messages
     const mot = document.getElementById("motivation");
+    const messages = [
+      "Consistency beats intensity. Track progress daily and celebrate small wins.",
+      "Celebrate effort, not only results. It builds confidence that lasts.",
+      "A calm routine + encouragement = real growth for kids.",
+      "Small daily habits create big long-term outcomes.",
+      "Keep it simple: add, save, celebrate."
+    ];
     let i = 0;
     setInterval(() => {
       mot.textContent = messages[i % messages.length];
       i++;
-    }, 7000);
+    }, 6000);
+
+    loadKids();
   </script>
 </body>
 </html>
-0
