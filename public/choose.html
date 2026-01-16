@@ -382,20 +382,7 @@ async function loadFamilyTree() {
         </li>
       </ol>
     `;
-function openNurseryReport() {
-  // take first child's class as nursery class
-  const treeKids = document.querySelectorAll(".tree .person .name");
-
-  const cls = JSON.parse(localStorage.getItem("selectedClass"));
-
-  if (!cls) {
-    alert("No nursery class selected yet");
-    return;
-  }
-
-  localStorage.setItem("reportClass", JSON.stringify(cls));
-  window.location.href = "schtofamily-report.html";
-}
+localStorage.setItem("currentFamilyMembers", JSON.stringify(members));
 
   } catch (err) {
     treeDiv.innerHTML = "❌ Failed to load family tree";
@@ -403,6 +390,35 @@ function openNurseryReport() {
   }
 }
 
+function openNurseryReport() {
+  // Get all members fetched from family tree
+  const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
+
+  if (!members.length) {
+    alert("No member data available");
+    return;
+  }
+
+  // Choose the logged-in user (kid) by default
+  const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase());
+
+  if (!kid) {
+    alert("Kid not found in family data");
+    return;
+  }
+
+  if (!kid.class) {
+    alert("Kid has no class assigned");
+    return;
+  }
+
+  // Save member ID and class for the report page
+  localStorage.setItem("reportMemberId", kid._id);
+  localStorage.setItem("reportClass", JSON.stringify(kid.class));
+
+  // Open the report page
+  window.location.href = "schtofamily-report.html";
+}
 
 
 // ================= Load Stars =================
