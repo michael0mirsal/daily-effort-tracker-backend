@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Daily Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1220;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    select, input[type="date"], button {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      background: #4f8cff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .child-card {
+      background: rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    }
+
+    .child-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: #ffc107;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .kpi {
+      background: rgba(255,255,255,.08);
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.2);
+      text-align: left;
+    }
+
+    .empty {
+      opacity: 0.7;
+      font-style: italic;
+    }
+    
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1 id="pageTitle">📘 Daily Performance Report</h1>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <select id="memberSelect"></select>
+    <input type="date" id="reportDate" />
+    <button onclick="loadSelectedMemberReport()">Load Report</button>
+  </div>
+
+  <!-- Report Area -->
+  <div id="reportContent"></div>
+
+</div>
+
+<script>
+  // ===== CONFIG =====
+  const API = "https://daily-effort-tracker-backend.onrender.com/api";
+
+  let currentClass = JSON.parse(localStorage.getItem("reportClass"));
+
+if (!currentClass) {
+  alert("No class data found");
+}
+
+
+  const MEMBERS_MAP = {};
+  currentClass.members.forEach(m => MEMBERS_MAP[m._id] = m.name);
+
+function loadSelectedMemberReport() {
+  const memberId = memberSelect.value;
+  updatePageTitle(currentClass.name, MEMBERS_MAP[memberId] || "Student");
+  loadCombinedMemberReport(currentClass, memberId);
+}
+
+
+  // ===== Init =====
+  const memberSelect = document.getElementById("memberSelect");
+  const dateInput = document.getElementById("reportDate");
+
+  dateInput.value = new Date().toISOString().slice(0,10);
+
+  currentClass.members.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m._id;
+    opt.textContent = m.name;
+    memberSelect.appendChild(opt);
+  });
+
+  function getSelectedDate() {
+    return dateInput.value;
+  }
+
+  function updateMailboxBadge() {}
+  function attachMessageButton() {}
+
+  function loadSelectedMemberReport() {
+    updatePageTitle(cls.name, MEMBERS_MAP[memberId] || "Student");
+
+    const memberId = memberSelect.value;
+    loadCombinedMemberReport(currentClass, memberId);
+  }
+
+  // ===== Main Function =====
+  async function loadCombinedMemberReport(cls, memberId) {
+    const area = document.getElementById("reportContent");
+
+    const date = getSelectedDate();
+    area.innerHTML = `<h2>Loading Report (${date})...</h2>`;
+
+    try {
+      const [rRes, aRes] = await Promise.all([
+        fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
+        fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+      ]);
+
+      const routines = rRes.ok ? await rRes.json() : [];
+      const activities = aRes.ok ? await aRes.json() : [];
+
+      const kid = {
+        id: memberId,
+        name: MEMBERS_MAP[memberId] || "Unknown",
+        totalTime: 0,
+        routineStars: 0,
+        activityStars: 0,
+        routines: [],
+        activities: []
+      };
+
+      activities.forEach(doc => {
+        const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
+        if (kidId !== memberId) return;
+
+        (doc.items || []).forEach(it => {
+          kid.totalTime += Number(it.timeMin || 0);
+          kid.activityStars += Number(it.evaluation || 0);
+          kid.activities.push(it);
+        });
+      });
+
+      routines.forEach(r => {
+        const kidId = String(r.schoolMemberId || r.kidmember || r.kidId);
+        if (kidId !== memberId) return;
+
+        (r.items || []).forEach(it => {
+          if (it.done === true) {
+            kid.routineStars += 1;
+            kid.routines.push({ task: it.task, section: it.section });
+          }
+        });
+      });
+
+      const totalStars = kid.routineStars + kid.activityStars;
+
+      const grouped = {};
+      kid.routines.forEach(r => {
+        if (!grouped[r.section]) grouped[r.section] = [];
+        grouped[r.section].push(r.task);
+      });
+
+      let html = `
+        <div class="child-card">
+          <div class="child-title">
+            <h2>🧒 ${kid.name}</h2>
+            <span class="badge">${totalStars} ⭐ Total</span>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi"><h3>Total Time</h3><strong>${kid.totalTime} min</strong></div>
+            <div class="kpi"><h3>Routine Stars</h3><strong>${kid.routineStars} ⭐</strong></div>
+            <div class="kpi"><h3>Activity Stars</h3><strong>${kid.activityStars} ⭐</strong></div>
+          </div>
+
+          <h3>✅ Completed Routines</h3>
+          ${
+            kid.routines.length
+              ? Object.entries(grouped).map(([section, tasks]) =>
+                  `<strong>${section.toUpperCase()}</strong>
+                   <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
+                ).join("")
+              : `<p class="empty">No completed routines</p>`
+          }
+
+          <h3>📊 Activities</h3>
+          ${
+            kid.activities.length
+              ? `<table>
+                  <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
+                  ${kid.activities.map(a =>
+                    `<tr>
+                      <td>${a.activity}</td>
+                      <td>${a.timeMin} min</td>
+                      <td>${a.evaluation} ⭐</td>
+                      <td>${a.note || "-"}</td>
+                    </tr>`).join("")}
+                </table>`
+              : `<p class="empty">No activities recorded</p>`
+          }
+        </div>
+      `;
+
+      area.innerHTML = html;
+
+    } catch (err) {
+      console.error(err);
+      area.innerHTML = `<p style="color:red;">Error loading report</p>`;
+    }
+  }
+
+  // Auto load first member
+  loadSelectedMemberReport();
+</script>
+
+</body>
+</html>
