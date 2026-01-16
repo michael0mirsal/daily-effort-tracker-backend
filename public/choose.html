@@ -388,6 +388,20 @@ async function loadFamilyTree() {
   }
 }
 
+function openMemberReport() {
+  const cls = JSON.parse(localStorage.getItem("currentClass"));
+
+  if (!cls || !cls._id) {
+    alert("No class selected");
+    return;
+  }
+
+  // Save again for report page
+  localStorage.setItem("reportClass", JSON.stringify(cls));
+
+  // Open report page
+  window.location.href = "member-report.html";
+}
 
 // ================= Load Stars =================
 async function loadStars() {
