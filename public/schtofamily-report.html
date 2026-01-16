@@ -129,19 +129,22 @@
 
   let currentClass = JSON.parse(localStorage.getItem("reportClass"));
 
-if (!currentClass) {
-  alert("No class data found");
+if (!currentClass || !currentClass.members) {
+  alert("No nursery class found");
+  window.location.href = "family.html";
 }
 
 
+
   const MEMBERS_MAP = {};
-  currentClass.members.forEach(m => MEMBERS_MAP[m._id] = m.name);
+currentClass.members.forEach(m => MEMBERS_MAP[m._id] = m.name);
 
 function loadSelectedMemberReport() {
   const memberId = memberSelect.value;
   updatePageTitle(currentClass.name, MEMBERS_MAP[memberId] || "Student");
   loadCombinedMemberReport(currentClass, memberId);
 }
+
 
 
   // ===== Init =====
