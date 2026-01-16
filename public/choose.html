@@ -301,9 +301,10 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
   <div id="options"></div>
-  <button class="open-report-btn" onclick="window.location.href='schtofamily-report.html'">
+  <button class="open-report-btn" onclick="openNurseryReport()">
   📘 Nursery Daily Report
 </button>
+
   <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
   <footer>Made with 🌻 Love and Joy</footer>
 </div>
@@ -381,6 +382,20 @@ async function loadFamilyTree() {
         </li>
       </ol>
     `;
+function openNurseryReport() {
+  // take first child's class as nursery class
+  const treeKids = document.querySelectorAll(".tree .person .name");
+
+  const cls = JSON.parse(localStorage.getItem("selectedClass"));
+
+  if (!cls) {
+    alert("No nursery class selected yet");
+    return;
+  }
+
+  localStorage.setItem("reportClass", JSON.stringify(cls));
+  window.location.href = "schtofamily-report.html";
+}
 
   } catch (err) {
     treeDiv.innerHTML = "❌ Failed to load family tree";
@@ -388,20 +403,7 @@ async function loadFamilyTree() {
   }
 }
 
-function openMemberReport() {
-  const cls = JSON.parse(localStorage.getItem("currentClass"));
 
-  if (!cls || !cls._id) {
-    alert("No class selected");
-    return;
-  }
-
-  // Save again for report page
-  localStorage.setItem("reportClass", JSON.stringify(cls));
-
-  // Open report page
-  window.location.href = "member-report.html";
-}
 
 // ================= Load Stars =================
 async function loadStars() {
