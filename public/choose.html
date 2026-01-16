@@ -269,6 +269,23 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   body{flex-direction:column;}
   .left-half, .right-half{width:100%;}
 }
+
+.open-report-btn {
+    background: linear-gradient(135deg, #4f8cff, #3b6be3);
+    color: #ffe082;
+    border: none;
+    border-radius: 14px;
+    padding: 16px 24px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0,0,0,.3);
+  }
+
+  .open-report-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.95;
+  }
+
 </style>
 </head>
 
@@ -284,6 +301,9 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
   <div id="options"></div>
+  <button class="open-report-btn" onclick="window.location.href='member-report.html'">
+  📘 Open Student Daily Report
+</button>
   <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
   <footer>Made with 🌻 Love and Joy</footer>
 </div>
