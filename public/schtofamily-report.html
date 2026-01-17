@@ -163,7 +163,6 @@ function updatePageTitle(nurseryName, memberName) {
 
 // ===== Load Report for Signed-in Kid =====
 async function loadKidReport() {
-  // ✅ Use class member ID for filtering activities/routines
   const reportMemberSchoolId = currentUser.schoolMemberId || currentUser._id;
   const memberName = currentUser.name || "Student";
   const date = getSelectedDate();
@@ -173,7 +172,7 @@ async function loadKidReport() {
 
   console.log("Report for member:", memberName);
   console.log("Family member ID:", currentUser._id);
-  console.log("Class member ID (used for filtering):", memberId);
+  console.log("Class member ID (used for filtering):", reportMemberSchoolId);
 
   try {
     const [rRes, aRes] = await Promise.all([
@@ -186,37 +185,40 @@ async function loadKidReport() {
 
     const activities = aRes.ok ? await aRes.json() : [];
 
-    console.log("Loaded routines:", routines);
-    console.log("Loaded activities:", activities);
+    const kid = {
+      id: reportMemberSchoolId,  // ✅ use the correct school member ID
+      name: memberName,
+      totalTime: 0,
+      routineStars: 0,
+      activityStars: 0,
+      routines: [],
+      activities: []
+    };
 
-    const kid = { id: memberId, name: memberName, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
+    // ===== Load routines =====
+    routines.forEach(r => {
+      const kidId = String(r.schoolMemberId || r.schoolMember || r.kidmember || r.kidId);
+      if (kidId !== reportMemberSchoolId) return;
+      (r.items || []).forEach(it => {
+        if (it.done === true) {
+          kid.routineStars += 1;
+          kid.routines.push({ task: it.task, section: it.section });
+        }
+      });
+    });
 
-    // Get school member ID
+    // ===== Load activities =====
+    activities.forEach(doc => {
+      const kidId = String(doc.schoolMemberId || doc.schoolMember || doc.kidmember);
+      if (kidId !== reportMemberSchoolId) return;
+      (doc.items || []).forEach(it => {
+        kid.totalTime += Number(it.timeMin || 0);
+        kid.activityStars += Number(it.evaluation || 0);
+        kid.activities.push(it);
+      });
+    });
 
-
-// Load routines/activities
-activities.forEach(doc => {
-  const kidId = String(doc.schoolMemberId || doc.schoolMember || doc.kidmember);
-  if (kidId !== reportMemberSchoolId) return; // now it matches the API data
-  (doc.items||[]).forEach(it => {
-    kid.totalTime += Number(it.timeMin||0);
-    kid.activityStars += Number(it.evaluation||0);
-    kid.activities.push(it);
-  });
-});
-
-routines.forEach(r => {
-  const kidId = String(r.schoolMemberId || r.schoolMember || r.kidmember || r.kidId);
-  if (kidId !== reportMemberSchoolId) return; // now it matches
-  (r.items||[]).forEach(it => {
-    if (it.done === true) {
-      kid.routineStars += 1;
-      kid.routines.push({ task: it.task, section: it.section });
-    }
-  });
-});
-
-
+    // ===== Render =====
     const totalStars = kid.routineStars + kid.activityStars;
     const grouped = {};
     kid.routines.forEach(r => {
@@ -224,7 +226,6 @@ routines.forEach(r => {
       grouped[r.section].push(r.task);
     });
 
-    // ===== Render =====
     reportArea.innerHTML = `
       <div class="child-card">
         <div class="child-title">
