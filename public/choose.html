@@ -391,34 +391,36 @@ localStorage.setItem("currentFamilyMembers", JSON.stringify(members));
 }
 
 function openNurseryReport() {
-  // Get all members fetched from family tree
   const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
 
   if (!members.length) {
-    alert("No member data available");
+    alert("No family members loaded");
     return;
   }
 
-  // Choose the logged-in user (kid) by default
-  const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase());
+  // Use logged-in kid or first child
+  let kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase());
 
-  if (!kid) {
-    alert("Kid not found in family data");
+  if (!kid) kid = members[0]; // fallback
+
+  if (!kid.class || !kid.class._id) {
+    alert("This child has no class assigned");
     return;
   }
 
-  if (!kid.class) {
-    alert("Kid has no class assigned");
-    return;
-  }
+  // Save class and member
+  localStorage.setItem("reportClass", JSON.stringify({
+    _id: kid.class._id,
+    name: kid.class.name,
+    members: members.filter(m => m.class?._id === kid.class._id)
+  }));
 
-  // Save member ID and class for the report page
   localStorage.setItem("reportMemberId", kid._id);
-  localStorage.setItem("reportClass", JSON.stringify(kid.class));
 
-  // Open the report page
-  window.location.href = "schtofamily-report.html";
+  // Open report page (FRONTEND)
+  window.location.href = "./schtofamily-report.html";
 }
+
 
 
 // ================= Load Stars =================
