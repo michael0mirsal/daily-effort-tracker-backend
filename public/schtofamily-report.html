@@ -224,17 +224,19 @@
       });
 
       // ===== Routines =====
-      routines.forEach(r => {
-        const kidId = String(r.schoolMemberId || r.kidmember || r.kidId);
-        if (kidId !== memberId) return;
+      // ===== Routines =====
+routines.forEach(r => {
+  const kidId = String(r.schoolMember || r.schoolMemberId || r.kidmember || r.kidId);
+  if (kidId !== memberId) return;
 
-        (r.items || []).forEach(it => {
-          if (it.done === true) {
-            kid.routineStars += 1;
-            kid.routines.push({ task: it.task, section: it.section });
-          }
-        });
-      });
+  (r.items || []).forEach(it => {
+    if (it.done === true) {
+      kid.routineStars += 1;
+      kid.routines.push({ task: it.task, section: it.section });
+    }
+  });
+});
+
 
       const totalStars = kid.routineStars + kid.activityStars;
 
