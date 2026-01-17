@@ -167,6 +167,7 @@ function updatePageTitle(nurseryName, memberName) {
 
 // ===== Load Report for Signed-in Kid =====
 async function loadKidReport() {
+  // Use schoolMemberId if exists, otherwise kid's _id
   const reportMemberSchoolId = currentUser.schoolMemberId || currentUser._id;
   const memberName = currentUser.name || "Student";
   const date = getSelectedDate();
@@ -176,9 +177,10 @@ async function loadKidReport() {
 
   console.log("Report for member:", memberName);
   console.log("Family member ID:", currentUser._id);
-  console.log("Class member ID (used for filtering):", reportMemberSchoolId);
+  console.log("Class/Nursery member ID (used for filtering):", reportMemberSchoolId);
 
   try {
+    // Fetch routines and activities for the class
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${currentClass._id}&date=${date}`),
       fetch(`${API}/sch-activities?classId=${currentClass._id}&date=${date}`)
@@ -186,11 +188,11 @@ async function loadKidReport() {
 
     let routines = rRes.ok ? await rRes.json() : [];
     if (!Array.isArray(routines)) routines = [routines];
-
     const activities = aRes.ok ? await aRes.json() : [];
 
+    // Initialize kid report object
     const kid = {
-      id: reportMemberSchoolId,  // ✅ use the correct school member ID
+      id: reportMemberSchoolId,
       name: memberName,
       totalTime: 0,
       routineStars: 0,
@@ -202,7 +204,12 @@ async function loadKidReport() {
     // ===== Load routines =====
     routines.forEach(r => {
       const kidId = String(r.schoolMemberId || r.schoolMember || r.kidmember || r.kidId);
-      if (kidId !== reportMemberSchoolId) return;
+      const reportId = String(reportMemberSchoolId);
+
+      console.log("Routine check:", kidId, "vs", reportId); // debug
+
+      if (kidId !== reportId) return;
+
       (r.items || []).forEach(it => {
         if (it.done === true) {
           kid.routineStars += 1;
@@ -214,7 +221,12 @@ async function loadKidReport() {
     // ===== Load activities =====
     activities.forEach(doc => {
       const kidId = String(doc.schoolMemberId || doc.schoolMember || doc.kidmember);
-      if (kidId !== reportMemberSchoolId) return;
+      const reportId = String(reportMemberSchoolId);
+
+      console.log("Activity check:", kidId, "vs", reportId); // debug
+
+      if (kidId !== reportId) return;
+
       (doc.items || []).forEach(it => {
         kid.totalTime += Number(it.timeMin || 0);
         kid.activityStars += Number(it.evaluation || 0);
@@ -222,7 +234,7 @@ async function loadKidReport() {
       });
     });
 
-    // ===== Render =====
+    // ===== Render Report =====
     const totalStars = kid.routineStars + kid.activityStars;
     const grouped = {};
     kid.routines.forEach(r => {
@@ -241,22 +253,29 @@ async function loadKidReport() {
           <div class="kpi"><h3>Routine Stars</h3><strong>${kid.routineStars} ⭐</strong></div>
           <div class="kpi"><h3>Activity Stars</h3><strong>${kid.activityStars} ⭐</strong></div>
         </div>
+
         <h3>✅ Completed Routines</h3>
         ${
           kid.routines.length
-            ? Object.entries(grouped).map(([section,tasks]) => 
-                `<strong>${section.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join('')}</ul>`).join('')
+            ? Object.entries(grouped).map(([section,tasks]) =>
+                `<strong>${section.toUpperCase()}</strong>
+                 <ul>${tasks.map(t => `<li>${t}</li>`).join('')}</ul>`
+              ).join('')
             : `<p class="empty">No completed routines</p>`
         }
+
         <h3>📊 Activities</h3>
         ${
           kid.activities.length
             ? `<table>
-                <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
-                ${kid.activities.map(a=>`<tr>
-                  <td>${a.activity}</td><td>${a.timeMin} min</td><td>${a.evaluation} ⭐</td><td>${a.note||"-"}</td>
-                </tr>`).join('')}
-              </table>`
+                 <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
+                 ${kid.activities.map(a => `<tr>
+                   <td>${a.activity}</td>
+                   <td>${a.timeMin} min</td>
+                   <td>${a.evaluation} ⭐</td>
+                   <td>${a.note || "-"}</td>
+                 </tr>`).join('')}
+               </table>`
             : `<p class="empty">No activities recorded</p>`
         }
       </div>
