@@ -161,7 +161,7 @@ function updatePageTitle(nurseryName, memberName) {
 
 // ===== Load Report for Selected Kid =====
 async function loadKidReport() {
-  const memberId = currentUser._id;
+  const memberId = localStorage.getItem("reportMemberClassId") || currentUser._id;
   const memberName = currentUser.name || "Student";
   const date = getSelectedDate();
 
