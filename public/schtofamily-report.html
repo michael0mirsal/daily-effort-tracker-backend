@@ -127,165 +127,138 @@
 </div>
 
 <script>
-  // ===== CONFIG =====
-  const API = "https://daily-effort-tracker-backend.onrender.com/api";
+// ===== CONFIG =====
+const API = "https://daily-effort-tracker-backend.onrender.com/api";
 
-  // ===== Load Signed In User =====
-  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const currentClass = JSON.parse(localStorage.getItem("reportClass"));
+// ===== Load Signed-in User & Class =====
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+const currentClass = JSON.parse(localStorage.getItem("reportClass"));
 
-  if (!currentUser || !currentUser._id) {
-    alert("No signed in user found");
-    window.location.href = "login.html";
-  }
+if (!currentUser || !currentUser._id) {
+  alert("No signed in user found");
+  window.location.href = "login.html";
+}
 
-  if (!currentClass || !currentClass._id) {
-    alert("No nursery class found");
-    window.location.href = "choose.html";
-  }
+if (!currentClass || !currentClass.members || !currentClass.members.length) {
+  alert("No nursery class found");
+  window.location.href = "choose.html";
+}
 
+const dateInput = document.getElementById("reportDate");
+const reportArea = document.getElementById("reportContent");
+dateInput.value = new Date().toISOString().slice(0,10);
+
+// ===== Helpers =====
+function getSelectedDate() { return dateInput.value; }
+
+function updatePageTitle(nurseryName, memberName) {
+  document.getElementById("pageTitle").innerHTML = `📘 ${nurseryName}`;
+  document.getElementById("memberTitle").innerHTML = `Daily Performance Report for <b>${memberName}</b>`;
+  document.getElementById("reportDateTitle").innerHTML = new Date(getSelectedDate()).toLocaleDateString();
+}
+
+// ===== Load Report for Signed-in Kid =====
+async function loadKidReport() {
   const memberId = currentUser._id;
   const memberName = currentUser.name || "Student";
+  const date = getSelectedDate();
 
-  // ===== Controls =====
-  const dateInput = document.getElementById("reportDate");
+  updatePageTitle(currentClass.name, memberName);
+  reportArea.innerHTML = `<h2>Loading Report (${date})...</h2>`;
 
-  // Set today's date
-  dateInput.value = new Date().toISOString().slice(0, 10);
+  try {
+    const [rRes, aRes] = await Promise.all([
+      fetch(`${API}/sch-routine/load?classId=${currentClass._id}&date=${date}`),
+      fetch(`${API}/sch-activities?classId=${currentClass._id}&date=${date}`)
+    ]);
 
-  // ===== Helpers =====
-  function getSelectedDate() {
-    return dateInput.value;
-  }
+    let routines = rRes.ok ? await rRes.json() : [];
+    if (!Array.isArray(routines)) routines = [routines];
 
-  // ===== Page Title =====
-  function updatePageTitle(nurseryName, memberName) {
-    const title = document.getElementById("pageTitle");
-    const memberTitle = document.getElementById("memberTitle");
-    const dateTitle = document.getElementById("reportDateTitle");
+    const activities = aRes.ok ? await aRes.json() : [];
 
-    title.innerHTML = `📘 ${nurseryName}`;
-    memberTitle.innerHTML = `Daily Performance Report for <b>${memberName}</b>`;
-    dateTitle.innerHTML = new Date(getSelectedDate()).toLocaleDateString();
-  }
+    const kid = { id: memberId, name: memberName, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
 
-  // ===== Main Loader =====
-  async function loadMemberReport() {
-    const area = document.getElementById("reportContent");
-    const date = getSelectedDate();
-
-    updatePageTitle(currentClass.name, memberName);
-
-    area.innerHTML = `<h2>Loading Report (${date})...</h2>`;
-
-    try {
-      const [rRes, aRes] = await Promise.all([
-        fetch(`${API}/sch-routine/load?classId=${currentClass._id}&date=${date}`),
-        fetch(`${API}/sch-activities?classId=${currentClass._id}&date=${date}`)
-      ]);
-
-      let routines = rRes.ok ? await rRes.json() : [];
-      if (!Array.isArray(routines)) routines = [routines];
-
-      const activities = aRes.ok ? await aRes.json() : [];
-
-      const kid = {
-        id: memberId,
-        name: memberName,
-        totalTime: 0,
-        routineStars: 0,
-        activityStars: 0,
-        routines: [],
-        activities: []
-      };
-
-      // ===== Activities =====
-      activities.forEach(doc => {
-        const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
-        if (kidId !== memberId) return;
-
-        (doc.items || []).forEach(it => {
-          kid.totalTime += Number(it.timeMin || 0);
-          kid.activityStars += Number(it.evaluation || 0);
-          kid.activities.push(it);
-        });
+    // ===== Activities =====
+    activities.forEach(doc => {
+      const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
+      if (kidId !== memberId) return;
+      (doc.items||[]).forEach(it => {
+        kid.totalTime += Number(it.timeMin||0);
+        kid.activityStars += Number(it.evaluation||0);
+        kid.activities.push(it);
       });
+    });
 
-      // ===== Routines =====
-      routines.forEach(r => {
-        const kidId = String(r.schoolMember || r.schoolMemberId || r.kidmember || r.kidId);
-        if (kidId !== memberId) return;
-
-        (r.items || []).forEach(it => {
-          if (it.done === true) {
-            kid.routineStars += 1;
-            kid.routines.push({ task: it.task, section: it.section });
-          }
-        });
+    // ===== Routines =====
+    routines.forEach(r => {
+      const kidId = String(r.schoolMember || r.schoolMemberId || r.kidmember || r.kidId);
+      if (kidId !== memberId) return;
+      (r.items||[]).forEach(it => {
+        if (it.done===true) {
+          kid.routineStars += 1;
+          kid.routines.push({ task: it.task, section: it.section });
+        }
       });
+    });
 
-      const totalStars = kid.routineStars + kid.activityStars;
+    const totalStars = kid.routineStars + kid.activityStars;
+    const grouped = {};
+    kid.routines.forEach(r => {
+      if (!grouped[r.section]) grouped[r.section] = [];
+      grouped[r.section].push(r.task);
+    });
 
-      // Group routines by section
-      const grouped = {};
-      kid.routines.forEach(r => {
-        if (!grouped[r.section]) grouped[r.section] = [];
-        grouped[r.section].push(r.task);
-      });
-
-      // ===== Render =====
-      area.innerHTML = `
-        <div class="child-card">
-          <div class="child-title">
-            <h2>🧒 ${kid.name}</h2>
-            <span class="badge">${totalStars} ⭐ Total</span>
-          </div>
-
-          <div class="kpi-grid">
-            <div class="kpi"><h3>Total Time</h3><strong>${kid.totalTime} min</strong></div>
-            <div class="kpi"><h3>Routine Stars</h3><strong>${kid.routineStars} ⭐</strong></div>
-            <div class="kpi"><h3>Activity Stars</h3><strong>${kid.activityStars} ⭐</strong></div>
-          </div>
-
-          <h3>✅ Completed Routines</h3>
-          ${
-            kid.routines.length
-              ? Object.entries(grouped).map(([section, tasks]) =>
-                  `<strong>${section.toUpperCase()}</strong>
-                   <ul>${tasks.map(t => `<li>${t}</li>`).join("")}</ul>`
-                ).join("")
-              : `<p class="empty">No completed routines</p>`
-          }
-
-          <h3>📊 Activities</h3>
-          ${
-            kid.activities.length
-              ? `<table>
-                  <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
-                  ${kid.activities.map(a =>
-                    `<tr>
-                      <td>${a.activity}</td>
-                      <td>${a.timeMin} min</td>
-                      <td>${a.evaluation} ⭐</td>
-                      <td>${a.note || "-"}</td>
-                    </tr>`).join("")}
-                </table>`
-              : `<p class="empty">No activities recorded</p>`
-          }
+    // ===== Render =====
+    reportArea.innerHTML = `
+      <div class="child-card">
+        <div class="child-title">
+          <h2>🧒 ${kid.name}</h2>
+          <span class="badge">${totalStars} ⭐ Total</span>
         </div>
-      `;
-
-    } catch (err) {
-      console.error(err);
-      area.innerHTML = `<p style="color:red;">Error loading report</p>`;
-    }
+        <div class="kpi-grid">
+          <div class="kpi"><h3>Total Time</h3><strong>${kid.totalTime} min</strong></div>
+          <div class="kpi"><h3>Routine Stars</h3><strong>${kid.routineStars} ⭐</strong></div>
+          <div class="kpi"><h3>Activity Stars</h3><strong>${kid.activityStars} ⭐</strong></div>
+        </div>
+        <h3>✅ Completed Routines</h3>
+        ${
+          kid.routines.length
+            ? Object.entries(grouped).map(([section,tasks]) => 
+                `<strong>${section.toUpperCase()}</strong><ul>${tasks.map(t=>`<li>${t}</li>`).join('')}</ul>`).join('')
+            : `<p class="empty">No completed routines</p>`
+        }
+        <h3>📊 Activities</h3>
+        ${
+          kid.activities.length
+            ? `<table>
+                <tr><th>Activity</th><th>Time</th><th>Stars</th><th>Note</th></tr>
+                ${kid.activities.map(a=>`<tr>
+                  <td>${a.activity}</td><td>${a.timeMin} min</td><td>${a.evaluation} ⭐</td><td>${a.note||"-"}</td>
+                </tr>`).join('')}
+              </table>`
+            : `<p class="empty">No activities recorded</p>`
+        }
+      </div>
+    `;
+  } catch(err) {
+    console.error(err);
+    reportArea.innerHTML = `<p style="color:red;">Error loading report</p>`;
   }
+}
 
-  // ===== Reload on Date Change =====
-  dateInput.addEventListener("change", loadMemberReport);
+// ===== Event Listeners =====
+dateInput.addEventListener("change", loadKidReport);
 
-  // ===== Auto Load =====
-  loadMemberReport();
+// ===== Auto Load =====
+loadKidReport();
+
+// ===== Logout =====
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "login.html";
+}
+
 </script>
 
 
