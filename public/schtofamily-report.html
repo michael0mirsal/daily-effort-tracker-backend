@@ -191,28 +191,31 @@ async function loadKidReport() {
 
     const kid = { id: memberId, name: memberName, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
 
-    // ===== Activities =====
-    activities.forEach(doc => {
-      const kidId = String(doc.schoolMemberId || doc.schoolMember || doc.kidmember);
-      if (kidId !== memberId) return;
-      (doc.items||[]).forEach(it => {
-        kid.totalTime += Number(it.timeMin||0);
-        kid.activityStars += Number(it.evaluation||0);
-        kid.activities.push(it);
-      });
-    });
+    // Get school member ID
+const reportMemberSchoolId = currentUser.schoolMemberId || currentUser._id;
 
-    // ===== Routines =====
-    routines.forEach(r => {
-      const kidId = String(r.schoolMemberId || r.schoolMember || r.kidmember || r.kidId);
-      if (kidId !== memberId) return;
-      (r.items||[]).forEach(it => {
-        if (it.done===true) {
-          kid.routineStars += 1;
-          kid.routines.push({ task: it.task, section: it.section });
-        }
-      });
-    });
+// Load routines/activities
+activities.forEach(doc => {
+  const kidId = String(doc.schoolMemberId || doc.schoolMember || doc.kidmember);
+  if (kidId !== reportMemberSchoolId) return; // now it matches the API data
+  (doc.items||[]).forEach(it => {
+    kid.totalTime += Number(it.timeMin||0);
+    kid.activityStars += Number(it.evaluation||0);
+    kid.activities.push(it);
+  });
+});
+
+routines.forEach(r => {
+  const kidId = String(r.schoolMemberId || r.schoolMember || r.kidmember || r.kidId);
+  if (kidId !== reportMemberSchoolId) return; // now it matches
+  (r.items||[]).forEach(it => {
+    if (it.done === true) {
+      kid.routineStars += 1;
+      kid.routines.push({ task: it.task, section: it.section });
+    }
+  });
+});
+
 
     const totalStars = kid.routineStars + kid.activityStars;
     const grouped = {};
