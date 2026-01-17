@@ -171,6 +171,10 @@ async function loadKidReport() {
   updatePageTitle(currentClass.name, memberName);
   reportArea.innerHTML = `<h2>Loading Report (${date})...</h2>`;
 
+  console.log("Report for member:", memberName);
+  console.log("Family member ID:", currentUser._id);
+  console.log("Class member ID (used for filtering):", memberId);
+
   try {
     const [rRes, aRes] = await Promise.all([
       fetch(`${API}/sch-routine/load?classId=${currentClass._id}&date=${date}`),
@@ -181,6 +185,9 @@ async function loadKidReport() {
     if (!Array.isArray(routines)) routines = [routines];
 
     const activities = aRes.ok ? await aRes.json() : [];
+
+    console.log("Loaded routines:", routines);
+    console.log("Loaded activities:", activities);
 
     const kid = { id: memberId, name: memberName, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
 
