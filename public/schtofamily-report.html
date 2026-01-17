@@ -139,11 +139,8 @@ if (!currentClass || !currentClass.members) {
   const MEMBERS_MAP = {};
 currentClass.members.forEach(m => MEMBERS_MAP[m._id] = m.name);
 
-function loadSelectedMemberReport() {
-  const memberId = memberSelect.value;
-  updatePageTitle(currentClass.name, MEMBERS_MAP[memberId] || "Student");
-  loadCombinedMemberReport(currentClass, memberId);
-}
+
+
 
 
 
@@ -168,11 +165,10 @@ function loadSelectedMemberReport() {
   function attachMessageButton() {}
 
   function loadSelectedMemberReport() {
-    updatePageTitle(cls.name, MEMBERS_MAP[memberId] || "Student");
-
-    const memberId = memberSelect.value;
-    loadCombinedMemberReport(currentClass, memberId);
-  }
+  const memberId = memberSelect.value;
+  updatePageTitle(currentClass.name, MEMBERS_MAP[memberId] || "Student");
+  loadCombinedMemberReport(currentClass, memberId);
+}
 
   // ===== Main Function =====
   async function loadCombinedMemberReport(cls, memberId) {
