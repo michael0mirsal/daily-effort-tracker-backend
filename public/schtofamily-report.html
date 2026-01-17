@@ -198,7 +198,12 @@
         fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
       ]);
 
-      const routines = rRes.ok ? await rRes.json() : [];
+      let routines = rRes.ok ? await rRes.json() : [];
+
+if (!Array.isArray(routines)) {
+  routines = [routines];
+}
+
       const activities = aRes.ok ? await aRes.json() : [];
 
       const kid = {
