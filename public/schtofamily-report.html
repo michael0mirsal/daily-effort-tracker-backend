@@ -130,20 +130,23 @@
 // ===== CONFIG =====
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
 
-// ===== Load Signed-in User & Class =====
-const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-const currentClass = JSON.parse(localStorage.getItem("reportClass"));
+// ===== Load Signed-in Kid from reportMemberId =====
+const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
+const reportMemberId = localStorage.getItem("reportMemberId");
+const currentUser = currentFamilyMembers.find(m => m._id === reportMemberId);
 
 if (!currentUser || !currentUser._id) {
   alert("No signed in user found");
   window.location.href = "login.html";
 }
 
+const currentClass = JSON.parse(localStorage.getItem("reportClass"));
 if (!currentClass || !currentClass.members || !currentClass.members.length) {
   alert("No nursery class found");
   window.location.href = "choose.html";
 }
 
+// ===== DOM Elements =====
 const dateInput = document.getElementById("reportDate");
 const reportArea = document.getElementById("reportContent");
 dateInput.value = new Date().toISOString().slice(0,10);
@@ -157,7 +160,7 @@ function updatePageTitle(nurseryName, memberName) {
   document.getElementById("reportDateTitle").innerHTML = new Date(getSelectedDate()).toLocaleDateString();
 }
 
-// ===== Load Report for Signed-in Kid =====
+// ===== Load Report for Selected Kid =====
 async function loadKidReport() {
   const memberId = currentUser._id;
   const memberName = currentUser.name || "Student";
@@ -258,8 +261,8 @@ function logout() {
   localStorage.removeItem("currentUser");
   window.location.href = "login.html";
 }
-
 </script>
+
 
 
 
