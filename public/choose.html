@@ -418,6 +418,7 @@ function openNurseryReport() {
   // ===== Save both IDs =====
   localStorage.setItem("reportMemberId", kid._id);          // family member ID
   localStorage.setItem("reportMemberClassId", kid.classMemberId || kid._id); // class member ID for filtering
+  localStorage.setItem("reportMemberSchoolId", kid.schoolMemberId || kid._id);
 
   // Open report page (FRONTEND)
   window.location.href = "./schtofamily-report.html";
