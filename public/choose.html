@@ -408,14 +408,16 @@ function openNurseryReport() {
     return;
   }
 
-  // Save class and member
+  // ===== Save class and members =====
   localStorage.setItem("reportClass", JSON.stringify({
     _id: kid.class._id,
     name: kid.class.name,
     members: members.filter(m => m.class?._id === kid.class._id)
   }));
 
-  localStorage.setItem("reportMemberId", kid._id);
+  // ===== Save both IDs =====
+  localStorage.setItem("reportMemberId", kid._id);          // family member ID
+  localStorage.setItem("reportMemberClassId", kid.classMemberId || kid._id); // class member ID for filtering
 
   // Open report page (FRONTEND)
   window.location.href = "./schtofamily-report.html";
