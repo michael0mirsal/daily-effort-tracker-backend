@@ -141,6 +141,10 @@ if (!currentUser || !currentUser._id) {
   window.location.href = "login.html";
 }
 
+if (!currentUser.schoolMemberId) {
+  console.warn("Warning: current user has no schoolMemberId, report may fail.");
+}
+
 const currentClass = JSON.parse(localStorage.getItem("reportClass"));
 if (!currentClass || !currentClass.members || !currentClass.members.length) {
   alert("No nursery class found");
