@@ -164,7 +164,7 @@ function updatePageTitle(nurseryName, memberName) {
 // ===== Load Report for Signed-in Kid =====
 async function loadKidReport() {
   // ✅ Use class member ID for filtering activities/routines
-  const memberId = reportMemberClassId || currentUser._id;
+  const memberId = currentUser.classMemberId || currentUser._id;
   const memberName = currentUser.name || "Student";
   const date = getSelectedDate();
 
@@ -193,7 +193,7 @@ async function loadKidReport() {
 
     // ===== Activities =====
     activities.forEach(doc => {
-      const kidId = String(doc.schoolMember || doc.schoolMemberId || doc.kidmember);
+      const kidId = String(doc.schoolMemberId || doc.schoolMember || doc.kidmember);
       if (kidId !== memberId) return;
       (doc.items||[]).forEach(it => {
         kid.totalTime += Number(it.timeMin||0);
@@ -204,7 +204,7 @@ async function loadKidReport() {
 
     // ===== Routines =====
     routines.forEach(r => {
-      const kidId = String(r.schoolMember || r.schoolMemberId || r.kidmember || r.kidId);
+      const kidId = String(r.schoolMemberId || r.schoolMember || r.kidmember || r.kidId);
       if (kidId !== memberId) return;
       (r.items||[]).forEach(it => {
         if (it.done===true) {
