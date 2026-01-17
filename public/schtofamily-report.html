@@ -130,40 +130,33 @@
   // ===== CONFIG =====
   const API = "https://daily-effort-tracker-backend.onrender.com/api";
 
-  // ===== Load Class From Storage =====
-  let currentClass = JSON.parse(localStorage.getItem("reportClass"));
+  // ===== Load Signed In User =====
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const currentClass = JSON.parse(localStorage.getItem("reportClass"));
 
-  if (!currentClass || !currentClass.members || !currentClass.members.length) {
+  if (!currentUser || !currentUser._id) {
+    alert("No signed in user found");
+    window.location.href = "login.html";
+  }
+
+  if (!currentClass || !currentClass._id) {
     alert("No nursery class found");
     window.location.href = "choose.html";
   }
 
-  // ===== Members Map =====
-  const MEMBERS_MAP = {};
-  currentClass.members.forEach(m => MEMBERS_MAP[m._id] = m.name);
+  const memberId = currentUser._id;
+  const memberName = currentUser.name || "Student";
 
-  // ===== Init Controls =====
-  const memberSelect = document.getElementById("memberSelect");
+  // ===== Controls =====
   const dateInput = document.getElementById("reportDate");
 
   // Set today's date
-  dateInput.value = new Date().toISOString().slice(0,10);
-
-  // Fill member dropdown
-  currentClass.members.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m._id;
-    opt.textContent = m.name;
-    memberSelect.appendChild(opt);
-  });
+  dateInput.value = new Date().toISOString().slice(0, 10);
 
   // ===== Helpers =====
   function getSelectedDate() {
     return dateInput.value;
   }
-
-  function updateMailboxBadge() {}
-  function attachMessageButton() {}
 
   // ===== Page Title =====
   function updatePageTitle(nurseryName, memberName) {
@@ -176,39 +169,29 @@
     dateTitle.innerHTML = new Date(getSelectedDate()).toLocaleDateString();
   }
 
-  // ===== Load Selected Member =====
-  function loadSelectedMemberReport() {
-    const memberId = memberSelect.value;
-    const memberName = MEMBERS_MAP[memberId] || "Student";
-
-    updatePageTitle(currentClass.name, memberName);
-    loadCombinedMemberReport(currentClass, memberId);
-  }
-
   // ===== Main Loader =====
-  async function loadCombinedMemberReport(cls, memberId) {
+  async function loadMemberReport() {
     const area = document.getElementById("reportContent");
     const date = getSelectedDate();
+
+    updatePageTitle(currentClass.name, memberName);
 
     area.innerHTML = `<h2>Loading Report (${date})...</h2>`;
 
     try {
       const [rRes, aRes] = await Promise.all([
-        fetch(`${API}/sch-routine/load?classId=${cls._id}&date=${date}`),
-        fetch(`${API}/sch-activities?classId=${cls._id}&date=${date}`)
+        fetch(`${API}/sch-routine/load?classId=${currentClass._id}&date=${date}`),
+        fetch(`${API}/sch-activities?classId=${currentClass._id}&date=${date}`)
       ]);
 
       let routines = rRes.ok ? await rRes.json() : [];
-
-if (!Array.isArray(routines)) {
-  routines = [routines];
-}
+      if (!Array.isArray(routines)) routines = [routines];
 
       const activities = aRes.ok ? await aRes.json() : [];
 
       const kid = {
         id: memberId,
-        name: MEMBERS_MAP[memberId] || "Unknown",
+        name: memberName,
         totalTime: 0,
         routineStars: 0,
         activityStars: 0,
@@ -229,19 +212,17 @@ if (!Array.isArray(routines)) {
       });
 
       // ===== Routines =====
-      // ===== Routines =====
-routines.forEach(r => {
-  const kidId = String(r.schoolMember || r.schoolMemberId || r.kidmember || r.kidId);
-  if (kidId !== memberId) return;
+      routines.forEach(r => {
+        const kidId = String(r.schoolMember || r.schoolMemberId || r.kidmember || r.kidId);
+        if (kidId !== memberId) return;
 
-  (r.items || []).forEach(it => {
-    if (it.done === true) {
-      kid.routineStars += 1;
-      kid.routines.push({ task: it.task, section: it.section });
-    }
-  });
-});
-
+        (r.items || []).forEach(it => {
+          if (it.done === true) {
+            kid.routineStars += 1;
+            kid.routines.push({ task: it.task, section: it.section });
+          }
+        });
+      });
 
       const totalStars = kid.routineStars + kid.activityStars;
 
@@ -253,7 +234,7 @@ routines.forEach(r => {
       });
 
       // ===== Render =====
-      let html = `
+      area.innerHTML = `
         <div class="child-card">
           <div class="child-title">
             <h2>🧒 ${kid.name}</h2>
@@ -294,21 +275,19 @@ routines.forEach(r => {
         </div>
       `;
 
-      area.innerHTML = html;
-
     } catch (err) {
       console.error(err);
       area.innerHTML = `<p style="color:red;">Error loading report</p>`;
     }
   }
 
-  // ===== Auto Reload on Change =====
-  dateInput.addEventListener("change", loadSelectedMemberReport);
-  memberSelect.addEventListener("change", loadSelectedMemberReport);
+  // ===== Reload on Date Change =====
+  dateInput.addEventListener("change", loadMemberReport);
 
-  // ===== Auto Load First Member =====
-  loadSelectedMemberReport();
+  // ===== Auto Load =====
+  loadMemberReport();
 </script>
+
 
 
 </body>
