@@ -129,9 +129,11 @@
 // ===== CONFIG =====
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
 
-// ===== Load Signed-in Kid from reportMemberId =====
+// ===== Load Signed-in Kid from localStorage =====
 const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
 const reportMemberId = localStorage.getItem("reportMemberId");
+const reportMemberClassId = localStorage.getItem("reportMemberClassId");
+
 const currentUser = currentFamilyMembers.find(m => m._id === reportMemberId);
 
 if (!currentUser || !currentUser._id) {
@@ -159,9 +161,10 @@ function updatePageTitle(nurseryName, memberName) {
   document.getElementById("reportDateTitle").innerHTML = new Date(getSelectedDate()).toLocaleDateString();
 }
 
-// ===== Load Report for Selected Kid =====
+// ===== Load Report for Signed-in Kid =====
 async function loadKidReport() {
-  const memberId = localStorage.getItem("reportMemberClassId") || currentUser._id;
+  // ✅ Use class member ID for filtering activities/routines
+  const memberId = reportMemberClassId || currentUser._id;
   const memberName = currentUser.name || "Student";
   const date = getSelectedDate();
 
@@ -261,6 +264,7 @@ function logout() {
   window.location.href = "login.html";
 }
 </script>
+
 
 
 
