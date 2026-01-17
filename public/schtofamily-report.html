@@ -164,7 +164,7 @@ function updatePageTitle(nurseryName, memberName) {
 // ===== Load Report for Signed-in Kid =====
 async function loadKidReport() {
   // ✅ Use class member ID for filtering activities/routines
-  const memberId = currentUser.classMemberId || currentUser._id;
+  const reportMemberSchoolId = currentUser.schoolMemberId || currentUser._id;
   const memberName = currentUser.name || "Student";
   const date = getSelectedDate();
 
@@ -192,7 +192,7 @@ async function loadKidReport() {
     const kid = { id: memberId, name: memberName, totalTime:0, routineStars:0, activityStars:0, routines:[], activities:[] };
 
     // Get school member ID
-const reportMemberSchoolId = currentUser.schoolMemberId || currentUser._id;
+
 
 // Load routines/activities
 activities.forEach(doc => {
