@@ -134,7 +134,10 @@ const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembe
 const reportMemberId = localStorage.getItem("reportMemberId");
 const reportMemberClassId = localStorage.getItem("reportMemberClassId");
 
-const currentUser = currentFamilyMembers.find(m => m._id === reportMemberId);
+const currentUser = currentFamilyMembers.find(
+  m => m._id === reportMemberId || m.schoolMemberId === reportMemberId
+);
+
 /*
 if (!currentUser || !currentUser._id) {
   alert("No signed in user found");
