@@ -103,7 +103,25 @@
       opacity: 0.7;
       font-style: italic;
     }
-    
+    /* TOP BAR */
+#topButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#backBtn { background: #ecf0f1; }
+#logoutBtn { background: var(--danger); color: white; }
+
   </style>
 </head>
 
@@ -115,6 +133,10 @@
 <h2 id="memberTitle"></h2>
 <p id="reportDateTitle"></p>
 
+<div id="topButtons">
+        <button id="backBtn">⬅ Back</button>
+        <button id="logoutBtn">Logout</button>
+      </div>
 
   <!-- Toolbar -->
   <div class="toolbar">
@@ -296,6 +318,9 @@ dateInput.addEventListener("change", loadKidReport);
 
 // ===== Auto Load =====
 loadKidReport();
+
+const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.onclick = () => window.location.href = "sch-choose.html";
 
 // ===== Logout =====
 function logout() {
