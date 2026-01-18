@@ -301,9 +301,10 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
   <div id="options"></div>
-  <button class="open-report-btn" onclick="openNurseryReport()">
+  <button class="open-report-btn" id="nurseryReportBtn" onclick="openNurseryReport()">
   📘 Nursery Daily Report
 </button>
+
 
   <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
   <footer>Made with 🌻 Love and Joy</footer>
@@ -312,6 +313,13 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 <script>
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+
+// 🔵 NEW — Set nursery name dynamically on button
+function setNurseryButtonName(name) {
+  const btn = document.getElementById("nurseryReportBtn");
+  if (btn) btn.innerText = `📘 ${name} Daily Report`;
+}
+
 
 if (!user) {
   alert("Not logged in");
@@ -383,6 +391,11 @@ async function loadFamilyTree() {
       </ol>
     `;
 localStorage.setItem("currentFamilyMembers", JSON.stringify(members));
+// 🔵 Set nursery name on button automatically
+if (members.length) {
+  const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase()) || members[0];
+  setNurseryButtonName(kid.nursery?.name || "Nursery");
+}
 
   } catch (err) {
     treeDiv.innerHTML = "❌ Failed to load family tree";
