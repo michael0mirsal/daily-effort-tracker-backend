@@ -371,6 +371,7 @@ router.get("/:id/school-info", requireFamily, async (req, res) => {
       age: m.age,
       role: m.role,
       avatar: m.avatar,
+      schoolMemberId: m.schoolMember?._id || null,
       nursery: m.schoolMember?.nursery || null,
       class: m.schoolMember?.class || null,
       status: m.schoolMember?.status || null
