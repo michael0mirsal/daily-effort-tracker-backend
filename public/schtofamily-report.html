@@ -135,12 +135,12 @@ const reportMemberId = localStorage.getItem("reportMemberId");
 const reportMemberClassId = localStorage.getItem("reportMemberClassId");
 
 const currentUser = currentFamilyMembers.find(m => m._id === reportMemberId);
-
+/*
 if (!currentUser || !currentUser._id) {
   alert("No signed in user found");
   window.location.href = "login.html";
 }
-
+*/
 if (!currentUser.schoolMemberId) {
   console.warn("Warning: current user has no schoolMemberId, report may fail.");
 }
