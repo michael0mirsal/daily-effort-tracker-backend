@@ -400,28 +400,31 @@ function openNurseryReport() {
 
   // Use logged-in kid or first child
   let kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase());
-
-  if (!kid) kid = members[0]; // fallback
+  if (!kid) kid = members[0];
 
   if (!kid.class || !kid.class._id) {
     alert("This child has no class assigned");
     return;
   }
 
-  // ===== Save class and members =====
+  if (!kid._id || !kid.member) {
+    alert("Invalid child record. Missing IDs.");
+    console.error("Invalid kid object:", kid);
+    return;
+  }
+
+  // ===== Save class =====
   localStorage.setItem("reportClass", JSON.stringify({
     _id: kid.class._id,
     name: kid.class.name,
     members: members.filter(m => m.class?._id === kid.class._id)
   }));
 
-  // ===== Save both IDs =====
-  localStorage.setItem("reportMemberId", kid.member); // family member ID         // family member ID
-  localStorage.setItem("reportMemberClassId", kid.classMemberId || kid._id); // class member ID for filtering
-  localStorage.setItem("reportMemberSchoolId", kid._id); // always use nursery member _id
+  // ===== Save IDs correctly =====
+  localStorage.setItem("reportMemberId", kid.member);   // Family member ID
+  localStorage.setItem("reportMemberSchoolId", kid._id); // Nursery member ID
 
-
-  // Open report page (FRONTEND)
+  // Open report page
   window.location.href = "./schtofamily-report.html";
 }
 
