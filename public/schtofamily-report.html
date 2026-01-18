@@ -119,8 +119,9 @@ button {
   font-weight: 600;
 }
 
-#backBtn { background: #ecf0f1; }
-#logoutBtn { background: var(--danger); color: white; }
+#backBtn { background: #61869d; }
+#logoutBtn { background: var(--danger); color: rgb(204, 40, 40); }
+
 
   </style>
 </head>
@@ -320,7 +321,7 @@ dateInput.addEventListener("change", loadKidReport);
 loadKidReport();
 
 const backBtn = document.getElementById("backBtn");
-  if (backBtn) backBtn.onclick = () => window.location.href = "sch-choose.html";
+  if (backBtn) backBtn.onclick = () => window.location.href = "choose.html";
 
 // ===== Logout =====
 function logout() {
