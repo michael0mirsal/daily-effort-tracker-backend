@@ -1,6 +1,8 @@
 import Attendance from "../models/Attendance.js";
 import SchoolMember from "../models/SchoolMember.js";
 import { sendWhatsAppReport } from "../routes/whatsappService.js";
+import { logInfo, logWarn, logError } from "../utils/logger.js";
+
 
 // Map attendance status to message or stars
 const statusMap = {
@@ -21,13 +23,14 @@ export const markAttendance = async ({
   markedBy,
   notes
 }) => {
+    logInfo("Attendance request received", { schoolMember, classId, date });
   if (!schoolMember || !classId || !date || !status) {
     throw new Error("Missing required fields");
   }
 
   // --- 1️⃣ Check if attendance exists ---
-  let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
-
+ 
+logInfo("Attendance saved", { attendanceId: attendance._id });
   if (attendance) {
     // Update existing record
     attendance.status = status;
@@ -50,7 +53,7 @@ export const markAttendance = async ({
   }
 
   await attendance.save();
-
+ let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
   // --- 2️⃣ Fetch SchoolMember for parent phones ---
   const member = await SchoolMember.findById(schoolMember);
 
@@ -68,8 +71,9 @@ export const markAttendance = async ({
   for (const phone of phones) {
     try {
       const messageText = statusMap[status] || status;
-      await sendWhatsAppReport(phone, date, messageText);
-      console.log(`✅ WhatsApp sent to ${phone} for ${member._id}`);
+      const msg = await sendWhatsAppReport(phone, date, messageText);
+      logInfo("WhatsApp sent", { phone, memberId: member._id, sid: msg.sid, status: msg.status });
+
     } catch (err) {
       console.error(`❌ Error sending WhatsApp to ${phone}:`, err);
     }
