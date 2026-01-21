@@ -3,7 +3,6 @@ import SchoolMember from "../models/sch-Member.js";
 import { sendWhatsAppReport } from "../routes/whatsappService.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 
-
 // Map attendance status to message or stars
 const statusMap = {
   present: "✅ Present",
@@ -23,23 +22,24 @@ export const markAttendance = async ({
   markedBy,
   notes
 }) => {
-    logInfo("Attendance request received", { schoolMember, classId, date });
+  logInfo("Attendance request received", { schoolMember, classId, date });
+
   if (!schoolMember || !classId || !date || !status) {
     throw new Error("Missing required fields");
   }
 
   // --- 1️⃣ Check if attendance exists ---
- 
-logInfo("Attendance saved", { attendanceId: attendance._id });
+  let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
+
   if (attendance) {
-    // Update existing record
+    logInfo("Attendance record exists, updating", { attendanceId: attendance._id });
     attendance.status = status;
     attendance.checkInTime = checkInTime;
     attendance.leaveTime = leaveTime;
     attendance.notes = notes;
     attendance.markedBy = markedBy;
   } else {
-    // Create new attendance
+    logInfo("No existing attendance, creating new record");
     attendance = new Attendance({
       schoolMember,
       class: classId,
@@ -53,12 +53,13 @@ logInfo("Attendance saved", { attendanceId: attendance._id });
   }
 
   await attendance.save();
- let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
+  logInfo("Attendance saved", { attendanceId: attendance._id });
+
   // --- 2️⃣ Fetch SchoolMember for parent phones ---
   const member = await SchoolMember.findById(schoolMember);
 
   if (!member) {
-    console.warn("⚠️ SchoolMember not found for WhatsApp notification");
+    logWarn("SchoolMember not found for WhatsApp notification", { schoolMember });
     return attendance;
   }
 
@@ -73,9 +74,8 @@ logInfo("Attendance saved", { attendanceId: attendance._id });
       const messageText = statusMap[status] || status;
       const msg = await sendWhatsAppReport(phone, date, messageText);
       logInfo("WhatsApp sent", { phone, memberId: member._id, sid: msg.sid, status: msg.status });
-
     } catch (err) {
-      console.error(`❌ Error sending WhatsApp to ${phone}:`, err);
+      logError(`Error sending WhatsApp to ${phone}`, err);
     }
   }
 
