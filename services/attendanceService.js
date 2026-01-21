@@ -15,6 +15,7 @@ const statusMap = {
 export const markAttendance = async ({
   schoolMember,
   classId,
+  nursery,
   date,
   status,
   checkInTime,
@@ -38,11 +39,13 @@ export const markAttendance = async ({
     attendance.leaveTime = leaveTime;
     attendance.notes = notes;
     attendance.markedBy = markedBy;
+    attendance.nursery = nursery; 
   } else {
     logInfo("No existing attendance, creating new record");
     attendance = new Attendance({
       schoolMember,
       class: classId,
+      nursery,
       date,
       status,
       checkInTime,
