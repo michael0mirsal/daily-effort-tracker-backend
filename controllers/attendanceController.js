@@ -1,14 +1,26 @@
 import Attendance from "../models/Attendance.js";
-
+import { markAttendance } from "../services/attendanceService.js";
 // --- CREATE attendance ---
 export const createAttendance = async (req, res) => {
-  console.log("🔥 CREATE ATTENDANCE HIT");
-  console.log("BODY:", req.body);
-
   try {
-    const attendance = await Attendance.create(req.body);
+    console.log("🔥 CREATE ATTENDANCE HIT");
+    console.log("BODY:", req.body);
+
+    const attendance = await markAttendance({
+      schoolMember: req.body.schoolMember,
+      classId: req.body.class,
+      date: req.body.date,
+      status: req.body.status,
+      checkInTime: req.body.checkInTime,
+      leaveTime: req.body.leaveTime,
+      markedBy: req.body.markedBy,
+      notes: req.body.notes
+    });
+
     res.status(201).json({ success: true, data: attendance });
+
   } catch (error) {
+    console.error("❌ Attendance error:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
