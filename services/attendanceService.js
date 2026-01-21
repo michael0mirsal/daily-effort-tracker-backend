@@ -1,6 +1,6 @@
 import Attendance from "../models/Attendance.js";
 import SchoolMember from "../models/SchoolMember.js";
-import { sendWhatsAppReport } from "../utils/whatsapp.js";
+import { sendWhatsAppReport } from "../routes/whatsappService.js";
 
 // Map attendance status to message or stars
 const statusMap = {
