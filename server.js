@@ -11,6 +11,7 @@ import familyRoutes from "./routes/familyRoutes.js"; // 🌳 Family System
 import schoolRoutes from "./routes/schoolRoutes.js";
 import schTaskRoutes from "./routes/schTaskRoutes.js";
 import msgRoutes from "./routes/msgRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js"; // 📝 Attendance system
 
 
 // Import MongoDB models
@@ -42,6 +43,7 @@ app.use(express.static(path.join(__dirname, "public/school-front")));
 app.use("/api", schoolRoutes);
 app.use("/api", schTaskRoutes);
 app.use("/api/msg", msgRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 app.get("/health", (req, res) => res.send("OK"));
 
