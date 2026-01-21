@@ -11,6 +11,7 @@ const client = new Twilio(accountSid, authToken);
 
 export async function sendWhatsAppReport(toPhone, reportDate, stars) {
   try {
+    console.log("📤 Sending WhatsApp via Twilio:", toPhone, reportDate, stars);
     const message = await client.messages.create({
       to: `whatsapp:${toPhone}`,
       from: sandboxNumber,
@@ -21,7 +22,7 @@ export async function sendWhatsAppReport(toPhone, reportDate, stars) {
       }),
     });
 
-    console.log("✅ WhatsApp request sent to Twilio:", message.sid);
+    console.log("✅ Twilio accepted message:", message.sid);
     return message; // <-- return for logging
   } catch (err) {
     console.error("❌ Error sending WhatsApp:", err);
