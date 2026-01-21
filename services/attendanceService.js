@@ -2,6 +2,15 @@ import Attendance from "../models/Attendance.js";
 import SchoolMember from "../models/SchoolMember.js";
 import { sendWhatsAppReport } from "../utils/whatsapp.js";
 
+// Map attendance status to message or stars
+const statusMap = {
+  present: "✅ Present",
+  absent: "❌ Absent",
+  late: "⏰ Late",
+  excused: "📝 Excused",
+  left_early: "🏃 Left Early"
+};
+
 export const markAttendance = async ({
   schoolMember,
   classId,
@@ -12,19 +21,22 @@ export const markAttendance = async ({
   markedBy,
   notes
 }) => {
-  if (!schoolMember || !classId || !date) {
+  if (!schoolMember || !classId || !date || !status) {
     throw new Error("Missing required fields");
   }
 
-  // 1️⃣ Check if attendance already exists
+  // --- 1️⃣ Check if attendance exists ---
   let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
+
   if (attendance) {
+    // Update existing record
     attendance.status = status;
     attendance.checkInTime = checkInTime;
     attendance.leaveTime = leaveTime;
     attendance.notes = notes;
     attendance.markedBy = markedBy;
   } else {
+    // Create new attendance
     attendance = new Attendance({
       schoolMember,
       class: classId,
@@ -39,18 +51,28 @@ export const markAttendance = async ({
 
   await attendance.save();
 
-  // 2️⃣ Fetch SchoolMember to get parent phones
+  // --- 2️⃣ Fetch SchoolMember for parent phones ---
   const member = await SchoolMember.findById(schoolMember);
 
-  // 3️⃣ Format phone numbers for WhatsApp
-  const phones = [];
-  if (member?.dadPhone) phones.push("+20" + member.dadPhone.replace(/^0/, ""));
-  if (member?.momPhone) phones.push("+20" + member.momPhone.replace(/^0/, ""));
+  if (!member) {
+    console.warn("⚠️ SchoolMember not found for WhatsApp notification");
+    return attendance;
+  }
 
-  // 4️⃣ Send WhatsApp to each parent
+  // --- 3️⃣ Format parent phone numbers ---
+  const phones = [];
+  if (member.dadPhone) phones.push("+20" + member.dadPhone.replace(/^0/, ""));
+  if (member.momPhone) phones.push("+20" + member.momPhone.replace(/^0/, ""));
+
+  // --- 4️⃣ Send WhatsApp messages ---
   for (const phone of phones) {
-    const stars = status === "present" ? "⭐" : "❌"; // or map other statuses
-    await sendWhatsAppReport(phone, date, stars);
+    try {
+      const messageText = statusMap[status] || status;
+      await sendWhatsAppReport(phone, date, messageText);
+      console.log(`✅ WhatsApp sent to ${phone} for ${member._id}`);
+    } catch (err) {
+      console.error(`❌ Error sending WhatsApp to ${phone}:`, err);
+    }
   }
 
   return attendance;
