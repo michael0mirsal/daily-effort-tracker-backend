@@ -21,12 +21,11 @@ export async function sendWhatsAppReport(toPhone, reportDate, stars) {
       }),
     });
 
-    // ✅ Log Twilio status
-    console.log(`Twilio Message SID: ${message.sid}`);
-    console.log(`Status: ${message.status}`);
-    console.log(`To: ${message.to}, From: ${message.from}`);
+    console.log("✅ WhatsApp request sent to Twilio:", message.sid);
+    return message; // <-- return for logging
   } catch (err) {
     console.error("❌ Error sending WhatsApp:", err);
+    throw err; // <-- allow caller to handle/log
   }
 }
 
