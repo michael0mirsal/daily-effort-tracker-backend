@@ -2,6 +2,9 @@ import Attendance from "../models/Attendance.js";
 
 // --- CREATE attendance ---
 export const createAttendance = async (req, res) => {
+  console.log("🔥 CREATE ATTENDANCE HIT");
+  console.log("BODY:", req.body);
+
   try {
     const attendance = await Attendance.create(req.body);
     res.status(201).json({ success: true, data: attendance });
