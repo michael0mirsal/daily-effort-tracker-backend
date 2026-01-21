@@ -1,5 +1,6 @@
 import Attendance from "../models/Attendance.js";
-import { sendWhatsAppReport } from "../utils/whatsapp.js"; // your Twilio function
+import SchoolMember from "../models/SchoolMember.js";
+import { sendWhatsAppReport } from "../utils/whatsapp.js";
 
 export const markAttendance = async ({
   schoolMember,
@@ -9,24 +10,21 @@ export const markAttendance = async ({
   checkInTime,
   leaveTime,
   markedBy,
-  notes,
-  parentPhone
+  notes
 }) => {
   if (!schoolMember || !classId || !date) {
     throw new Error("Missing required fields");
   }
 
-  // Check if attendance already exists
+  // 1️⃣ Check if attendance already exists
   let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
   if (attendance) {
-    // Update existing
     attendance.status = status;
     attendance.checkInTime = checkInTime;
     attendance.leaveTime = leaveTime;
     attendance.notes = notes;
     attendance.markedBy = markedBy;
   } else {
-    // Create new
     attendance = new Attendance({
       schoolMember,
       class: classId,
@@ -41,10 +39,18 @@ export const markAttendance = async ({
 
   await attendance.save();
 
-  // ✅ Send WhatsApp if parent phone provided
-  if (parentPhone) {
-    const stars = status === "present" ? "⭐" : "❌"; // Example: star for present
-    await sendWhatsAppReport(parentPhone, date, stars);
+  // 2️⃣ Fetch SchoolMember to get parent phones
+  const member = await SchoolMember.findById(schoolMember);
+
+  // 3️⃣ Format phone numbers for WhatsApp
+  const phones = [];
+  if (member?.dadPhone) phones.push("+20" + member.dadPhone.replace(/^0/, ""));
+  if (member?.momPhone) phones.push("+20" + member.momPhone.replace(/^0/, ""));
+
+  // 4️⃣ Send WhatsApp to each parent
+  for (const phone of phones) {
+    const stars = status === "present" ? "⭐" : "❌"; // or map other statuses
+    await sendWhatsAppReport(phone, date, stars);
   }
 
   return attendance;
