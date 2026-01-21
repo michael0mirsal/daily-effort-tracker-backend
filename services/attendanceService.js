@@ -1,5 +1,5 @@
 import Attendance from "../models/Attendance.js";
-import SchoolMember from "../models/SchoolMember.js";
+import SchoolMember from "../models/schoolMember.js";
 import { sendWhatsAppReport } from "../routes/whatsappService.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 
