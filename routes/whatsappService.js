@@ -20,8 +20,13 @@ export async function sendWhatsAppReport(toPhone, reportDate, stars) {
         "2": stars
       }),
     });
-    console.log("✅ WhatsApp sent:", message.sid);
+
+    // ✅ Log Twilio status
+    console.log(`Twilio Message SID: ${message.sid}`);
+    console.log(`Status: ${message.status}`);
+    console.log(`To: ${message.to}, From: ${message.from}`);
   } catch (err) {
     console.error("❌ Error sending WhatsApp:", err);
   }
 }
+
