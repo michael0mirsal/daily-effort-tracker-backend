@@ -9,9 +9,9 @@ const sandboxNumber = process.env.WHATSAPP_SANDBOX_NUMBER;
 
 const client = new Twilio(accountSid, authToken);
 
-export async function sendWhatsAppReport(toPhone, reportDate, stars) {
+export async function sendWhatsAppReport(toPhone, reportDate, statusText) {
   try {
-    console.log("📤 Sending WhatsApp via Twilio:", toPhone, reportDate, stars);
+    console.log("📤 Sending WhatsApp via Twilio:", toPhone, reportDate, statusText);
     const message = await client.messages.create({
       to: `whatsapp:${toPhone}`,
       from: sandboxNumber,
@@ -21,10 +21,11 @@ Status: ${statusText}`
     });
 
     console.log("✅ Twilio accepted message:", message.sid);
-    return message; // <-- return for logging
+    return message;
   } catch (err) {
     console.error("❌ Error sending WhatsApp:", err);
-    throw err; // <-- allow caller to handle/log
+    throw err;
   }
 }
+
 
