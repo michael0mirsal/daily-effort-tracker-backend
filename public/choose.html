@@ -285,6 +285,29 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
     transform: translateY(-2px);
     opacity: 0.95;
   }
+.bus-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  background: linear-gradient(90deg, #007bff, #00aaff);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bus-button .bus-icon {
+  font-size: 24px;
+}
+
+.bus-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
 
 </style>
 </head>
@@ -301,6 +324,11 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
   <div id="options"></div>
+  <button id="openFamAttendance" class="bus-button">
+  <span class="bus-icon">🚌</span>
+  Attendance
+</button>
+
   <button class="open-report-btn" id="nurseryReportBtn" onclick="openNurseryReport()">
   📘 Nursery Daily Report
 </button>
@@ -439,6 +467,12 @@ function openNurseryReport() {
   // Open report page
   window.location.href = "./schtofamily-report.html";
 }
+
+
+document.getElementById("openFamAttendance").onclick = () => {
+  window.location.href = "fam-attendance.html";
+};
+
 
 
 
