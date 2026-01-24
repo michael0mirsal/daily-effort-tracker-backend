@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Attendance Story</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2f5;
+  padding: 20px;
+}
+
+/* ================= POPUP ================= */
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: white;
+  padding: 25px;
+  width: 350px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.popup-content select,
+.popup-content button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* ================= PAGE ================= */
+h1 {
+  text-align: center;
+}
+
+.pads {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pad {
+  flex: 1;
+  min-height: 420px;
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  border: 2px dashed #ccc;
+}
+
+.class-pad { border-color: #28a745; }
+.bus-pad { border-color: #007bff; }
+
+.pad h2 {
+  text-align: center;
+}
+
+/* ================= MEMBER ================= */
+.member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8f9fa;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  cursor: grab;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #6c757d;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.status {
+  font-size: 12px;
+  color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= CLASS POPUP ================= -->
+<div id="classPopup" class="popup">
+  <div class="popup-content">
+    <h2>🏫 Select Your Class</h2>
+    <p>Choose class to start attendance</p>
+    <select id="classSelect">
+      <option>Loading...</option>
+    </select>
+    <button id="classSelectBtn">✅ Confirm</button>
+  </div>
+</div>
+
+<!-- ================= PAGE ================= -->
+<h1 id="classTitle">Attendance</h1>
+
+<div class="pads">
+  <div class="pad class-pad"
+       ondrop="drop(event)"
+       ondragover="allowDrop(event)">
+    <h2>🏫 Class</h2>
+    <div id="classPad"></div>
+  </div>
+
+  <div class="pad bus-pad"
+       ondrop="drop(event)"
+       ondragover="allowDrop(event)">
+    <h2>🚌 Bus</h2>
+  </div>
+</div>
+
+<script>
+const API = "https://daily-effort-tracker-backend.onrender.com/api";
+let CLASS_MEMBERS = [];
+
+/* ================= DRAG ================= */
+function allowDrop(ev) { ev.preventDefault(); }
+function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
+
+function drop(ev) {
+  ev.preventDefault();
+  const id = ev.dataTransfer.getData("id");
+  const el = document.getElementById(id);
+  ev.currentTarget.appendChild(el);
+
+  const status = el.querySelector(".status");
+  status.textContent = ev.currentTarget.classList.contains("bus-pad")
+    ? "Status: On Bus"
+    : "Status: Present";
+}
+
+/* ================= LOAD CLASSES ================= */
+async function loadClassesByUser() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return alert("Not logged in");
+
+  const select = document.getElementById("classSelect");
+  select.innerHTML = "<option>Loading...</option>";
+
+  let res;
+  if (user.role === "teacher") {
+    res = await fetch(`${API}/teachers/${user._id}/classes`);
+  } else {
+    res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+  }
+
+  const data = await res.json();
+  select.innerHTML = `<option value="">-- Select Class --</option>`;
+  data.classes.forEach(c =>
+    select.innerHTML += `<option value="${c._id}">${c.name}</option>`
+  );
+}
+
+/* ================= LOAD MEMBERS ================= */
+async function loadMembers(classId) {
+  const res = await fetch(`${API}/members/class/${classId}`);
+  const members = await res.json();
+
+  CLASS_MEMBERS = members.map(m => ({
+    id: m._id,
+    name: m.member?.name || "Kid"
+  }));
+
+  renderMembers();
+}
+
+/* ================= RENDER MEMBERS ================= */
+function renderMembers() {
+  const pad = document.getElementById("classPad");
+  pad.innerHTML = "";
+
+  CLASS_MEMBERS.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "member";
+    div.id = m.id;
+    div.draggable = true;
+    div.ondragstart = drag;
+
+    div.innerHTML = `
+      <div class="avatar">${m.name[0]}</div>
+      <div>
+        <div>${m.name}</div>
+        <div class="status">Status: Present</div>
+      </div>
+    `;
+
+    pad.appendChild(div);
+  });
+}
+
+/* ================= INIT ================= */
+window.addEventListener("DOMContentLoaded", async () => {
+  document.getElementById("classPopup").style.display = "flex";
+  await loadClassesByUser();
+});
+
+document.getElementById("classSelectBtn").onclick = async () => {
+  const select = document.getElementById("classSelect");
+  const classId = select.value;
+  if (!classId) return alert("Select class");
+
+  document.getElementById("classTitle").textContent =
+    "Attendance – " + select.options[select.selectedIndex].text;
+
+  document.getElementById("classPopup").style.display = "none";
+  await loadMembers(classId);
+};
+</script>
+
+</body>
+</html>
