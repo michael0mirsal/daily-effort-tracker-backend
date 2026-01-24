@@ -14,6 +14,7 @@ body {
 /* ================= PAGE ================= */
 h1 {
   text-align: center;
+  white-space: pre-line;
 }
 
 .pads {
@@ -50,6 +51,11 @@ h1 {
   cursor: grab;
 }
 
+.member.current-user {
+  border: 2px solid #ffc107;
+  background: #fff3cd;
+}
+
 .avatar {
   width: 40px;
   height: 40px;
@@ -65,10 +71,6 @@ h1 {
 .status {
   font-size: 12px;
   color: #666;
-}
-
-#attendanceTitle {
-  white-space: pre-line;
 }
 </style>
 </head>
@@ -96,8 +98,8 @@ const API = "https://daily-effort-tracker-backend.onrender.com/api";
 // ===== Load Family/Class Info from localStorage =====
 const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
 const reportMemberId = localStorage.getItem("reportMemberId");
-const reportMemberClassId = localStorage.getItem("reportMemberClassId");
 const currentClass = JSON.parse(localStorage.getItem("reportClass"));
+const currentNursery = JSON.parse(localStorage.getItem("reportNursery") || "{}");
 
 if (!currentClass || !currentClass.members || !currentClass.members.length) {
   alert("No member class found");
@@ -128,6 +130,20 @@ function drop(ev) {
     : "Status: On Bus";
 }
 
+// ===== DAILY RESET =====
+function shouldResetAttendance() {
+  const now = new Date();
+  const hour = now.getHours();
+  const today = now.toISOString().split("T")[0];
+  const lastReset = localStorage.getItem("attendanceLastReset");
+
+  if (hour >= 7 && lastReset !== today) {
+    localStorage.setItem("attendanceLastReset", today);
+    return true;
+  }
+  return false;
+}
+
 // ===== RENDER MEMBERS =====
 function renderMembers() {
   homePad.innerHTML = "";
@@ -146,20 +162,35 @@ function renderMembers() {
       <div class="avatar">${m.name[0]}</div>
       <div>
         <div>${m.name}</div>
-        <div class="status">Status: Home</div>
+        <div class="status">Status: ${m.familyId === currentUser.familyId ? "Home" : "On Bus"}</div>
       </div>
     `;
 
-    homePad.appendChild(div);
+    // Logged-in member highlighted
+    if (m._id === currentUser._id) div.classList.add("current-user");
+
+    // Add to correct pad
+    
+      homePad.appendChild(div);
+    
+    
+    
   });
 
-  // Update page title
+  // Update page title: Family – Nursery – Class
   const familyName = currentUser?.familyName || "Family";
-  attendanceTitle.textContent = `${familyName} – ${currentClass.name}\nAttendance`;
+  const nurseryName = currentNursery?.name || "Nursery";
+  const className = currentClass?.name || "Member Class";
+  attendanceTitle.textContent = `${familyName} – ${nurseryName} – ${className}\nAttendance`;
 }
 
 // ===== INIT =====
-renderMembers();
+if (shouldResetAttendance()) {
+  renderMembers(); // reset pads at 7 AM
+} else {
+  renderMembers(); // otherwise just render
+}
+
 </script>
 </body>
 </html>
