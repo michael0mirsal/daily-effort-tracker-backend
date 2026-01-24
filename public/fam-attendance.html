@@ -110,6 +110,11 @@ const currentUser = currentFamilyMembers.find(
   m => m._id === reportMemberId || m.schoolMemberId === reportMemberId
 );
 
+if (!currentUser) {
+  alert("No signed-in user found.");
+  window.location.href = "choose.html";
+}
+
 // ===== DOM Elements =====
 const homePad = document.getElementById("homePad");
 const busPad = document.getElementById("busPad");
@@ -144,7 +149,7 @@ function shouldResetAttendance() {
   return false;
 }
 
-// ===== RENDER MEMBERS =====
+// ===== RENDER MEMBERS (validated by nursery & family) =====
 function renderMembers() {
   homePad.innerHTML = "";
   busPad.innerHTML = "";
@@ -152,29 +157,30 @@ function renderMembers() {
   const members = currentClass.members || [];
 
   members.forEach(m => {
+    // ✅ Validation: only include members from the same nursery
+    if (m.nurseryId !== currentNursery._id) return;
+
     const div = document.createElement("div");
     div.className = "member";
     div.id = m._id;
     div.draggable = true;
     div.ondragstart = drag;
 
+    const isFamilyMember = m.familyId === currentUser.familyId;
     div.innerHTML = `
       <div class="avatar">${m.name[0]}</div>
       <div>
         <div>${m.name}</div>
-        <div class="status">Status: ${m.familyId === currentUser.familyId ? "Home" : "On Bus"}</div>
+        <div class="status">Status: ${isFamilyMember ? "Home" : "On Bus"}</div>
       </div>
     `;
 
-    // Logged-in member highlighted
+    // Highlight logged-in member
     if (m._id === currentUser._id) div.classList.add("current-user");
 
     // Add to correct pad
-    
-      homePad.appendChild(div);
-    
-    
-    
+    if (isFamilyMember) homePad.appendChild(div);
+    else busPad.appendChild(div);
   });
 
   // Update page title: Family – Nursery – Class
@@ -185,11 +191,7 @@ function renderMembers() {
 }
 
 // ===== INIT =====
-if (shouldResetAttendance()) {
-  renderMembers(); // reset pads at 7 AM
-} else {
-  renderMembers(); // otherwise just render
-}
+renderMembers();
 
 </script>
 </body>
