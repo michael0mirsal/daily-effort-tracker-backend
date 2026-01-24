@@ -92,6 +92,9 @@ h1 {
   font-size: 12px;
   color: #666;
 }
+#attendanceTitle {
+  white-space: pre-line;
+}
 </style>
 </head>
 
@@ -110,7 +113,7 @@ h1 {
 </div>
 
 <!-- ================= PAGE ================= -->
-<h1 id="attendanceTitle"><p></p>Attendance</h1>
+<h1 id="attendanceTitle">Attendance</h1>
 
 
 <div class="pads">
@@ -154,7 +157,7 @@ function updateAttendanceTitle(className) {
   const title = document.getElementById("attendanceTitle");
 
   const nurseryName = user?.nurseryName || "Nursery";
-  title.textContent = `${nurseryName} – ${className} – Attendance`;
+  title.textContent = `${nurseryName} – ${className}\nAttendance`;
 }
 
 /* ================= LOAD CLASSES ================= */
