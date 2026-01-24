@@ -110,7 +110,8 @@ h1 {
 </div>
 
 <!-- ================= PAGE ================= -->
-<h1 id="classTitle">Attendance</h1>
+<h1 id="attendanceTitle">Attendance</h1>
+
 
 <div class="pads">
   <div class="pad class-pad"
@@ -121,11 +122,12 @@ h1 {
   </div>
 
   <div class="pad bus-pad"
-       ondrop="drop(event)"
-       ondragover="allowDrop(event)">
-    <h2>🚌 Bus</h2>
-  </div>
+     ondrop="drop(event)"
+     ondragover="allowDrop(event)">
+  <h2>🚌 Bus</h2>
+  <div id="busPad"></div>
 </div>
+
 
 <script>
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
@@ -147,27 +149,67 @@ function drop(ev) {
     : "Status: Present";
 }
 
+function updateAttendanceTitle(className) {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const title = document.getElementById("attendanceTitle");
+
+  const nurseryName = user?.nurseryName || "Nursery";
+  title.textContent = `${nurseryName} – ${className} – Attendance`;
+}
+
 /* ================= LOAD CLASSES ================= */
 async function loadClassesByUser() {
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return alert("Not logged in");
+  if (!user) {
+    alert("Not logged in");
+    return;
+  }
 
   const select = document.getElementById("classSelect");
   select.innerHTML = "<option>Loading...</option>";
 
-  let res;
-  if (user.role === "teacher") {
-    res = await fetch(`${API}/teachers/${user._id}/classes`);
-  } else {
-    res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
-  }
+  try {
+    let res;
 
-  const data = await res.json();
-  select.innerHTML = `<option value="">-- Select Class --</option>`;
-  data.classes.forEach(c =>
-    select.innerHTML += `<option value="${c._id}">${c.name}</option>`
-  );
+    if (user.role?.toLowerCase() === "teacher") {
+      res = await fetch(`${API}/teachers/${user._id}/classes`);
+    } else {
+      res = await fetch(`${API}/nurseries/${user.nurseryId}/classes`);
+    }
+
+    if (!res.ok) throw new Error("Failed to load classes");
+
+    const data = await res.json();
+
+    select.innerHTML = `<option value="">-- Select Class --</option>`;
+    data.classes.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c._id;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error(err);
+    select.innerHTML = `<option value="">Failed to load</option>`;
+  }
 }
+
+
+function shouldResetAttendance() {
+  const now = new Date();
+  const hour = now.getHours();
+  const today = now.toISOString().split("T")[0];
+
+  const lastReset = localStorage.getItem("attendanceLastReset");
+
+  if (hour >= 7 && lastReset !== today) {
+    localStorage.setItem("attendanceLastReset", today);
+    return true;
+  }
+  return false;
+}
+
 
 /* ================= LOAD MEMBERS ================= */
 async function loadMembers(classId) {
@@ -179,13 +221,22 @@ async function loadMembers(classId) {
     name: m.member?.name || "Kid"
   }));
 
-  renderMembers();
+  // ✅ RESET AT 7 AM
+   renderMembers();
 }
+/* when backend is ready
+if (shouldResetAttendance()) {
+  renderMembers(); // reset to default (all on bus)
+} else {
+  loadSavedAttendance(); // load yesterday/today data
+}
+
+*/
 
 /* ================= RENDER MEMBERS ================= */
 function renderMembers() {
-  const pad = document.getElementById("classPad");
-  pad.innerHTML = "";
+  const busPad = document.getElementById("busPad");
+  busPad.innerHTML = "";
 
   CLASS_MEMBERS.forEach(m => {
     const div = document.createElement("div");
@@ -198,13 +249,14 @@ function renderMembers() {
       <div class="avatar">${m.name[0]}</div>
       <div>
         <div>${m.name}</div>
-        <div class="status">Status: Present</div>
+        <div class="status">Status: On Bus</div>
       </div>
     `;
 
-    pad.appendChild(div);
+    busPad.appendChild(div);
   });
 }
+
 
 /* ================= INIT ================= */
 window.addEventListener("DOMContentLoaded", async () => {
@@ -215,14 +267,30 @@ window.addEventListener("DOMContentLoaded", async () => {
 document.getElementById("classSelectBtn").onclick = async () => {
   const select = document.getElementById("classSelect");
   const classId = select.value;
-  if (!classId) return alert("Select class");
 
-  document.getElementById("classTitle").textContent =
-    "Attendance – " + select.options[select.selectedIndex].text;
+  if (!classId) {
+    alert("Select class");
+    return;
+  }
 
+  const className = select.options[select.selectedIndex].text;
+
+  // ✅ store selected class globally
+  window.selectedClass = {
+    id: classId,
+    name: className
+  };
+
+  // ✅ update title (nursery + class)
+  updateAttendanceTitle(className);
+
+  // ✅ close popup
   document.getElementById("classPopup").style.display = "none";
+
+  // ✅ load members
   await loadMembers(classId);
 };
+
 </script>
 
 </body>
