@@ -11,32 +11,6 @@ body {
   padding: 20px;
 }
 
-/* ================= POPUP ================= */
-.popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.popup-content {
-  background: white;
-  padding: 25px;
-  width: 350px;
-  border-radius: 10px;
-  text-align: center;
-}
-
-.popup-content select,
-.popup-content button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-
 /* ================= PAGE ================= */
 h1 {
   text-align: center;
@@ -101,45 +75,47 @@ h1 {
 
 <body>
 
-<!-- ================= CLASS POPUP ================= -->
-<div id="classPopup" class="popup">
-  <div class="popup-content">
-    <h2>👨‍👩‍👧 Select Member Class</h2>
-    <p>Choose member class to start attendance</p>
-    <select id="classSelect">
-      <option>Loading...</option>
-    </select>
-    <button id="classSelectBtn">✅ Confirm</button>
-  </div>
-</div>
-
-<!-- ================= PAGE ================= -->
-<h1 id="attendanceTitle">Attendance</h1>
+<h1 id="attendanceTitle">Family Attendance</h1>
 
 <div class="pads">
-  <div class="pad bus-pad"
-       ondrop="drop(event)"
-       ondragover="allowDrop(event)">
+  <div class="pad bus-pad" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>🚌 Bus</h2>
     <div id="busPad"></div>
   </div>
 
-  <div class="pad home-pad"
-       ondrop="drop(event)"
-       ondragover="allowDrop(event)">
+  <div class="pad home-pad" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>🏠 Home</h2>
     <div id="homePad"></div>
   </div>
 </div>
 
 <script>
+// ===== CONFIG =====
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
-let CLASS_MEMBERS = [];
 
-/* ================= DRAG ================= */
+// ===== Load Family/Class Info from localStorage =====
+const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
+const reportMemberId = localStorage.getItem("reportMemberId");
+const reportMemberClassId = localStorage.getItem("reportMemberClassId");
+const currentClass = JSON.parse(localStorage.getItem("reportClass"));
+
+if (!currentClass || !currentClass.members || !currentClass.members.length) {
+  alert("No member class found");
+  window.location.href = "choose.html";
+}
+
+const currentUser = currentFamilyMembers.find(
+  m => m._id === reportMemberId || m.schoolMemberId === reportMemberId
+);
+
+// ===== DOM Elements =====
+const homePad = document.getElementById("homePad");
+const busPad = document.getElementById("busPad");
+const attendanceTitle = document.getElementById("attendanceTitle");
+
+// ===== DRAG & DROP =====
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
-
 function drop(ev) {
   ev.preventDefault();
   const id = ev.dataTransfer.getData("id");
@@ -152,90 +128,17 @@ function drop(ev) {
     : "Status: On Bus";
 }
 
-function updateAttendanceTitle(className) {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const title = document.getElementById("attendanceTitle");
-
-  const familyName = user?.familyName || "Family";
-  title.textContent = `${familyName} – ${className}\nAttendance`;
-}
-
-/* ================= LOAD CLASSES ================= */
-async function loadClassesByUser() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) {
-    alert("Not logged in");
-    return;
-  }
-
-  const select = document.getElementById("classSelect");
-  select.innerHTML = "<option>Loading...</option>";
-
-  try {
-    let res;
-
-    if (user.role?.toLowerCase() === "teacher") {
-      res = await fetch(`${API}/teachers/${user._id}/member-classes`);
-    } else {
-      res = await fetch(`${API}/families/${user.familyId}/member-classes`);
-    }
-
-    if (!res.ok) throw new Error("Failed to load classes");
-
-    const data = await res.json();
-
-    select.innerHTML = `<option value="">-- Select Member Class --</option>`;
-    data.classes.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c._id;
-      opt.textContent = c.name;
-      select.appendChild(opt);
-    });
-
-  } catch (err) {
-    console.error(err);
-    select.innerHTML = `<option value="">Failed to load</option>`;
-  }
-}
-
-/* ================= RESET DAILY ================= */
-function shouldResetAttendance() {
-  const now = new Date();
-  const hour = now.getHours();
-  const today = now.toISOString().split("T")[0];
-
-  const lastReset = localStorage.getItem("attendanceLastReset");
-
-  if (hour >= 7 && lastReset !== today) {
-    localStorage.setItem("attendanceLastReset", today);
-    return true;
-  }
-  return false;
-}
-
-/* ================= LOAD MEMBERS ================= */
-async function loadMembers(classId) {
-  const res = await fetch(`${API}/members/class/${classId}`);
-  const members = await res.json();
-
-  CLASS_MEMBERS = members.map(m => ({
-    id: m._id,
-    name: m.member?.name || "Member"
-  }));
-
-  // Default on a new day: home pad
-  renderMembers();
-}
-
-/* ================= RENDER MEMBERS ================= */
+// ===== RENDER MEMBERS =====
 function renderMembers() {
-  const homePad = document.getElementById("homePad");
   homePad.innerHTML = "";
+  busPad.innerHTML = "";
 
-  CLASS_MEMBERS.forEach(m => {
+  const members = currentClass.members || [];
+
+  members.forEach(m => {
     const div = document.createElement("div");
     div.className = "member";
-    div.id = m.id;
+    div.id = m._id;
     div.draggable = true;
     div.ondragstart = drag;
 
@@ -249,41 +152,14 @@ function renderMembers() {
 
     homePad.appendChild(div);
   });
+
+  // Update page title
+  const familyName = currentUser?.familyName || "Family";
+  attendanceTitle.textContent = `${familyName} – ${currentClass.name}\nAttendance`;
 }
 
-/* ================= INIT ================= */
-window.addEventListener("DOMContentLoaded", async () => {
-  document.getElementById("classPopup").style.display = "flex";
-  await loadClassesByUser();
-});
-
-document.getElementById("classSelectBtn").onclick = async () => {
-  const select = document.getElementById("classSelect");
-  const classId = select.value;
-
-  if (!classId) {
-    alert("Select member class");
-    return;
-  }
-
-  const className = select.options[select.selectedIndex].text;
-
-  // Store selected class globally
-  window.selectedClass = {
-    id: classId,
-    name: className
-  };
-
-  // Update title (family + class)
-  updateAttendanceTitle(className);
-
-  // Close popup
-  document.getElementById("classPopup").style.display = "none";
-
-  // Load members
-  await loadMembers(classId);
-};
+// ===== INIT =====
+renderMembers();
 </script>
-
 </body>
 </html>
