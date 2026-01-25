@@ -131,9 +131,16 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 async function markAttendance(status) {
   try {
     const schoolMember = localStorage.getItem("reportMemberSchoolId"); 
-    const classId = JSON.parse(localStorage.getItem("reportClass"))._id;
-    const nursery = JSON.parse(localStorage.getItem("reportNursery"))._id;
+    const classId = JSON.parse(localStorage.getItem("reportClass"))?._id;
+    const nursery = JSON.parse(localStorage.getItem("reportNursery"))?._id;
     const markedBy = localStorage.getItem("reportMemberId"); // teacher/family ID
+
+    console.log("🚀 Local data:");
+    console.log("schoolMember:", schoolMember);
+    console.log("classId:", classId);
+    console.log("nursery:", nursery);
+    console.log("markedBy:", markedBy);
+    console.log("status:", status);
 
     const now = new Date();
 
@@ -145,7 +152,7 @@ async function markAttendance(status) {
     const data = {
       date: now.toISOString().split("T")[0],
       nursery,
-      classId, // <-- send as `class`
+      classId, // must match backend
       schoolMember,
       status: statusMap[status],
       checkInTime: status === "bus" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
@@ -153,6 +160,8 @@ async function markAttendance(status) {
       markedBy,
       notes: "Marked via frontend"
     };
+
+    console.log("📤 Data to send:", data);
 
     const res = await fetch(`${API}/attendance`, {
       method: "POST",
@@ -171,6 +180,7 @@ async function markAttendance(status) {
     alert("❌ Failed to mark attendance");
   }
 }
+
 
 
 
