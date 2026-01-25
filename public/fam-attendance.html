@@ -120,6 +120,19 @@ if (!currentUser) {
   window.location.href = "choose.html";
 }
 
+function getToday() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getCurrentTime() {
+  return new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+
 // ================= DOM =================
 const homePad = document.getElementById("homePad");
 const busPad = document.getElementById("busPad");
@@ -129,17 +142,23 @@ const attendanceTitle = document.getElementById("attendanceTitle");
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
 
-function drop(ev) {
+async function drop(ev) {
   ev.preventDefault();
   const id = ev.dataTransfer.getData("id");
   const el = document.getElementById(id);
   ev.currentTarget.appendChild(el);
 
-  el.querySelector(".status").textContent =
-    ev.currentTarget.classList.contains("home-pad")
-      ? "Status: Home"
-      : "Status: On Bus";
+  const isBus = ev.currentTarget.classList.contains("bus-pad");
+  const statusEl = el.querySelector(".status");
+
+  statusEl.textContent = isBus ? "Status: On Bus" : "Status: Home";
+
+  // Only track logged-in kid
+  if (id !== currentUser._id) return;
+
+  await saveAttendance(isBus);
 }
+
 
 // ================= RENDER =================
 function renderMembers() {
