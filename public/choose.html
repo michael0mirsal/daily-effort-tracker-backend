@@ -506,19 +506,21 @@ function openfamilyattendance() {
   }));
 
   // ================= SAVE NURSERY =================
-  const nurseryId = kid.nurseryId || kid.class?.nurseryId;
-  const nurseryName = kid.nurseryName || kid.class?.nurseryName || "To Be Me";
+  const nurseryId = kid.nursery || kid.class?.nurseryId;
+const nurseryName = kid.nurseryName || kid.class?.nurseryName || "To Be Me";
 
-  if (!nurseryId) {
-    console.error("❌ Nursery ID is missing for this kid or class");
-    alert("Cannot open attendance: Nursery not found");
-    return;
-  }
+if (!nurseryId) {
+  console.error("❌ Nursery ID is missing for this kid or class");
+  alert("Cannot open attendance: Nursery not found");
+  return;
+}
 
-  localStorage.setItem("reportNursery", JSON.stringify({
-    _id: nurseryId,
-    name: nurseryName
-  }));
+localStorage.setItem("reportNursery", JSON.stringify({
+  _id: nurseryId,
+  name: nurseryName
+}));
+
+console.log("Saved Nursery object:", { _id: nurseryId, name: nurseryName });
 
   // ================= SAVE IDS =================
   localStorage.setItem("reportMemberId", kid._id);                 // family member
