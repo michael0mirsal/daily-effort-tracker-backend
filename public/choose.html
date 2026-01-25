@@ -324,7 +324,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
   <div id="options"></div>
-  <button id="openFamAttendance" class="bus-button">
+  <button id="openfamilyattendance" class="bus-button">
   <span class="bus-icon">🚌</span>
   Attendance
 </button>
@@ -469,9 +469,86 @@ function openNurseryReport() {
 }
 
 
-document.getElementById("openFamAttendance").onclick = () => {
-  window.location.href = "fam-attendance.html";
-};
+function openfamilyattendance() {
+  const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // ================= VALIDATION =================
+  if (!members.length) {
+    alert("No family members loaded");
+    return;
+  }
+
+  if (!user) {
+    alert("User not logged in");
+    return;
+  }
+
+  // ================= PICK CURRENT KID =================
+  let kid = members.find(
+    m => m.name?.toLowerCase() === user.name?.toLowerCase()
+  );
+
+  // fallback → first kid
+  if (!kid) kid = members[0];
+
+  if (!kid || !kid._id || !kid.schoolMemberId) {
+    alert("Invalid family member data");
+    console.error("Invalid kid:", kid);
+    return;
+  }
+
+  if (!kid.class || !kid.class._id) {
+    alert("This child is not assigned to any class");
+    return;
+  }
+
+  // ================= FILTER SAME CLASS MEMBERS =================
+  const classMembers = members.filter(
+    m => m.class?._id === kid.class._id
+  );
+
+  // ================= SAVE CLASS =================
+  localStorage.setItem(
+    "reportClass",
+    JSON.stringify({
+      _id: kid.class._id,
+      name: kid.class.name,
+      members: classMembers
+    })
+  );
+
+  // ================= SAVE FAMILY =================
+  localStorage.setItem(
+    "reportFamily",
+    JSON.stringify({
+      _id: user.familyId || null,
+      name: user.familyName || user.name || "Family"
+    })
+  );
+
+  // ================= SAVE NURSERY =================
+  localStorage.setItem(
+    "reportNursery",
+    JSON.stringify({
+      _id: kid.class.nurseryId || user.nurseryId,
+      name: kid.class.nurseryName || user.nurseryName || "Nursery"
+    })
+  );
+
+  // ================= SAVE MEMBER IDS =================
+  localStorage.setItem("reportMemberId", kid._id);               // Family-side ID
+  localStorage.setItem("reportMemberSchoolId", kid.schoolMemberId); // Nursery-side ID
+
+  // ================= DEBUG LOG =================
+  console.log("Family:", user.familyName);
+  console.log("Nursery:", kid.class.nurseryName || user.nurseryName);
+  console.log("Class:", kid.class.name);
+
+  // ================= NAVIGATE =================
+  window.location.href = "./fam-attendance.html";
+}
+
 
 
 
