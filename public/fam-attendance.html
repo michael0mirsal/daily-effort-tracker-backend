@@ -219,7 +219,7 @@ async function drop(ev) {
   // Only mark for logged-in member
   if (id !== currentUser._id) return;
 
-  await markAttendance(isBus ? "present" : "home");
+   await markAttendance(isBus ? "bus" : "home");
 }
 
 // ================= RENDER =================
