@@ -471,84 +471,60 @@ function openNurseryReport() {
 
 function openfamilyattendance() {
   const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
-  // ================= VALIDATION =================
   if (!members.length) {
     alert("No family members loaded");
     return;
   }
 
-  if (!user) {
-    alert("User not logged in");
+  // Pick logged-in kid (fallback to first)
+  let kid = members.find(
+    k => k.name?.toLowerCase() === user.name?.toLowerCase()
+  );
+  if (!kid) kid = members[0];
+
+  if (!kid.class || !kid.class._id) {
+    alert("This child has no class assigned");
     return;
   }
 
-  // ================= PICK CURRENT KID =================
-  let kid = members.find(
-    m => m.name?.toLowerCase() === user.name?.toLowerCase()
-  );
-
-  // fallback → first kid
-  if (!kid) kid = members[0];
-
-  if (!kid || !kid._id || !kid.schoolMemberId) {
-    alert("Invalid family member data");
+  if (!kid._id || !kid.schoolMemberId) {
+    alert("Invalid kid object");
     console.error("Invalid kid:", kid);
     return;
   }
 
-  if (!kid.class || !kid.class._id) {
-    alert("This child is not assigned to any class");
-    return;
-  }
-
-  // ================= FILTER SAME CLASS MEMBERS =================
-  const classMembers = members.filter(
-    m => m.class?._id === kid.class._id
-  );
-
   // ================= SAVE CLASS =================
-  localStorage.setItem(
-    "reportClass",
-    JSON.stringify({
-      _id: kid.class._id,
-      name: kid.class.name,
-      members: classMembers
-    })
-  );
+  localStorage.setItem("reportClass", JSON.stringify({
+    _id: kid.class._id,
+    name: kid.class.name
+  }));
 
   // ================= SAVE FAMILY =================
-  localStorage.setItem(
-    "reportFamily",
-    JSON.stringify({
-      _id: user.familyId || null,
-      name: user.familyName || user.name || "Family"
-    })
-  );
+  localStorage.setItem("reportFamily", JSON.stringify({
+    _id: kid.familyId,
+    name: kid.familyName || user.familyName || "Zarif"
+  }));
 
   // ================= SAVE NURSERY =================
-  localStorage.setItem(
-    "reportNursery",
-    JSON.stringify({
-      _id: kid.class.nurseryId || user.nurseryId,
-      name: kid.class.nurseryName || user.nurseryName || "Nursery"
-    })
-  );
+  localStorage.setItem("reportNursery", JSON.stringify({
+    _id: kid.nurseryId || kid.class.nurseryId,
+    name: kid.nurseryName || kid.class.nurseryName || "To Be Me"
+  }));
 
-  // ================= SAVE MEMBER IDS =================
-  localStorage.setItem("reportMemberId", kid._id);               // Family-side ID
-  localStorage.setItem("reportMemberSchoolId", kid.schoolMemberId); // Nursery-side ID
+  // ================= SAVE IDS =================
+  localStorage.setItem("reportMemberId", kid._id);                 // family member
+  localStorage.setItem("reportMemberSchoolId", kid.schoolMemberId); // nursery member
 
-  // ================= DEBUG LOG =================
-  console.log("Family:", user.familyName);
-  console.log("Nursery:", kid.class.nurseryName || user.nurseryName);
-  console.log("Class:", kid.class.name);
+  // ================= DEBUG =================
+  console.log("Saved Family:", kid.familyName);
+  console.log("Saved Nursery:", kid.nurseryName);
+  console.log("Saved Class:", kid.class.name);
 
-  // ================= NAVIGATE =================
+  // ================= OPEN PAGE =================
   window.location.href = "./fam-attendance.html";
 }
-
 
 
 
