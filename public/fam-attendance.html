@@ -117,6 +117,23 @@ if (!currentUser) {
   window.location.href = "choose.html";
 }
 
+async function fetchTodayAttendance() {
+  const today = new Date().toISOString().split("T")[0];
+
+  if (!reportClass?._id) return [];
+
+  const params = new URLSearchParams({
+    classId: reportClass._id,
+    date: today
+  });
+
+  const res = await fetch(`${API}/attendance?${params.toString()}`);
+  if (!res.ok) return [];
+
+  const json = await res.json();
+  return json.data || [];
+}
+
 // ================= DOM =================
 const homePad = document.getElementById("homePad");
 const busPad = document.getElementById("busPad");
@@ -227,63 +244,59 @@ async function renderMembers() {
   homePad.innerHTML = "";
   busPad.innerHTML = "";
 
-  const onClassLabel = document.getElementById("onClassLabel");
-  onClassLabel.style.display = "none"; // hide by default
+  const attendanceList = await fetchTodayAttendance();
 
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
-
-  // ================= FETCH TODAY'S ATTENDANCE =================
-  let attendanceStatus = "home"; // default
-  try {
-    const res = await fetch(`${API}/attendance?classId=${reportClass._id}&date=${today}`);
-    if (res.ok) {
-      const result = await res.json();
-      const myAttendance = result.data.find(a => a.schoolMember === reportMemberSchoolId);
-      if (myAttendance) {
-        if (myAttendance.status === "leave") attendanceStatus = "bus";
-        else if (myAttendance.status === "absent") attendanceStatus = "home";
-        else if (myAttendance.status === "present") attendanceStatus = "present";
-      }
-    }
-  } catch (err) {
-    console.warn("Could not fetch attendance, defaulting to Home", err);
-  }
-
-  // ================= RENDER =================
-  if (attendanceStatus === "present") {
-    // Kid is already in class
-    onClassLabel.style.display = "block";
-    onClassLabel.textContent = `${currentUser.name} – On Class`;
-  } else {
-    // Create member div for home or bus
-    const div = document.createElement("div");
-    div.className = "member current-user";
-    div.id = currentUser._id;
-    div.draggable = true;
-    div.ondragstart = drag;
-    div.innerHTML = `
-      <div class="avatar">${currentUser.name[0]}</div>
-      <div>
-        <div>${currentUser.name}</div>
-        <div class="status">Status: ${attendanceStatus === "bus" ? "On Bus" : "Home"}</div>
-      </div>
-    `;
-
-    if (attendanceStatus === "bus") busPad.appendChild(div);
-    else homePad.appendChild(div);
-  }
+  const todayAttendance = attendanceList.find(
+    a => a.schoolMember?._id === reportMemberSchoolId
+  );
 
   // ================= TITLE =================
   const familyName = reportFamily?.name || "Family";
   const nurseryName = reportNursery?.name || "Nursery";
   const className = reportClass?.name || "Class";
 
-  const date = now.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
-  const time = now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
+  attendanceTitle.textContent =
+    `${familyName} – ${nurseryName} – ${className}\nAttendance`;
 
-  attendanceTitle.textContent = `${familyName} – ${nurseryName} – ${className}\nAttendance\n📅 ${date} — ${time}`;
+  // ================= PRESENT → ON CLASS =================
+  if (todayAttendance?.status === "present") {
+    document.getElementById("pads").style.display = "none";
 
+    const label = document.createElement("div");
+    label.style.textAlign = "center";
+    label.style.marginTop = "80px";
+    label.style.fontSize = "32px";
+    label.style.fontWeight = "bold";
+    label.textContent = "🟢 On Class";
+
+    document.body.appendChild(label);
+    return;
+  }
+
+  // ================= CREATE MEMBER =================
+  const div = document.createElement("div");
+  div.className = "member current-user";
+  div.id = currentUser._id;
+  div.draggable = true;
+  div.ondragstart = drag;
+
+  let statusText = "Status: Home";
+  let targetPad = homePad;
+
+  if (todayAttendance?.status === "leave") {
+    statusText = "Status: On Bus";
+    targetPad = busPad;
+  }
+
+  div.innerHTML = `
+    <div class="avatar">${currentUser.name[0]}</div>
+    <div>
+      <div>${currentUser.name}</div>
+      <div class="status">${statusText}</div>
+    </div>
+  `;
+
+  targetPad.appendChild(div);
 }
 
 
