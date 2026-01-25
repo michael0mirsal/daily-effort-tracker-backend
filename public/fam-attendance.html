@@ -130,30 +130,36 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 // ================= ATTENDANCE API =================
 async function markAttendance(status) {
   try {
-    const schoolMember = localStorage.getItem("reportMemberSchoolId");
+    const schoolMember = localStorage.getItem("reportMemberSchoolId"); 
     const classId = JSON.parse(localStorage.getItem("reportClass"))._id;
     const nursery = JSON.parse(localStorage.getItem("reportNursery"))._id;
     const markedBy = localStorage.getItem("reportMemberId"); // teacher/family ID
 
-    // ✅ Map drag status to backend enum
+    const now = new Date();
+
+    // Map UI status to schema status
     const statusMap = {
-      class: "present",
-      bus: "leave",
-      home: "absent"
+      home: "absent",
+      bus: "present",   // kid left on bus
+      class: "present"  // default if needed
     };
 
-    const now = new Date();
+    const checkInTime = now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" });
+    const leaveTime = now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" });
+
     const data = {
-      schoolMember,
-      classId,
-      nursery,
       date: now.toISOString().split("T")[0],
+      nursery,
+      classId,
+      schoolMember,
       status: statusMap[status],
-      checkInTime: status === "bus" || status === "class" ? now.toLocaleTimeString([], { hour12: false }) : null,
-      leaveTime: status === "home" ? now.toLocaleTimeString([], { hour12: false }) : null,
+      checkInTime: status === "bus" ? checkInTime : null,
+      leaveTime: status === "home" ? leaveTime : null,
       markedBy,
       notes: "Marked via frontend"
     };
+
+    console.log("Submitting attendance:", data); // debug
 
     const res = await fetch(`${API}/attendance`, {
       method: "POST",
@@ -161,14 +167,18 @@ async function markAttendance(status) {
       body: JSON.stringify(data)
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`HTTP ${res.status} - ${errorText}`);
+    }
 
-    alert(`✅ Attendance marked as ${statusMap[status]}`);
+    alert(`✅ Attendance marked as ${statusMap[status].toUpperCase()}`);
   } catch (err) {
     console.error("Attendance error:", err);
     alert("❌ Failed to mark attendance");
   }
 }
+
 
 
 // ================= DRAG & DROP =================
