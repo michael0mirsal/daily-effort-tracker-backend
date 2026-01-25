@@ -145,7 +145,7 @@ async function markAttendance(status) {
     const data = {
       date: now.toISOString().split("T")[0],
       nursery,
-      class: classId, // <-- send as `class`
+      classId, // <-- send as `class`
       schoolMember,
       status: statusMap[status],
       checkInTime: status === "bus" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
