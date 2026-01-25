@@ -472,8 +472,7 @@ function openNurseryReport() {
 function openfamilyattendance() {
   const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  const nurseryId = kid.nurseryId || kid.class?.nurseryId || "dummy-nursery-id";
-  const nurseryName = kid.nurseryName || kid.class?.nurseryName || "To Be Me";
+
   if (!members.length) {
     alert("No family members loaded");
     return;
@@ -509,10 +508,13 @@ function openfamilyattendance() {
   }));
 
   // ================= SAVE NURSERY =================
+  const nurseryId = kid.nurseryId || kid.class?.nurseryId || "dummy-nursery-id";
+  const nurseryName = kid.nurseryName || kid.class?.nurseryName || "To Be Me";
+
   localStorage.setItem("reportNursery", JSON.stringify({
-  _id: nurseryId,
-  name: nurseryName
-}));
+    _id: nurseryId,
+    name: nurseryName
+  }));
 
   // ================= SAVE IDS =================
   localStorage.setItem("reportMemberId", kid._id);                 // family member
@@ -520,7 +522,7 @@ function openfamilyattendance() {
 
   // ================= DEBUG =================
   console.log("Saved Family:", kid.familyName);
-  console.log("Saved Nursery:", kid.nurseryName);
+  console.log("Saved Nursery:", nurseryName);
   console.log("Saved Class:", kid.class.name);
 
   // ================= OPEN PAGE =================
