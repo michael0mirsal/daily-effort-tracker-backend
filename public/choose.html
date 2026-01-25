@@ -479,9 +479,7 @@ function openfamilyattendance() {
   }
 
   // Pick logged-in kid (fallback to first)
-  let kid = members.find(
-    k => k.name?.toLowerCase() === user.name?.toLowerCase()
-  );
+  let kid = members.find(k => k.name?.toLowerCase() === user.name?.toLowerCase());
   if (!kid) kid = members[0];
 
   if (!kid.class || !kid.class._id) {
@@ -490,8 +488,8 @@ function openfamilyattendance() {
   }
 
   if (!kid._id || !kid.schoolMemberId) {
+    console.error("Invalid kid object", kid);
     alert("Invalid kid object");
-    console.error("Invalid kid:", kid);
     return;
   }
 
@@ -508,8 +506,14 @@ function openfamilyattendance() {
   }));
 
   // ================= SAVE NURSERY =================
-  const nurseryId = kid.nurseryId || kid.class?.nurseryId || "dummy-nursery-id";
+  const nurseryId = kid.nurseryId || kid.class?.nurseryId;
   const nurseryName = kid.nurseryName || kid.class?.nurseryName || "To Be Me";
+
+  if (!nurseryId) {
+    console.error("❌ Nursery ID is missing for this kid or class");
+    alert("Cannot open attendance: Nursery not found");
+    return;
+  }
 
   localStorage.setItem("reportNursery", JSON.stringify({
     _id: nurseryId,
@@ -522,7 +526,7 @@ function openfamilyattendance() {
 
   // ================= DEBUG =================
   console.log("Saved Family:", kid.familyName);
-  console.log("Saved Nursery:", nurseryName);
+  console.log("Saved Nursery:", nurseryName, "ID:", nurseryId);
   console.log("Saved Class:", kid.class.name);
 
   // ================= OPEN PAGE =================
