@@ -5,7 +5,7 @@ import { logInfo, logWarn, logError } from "../utils/logger.js";
 
 // Map attendance status to message or stars
 const statusMap = {
-  present: "✅ Present",
+  //present: "✅ Present",
   absent: "❌ Absent",
   leave: "leave",
   late: "⏰ Late",
