@@ -194,7 +194,7 @@ async function markAttendance(status) {
       throw new Error(`HTTP ${res.status} - ${text}`);
     }
 
-    alert(`✅ Attendance marked as ${finalStatus.toUpperCase()}`);
+    alert(`✅ Notification Sent : ${finalStatus.toUpperCase()}`);
   } catch (err) {
     console.error("Attendance error:", err);
     alert("❌ Failed to mark attendance");
