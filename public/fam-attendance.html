@@ -137,29 +137,22 @@ async function markAttendance(status) {
 
     const now = new Date();
 
-    // Map UI status to schema status
     const statusMap = {
       home: "absent",
-      bus: "present",   // kid left on bus
-      class: "present"  // default if needed
+      bus: "present"
     };
-
-    const checkInTime = now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" });
-    const leaveTime = now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" });
 
     const data = {
       date: now.toISOString().split("T")[0],
       nursery,
-      classId,
+      class: classId, // <-- send as `class`
       schoolMember,
       status: statusMap[status],
-      checkInTime: status === "bus" ? checkInTime : null,
-      leaveTime: status === "home" ? leaveTime : null,
+      checkInTime: status === "bus" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
+      leaveTime: status === "home" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
       markedBy,
       notes: "Marked via frontend"
     };
-
-    console.log("Submitting attendance:", data); // debug
 
     const res = await fetch(`${API}/attendance`, {
       method: "POST",
@@ -168,8 +161,8 @@ async function markAttendance(status) {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`HTTP ${res.status} - ${errorText}`);
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status} - ${text}`);
     }
 
     alert(`✅ Attendance marked as ${statusMap[status].toUpperCase()}`);
