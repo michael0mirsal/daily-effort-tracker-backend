@@ -7,6 +7,7 @@ import { logInfo, logWarn, logError } from "../utils/logger.js";
 const statusMap = {
   present: "✅ Present",
   absent: "❌ Absent",
+  leave: "leave",
   late: "⏰ Late",
   excused: "📝 Excused",
   left_early: "🏃 Left Early"
