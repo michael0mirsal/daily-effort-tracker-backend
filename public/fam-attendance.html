@@ -168,8 +168,27 @@ function renderMembers() {
   const nurseryName = reportNursery?.name || "Nursery";
   const className = reportClass?.name || "Class";
 
-  attendanceTitle.textContent =
-    `${familyName} – ${nurseryName} – ${className}\nAttendance`;
+ function formatDateTime() {
+  const now = new Date();
+
+  const date = now.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+
+  const time = now.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+
+  return `📅 ${date} — ${time}`;
+}
+
+attendanceTitle.textContent =
+  `${familyName} – ${nurseryName} – ${className}\nAttendance\n${formatDateTime()}`;
+
 
   // ================= DEBUG =================
   console.log("Family:", familyName);
