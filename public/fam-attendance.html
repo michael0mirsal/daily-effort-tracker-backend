@@ -95,12 +95,11 @@ h1 {
 // ================= CONFIG =================
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
 
-// ================= LOAD FROM localStorage =================
+// ================= LOAD CONTEXT =================
 const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
 const reportClass = JSON.parse(localStorage.getItem("reportClass") || "{}");
 const reportFamily = JSON.parse(localStorage.getItem("reportFamily") || "{}");
 const reportNursery = JSON.parse(localStorage.getItem("reportNursery") || "{}");
-
 const reportMemberId = localStorage.getItem("reportMemberId");
 const reportMemberSchoolId = localStorage.getItem("reportMemberSchoolId");
 
@@ -111,37 +110,60 @@ if (!reportClass?._id || !reportMemberId) {
 }
 
 // ================= FIND LOGGED-IN MEMBER =================
-const currentUser = currentFamilyMembers.find(
-  m => m._id === reportMemberId
-);
-
+const currentUser = currentFamilyMembers.find(m => m._id === reportMemberId);
 if (!currentUser) {
   alert("Logged-in family member not found");
   window.location.href = "choose.html";
 }
-
-function getToday() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function getCurrentTime() {
-  return new Date().toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true
-  });
-}
-
 
 // ================= DOM =================
 const homePad = document.getElementById("homePad");
 const busPad = document.getElementById("busPad");
 const attendanceTitle = document.getElementById("attendanceTitle");
 
-// ================= DRAG & DROP =================
+// ================= HELPERS =================
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
+function getToday() { return new Date().toISOString().split("T")[0]; }
+function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true }); }
 
+// ================= ATTENDANCE API =================
+async function markAttendance(status) {
+  try {
+    const payload = {
+      schoolMember: reportMemberSchoolId,
+      classId: reportClass._id,
+      nursery: reportNursery._id,
+      date: getToday(),
+      status,
+      checkInTime: getCurrentTime(),
+      leaveTime: "", // optional, can update later
+      markedBy: currentUser._id,
+      notes: "Marked from family attendance page"
+    };
+
+    const res = await fetch(`${API}/attendance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      console.log("Attendance saved:", data.data);
+      alert(`✅ Attendance marked as ${status.toUpperCase()}`);
+    } else {
+      console.error(data);
+      alert(`❌ Failed: ${data.message}`);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to mark attendance");
+  }
+}
+
+// ================= DRAG & DROP =================
 async function drop(ev) {
   ev.preventDefault();
   const id = ev.dataTransfer.getData("id");
@@ -150,30 +172,24 @@ async function drop(ev) {
 
   const isBus = ev.currentTarget.classList.contains("bus-pad");
   const statusEl = el.querySelector(".status");
-
   statusEl.textContent = isBus ? "Status: On Bus" : "Status: Home";
 
-  // Only track logged-in kid
+  // Only mark for logged-in member
   if (id !== currentUser._id) return;
 
-  // ✅ Call the correct function
-  await markAttendance(isBus ? "bus" : "home");
+  await markAttendance(isBus ? "present" : "home");
 }
-
-
 
 // ================= RENDER =================
 function renderMembers() {
   homePad.innerHTML = "";
   busPad.innerHTML = "";
 
-  // ✅ ONLY the logged-in family member
   const div = document.createElement("div");
   div.className = "member current-user";
   div.id = currentUser._id;
   div.draggable = true;
   div.ondragstart = drag;
-
   div.innerHTML = `
     <div class="avatar">${currentUser.name[0]}</div>
     <div>
@@ -181,7 +197,6 @@ function renderMembers() {
       <div class="status">Status: Home</div>
     </div>
   `;
-
   homePad.appendChild(div);
 
   // ================= TITLE =================
@@ -189,29 +204,12 @@ function renderMembers() {
   const nurseryName = reportNursery?.name || "Nursery";
   const className = reportClass?.name || "Class";
 
- function formatDateTime() {
   const now = new Date();
+  const date = now.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+  const time = now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
 
-  const date = now.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  });
+  attendanceTitle.textContent = `${familyName} – ${nurseryName} – ${className}\nAttendance\n📅 ${date} — ${time}`;
 
-  const time = now.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true
-  });
-
-  return `📅 ${date} — ${time}`;
-}
-
-attendanceTitle.textContent =
-  `${familyName} – ${nurseryName} – ${className}\nAttendance\n${formatDateTime()}`;
-
-
-  // ================= DEBUG =================
   console.log("Family:", familyName);
   console.log("Nursery:", nurseryName);
   console.log("Class:", className);
@@ -220,8 +218,6 @@ attendanceTitle.textContent =
 // ================= INIT =================
 renderMembers();
 </script>
-<script type="module" src="fam-attendance.js"></script>
-
 
 </body>
 </html>
