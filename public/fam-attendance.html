@@ -155,7 +155,7 @@ async function markAttendance(status) {
 
     // -------------------- MAP STATUS --------------------
     const statusMap = { home: "absent", bus: "present" };
-    const finalStatus = statusMap[status] || status; // fallback to original if already 'present'/'absent'
+    const finalStatus = statusMap[status] || status; // fallback if already 'present'/'absent'
     console.log("finalStatus (mapped):", finalStatus);
 
     // -------------------- BUILD DATA --------------------
