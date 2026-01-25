@@ -130,31 +130,42 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 // ================= ATTENDANCE API =================
 async function markAttendance(status) {
   try {
+    // -------------------- GET LOCAL DATA --------------------
     const schoolMember = localStorage.getItem("reportMemberSchoolId"); 
-    const classId = JSON.parse(localStorage.getItem("reportClass"))?._id;
-    const nursery = JSON.parse(localStorage.getItem("reportNursery"))?._id;
+    const classData = localStorage.getItem("reportClass");
+    const nurseryData = localStorage.getItem("reportNursery");
     const markedBy = localStorage.getItem("reportMemberId"); // teacher/family ID
+
+    const classId = classData ? JSON.parse(classData)?._id : null;
+    const nursery = nurseryData ? JSON.parse(nurseryData)?._id : null;
+
+    // -------------------- VALIDATE LOCAL DATA --------------------
+    if (!schoolMember || !classId || !nursery || !markedBy) {
+      console.error("❌ Missing required localStorage data", { schoolMember, classId, nursery, markedBy });
+      alert("❌ Cannot mark attendance: Missing data");
+      return;
+    }
 
     console.log("🚀 Local data:");
     console.log("schoolMember:", schoolMember);
     console.log("classId:", classId);
     console.log("nursery:", nursery);
     console.log("markedBy:", markedBy);
-    console.log("status:", status);
+    console.log("status (raw):", status);
 
+    // -------------------- MAP STATUS --------------------
+    const statusMap = { home: "absent", bus: "present" };
+    const finalStatus = statusMap[status] || status; // fallback to original if already 'present'/'absent'
+    console.log("finalStatus (mapped):", finalStatus);
+
+    // -------------------- BUILD DATA --------------------
     const now = new Date();
-
-    const statusMap = {
-      home: "absent",
-      bus: "present"
-    };
-
     const data = {
       date: now.toISOString().split("T")[0],
       nursery,
-      classId, // must match backend
+      classId,
       schoolMember,
-      status: statusMap[status],
+      status: finalStatus,
       checkInTime: status === "bus" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
       leaveTime: status === "home" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
       markedBy,
@@ -163,6 +174,7 @@ async function markAttendance(status) {
 
     console.log("📤 Data to send:", data);
 
+    // -------------------- SEND REQUEST --------------------
     const res = await fetch(`${API}/attendance`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -174,7 +186,7 @@ async function markAttendance(status) {
       throw new Error(`HTTP ${res.status} - ${text}`);
     }
 
-    alert(`✅ Attendance marked as ${statusMap[status].toUpperCase()}`);
+    alert(`✅ Attendance marked as ${finalStatus.toUpperCase()}`);
   } catch (err) {
     console.error("Attendance error:", err);
     alert("❌ Failed to mark attendance");
