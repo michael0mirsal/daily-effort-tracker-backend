@@ -131,45 +131,45 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 async function markAttendance(status) {
   try {
     // -------------------- GET LOCAL DATA --------------------
-    const schoolMember = localStorage.getItem("reportMemberSchoolId"); 
-    const classData = localStorage.getItem("reportClass");
-    const nurseryData = localStorage.getItem("reportNursery");
-    const markedBy = localStorage.getItem("reportMemberId"); // teacher/family ID
+    const schoolMember = localStorage.getItem("reportMemberSchoolId");
+    const classId = JSON.parse(localStorage.getItem("reportClass"))?._id;
+    const nursery = JSON.parse(localStorage.getItem("reportNursery"))?._id;
+    const markedBy = localStorage.getItem("reportMemberId"); // parent ID
 
-    const classId = classData ? JSON.parse(classData)?._id : null;
-    const nursery = nurseryData ? JSON.parse(nurseryData)?._id : null;
-
-    // -------------------- VALIDATE LOCAL DATA --------------------
     if (!schoolMember || !classId || !nursery || !markedBy) {
-      console.error("❌ Missing required localStorage data", { schoolMember, classId, nursery, markedBy });
       alert("❌ Cannot mark attendance: Missing data");
       return;
     }
 
-    console.log("🚀 Local data:");
-    console.log("schoolMember:", schoolMember);
-    console.log("classId:", classId);
-    console.log("nursery:", nursery);
-    console.log("markedBy:", markedBy);
-    console.log("status (raw):", status);
+    const now = new Date();
 
-    // -------------------- MAP STATUS --------------------
-    const statusMap = { home: "absent", bus: "present" };
-    const finalStatus = statusMap[status] || status; // fallback if already 'present'/'absent'
-    console.log("finalStatus (mapped):", finalStatus);
+    // -------------------- MAP STATUS & NOTES --------------------
+    let backendStatus = "";
+    let noteText = "";
+
+    if (status === "absent") {
+      backendStatus = "absent";
+      noteText = "Marked by Parent";
+    } else if (status === "leave") {
+      backendStatus = "leave";
+      noteText = "Marked by Parent";
+    } else {
+      console.error("❌ Unknown status:", status);
+      alert("❌ Invalid status");
+      return;
+    }
 
     // -------------------- BUILD DATA --------------------
-    const now = new Date();
     const data = {
       date: now.toISOString().split("T")[0],
       nursery,
       classId,
       schoolMember,
-      status: finalStatus,
-      checkInTime: status === "bus" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
-      leaveTime: status === "home" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
+      status: backendStatus,
+      checkInTime: status === "leave" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
+      leaveTime: status === "absent" ? now.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" }) : null,
       markedBy,
-      notes: "Marked via frontend"
+      notes: noteText
     };
 
     console.log("📤 Data to send:", data);
@@ -186,7 +186,7 @@ async function markAttendance(status) {
       throw new Error(`HTTP ${res.status} - ${text}`);
     }
 
-    alert(`✅ Attendance marked as ${finalStatus.toUpperCase()}`);
+    alert(`✅ Attendance marked as ${backendStatus.toUpperCase()}`);
   } catch (err) {
     console.error("Attendance error:", err);
     alert("❌ Failed to mark attendance");
