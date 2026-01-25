@@ -156,8 +156,10 @@ async function drop(ev) {
   // Only track logged-in kid
   if (id !== currentUser._id) return;
 
-  await saveAttendance(isBus);
+  // ✅ Call the correct function
+  await markAttendance(isBus ? "bus" : "home");
 }
+
 
 
 // ================= RENDER =================
@@ -218,7 +220,8 @@ attendanceTitle.textContent =
 // ================= INIT =================
 renderMembers();
 </script>
-<script type="module" src="public\fam-attendance.js"></script>
+<script type="module" src="js/fam-attendance.js"></script>
+
 
 </body>
 </html>
