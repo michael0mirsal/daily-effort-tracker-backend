@@ -139,7 +139,7 @@ let CLASS_MEMBERS = [];
 /* ================= DRAG ================= */
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
-/*
+
 function drop(ev) {
   ev.preventDefault();
   const id = ev.dataTransfer.getData("id");
@@ -151,7 +151,7 @@ function drop(ev) {
     ? "Status: On Bus"
     : "Status: Present";
 }
-*/
+
 function updateAttendanceTitle(className) {
   const user = JSON.parse(localStorage.getItem("user"));
   const title = document.getElementById("attendanceTitle");
