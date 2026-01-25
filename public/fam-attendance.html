@@ -77,7 +77,7 @@ h1 {
 
 <body>
 
-<h1 id="attendanceTitle">Family Attendance</h1>
+<h1 id="attendanceTitle">Attendance</h1>
 
 <div class="pads">
   <div class="pad bus-pad" ondrop="drop(event)" ondragover="allowDrop(event)">
@@ -92,107 +92,94 @@ h1 {
 </div>
 
 <script>
-// ===== CONFIG =====
+// ================= CONFIG =================
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
 
-// ===== Load Family/Class Info from localStorage =====
+// ================= LOAD FROM localStorage =================
 const currentFamilyMembers = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
-const reportMemberId = localStorage.getItem("reportMemberId");
-const currentClass = JSON.parse(localStorage.getItem("reportClass"));
-const currentNursery = JSON.parse(localStorage.getItem("reportNursery") || "{}");
+const reportClass = JSON.parse(localStorage.getItem("reportClass") || "{}");
+const reportFamily = JSON.parse(localStorage.getItem("reportFamily") || "{}");
+const reportNursery = JSON.parse(localStorage.getItem("reportNursery") || "{}");
 
-if (!currentClass || !currentClass.members || !currentClass.members.length) {
-  alert("No member class found");
+const reportMemberId = localStorage.getItem("reportMemberId");
+const reportMemberSchoolId = localStorage.getItem("reportMemberSchoolId");
+
+// ================= VALIDATION =================
+if (!reportClass?._id || !reportMemberId) {
+  alert("Attendance context missing");
   window.location.href = "choose.html";
 }
 
+// ================= FIND LOGGED-IN MEMBER =================
 const currentUser = currentFamilyMembers.find(
-  m => m._id === reportMemberId || m.schoolMemberId === reportMemberId
+  m => m._id === reportMemberId
 );
 
 if (!currentUser) {
-  alert("No signed-in user found.");
+  alert("Logged-in family member not found");
   window.location.href = "choose.html";
 }
 
-// ===== DOM Elements =====
+// ================= DOM =================
 const homePad = document.getElementById("homePad");
 const busPad = document.getElementById("busPad");
 const attendanceTitle = document.getElementById("attendanceTitle");
 
-// ===== DRAG & DROP =====
+// ================= DRAG & DROP =================
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
+
 function drop(ev) {
   ev.preventDefault();
   const id = ev.dataTransfer.getData("id");
   const el = document.getElementById(id);
   ev.currentTarget.appendChild(el);
 
-  const status = el.querySelector(".status");
-  status.textContent = ev.currentTarget.classList.contains("home-pad")
-    ? "Status: Home"
-    : "Status: On Bus";
+  el.querySelector(".status").textContent =
+    ev.currentTarget.classList.contains("home-pad")
+      ? "Status: Home"
+      : "Status: On Bus";
 }
 
-// ===== DAILY RESET =====
-function shouldResetAttendance() {
-  const now = new Date();
-  const hour = now.getHours();
-  const today = now.toISOString().split("T")[0];
-  const lastReset = localStorage.getItem("attendanceLastReset");
-
-  if (hour >= 7 && lastReset !== today) {
-    localStorage.setItem("attendanceLastReset", today);
-    return true;
-  }
-  return false;
-}
-
-// ===== RENDER MEMBERS (validated by nursery & family) =====
+// ================= RENDER =================
 function renderMembers() {
   homePad.innerHTML = "";
   busPad.innerHTML = "";
 
-  const members = currentClass.members || [];
+  // ✅ ONLY the logged-in family member
+  const div = document.createElement("div");
+  div.className = "member current-user";
+  div.id = currentUser._id;
+  div.draggable = true;
+  div.ondragstart = drag;
 
-  members.forEach(m => {
-    // ✅ Validation: only include members from the same nursery
-    if (m.nurseryId !== currentNursery._id) return;
+  div.innerHTML = `
+    <div class="avatar">${currentUser.name[0]}</div>
+    <div>
+      <div>${currentUser.name}</div>
+      <div class="status">Status: Home</div>
+    </div>
+  `;
 
-    const div = document.createElement("div");
-    div.className = "member";
-    div.id = m._id;
-    div.draggable = true;
-    div.ondragstart = drag;
+  homePad.appendChild(div);
 
-    const isFamilyMember = m.familyId === currentUser.familyId;
-    div.innerHTML = `
-      <div class="avatar">${m.name[0]}</div>
-      <div>
-        <div>${m.name}</div>
-        <div class="status">Status: ${isFamilyMember ? "Home" : "On Bus"}</div>
-      </div>
-    `;
+  // ================= TITLE =================
+  const familyName = reportFamily?.name || "Family";
+  const nurseryName = reportNursery?.name || "Nursery";
+  const className = reportClass?.name || "Class";
 
-    // Highlight logged-in member
-    if (m._id === currentUser._id) div.classList.add("current-user");
+  attendanceTitle.textContent =
+    `${familyName} – ${nurseryName} – ${className}\nAttendance`;
 
-    // Add to correct pad
-    if (isFamilyMember) homePad.appendChild(div);
-    else busPad.appendChild(div);
-  });
-
-  // Update page title: Family – Nursery – Class
-  const familyName = currentUser?.familyName || "Family";
-  const nurseryName = currentNursery?.name || "Nursery";
-  const className = currentClass?.name || "Member Class";
-  attendanceTitle.textContent = `${familyName} – ${nurseryName} – ${className}\nAttendance`;
+  // ================= DEBUG =================
+  console.log("Family:", familyName);
+  console.log("Nursery:", nurseryName);
+  console.log("Class:", className);
 }
 
-// ===== INIT =====
+// ================= INIT =================
 renderMembers();
-
 </script>
+
 </body>
 </html>
