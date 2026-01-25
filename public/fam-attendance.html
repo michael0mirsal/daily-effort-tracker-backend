@@ -130,35 +130,33 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 // ================= ATTENDANCE API =================
 async function markAttendance(status) {
   try {
-    const payload = {
-      schoolMember: reportMemberSchoolId,
-      classId: reportClass._id,
-      nursery: reportNursery._id,
-      date: getToday(),
-      status,
-      checkInTime: getCurrentTime(),
-      leaveTime: "", // optional, can update later
-      markedBy: currentUser._id,
-      notes: "Marked from family attendance page"
+    const now = new Date();
+
+    const attendanceData = {
+      schoolMember: localStorage.getItem("reportMemberSchoolId"),          // Required
+      classId: JSON.parse(localStorage.getItem("reportClass"))._id,        // Required
+      nursery: JSON.parse(localStorage.getItem("reportNursery"))._id,      // Required
+      date: now.toISOString().split("T")[0],                               // "2026-01-25"
+      status,                                                               // "bus" or "home"
+      checkInTime: status === "bus" ? now.toLocaleTimeString([], { hour12: false }) : null,
+      leaveTime: status === "home" ? now.toLocaleTimeString([], { hour12: false }) : null,
+      markedBy: localStorage.getItem("reportMemberId") || "SYSTEM",        // Staff or system
+      notes: "Marked from frontend"
     };
 
     const res = await fetch(`${API}/attendance`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(attendanceData)
     });
 
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    if (res.ok) {
-      console.log("Attendance saved:", data.data);
-      alert(`✅ Attendance marked as ${status.toUpperCase()}`);
-    } else {
-      console.error(data);
-      alert(`❌ Failed: ${data.message}`);
-    }
+    console.log("Attendance saved:", data);
+    alert(`✅ Attendance marked as ${status.toUpperCase()}`);
   } catch (err) {
-    console.error(err);
+    console.error("Attendance error:", err);
     alert("❌ Failed to mark attendance");
   }
 }
