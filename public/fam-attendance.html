@@ -90,6 +90,7 @@ h1 {
     <div id="homePad"></div>
   </div>
 </div>
+<div id="onClassLabel" style="display:none; text-align:center; font-size:24px; margin-top:50px; font-weight:bold;"></div>
 
 <script>
 // ================= CONFIG =================
@@ -226,6 +227,9 @@ async function renderMembers() {
   homePad.innerHTML = "";
   busPad.innerHTML = "";
 
+  const onClassLabel = document.getElementById("onClassLabel");
+  onClassLabel.style.display = "none"; // hide by default
+
   const now = new Date();
   const today = now.toISOString().split("T")[0];
 
@@ -239,28 +243,36 @@ async function renderMembers() {
       if (myAttendance) {
         if (myAttendance.status === "leave") attendanceStatus = "bus";
         else if (myAttendance.status === "absent") attendanceStatus = "home";
+        else if (myAttendance.status === "present") attendanceStatus = "present";
       }
     }
   } catch (err) {
     console.warn("Could not fetch attendance, defaulting to Home", err);
   }
 
-  // ================= CREATE MEMBER DIV =================
-  const div = document.createElement("div");
-  div.className = "member current-user";
-  div.id = currentUser._id;
-  div.draggable = true;
-  div.ondragstart = drag;
-  div.innerHTML = `
-    <div class="avatar">${currentUser.name[0]}</div>
-    <div>
-      <div>${currentUser.name}</div>
-      <div class="status">Status: ${attendanceStatus === "bus" ? "On Bus" : "Home"}</div>
-    </div>
-  `;
+  // ================= RENDER =================
+  if (attendanceStatus === "present") {
+    // Kid is already in class
+    onClassLabel.style.display = "block";
+    onClassLabel.textContent = `${currentUser.name} – On Class`;
+  } else {
+    // Create member div for home or bus
+    const div = document.createElement("div");
+    div.className = "member current-user";
+    div.id = currentUser._id;
+    div.draggable = true;
+    div.ondragstart = drag;
+    div.innerHTML = `
+      <div class="avatar">${currentUser.name[0]}</div>
+      <div>
+        <div>${currentUser.name}</div>
+        <div class="status">Status: ${attendanceStatus === "bus" ? "On Bus" : "Home"}</div>
+      </div>
+    `;
 
-  if (attendanceStatus === "bus") busPad.appendChild(div);
-  else homePad.appendChild(div);
+    if (attendanceStatus === "bus") busPad.appendChild(div);
+    else homePad.appendChild(div);
+  }
 
   // ================= TITLE =================
   const familyName = reportFamily?.name || "Family";
