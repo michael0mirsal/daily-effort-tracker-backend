@@ -144,20 +144,22 @@ async function markAttendance(status) {
     const now = new Date();
 
     // -------------------- MAP STATUS & NOTES --------------------
-    let backendStatus = "";
-    let noteText = "";
+    // -------------------- MAP STATUS & NOTES --------------------
+let backendStatus = "";
+let noteText = "";
 
-    if (status === "absent") {
-      backendStatus = "absent";
-      noteText = "Marked by Parent";
-    } else if (status === "leave") {
-      backendStatus = "leave";
-      noteText = "Marked by Parent";
-    } else {
-      console.error("❌ Unknown status:", status);
-      alert("❌ Invalid status");
-      return;
-    }
+if (status === "absent") {
+  backendStatus = "absent";
+  noteText = "Marked by Parent";
+} else if (status === "leave") {
+  backendStatus = "leave";
+  noteText = "Marked by Parent";
+}  else {
+  console.error("❌ Unknown status:", status);
+  alert("❌ Invalid status");
+  return;
+}
+
 
     // -------------------- BUILD DATA --------------------
     const data = {
