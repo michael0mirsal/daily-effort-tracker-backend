@@ -12,6 +12,7 @@ const statusMap = {
   left_early: "🏃 Left Early"
 };
 
+
 export const markAttendance = async ({
   schoolMember,
   classId,
@@ -29,19 +30,21 @@ export const markAttendance = async ({
     throw new Error("Missing required fields");
   }
 
-  // --- 1️⃣ Check if attendance exists ---
+  // ✅ Check if attendance already exists today for this member
   let attendance = await Attendance.findOne({ schoolMember, class: classId, date });
 
   if (attendance) {
-    logInfo("Attendance record exists, updating", { attendanceId: attendance._id });
+    // Only allow updates, do not create a new record
+    logInfo("Attendance already exists, updating instead", { attendanceId: attendance._id });
     attendance.status = status;
-    attendance.checkInTime = checkInTime;
-    attendance.leaveTime = leaveTime;
-    attendance.notes = notes;
+    attendance.checkInTime = checkInTime || attendance.checkInTime;
+    attendance.leaveTime = leaveTime || attendance.leaveTime;
+    attendance.notes = notes || attendance.notes;
     attendance.markedBy = markedBy;
-    attendance.nursery = nursery; 
+    attendance.nursery = nursery;
   } else {
-    logInfo("No existing attendance, creating new record");
+    // Create new attendance for today
+    logInfo("Creating new attendance record");
     attendance = new Attendance({
       schoolMember,
       class: classId,
@@ -57,7 +60,10 @@ export const markAttendance = async ({
 
   await attendance.save();
   logInfo("Attendance saved", { attendanceId: attendance._id });
+  return attendance;
+};
 
+/* watsapp
   // --- 2️⃣ Fetch SchoolMember for parent phones ---
   const member = await SchoolMember.findById(schoolMember);
 
@@ -84,3 +90,4 @@ export const markAttendance = async ({
 
   return attendance;
 };
+*/
