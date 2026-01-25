@@ -222,11 +222,30 @@ async function drop(ev) {
    await markAttendance(isBus ? "bus" : "home");
 }
 
-// ================= RENDER =================
-function renderMembers() {
+async function renderMembers() {
   homePad.innerHTML = "";
   busPad.innerHTML = "";
 
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+
+  // ================= FETCH TODAY'S ATTENDANCE =================
+  let attendanceStatus = "home"; // default
+  try {
+    const res = await fetch(`${API}/attendance?classId=${reportClass._id}&date=${today}`);
+    if (res.ok) {
+      const result = await res.json();
+      const myAttendance = result.data.find(a => a.schoolMember === reportMemberSchoolId);
+      if (myAttendance) {
+        if (myAttendance.status === "leave") attendanceStatus = "bus";
+        else if (myAttendance.status === "absent") attendanceStatus = "home";
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch attendance, defaulting to Home", err);
+  }
+
+  // ================= CREATE MEMBER DIV =================
   const div = document.createElement("div");
   div.className = "member current-user";
   div.id = currentUser._id;
@@ -236,26 +255,25 @@ function renderMembers() {
     <div class="avatar">${currentUser.name[0]}</div>
     <div>
       <div>${currentUser.name}</div>
-      <div class="status">Status: Home</div>
+      <div class="status">Status: ${attendanceStatus === "bus" ? "On Bus" : "Home"}</div>
     </div>
   `;
-  homePad.appendChild(div);
+
+  if (attendanceStatus === "bus") busPad.appendChild(div);
+  else homePad.appendChild(div);
 
   // ================= TITLE =================
   const familyName = reportFamily?.name || "Family";
   const nurseryName = reportNursery?.name || "Nursery";
   const className = reportClass?.name || "Class";
 
-  const now = new Date();
   const date = now.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
   const time = now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
 
   attendanceTitle.textContent = `${familyName} – ${nurseryName} – ${className}\nAttendance\n📅 ${date} — ${time}`;
 
-  console.log("Family:", familyName);
-  console.log("Nursery:", nurseryName);
-  console.log("Class:", className);
 }
+
 
 // ================= INIT =================
 renderMembers();
