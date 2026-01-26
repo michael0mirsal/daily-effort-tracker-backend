@@ -182,8 +182,6 @@ const STATUS_UI = {
 
 async function loadTodayAttendance(classId) {
   const date = getTodayDate();
-
-  // Match backend exactly: query params
   const res = await fetch(`${API}/Attendance?classId=${classId}&date=${date}`);
 
   if (!res.ok) {
@@ -191,15 +189,17 @@ async function loadTodayAttendance(classId) {
   }
 
   const result = await res.json();
-
-  // Map: memberId -> status
   const attendanceMap = {};
+
   result.data.forEach(a => {
-    attendanceMap[a.schoolMember] = a.status; // leave / present / absent
+    const memberId = typeof a.schoolMember === "string" ? a.schoolMember : a.schoolMember._id;
+    attendanceMap[memberId] = a.status; // leave / present / absent
   });
 
+  console.log("Fixed Attendance Map:", attendanceMap);
   return attendanceMap;
 }
+
 
 
 
