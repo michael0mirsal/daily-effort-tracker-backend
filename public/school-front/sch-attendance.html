@@ -337,19 +337,25 @@ async function loadMembers(classId) {
 
   // Convert keys to string to ensure exact match with member _id
   const attendanceMap = {};
-  for (const key in attendanceMapRaw) {
-    attendanceMap[String(key)] = attendanceMapRaw[key];
-  }
+result.data.forEach(a => {
+  attendanceMap[String(a.schoolMember)] = {
+    status: a.status,
+    attendanceId: a._id
+  };
+});
+
 
   // Map members
   CLASS_MEMBERS = members.map(m => ({
   id: m._id,
   name: m.member?.name || "Kid",
-  status: (attendanceMap[String(m._id)]?.status) || "absent",
+  status: attendanceMap[String(m._id)]?.status || "absent",
   attendanceId: attendanceMap[String(m._id)]?.attendanceId || null
 }));
 
+console.log("Fixed Attendance Map:", attendanceMap);
 console.log("Members mapped:", CLASS_MEMBERS);
+
 
 
   renderMembers();
