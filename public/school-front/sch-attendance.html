@@ -183,22 +183,20 @@ const STATUS_UI = {
 async function loadTodayAttendance(classId) {
   const date = getTodayDate();
   const res = await fetch(`${API}/Attendance?classId=${classId}&date=${date}`);
-
   if (!res.ok) throw new Error("Failed to load attendance");
+  const data = await res.json();
 
-  const result = await res.json();
-
-  // Map: memberId -> { status, _id }
   const attendanceMap = {};
-  result.data.forEach(a => {
+  data.data.forEach(a => {
     attendanceMap[String(a.schoolMember)] = {
       status: a.status,
-      attendanceId: a._id  // store record ID
+      attendanceId: a._id
     };
   });
 
-  return attendanceMap;
+  return attendanceMap; // ✅ returns the fixed map
 }
+
 
 
 
@@ -322,41 +320,25 @@ function shouldResetAttendance() {
 
 
 async function loadMembers(classId) {
-  const [membersRes, attendanceMapRaw] = await Promise.all([
+  const [membersRes, attendanceMap] = await Promise.all([
     fetch(`${API}/members/class/${classId}`),
     loadTodayAttendance(classId)
   ]);
 
   if (!membersRes.ok) throw new Error("Failed to load members");
-
   const members = await membersRes.json();
 
-  // 🔹 DEBUG LOG
-  console.log("Raw Attendance Map:", attendanceMapRaw); // {schoolMemberId: status, ...}
-  console.log("Members fetched:", members);
-
-  // Convert keys to string to ensure exact match with member _id
-  const attendanceMap = {};
-result.data.forEach(a => {
-  attendanceMap[String(a.schoolMember)] = {
-    status: a.status,
-    attendanceId: a._id
-  };
-});
-
-
-  // Map members
+  // Map members using the fixed attendanceMap
   CLASS_MEMBERS = members.map(m => ({
-  id: m._id,
-  name: m.member?.name || "Kid",
-  status: attendanceMap[String(m._id)]?.status || "absent",
-  attendanceId: attendanceMap[String(m._id)]?.attendanceId || null
-}));
+    id: m._id,
+    name: m.member?.name || "Kid",
+    status: attendanceMap[String(m._id)]?.status || "absent",
+    attendanceId: attendanceMap[String(m._id)]?.attendanceId || null
+  }));
 
-console.log("Fixed Attendance Map:", attendanceMap);
-console.log("Members mapped:", CLASS_MEMBERS);
-
-
+  // 🔹 Debug
+  console.log("Fixed Attendance Map:", attendanceMap);
+  console.log("Members mapped:", CLASS_MEMBERS);
 
   renderMembers();
 }
