@@ -188,14 +188,16 @@ async function loadTodayAttendance(classId) {
 
   const attendanceMap = {};
   data.data.forEach(a => {
-    attendanceMap[String(a.schoolMember)] = {
+    const memberId = a.schoolMember._id || a.schoolMember; // fix here
+    attendanceMap[String(memberId)] = {
       status: a.status,
       attendanceId: a._id
     };
   });
 
-  return attendanceMap; // ✅ returns the fixed map
+  return attendanceMap;
 }
+
 
 
 
