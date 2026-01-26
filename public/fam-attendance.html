@@ -269,19 +269,24 @@ async function renderMembers() {
     `${familyName} – ${nurseryName} – ${className}\nAttendance`;
 
   // ================= PRESENT → ON CLASS =================
-  if (todayAttendance?.status === "present") {
-    document.getElementById("pads").style.display = "none";
+  if (todayAttendance?.status === "present") { 
+  // Hide the pads
+  document.getElementById("pads").style.display = "none";
 
-    const label = document.createElement("div");
-    label.style.textAlign = "center";
-    label.style.marginTop = "80px";
-    label.style.fontSize = "32px";
-    label.style.fontWeight = "bold";
-    label.textContent = "🟢 On Class";
+  // Create the label
+  const label = document.createElement("div");
+  label.style.textAlign = "center";
+  label.style.marginTop = "80px";
+  label.style.fontSize = "32px";
+  label.style.fontWeight = "bold";
+  label.style.color = "#007bff";
+  // Set the text to include the user's name
+  label.textContent = `${currentUser.name} 🟢 On Class`;
 
-    document.body.appendChild(label);
-    return;
-  }
+  document.body.appendChild(label);
+  return;
+}
+
 
   // ================= CREATE MEMBER =================
   const div = document.createElement("div");
