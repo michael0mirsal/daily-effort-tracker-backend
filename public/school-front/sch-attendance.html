@@ -184,21 +184,22 @@ async function loadTodayAttendance(classId) {
   const date = getTodayDate();
   const res = await fetch(`${API}/Attendance?classId=${classId}&date=${date}`);
 
-  if (!res.ok) {
-    throw new Error("Failed to load attendance");
-  }
+  if (!res.ok) throw new Error("Failed to load attendance");
 
   const result = await res.json();
-  const attendanceMap = {};
 
+  // Map: memberId -> { status, _id }
+  const attendanceMap = {};
   result.data.forEach(a => {
-    const memberId = typeof a.schoolMember === "string" ? a.schoolMember : a.schoolMember._id;
-    attendanceMap[memberId] = a.status; // leave / present / absent
+    attendanceMap[String(a.schoolMember)] = {
+      status: a.status,
+      attendanceId: a._id  // store record ID
+    };
   });
 
-  console.log("Fixed Attendance Map:", attendanceMap);
   return attendanceMap;
 }
+
 
 
 
@@ -209,17 +210,13 @@ async function loadTodayAttendance(classId) {
 async function drop(ev) {
   ev.preventDefault();
 
-  // Get dragged element
   const id = ev.dataTransfer.getData("id");
   const el = document.getElementById(id);
 
-  // Safety: do nothing if member is absent
-  if (el.dataset.status === "absent") return;
+  if (el.dataset.status === "absent") return; // do nothing
 
-  // Append to new pad
   ev.currentTarget.appendChild(el);
 
-  // Determine new status
   const isBus = ev.currentTarget.classList.contains("bus-pad");
   const newStatus = isBus ? "leave" : "present";
 
@@ -229,32 +226,36 @@ async function drop(ev) {
   el.className = `member ${ui.className}`;
   el.querySelector(".status").textContent = `Status: ${ui.text}`;
 
-  // Call backend to update attendance
+  const attendanceId = el.dataset.attendanceId;
+  if (!attendanceId) {
+    console.warn("No attendance record ID found for this member.");
+    return;
+  }
+
+  // ✅ PUT request to update by _id
   try {
-    const res = await fetch(`${API}/attendance/update/${el.dataset.attendanceId}`, {
-  method: "PUT",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ status: newStatus })
-});
+    const res = await fetch(`${API}/attendance/update/${attendanceId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus })
+    });
 
-
-    if (!res.ok) {
-      throw new Error("Attendance record not found");
-    }
+    if (!res.ok) throw new Error("Failed to update attendance");
 
     console.log(`Attendance updated: ${id} → ${newStatus}`);
   } catch (err) {
-    alert("Failed to update attendance: record may not exist.");
+    alert("Failed to update attendance.");
     console.warn(err);
 
-    // Optional: revert UI if backend fails
-    const oldStatus = el.dataset.status === "leave" ? "present" : "leave";
+    // Optional: revert UI
+    const oldStatus = newStatus === "leave" ? "present" : "leave";
     const oldUI = STATUS_UI[oldStatus];
     el.dataset.status = oldStatus;
     el.className = `member ${oldUI.className}`;
     el.querySelector(".status").textContent = `Status: ${oldUI.text}`;
   }
 }
+
 
 
 
@@ -342,10 +343,14 @@ async function loadMembers(classId) {
 
   // Map members
   CLASS_MEMBERS = members.map(m => ({
-    id: m._id,
-    name: m.member?.name || "Kid",
-    status: attendanceMap[String(m._id)] || "absent" // now correctly matches
-  }));
+  id: m._id,
+  name: m.member?.name || "Kid",
+  status: (attendanceMap[String(m._id)]?.status) || "absent",
+  attendanceId: attendanceMap[String(m._id)]?.attendanceId || null
+}));
+
+console.log("Members mapped:", CLASS_MEMBERS);
+
 
   renderMembers();
 }
@@ -376,15 +381,16 @@ function renderMembers() {
   div.className = `member ${ui.className}`;
   div.id = m.id;
   div.dataset.status = m.status;
+div.dataset.attendanceId = m.attendanceId;
 
-  // ❌ Absent → not draggable
-  if (m.status === "absent") {
-    div.draggable = false;
-    div.style.cursor = "not-allowed";
-  } else {
-    div.draggable = true;
-    div.ondragstart = drag;
-  }
+if (m.status === "absent") {
+  div.draggable = false;
+  div.style.cursor = "not-allowed";
+} else {
+  div.draggable = true;
+  div.ondragstart = drag;
+}
+
 
   div.innerHTML = `
     <div class="avatar">${m.name[0]}</div>
