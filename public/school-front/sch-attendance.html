@@ -182,26 +182,23 @@ const STATUS_UI = {
 
 async function loadTodayAttendance(classId) {
   const date = getTodayDate();
-  
-  // Correct endpoint: query params, match Postman
-  const url = `${API}/Attendance?classId=${classId}&date=${date}`;
 
-  const res = await fetch(url);
+  // Correct endpoint & query params
+  const res = await fetch(`${API}/Attendance?classId=${classId}&date=${date}`);
 
-  if (!res.ok) {
-    throw new Error("Failed to load attendance");
-  }
+  if (!res.ok) throw new Error("Failed to load attendance");
 
-  const data = await res.json();
+  const result = await res.json();
 
-  // Map: memberId → status
+  // The backend wraps the data in `data` array
   const attendanceMap = {};
-  data.data.forEach(a => {  // note: your API returns { data: [...] }
-    attendanceMap[a.schoolMember] = a.status;
+  result.data.forEach(a => {
+    attendanceMap[a.schoolMember] = a.status; // leave / present / absent
   });
 
   return attendanceMap;
 }
+
 
 
 
@@ -338,10 +335,11 @@ async function loadMembers(classId) {
   const members = await membersRes.json();
 
   CLASS_MEMBERS = members.map(m => ({
-    id: m._id,
-    name: m.member?.name || "Kid",
-    status: attendanceMap[m._id] || "absent" // 👈 default classic
-  }));
+  id: m._id,
+  name: m.member?.name || "Kid",
+  status: attendanceMap[m._id] || "absent"
+}));
+
 
   renderMembers();
 }
