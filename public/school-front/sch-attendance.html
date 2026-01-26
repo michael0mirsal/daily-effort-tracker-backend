@@ -197,29 +197,64 @@ async function loadTodayAttendance(classId) {
   return attendanceMap;
 }
 
-if (m.status === "absent") {
-  div.draggable = false;
-  div.style.cursor = "not-allowed";
-}
 
-function drop(ev) {
+
+async function drop(ev) {
   ev.preventDefault();
+
+  // Get dragged element
   const id = ev.dataTransfer.getData("id");
   const el = document.getElementById(id);
 
-  if (el.dataset.status === "absent") return; // 🚫 safety
+  // Safety: do nothing if member is absent
+  if (el.dataset.status === "absent") return;
 
+  // Append to new pad
   ev.currentTarget.appendChild(el);
 
+  // Determine new status
   const isBus = ev.currentTarget.classList.contains("bus-pad");
   const newStatus = isBus ? "leave" : "present";
 
+  // Update UI
   el.dataset.status = newStatus;
-
   const ui = STATUS_UI[newStatus];
   el.className = `member ${ui.className}`;
   el.querySelector(".status").textContent = `Status: ${ui.text}`;
+
+  // Call backend to update attendance
+  try {
+    const res = await fetch(`${API}/attendance/update`, {
+      method: "PUT",          // ✅ Update only, no creation
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        schoolMember: id,
+        class: window.selectedClass.id,
+        date: getTodayDate(),
+        status: newStatus
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error("Attendance record not found");
+    }
+
+    console.log(`Attendance updated: ${id} → ${newStatus}`);
+  } catch (err) {
+    alert("Failed to update attendance: record may not exist.");
+    console.warn(err);
+
+    // Optional: revert UI if backend fails
+    const oldStatus = el.dataset.status === "leave" ? "present" : "leave";
+    const oldUI = STATUS_UI[oldStatus];
+    el.dataset.status = oldStatus;
+    el.className = `member ${oldUI.className}`;
+    el.querySelector(".status").textContent = `Status: ${oldUI.text}`;
+  }
 }
+
 
 
 function updateAttendanceTitle(className) {
