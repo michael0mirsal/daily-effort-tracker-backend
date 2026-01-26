@@ -233,11 +233,12 @@ if (!member?.attendanceId) {
 
 
   try {
-    const res = await fetch(`${API}/attendance/update/${member.attendanceId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus })
-    });
+    const res = await fetch(`${API}/attendance/${member.attendanceId}`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ status: newStatus })
+});
+
 
     if (!res.ok) throw new Error("Failed to update attendance");
 
