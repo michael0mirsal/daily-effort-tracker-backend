@@ -182,20 +182,27 @@ const STATUS_UI = {
 
 async function loadTodayAttendance(classId) {
   const date = getTodayDate();
-  const res = await fetch(`${API}/attendance/class/${classId}?date=${date}`);
+  
+  // Correct endpoint: query params, match Postman
+  const url = `${API}/Attendance?classId=${classId}&date=${date}`;
 
-  if (!res.ok) throw new Error("Failed to load attendance");
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error("Failed to load attendance");
+  }
 
   const data = await res.json();
 
   // Map: memberId → status
   const attendanceMap = {};
-  data.forEach(a => {
+  data.data.forEach(a => {  // note: your API returns { data: [...] }
     attendanceMap[a.schoolMember] = a.status;
   });
 
   return attendanceMap;
 }
+
 
 
 
