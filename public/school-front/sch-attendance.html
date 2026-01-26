@@ -65,16 +65,6 @@ h1 {
 }
 
 /* ================= MEMBER ================= */
-.member {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f8f9fa;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: grab;
-}
 
 .avatar {
   width: 40px;
@@ -95,6 +85,37 @@ h1 {
 #attendanceTitle {
   white-space: pre-line;
 }
+/* Default member */
+.member {
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 10px;
+  background: #f7f7f7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 🚌 On Bus – highlighted */
+.member.status-bus {
+  background: #e0f2ff;
+  border: 2px solid #2196f3;
+  box-shadow: 0 0 8px rgba(33,150,243,0.4);
+}
+
+/* 🏫 Present – normal */
+.member.status-present {
+  background: #f4fff7;
+  border: 1px solid #c8e6c9;
+}
+
+/* ❌ Absent – classic / muted */
+.member.status-absent {
+  background: #f5f5f5;
+  opacity: 0.6;
+  border: 1px dashed #bdbdbd;
+}
+
 </style>
 </head>
 
@@ -136,21 +157,70 @@ h1 {
 const API = "https://daily-effort-tracker-backend.onrender.com/api";
 let CLASS_MEMBERS = [];
 
+
 /* ================= DRAG ================= */
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
+
+function getTodayDate() {
+  return new Date().toISOString().split("T")[0];
+}
+const STATUS_UI = {
+  leave: {
+    text: "On Bus",
+    className: "status-bus"
+  },
+  present: {
+    text: "Present",
+    className: "status-present"
+  },
+  absent: {
+    text: "Absent",
+    className: "status-absent"
+  }
+};
+
+async function loadTodayAttendance(classId) {
+  const date = getTodayDate();
+  const res = await fetch(`${API}/attendance/class/${classId}?date=${date}`);
+
+  if (!res.ok) throw new Error("Failed to load attendance");
+
+  const data = await res.json();
+
+  // Map: memberId → status
+  const attendanceMap = {};
+  data.forEach(a => {
+    attendanceMap[a.schoolMember] = a.status;
+  });
+
+  return attendanceMap;
+}
+
+if (m.status === "absent") {
+  div.draggable = false;
+  div.style.cursor = "not-allowed";
+}
 
 function drop(ev) {
   ev.preventDefault();
   const id = ev.dataTransfer.getData("id");
   const el = document.getElementById(id);
+
+  if (el.dataset.status === "absent") return; // 🚫 safety
+
   ev.currentTarget.appendChild(el);
 
-  const status = el.querySelector(".status");
-  status.textContent = ev.currentTarget.classList.contains("bus-pad")
-    ? "Status: On Bus"
-    : "Status: Present";
+  const isBus = ev.currentTarget.classList.contains("bus-pad");
+  const newStatus = isBus ? "leave" : "present";
+
+  el.dataset.status = newStatus;
+
+  const ui = STATUS_UI[newStatus];
+  el.className = `member ${ui.className}`;
+  el.querySelector(".status").textContent = `Status: ${ui.text}`;
 }
+
 
 function updateAttendanceTitle(className) {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -216,17 +286,24 @@ function shouldResetAttendance() {
 
 /* ================= LOAD MEMBERS ================= */
 async function loadMembers(classId) {
-  const res = await fetch(`${API}/members/class/${classId}`);
-  const members = await res.json();
+  const [membersRes, attendanceMap] = await Promise.all([
+    fetch(`${API}/members/class/${classId}`),
+    loadTodayAttendance(classId)
+  ]);
+
+  if (!membersRes.ok) throw new Error("Failed to load members");
+
+  const members = await membersRes.json();
 
   CLASS_MEMBERS = members.map(m => ({
     id: m._id,
-    name: m.member?.name || "Kid"
+    name: m.member?.name || "Kid",
+    status: attendanceMap[m._id] || "absent" // 👈 default classic
   }));
 
-  // ✅ RESET AT 7 AM
-   renderMembers();
+  renderMembers();
 }
+
 /* when backend is ready
 if (shouldResetAttendance()) {
   renderMembers(); // reset to default (all on bus)
@@ -239,26 +316,45 @@ if (shouldResetAttendance()) {
 /* ================= RENDER MEMBERS ================= */
 function renderMembers() {
   const busPad = document.getElementById("busPad");
+  const classPad = document.getElementById("classPad");
+
   busPad.innerHTML = "";
+  classPad.innerHTML = "";
 
   CLASS_MEMBERS.forEach(m => {
-    const div = document.createElement("div");
-    div.className = "member";
-    div.id = m.id;
+  const ui = STATUS_UI[m.status] || STATUS_UI.present;
+
+  const div = document.createElement("div");
+  div.className = `member ${ui.className}`;
+  div.id = m.id;
+  div.dataset.status = m.status;
+
+  // ❌ Absent → not draggable
+  if (m.status === "absent") {
+    div.draggable = false;
+    div.style.cursor = "not-allowed";
+  } else {
     div.draggable = true;
     div.ondragstart = drag;
+  }
 
-    div.innerHTML = `
-      <div class="avatar">${m.name[0]}</div>
-      <div>
-        <div>${m.name}</div>
-        <div class="status">Status: On Bus</div>
-      </div>
-    `;
+  div.innerHTML = `
+    <div class="avatar">${m.name[0]}</div>
+    <div>
+      <div class="name">${m.name}</div>
+      <div class="status">Status: ${ui.text}</div>
+    </div>
+  `;
 
+  if (m.status === "leave") {
     busPad.appendChild(div);
-  });
+  } else {
+    classPad.appendChild(div);
+  }
+});
+
 }
+
 
 
 /* ================= INIT ================= */
