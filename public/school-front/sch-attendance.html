@@ -326,7 +326,6 @@ function shouldResetAttendance() {
 }
 
 
-/* ================= LOAD MEMBERS ================= */
 async function loadMembers(classId) {
   const [membersRes, attendanceMap] = await Promise.all([
     fetch(`${API}/members/class/${classId}`),
@@ -337,16 +336,19 @@ async function loadMembers(classId) {
 
   const members = await membersRes.json();
 
+  // 🔹 DEBUG LOG
+  console.log("Attendance Map:", attendanceMap); // shows { schoolMemberId: status, ... }
+  console.log("Members fetched:", members);       // shows raw members array from backend
+
   CLASS_MEMBERS = members.map(m => ({
-  id: m._id,
-  name: m.member?.name || "Kid",
-  status: attendanceMap[m._id] || "absent" // default only if no record
-}));
-
-
+    id: m._id,
+    name: m.member?.name || "Kid",
+    status: attendanceMap[m._id] || "absent" // default only if no record
+  }));
 
   renderMembers();
 }
+
 
 /* when backend is ready
 if (shouldResetAttendance()) {
