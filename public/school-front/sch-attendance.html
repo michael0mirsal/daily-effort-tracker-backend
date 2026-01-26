@@ -231,18 +231,12 @@ async function drop(ev) {
 
   // Call backend to update attendance
   try {
-    const res = await fetch(`${API}/attendance/update`, {
-      method: "PUT",          // ✅ Update only, no creation
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        schoolMember: id,
-        class: window.selectedClass.id,
-        date: getTodayDate(),
-        status: newStatus
-      })
-    });
+    const res = await fetch(`${API}/attendance/update/${el.dataset.attendanceId}`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ status: newStatus })
+});
+
 
     if (!res.ok) {
       throw new Error("Attendance record not found");
@@ -341,10 +335,12 @@ async function loadMembers(classId) {
   console.log("Members fetched:", members);       // shows raw members array from backend
 
   CLASS_MEMBERS = members.map(m => ({
-    id: m._id,
-    name: m.member?.name || "Kid",
-    status: attendanceMap[m._id] || "absent" // default only if no record
-  }));
+  id: m._id,                      // member id
+  name: m.member?.name || "Kid",
+  status: attendanceMap[m._id]?.status || "absent",  // status
+  attendanceId: attendanceMap[m._id]?._id || null    // <--- store attendance _id
+}));
+
 
   renderMembers();
 }
