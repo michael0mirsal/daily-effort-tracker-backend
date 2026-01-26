@@ -224,10 +224,11 @@ async function drop(ev) {
 
   // ✅ Update DB using attendanceId
   const member = CLASS_MEMBERS.find(m => m.id === id);
-  if (!member || !member.attendanceId) {
-    console.warn("Attendance record not found for this member", member);
-    return;
-  }
+if (!member?.attendanceId) {
+  console.warn("Attendance record not found", member);
+  return;
+}
+
 
   try {
     const res = await fetch(`${API}/attendance/update/${member.attendanceId}`, {
@@ -326,13 +327,22 @@ async function loadMembers(classId) {
   if (!membersRes.ok) throw new Error("Failed to load members");
   const members = await membersRes.json();
 
+const attendanceMapFixed = {};
+Object.keys(attendanceMap).forEach(k => {
+  attendanceMapFixed[String(k)] = attendanceMap[k];
+});
+
   // Map members using the fixed attendanceMap
-  CLASS_MEMBERS = members.map(m => ({
-    id: m._id,
+  CLASS_MEMBERS = members.map(m => {
+  const key = String(m._id);
+  return {
+    id: key,
     name: m.member?.name || "Kid",
-    status: attendanceMap[String(m._id)]?.status || "absent",
-    attendanceId: attendanceMap[String(m._id)]?.attendanceId || null
-  }));
+    status: attendanceMapFixed[key]?.status || "absent",
+    attendanceId: attendanceMapFixed[key]?.attendanceId || null
+  };
+});
+
 
   // 🔹 Debug
   console.log("Fixed Attendance Map:", attendanceMap);
