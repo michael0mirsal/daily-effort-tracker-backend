@@ -1,6 +1,7 @@
 // controllers/attendanceController.js
 import { markAttendance } from "../services/attendanceService.js";
 import { logInfo, logError } from "../utils/logger.js";
+import Attendance from "../models/Attendance.js";
 
 // ✅ CREATE Attendance
 export const createAttendance = async (req, res) => {
