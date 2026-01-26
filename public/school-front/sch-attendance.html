@@ -212,42 +212,53 @@ async function drop(ev) {
   const id = ev.dataTransfer.getData("id");
   const el = document.getElementById(id);
 
+  // Don’t allow dragging absent
   if (el.dataset.status === "absent") return;
 
+  // Move element in UI
   ev.currentTarget.appendChild(el);
 
+  // Determine new status
   const isBus = ev.currentTarget.classList.contains("bus-pad");
   const newStatus = isBus ? "leave" : "present";
 
+  // Update element dataset & UI
   el.dataset.status = newStatus;
   const ui = STATUS_UI[newStatus];
   el.className = `member ${ui.className}`;
   el.querySelector(".status").textContent = `Status: ${ui.text}`;
 
-  // ✅ Update DB using attendanceId
+  // Find member object
   const member = CLASS_MEMBERS.find(m => m.id === id);
-if (!member?.attendanceId) {
-  console.warn("Attendance record not found", member);
-  return;
-}
-
+  if (!member?.attendanceId) {
+    console.warn("Attendance record not found", member);
+    return;
+  }
 
   try {
-    const res = await fetch(`${API}/attendance/${member.attendanceId}`, {
-  method: "PUT",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ status: newStatus })
-});
+    // Get teacher name
+    const user = JSON.parse(localStorage.getItem("user"));
+    const teacherName = user?.name || "Teacher";
 
+    // Always update notes whenever status changes
+    const res = await fetch(`${API}/attendance/${member.attendanceId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        status: newStatus,
+        notes: `Marked by ${teacherName}`
+      })
+    });
 
     if (!res.ok) throw new Error("Failed to update attendance");
 
-    console.log(`Attendance updated: ${id} → ${newStatus}`);
+    console.log(`Attendance updated: ${id} → ${newStatus} (notes updated)`);
+
   } catch (err) {
     alert("Failed to update attendance: record may not exist.");
     console.warn(err);
 
-    // revert UI
+    // revert UI if error
     const oldStatus = newStatus === "leave" ? "present" : "leave";
     const oldUI = STATUS_UI[oldStatus];
     el.dataset.status = oldStatus;
