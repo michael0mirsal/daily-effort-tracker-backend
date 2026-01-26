@@ -26,17 +26,29 @@ export const getAttendanceByClass = async (req, res) => {
     const { classId, date } = req.query;
 
     if (!classId || !date) {
-      return res.status(400).json({ success: false, message: "Missing classId or date" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing classId or date"
+      });
     }
 
-    const attendanceList = await Attendance.find({ class: classId, date })
+    const attendanceList = await Attendance.find({
+      class: classId,
+      date
+    })
       .populate("schoolMember")
       .populate("markedBy", "name");
 
-    res.status(200).json({ success: true, data: attendanceList });
+    res.status(200).json({
+      success: true,
+      data: attendanceList
+    });
   } catch (err) {
     logError("Error fetching attendance", err);
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
