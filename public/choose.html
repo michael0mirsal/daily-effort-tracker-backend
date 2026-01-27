@@ -323,6 +323,12 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <h1 id="welcomeText">🌞 Welcome!</h1>
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
+  <!-- 🔵 NEW: Notification Panel -->
+<div id="notificationPanel" style="position: fixed; top: 20px; right: 20px; width: 320px; max-height: 500px; overflow-y:auto; z-index:1000;">
+  <h3 style="margin:0 0 5px 0;">🔔 Notifications</h3>
+  <ul id="notificationList" aria-live="polite" style="list-style:none; padding:0; margin:0; font-size:14px;"></ul>
+</div>
+
   <div id="options"></div>
   <button id="openFamAttendance" class="bus-button" onclick="openfamilyattendance()">
   <span class="bus-icon">🚌</span>
@@ -609,6 +615,39 @@ function logout() {
 // ================= Init =================
 loadFamilyTree();
 loadStars();
+</script>
+<!-- 🔵 NEW: Socket.IO client -->
+<script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+<script>
+  // 🔵 NEW: Connect socket
+  const socket = io("https://daily-effort-tracker-backend.onrender.com"); // Replace with your backend URL
+
+  const userId = user ? user._id : null; // 🔵 NEW: Pass logged-in user ID
+
+  if (userId) {
+    socket.emit("join", userId); // 🔵 NEW: Join user room
+  }
+
+  // 🔵 NEW: Listen for attendance notifications
+  socket.on("attendance_notification", (data) => {
+    console.log("🔔 New notification:", data);
+
+    const notificationList = document.getElementById("notificationList");
+    if (!notificationList) return;
+
+    const li = document.createElement("li");
+    li.style.background = "#fff3cd";
+    li.style.border = "1px solid #ffeeba";
+    li.style.padding = "8px 12px";
+    li.style.marginBottom = "6px";
+    li.style.borderRadius = "8px";
+    li.innerHTML = `<b>${data.type}</b>: ${data.message} <br><small>${new Date().toLocaleTimeString()}</small>`;
+
+    notificationList.prepend(li); // New notifications at top
+
+    // 🔵 Optional: flash animation
+    li.animate([{ transform: "scale(0.95)", opacity: 0.5 }, { transform: "scale(1)", opacity: 1 }], { duration: 400 });
+  });
 </script>
 
 </body>
