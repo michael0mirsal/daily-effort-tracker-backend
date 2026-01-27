@@ -1,3 +1,5 @@
+import http from "http";
+import { Server } from "socket.io";
 // ======================================================
 // ✅ Imports & Setup
 // ======================================================
@@ -44,7 +46,7 @@ app.use("/api", schoolRoutes);
 app.use("/api", schTaskRoutes);
 app.use("/api/msg", msgRoutes);
 app.use("/api/attendance", attendanceRoutes);
-
+app.use("/api/families", familyRoutes);
 app.get("/health", (req, res) => res.send("OK"));
 
 // ✅ Connect MongoDB and start server
@@ -55,17 +57,43 @@ console.log("✅ MongoDB connected");
 // ======================================================
 // ✅ Start server
 // ======================================================
+
+// ================= HTTP + Socket.IO =================
+const httpServer = http.createServer(app);
+
+export const io = new Server(httpServer, {
+  cors: {
+    origin: "*", // later restrict in production
+    methods: ["GET", "POST"],
+  },
+});
+
+// Socket.IO connection logic
+io.on("connection", (socket) => {
+  console.log("🔌 Socket connected:", socket.id);
+
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`👤 User joined room: ${userId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Socket disconnected:", socket.id);
+  });
+});
+
+// ================= Start server =================
 if (!PORT) {
   console.error("❌ No PORT defined in environment variables!");
   process.exit(1);
 }
 
-const server = app.listen(PORT, "0.0.0.0", () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running → http://0.0.0.0:${PORT}`);
 });
 
-// Graceful error handling
-server.on("error", (err) => {
+// ================= Graceful error handling =================
+httpServer.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
     console.error(`❌ Port ${PORT} is already in use. Try restarting the server.`);
   } else {
@@ -74,11 +102,10 @@ server.on("error", (err) => {
   process.exit(1);
 });
 
-
 // ======================================================
 // ✅ Family Routes
 // ======================================================
-app.use("/api/families", familyRoutes);
+
 
 // ======================================================
 // ✅ Effort APIs (MongoDB version)
