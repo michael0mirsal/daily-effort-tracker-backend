@@ -1,4 +1,5 @@
 // controllers/attendanceController.js
+import { io } from "../server.js";
 import { markAttendance } from "../services/attendanceService.js";
 import { logInfo, logError } from "../utils/logger.js";
 import Attendance from "../models/Attendance.js";
@@ -14,10 +15,7 @@ export const updateAttendance = async (req, res) => {
     // 1️⃣ Load old attendance
     const oldAttendance = await Attendance.findById(attendanceId);
     if (!oldAttendance) {
-      return res.status(404).json({
-        success: false,
-        message: "Attendance not found",
-      });
+      return res.status(404).json({ success: false, message: "Attendance not found" });
     }
 
     const notifications = [];
@@ -60,13 +58,9 @@ export const updateAttendance = async (req, res) => {
     }
 
     // 4️⃣ Update attendance
-    const updatedAttendance = await Attendance.findByIdAndUpdate(
-      attendanceId,
-      updates,
-      { new: true }
-    );
+    const updatedAttendance = await Attendance.findByIdAndUpdate(attendanceId, updates, { new: true });
 
-    // 5️⃣ Save history (ONLY if something changed)
+    // 5️⃣ Save history
     if (changes.length > 0) {
       await AttendanceHistory.create({
         attendance: updatedAttendance._id,
@@ -75,14 +69,17 @@ export const updateAttendance = async (req, res) => {
       });
     }
 
-    // 6️⃣ Save notifications
+    // 6️⃣ Save notifications AND emit via Socket.IO
     for (const n of notifications) {
-      await Notification.create({
+      const savedNotification = await Notification.create({
         user: updatedAttendance.markedBy,
         attendance: updatedAttendance._id,
         type: n.type,
         message: n.message,
       });
+
+      // Emit notification to the specific user room
+      io.to(updatedAttendance.markedBy.toString()).emit("notification", savedNotification);
     }
 
     res.status(200).json({
@@ -91,12 +88,10 @@ export const updateAttendance = async (req, res) => {
       changesRecorded: changes.length,
       notificationsCreated: notifications.length,
     });
+
   } catch (err) {
-    logError("Error updating attendance", err);
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    console.error("Error updating attendance:", err);
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
