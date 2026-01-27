@@ -3,6 +3,7 @@ import { markAttendance } from "../services/attendanceService.js";
 import { logInfo, logError } from "../utils/logger.js";
 import Attendance from "../models/Attendance.js";
 import Notification from "../models/Notification.js";
+import AttendanceHistory from "../models/AttendanceHistory.js";
 
 // ✅ UPDATE attendance (professional version)
 export const updateAttendance = async (req, res) => {
@@ -10,7 +11,7 @@ export const updateAttendance = async (req, res) => {
     const attendanceId = req.params.id;
     const updates = req.body;
 
-    // 1️⃣ Get OLD attendance (required for comparison)
+    // 1️⃣ Load old attendance
     const oldAttendance = await Attendance.findById(attendanceId);
     if (!oldAttendance) {
       return res.status(404).json({
@@ -20,23 +21,36 @@ export const updateAttendance = async (req, res) => {
     }
 
     const notifications = [];
+    const changes = [];
 
-    // 2️⃣ Detect STATUS change
+    // 2️⃣ Track STATUS change
     if (
       Object.prototype.hasOwnProperty.call(updates, "status") &&
       updates.status !== oldAttendance.status
     ) {
+      changes.push({
+        field: "status",
+        oldValue: oldAttendance.status,
+        newValue: updates.status,
+      });
+
       notifications.push({
         type: "STATUS_CHANGED",
         message: `Status changed from "${oldAttendance.status}" to "${updates.status}"`,
       });
     }
 
-    // 3️⃣ Detect NOTES change (even empty string)
+    // 3️⃣ Track NOTES change
     if (
       Object.prototype.hasOwnProperty.call(updates, "notes") &&
       updates.notes !== oldAttendance.notes
     ) {
+      changes.push({
+        field: "notes",
+        oldValue: oldAttendance.notes,
+        newValue: updates.notes,
+      });
+
       notifications.push({
         type: "NOTE_CHANGED",
         message: updates.notes
@@ -52,20 +66,29 @@ export const updateAttendance = async (req, res) => {
       { new: true }
     );
 
-    // 5️⃣ Save notifications (if any)
+    // 5️⃣ Save history (ONLY if something changed)
+    if (changes.length > 0) {
+      await AttendanceHistory.create({
+        attendance: updatedAttendance._id,
+        changedBy: req.user.id, // or updatedAttendance.markedBy
+        changes,
+      });
+    }
+
+    // 6️⃣ Save notifications
     for (const n of notifications) {
       await Notification.create({
-        user: updatedAttendance.markedBy, // who should receive it
+        user: updatedAttendance.markedBy,
         attendance: updatedAttendance._id,
         type: n.type,
         message: n.message,
       });
     }
 
-    // 6️⃣ Response
     res.status(200).json({
       success: true,
       data: updatedAttendance,
+      changesRecorded: changes.length,
       notificationsCreated: notifications.length,
     });
   } catch (err) {
