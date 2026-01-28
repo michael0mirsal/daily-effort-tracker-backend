@@ -10,6 +10,7 @@ const socket = io(SERVER_URL);
 function joinUserRoom(userId) {
   socket.emit("join", userId);
 }
+console.log("🔥 socket.js loaded");
 
 // Listen for notifications
 socket.on("notification", (data) => {
