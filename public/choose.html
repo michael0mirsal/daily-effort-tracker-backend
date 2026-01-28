@@ -629,7 +629,7 @@ loadStars();
   }
 
   // 🔵 NEW: Listen for attendance notifications
-  socket.on("attendance_notification", (data) => {
+  socket.on("notification", (data) => {
     console.log("🔔 New notification:", data);
 
     const notificationList = document.getElementById("notificationList");
