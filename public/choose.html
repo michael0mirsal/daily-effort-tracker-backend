@@ -619,23 +619,19 @@ loadStars();
 <!-- 🔵 NEW: Socket.IO client -->
 <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
 <script>
-  const SERVER_URL = "https://daily-effort-tracker-backend.onrender.com";
-  
-
+  // ✅ Use existing user from first script block
   if (!user) {
     console.warn("No user found. Notifications will not work.");
   } else {
-    const socket = io(SERVER_URL);
+    const socket = io("https://daily-effort-tracker-backend.onrender.com");
 
-    socket.on("connect", () => {
-      console.log("🔌 Socket connected:", socket.id);
-      socket.emit("join", user._id);
-    });
+    // Join user-specific room
+    console.log("Joining socket room for user:", user._id);
+    socket.emit("join", user._id);
 
-    // Listen for server notifications
+    // Listen for notifications
     socket.on("notification", (data) => {
       console.log("🔔 New notification:", data);
-
       const notificationList = document.getElementById("notificationList");
       if (!notificationList) return;
 
@@ -646,13 +642,7 @@ loadStars();
       li.style.marginBottom = "6px";
       li.style.borderRadius = "8px";
       li.innerHTML = `<b>${data.type}</b>: ${data.message} <br><small>${new Date().toLocaleTimeString()}</small>`;
-
       notificationList.prepend(li);
-
-      li.animate(
-        [{ transform: "scale(0.95)", opacity: 0.5 }, { transform: "scale(1)", opacity: 1 }],
-        { duration: 400 }
-      );
     });
   }
 </script>
