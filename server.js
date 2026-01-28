@@ -106,6 +106,18 @@ httpServer.on("error", (err) => {
 // ======================================================
 // ✅ Family Routes
 // ======================================================
+// Temporary test endpoint for Socket.IO
+app.get("/test-notification", (req, res) => {
+  // Replace this with a valid user ID from your DB
+  const testUserId = "693910b005208db929fbaa60";
+
+  io.to(testUserId).emit("notification", {
+    type: "Test",
+    message: "This is a test notification from the server!"
+  });
+
+  res.send("✅ Test notification sent!");
+});
 
 
 // ======================================================
