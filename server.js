@@ -109,7 +109,7 @@ httpServer.on("error", (err) => {
 // Temporary test endpoint for Socket.IO
 app.get("/test-notification", (req, res) => {
   // Replace this with a valid user ID from your DB
-  const testUserId = "693910b005208db929fbaa60";
+  const testUserId = "6936df862f5bd5d7ed61ece0";
 
   io.to(testUserId).emit("notification", {
     type: "Test",
