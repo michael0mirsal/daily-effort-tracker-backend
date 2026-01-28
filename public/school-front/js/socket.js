@@ -3,6 +3,7 @@
 // Replace with your backend URL
 const SERVER_URL = "https://daily-effort-tracker-backend.onrender.com";
 
+console.log("🔥 socket.js loaded");
 // Connect to Socket.IO
 const socket = io(SERVER_URL);
 
@@ -10,7 +11,7 @@ const socket = io(SERVER_URL);
 function joinUserRoom(userId) {
   socket.emit("join", userId);
 }
-console.log("🔥 socket.js loaded");
+
 
 // Listen for notifications
 socket.on("notification", (data) => {
