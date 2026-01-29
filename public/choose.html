@@ -427,16 +427,16 @@ async function loadFamilyTree() {
 localStorage.setItem("currentFamilyMembers", JSON.stringify(members));
 // 🔵 Pick current kid
     if (members.length) {
-      const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase()) || members[0];
+  const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase()) || members[0];
 
-      // Set nursery button
-      setNurseryButtonName(kid.nursery?.name || "Nursery");
+  // Set nursery button
+  setNurseryButtonName(kid.nursery?.name || "Nursery");
 
-      // ✅ Save schoolMemberId
-      if (kid && kid._id) {
-        localStorage.setItem("currentSchoolMemberId", kid._id);
-      }
-    }
+  // ✅ Save BOTH IDs correctly
+  localStorage.setItem("currentFamilyMemberId", kid._id);      // Family table ID
+  localStorage.setItem("currentSchoolMemberId", kid.schoolMemberId || kid._id); // School/Nursery ID
+}
+
 
 
 
@@ -636,9 +636,9 @@ if (!user) {
   // ✅ Get the schoolMemberId saved from family tree
   const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
 
-  if (schoolMemberId) {
-    console.log("Joining socket room for kid:", schoolMemberId);
-    socket.emit("join", schoolMemberId);
+if (schoolMemberId) {
+  console.log("Joining socket room for kid:", schoolMemberId);
+  socket.emit("join", schoolMemberId);
   } else {
     console.warn("No schoolMemberId found in localStorage");
   }
