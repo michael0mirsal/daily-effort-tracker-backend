@@ -700,57 +700,50 @@ container.appendChild(toast);
 // ---------------- Add to Panel ----------------
 function addNoteToPanel(data) {
   if (!data.message || !data.createdAt) return;
-  if (data.type !== "NOTE_CHANGED") return;
+  if (!["NOTE_CHANGED", "STATUS_CHANGED"].includes(data.type)) return;
 
   const noteDate = new Date(data.createdAt).toISOString().split("T")[0];
   if (noteDate !== todayDate) return;
 
-const panelList = document.getElementById("notificationPanelList");
+  const panelList = document.getElementById("notificationPanelList");
   if (!panelList) return;
-  // create list item
+
   const li = document.createElement("li");
   li.style.padding = "8px 10px";
   li.style.borderBottom = "1px solid #eee";
   li.style.cursor = "pointer";
-  li.style.background = "#007bff";
+
+  li.style.background =
+    data.type === "STATUS_CHANGED" ? "#e3f2fd" : "#fffbea";
 
   li.innerHTML = `
     <b>${data.type}</b>: ${data.message}<br>
     <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
   `;
-if (data.type === "STATUS_CHANGED") {
-  li.style.background = "#e3f2fd";
-}
 
-  // mark as read and navigate when clicked
   li.onclick = () => {
-    li.style.background = "#f0f0f0"; // mark as read visually
+    li.style.background = "#f0f0f0";
     if (data.link) window.location.href = data.link;
   };
 
   panelList.prepend(li);
 
-  // save in todayNotes for memory
   todayNotes.push({
-  message: data.message,
-  type: data.type,
-  createdAt: data.createdAt,
-  link: data.link || null
-});
-saveTodayNotes();
+    message: data.message,
+    type: data.type,
+    createdAt: data.createdAt,
+    link: data.link || null
+  });
 
+  saveTodayNotes();
 }
+
 
 // ---------------- Toggle Panel ----------------
 document.getElementById("notificationBell").onclick = () => {
   const panel = document.getElementById("notificationPanel");
-  if (!panel) return;
-
-  // toggle panel
   panel.style.display = panel.style.display === "block" ? "none" : "block";
-
-  // reset badge when opening
-  
+  resetBadge();
 };
 
 document.getElementById("markAllReadBtn").onclick = () => {
@@ -778,54 +771,50 @@ loadTodayNotes();
 <script>
 if (user) {
   const socket = io("https://daily-effort-tracker-backend.onrender.com");
-  const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
-console.log("📌 Joining room with schoolMemberId:", schoolMemberId);
 
-if (schoolMemberId) {
-  socket.emit("join", schoolMemberId);
-} else {
-  console.error("❌ No schoolMemberId found for socket join");
-}
-
-
-  socket.on("notification", (data) => {
-  console.log("🔔 New notification:", data);
-socket.on("connect", () => {
-  console.log("🟢 Socket connected:", socket.id);
-});
-
-socket.on("disconnect", (reason) => {
-  console.warn("🔴 Socket disconnected:", reason);
-});
-
-socket.on("connect_error", (err) => {
-  console.error("❌ Socket connect error:", err.message);
-});
-  // 🟡 Status change → toast only
-  if (data.type === "STATUS_CHANGED") {
-  showToast(data.message, "info", "./fam-attendance.html");
-
-  addNoteToPanel({
-    ...data,
-    type: "STATUS_CHANGED",
-    createdAt: data.createdAt
+  // ---------------- Socket lifecycle ----------------
+  socket.on("connect", () => {
+    console.log("🟢 Socket connected:", socket.id);
   });
 
-  return;
-}
+  socket.on("disconnect", (reason) => {
+    console.warn("🔴 Socket disconnected:", reason);
+  });
 
+  socket.on("connect_error", (err) => {
+    console.error("❌ Socket connect error:", err.message);
+  });
 
-  // 🟢 Notes → toast + panel (today only)
-  if (data.type === "NOTE_CHANGED") {
-    showToast(data.message, "note", "./fam-attendance.html");
+  // ---------------- Join room ----------------
+  const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
+  console.log("📌 Joining room with schoolMemberId:", schoolMemberId);
 
-    addNoteToPanel({
-      ...data,
-      date: new Date(data.createdAt).toISOString().split("T")[0]
-    });
+  if (schoolMemberId) {
+    socket.emit("join", schoolMemberId);
+  } else {
+    console.error("❌ No schoolMemberId found for socket join");
   }
-});
 
+  // ---------------- Handle notifications ----------------
+  socket.on("notification", (data) => {
+    console.log("🔔 New notification:", data);
+
+    // Always show toast
+    showToast(
+      data.message,
+      data.type === "STATUS_CHANGED" ? "info" : "note",
+      "./fam-attendance.html"
+    );
+
+    // Always add to panel (today only logic inside addNoteToPanel)
+    addNoteToPanel(data);
+
+    // Increment badge ONLY if panel is closed
+    const panel = document.getElementById("notificationPanel");
+    if (panel.style.display !== "block") {
+      incrementBadge();
+    }
+  });
 }
 </script>
 
