@@ -63,25 +63,28 @@ export const updateAttendance = async (req, res) => {
     // 5️⃣ Save history
     if (changes.length > 0) {
       await AttendanceHistory.create({
-        attendance: updatedAttendance._id,
-        changedBy: req.user.id, // or updatedAttendance.markedBy
-        changes,
-      });
+  attendance: updatedAttendance._id,
+  changedBy: updatedAttendance.markedBy, // ✅ always exists
+  changes,
+});
     }
 
     // 6️⃣ Save notifications AND emit via Socket.IO
-    for (const n of notifications) {
-  const savedNotification = await Notification.create({
-    user: updatedAttendance.schoolMember, // ✅ kid (family room)
-    attendance: updatedAttendance._id,
-    type: n.type,
-    message: n.message,
-  });
+if (notifications.length > 0) {
+  for (const n of notifications) {
+    const savedNotification = await Notification.create({
+      user: updatedAttendance.schoolMember, // kid / family
+      attendance: updatedAttendance._id,
+      type: n.type,
+      message: n.message,
+    });
 
-  // ✅ Emit to kid / family socket room
-  io.to(updatedAttendance.schoolMember.toString())
-    .emit("notification", savedNotification);
+    // Emit to kid / family socket room
+    io.to(updatedAttendance.schoolMember.toString())
+      .emit("notification", savedNotification);
+  }
 }
+
 
 
     res.status(200).json({
