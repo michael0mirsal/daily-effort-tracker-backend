@@ -698,9 +698,13 @@ document.getElementById("notificationBell").onclick = () => {
   const badge = document.getElementById("notificationCount");
   if (badge) badge.innerText = "0";
 
-  // You can optionally open a full notification panel here
-  alert("Open your notification panel here if needed!");
+  // ✅ Toggle visibility of toast container
+  const container = document.getElementById("toastContainer");
+  if (container) {
+    container.style.display = container.style.display === "block" ? "none" : "block";
+  }
 };
+
 
 
 // ================= Init =================
