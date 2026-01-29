@@ -897,24 +897,40 @@ if (user) {
 
   // ---------------- Handle notifications ----------------
   socket.on("notification", (data) => {
-    console.log("🔔 New notification:", data);
+  console.log("🔔 New notification:", data);
 
-    // Always show toast
-    showToast(
-      data.message,
-      data.type === "STATUS_CHANGED" ? "info" : "note",
-      "./fam-attendance.html"
-    );
+  let displayMessage = data.message; // fallback
 
-    // Always add to panel (today only logic inside addNoteToPanel)
-    addNoteToPanel(data);
-
-    // Increment badge ONLY if panel is closed
-    const panel = document.getElementById("notificationPanel");
-    if (panel.style.display !== "block") {
-      incrementBadge();
+  // Modify message for STATUS_CHANGED
+  if (data.type === "STATUS_CHANGED" && data.from && data.to && data.userName) {
+    if (data.from === "present" && data.to === "leave") {
+      displayMessage = `${data.userName} now left on the bus. 🚌`;
+    } else if (data.from === "leave" && data.to === "present") {
+      displayMessage = `${data.userName} now present in class. ✅`;
+    } else {
+      // fallback if other statuses appear
+      displayMessage = `${data.userName} status changed from "${data.from}" to "${data.to}"`;
     }
+  }
+
+  // Show toast
+  showToast(
+    displayMessage,
+    data.type === "STATUS_CHANGED" ? "info" : "note",
+    "./fam-attendance.html"
+  );
+
+  // Add to panel
+  addNoteToPanel({
+    ...data,
+    message: displayMessage
   });
+
+  // Increment badge if panel closed
+  const panel = document.getElementById("notificationPanel");
+  if (panel.style.display !== "block") incrementBadge();
+});
+
 }
 </script>
 
