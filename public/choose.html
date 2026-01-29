@@ -350,7 +350,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   right: 20px;
   width: 380px;
   max-height: 500px;
-  background: linear-gradient(145deg, #ffffffee, #f0f0f5ee);
+  background: linear-gradient(145deg, #ffffff9c, #f0f0f5b1);
   border-radius: 16px;
   box-shadow: 0 8px 28px rgba(0,0,0,0.3);
   overflow-y: auto;
@@ -359,6 +359,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   padding: 15px;
   font-family: 'Segoe UI', sans-serif;
   backdrop-filter: blur(8px);
+  
 }
 #notificationPanel h3 {
   margin-top: 0;
@@ -909,8 +910,13 @@ if (user) {
       const from = match[1];
       const to = match[2];
 
-      // Get userName from data if available, otherwise fallback
-      const userName = data.userName || "A student";
+      // Get all members from localStorage
+      const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
+
+      // Find the kid by schoolMemberId
+      const kid = members.find(k => k.schoolMemberId === data.user || k._id === data.user);
+
+      const userName = kid?.name || "A student";
 
       if (from === "present" && to === "leave") {
         displayMessage = `${userName} now left on the bus. 🚌`;
