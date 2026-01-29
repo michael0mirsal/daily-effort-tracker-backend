@@ -308,6 +308,110 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
+/* Notification Bell */
+#notificationBell {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  z-index: 1001;
+  font-size: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, #4f8cff, #3b6be3);
+  padding: 12px;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#notificationBell:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+#notificationCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff4b5c;
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* Notification Panel */
+#notificationPanel {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  width: 380px;
+  max-height: 500px;
+  background: linear-gradient(145deg, #ffffffee, #f0f0f5ee);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+  overflow-y: auto;
+  display: none;
+  z-index: 1003;
+  padding: 15px;
+  font-family: 'Segoe UI', sans-serif;
+  backdrop-filter: blur(8px);
+}
+#notificationPanel h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+#markAllReadBtn {
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+#markAllReadBtn:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* Notification list items */
+#notificationPanelList li {
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  list-style: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+#notificationPanelList li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Differentiate types */
+#notificationPanelList li.status-changed {
+  background: linear-gradient(120deg, #d0f0fd, #a0e1ff);
+  border-left: 4px solid #007bff;
+}
+#notificationPanelList li.note-changed {
+  background: linear-gradient(120deg, #fff8d6, #fff1a8);
+  border-left: 4px solid #ffbf00;
+}
+
+#notificationPanelList li small {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: #666;
+}
 
 </style>
 </head>
@@ -709,20 +813,15 @@ function addNoteToPanel(data) {
   if (!panelList) return;
 
   const li = document.createElement("li");
-  li.style.padding = "8px 10px";
-  li.style.borderBottom = "1px solid #eee";
-  li.style.cursor = "pointer";
-
-  li.style.background =
-    data.type === "STATUS_CHANGED" ? "#e3f2fd" : "#fffbea";
+  li.className = data.type === "STATUS_CHANGED" ? "status-changed" : "note-changed";
 
   li.innerHTML = `
-    <b>${data.type}</b>: ${data.message}<br>
+    <b>${data.type.replace("_", " ")}</b>: ${data.message}
     <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
   `;
 
   li.onclick = () => {
-    li.style.background = "#f0f0f0";
+    li.style.opacity = 0.6; // mark as read visually
     if (data.link) window.location.href = data.link;
   };
 
@@ -737,6 +836,7 @@ function addNoteToPanel(data) {
 
   saveTodayNotes();
 }
+
 
 
 // ---------------- Toggle Panel ----------------
