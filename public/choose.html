@@ -718,6 +718,9 @@ const panelList = document.getElementById("notificationPanelList");
     <b>${data.type}</b>: ${data.message}<br>
     <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
   `;
+if (data.type === "STATUS_CHANGED") {
+  li.style.background = "#e3f2fd";
+}
 
   // mark as read and navigate when clicked
   li.onclick = () => {
@@ -747,7 +750,7 @@ document.getElementById("notificationBell").onclick = () => {
   panel.style.display = panel.style.display === "block" ? "none" : "block";
 
   // reset badge when opening
-  resetBadge();
+  
 };
 
 document.getElementById("markAllReadBtn").onclick = () => {
@@ -800,9 +803,17 @@ socket.on("connect_error", (err) => {
 });
   // 🟡 Status change → toast only
   if (data.type === "STATUS_CHANGED") {
-    showToast(data.message, "info", "./fam-attendance.html");
-    return;
-  }
+  showToast(data.message, "info", "./fam-attendance.html");
+
+  addNoteToPanel({
+    ...data,
+    type: "STATUS_CHANGED",
+    createdAt: data.createdAt
+  });
+
+  return;
+}
+
 
   // 🟢 Notes → toast + panel (today only)
   if (data.type === "NOTE_CHANGED") {
