@@ -768,9 +768,16 @@ if (user) {
   socket.on("notification", (data) => {
   console.log("🔔 New notification:", data);
 
-  // Only show notes for current kid today
-  if (data.type === "NOTE_CHANGED" && data.user === schoolMemberId) {
-    showToast(data.message, "note", data.link || "./fam-attendance.html");
+  // 🟡 Status change → toast only
+  if (data.type === "STATUS_CHANGED") {
+    showToast(data.message, "info", "./fam-attendance.html");
+    return;
+  }
+
+  // 🟢 Notes → toast + panel (today only)
+  if (data.type === "NOTE_CHANGED") {
+    showToast(data.message, "note", "./fam-attendance.html");
+
     addNoteToPanel({
       ...data,
       date: new Date(data.createdAt).toISOString().split("T")[0]
