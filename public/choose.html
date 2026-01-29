@@ -682,13 +682,13 @@ function showToast(message, type = "note", link = null) {
   toast.innerText = message;
 
   // clickable
-  if (link) toast.onclick = () => { window.location.href = link; };
-
-  container.appendChild(toast);
-
-  if (document.getElementById("notificationPanel").style.display !== "block") {
-  incrementBadge();
+  if (type === "note") {
+  toast.onclick = () => {
+    document.getElementById("notificationPanel").style.display = "block";
+    resetBadge();
+  };
 }
+
 
   setTimeout(() => { toast.remove(); }, 5000);
 
@@ -697,12 +697,14 @@ function showToast(message, type = "note", link = null) {
 
 // ---------------- Add to Panel ----------------
 function addNoteToPanel(data) {
-  if (!data.message || !data.date || data.date !== todayDate) return;
+  if (!data.message || !data.createdAt) return;
   if (data.type !== "NOTE_CHANGED") return;
 
-  const panelList = document.getElementById("notificationPanelList");
-  if (!panelList) return;
+  const noteDate = new Date(data.createdAt).toISOString().split("T")[0];
+  if (noteDate !== todayDate) return;
 
+const panelList = document.getElementById("notificationPanelList");
+  if (!panelList) return;
   // create list item
   const li = document.createElement("li");
   li.style.padding = "8px 10px";
@@ -724,8 +726,14 @@ function addNoteToPanel(data) {
   panelList.prepend(li);
 
   // save in todayNotes for memory
-  todayNotes.push({ ...data, element: li });
-  saveTodayNotes(); 
+  todayNotes.push({
+  message: data.message,
+  type: data.type,
+  createdAt: data.createdAt,
+  link: data.link || null
+});
+saveTodayNotes();
+
 }
 
 // ---------------- Toggle Panel ----------------
