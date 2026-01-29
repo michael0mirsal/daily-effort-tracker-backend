@@ -22,16 +22,13 @@ export const updateAttendance = async (req, res) => {
     const changes = [];
 
     // 2️⃣ Track STATUS change
-    if (
-      Object.prototype.hasOwnProperty.call(updates, "status") &&
-      updates.status !== oldAttendance.status
-    ) {
+    if (Object.prototype.hasOwnProperty.call(updates, "status") &&
+        updates.status !== oldAttendance.status) {
       changes.push({
         field: "status",
         oldValue: oldAttendance.status,
         newValue: updates.status,
       });
-
       notifications.push({
         type: "STATUS_CHANGED",
         message: `Status changed from "${oldAttendance.status}" to "${updates.status}"`,
@@ -39,16 +36,13 @@ export const updateAttendance = async (req, res) => {
     }
 
     // 3️⃣ Track NOTES change
-    if (
-      Object.prototype.hasOwnProperty.call(updates, "notes") &&
-      updates.notes !== oldAttendance.notes
-    ) {
+    if (Object.prototype.hasOwnProperty.call(updates, "notes") &&
+        updates.notes !== oldAttendance.notes) {
       changes.push({
         field: "notes",
         oldValue: oldAttendance.notes,
         newValue: updates.notes,
       });
-
       notifications.push({
         type: "NOTE_CHANGED",
         message: updates.notes
@@ -63,29 +57,26 @@ export const updateAttendance = async (req, res) => {
     // 5️⃣ Save history
     if (changes.length > 0) {
       await AttendanceHistory.create({
-  attendance: updatedAttendance._id,
-  changedBy: updatedAttendance.markedBy, // ✅ always exists
-  changes,
-});
+        attendance: updatedAttendance._id,
+        changedBy: updatedAttendance.markedBy,
+        changes,
+      });
     }
 
     // 6️⃣ Save notifications AND emit via Socket.IO
-if (notifications.length > 0) {
-  for (const n of notifications) {
-    const savedNotification = await Notification.create({
-      user: updatedAttendance.schoolMember, // kid / family
-      attendance: updatedAttendance._id,
-      type: n.type,
-      message: n.message,
-    });
+    if (notifications.length > 0) {
+      for (const n of notifications) {
+        const savedNotification = await Notification.create({
+          user: updatedAttendance.schoolMember, // kid / family
+          attendance: updatedAttendance._id,
+          type: n.type,
+          message: n.message,
+        });
 
-    // Emit to kid / family socket room
-    io.to(updatedAttendance.schoolMember.toString())
-      .emit("notification", savedNotification);
-  }
-}
-
-
+        // ✅ Emit to the correct socket room (schoolMemberId)
+        io.to(updatedAttendance.schoolMember.toString()).emit("notification", savedNotification);
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -99,6 +90,7 @@ if (notifications.length > 0) {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
 
 // ✅ CREATE Attendance
 export const createAttendance = async (req, res) => {
