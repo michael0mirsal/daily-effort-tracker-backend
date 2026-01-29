@@ -106,7 +106,8 @@ httpServer.on("error", (err) => {
 // ======================================================
 // ✅ Family Routes
 // ======================================================
-// Temporary test endpoint for Socket.IO
+// Temporary test endpoint for Socket.I
+/*
 app.get("/test-notification", (req, res) => {
   // Replace this with a valid user ID from your DB
   const testUserId = "6936df862f5bd5d7ed61ece0";
@@ -118,7 +119,7 @@ app.get("/test-notification", (req, res) => {
 
   res.send("✅ Test notification sent!");
 });
-
+*/
 
 // ======================================================
 // ✅ Effort APIs (MongoDB version)
