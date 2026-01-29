@@ -324,6 +324,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <div id="starsBox"></div>
   <div id="motivationText">Keep supporting your kids! 🌟</div>
   <!-- 🔵 NEW: Notification Bell & Toast Panel -->
+<!-- 🔵 Notification Bell & Panel -->
 <div id="notificationBell" style="position: fixed; top: 20px; right: 20px; cursor: pointer; z-index: 1001;">
   🔔 <span id="notificationCount" style="
     position: absolute; top: -5px; right: -5px; 
@@ -331,7 +332,20 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
     border-radius: 50%; padding: 2px 6px; font-size: 12px;">0</span>
 </div>
 
+<!-- Toast container for temporary popups -->
 <div id="toastContainer" style="position: fixed; top: 60px; right: 20px; z-index: 1002;"></div>
+
+<!-- Full Notification Panel -->
+<div id="notificationPanel" style="
+  position: fixed; top: 60px; right: 20px; width: 350px; max-height: 500px;
+  background: white; border: 1px solid #ccc; border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); overflow-y: auto; display: none; z-index: 1003;
+  padding: 10px; font-family: Arial, sans-serif;">
+  <h3 style="margin-top:0;">📌 Today’s Notes</h3>
+  <ul id="notificationPanelList" style="list-style:none; padding:0; margin:0;"></ul>
+</div>
+
+
 
 
   <div id="options"></div>
@@ -625,84 +639,82 @@ function logout() {
   window.location.href = "signin.html";
 }
 
-let unreadCount = 0; // Badge counter
+let unreadCount = 0; // badge counter
+const todayDate = new Date().toISOString().split("T")[0];
+const todayNotes = []; // keep today notes for the panel
 
-function showToast(message, type = "info", link = null) {
+// ---------------- Show Toast ----------------
+function showToast(message, type = "note", link = null) {
   const container = document.getElementById("toastContainer");
   if (!container) return;
 
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
+  toast.style.background = type === "note" ? "#fff3cd" : "#d1ecf1";
+  toast.style.border = type === "note" ? "1px solid #ffeeba" : "1px solid #bee5eb";
+  toast.style.color = "#000";
   toast.style.padding = "10px 15px";
   toast.style.marginTop = "8px";
   toast.style.borderRadius = "8px";
   toast.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
   toast.style.cursor = link ? "pointer" : "default";
-  toast.style.color = "#000";
-  toast.style.fontSize = "14px";
-  toast.style.transition = "opacity 0.4s ease, transform 0.4s ease";
-
-  // Set background & border based on type
-  switch(type) {
-    case "note":
-      toast.style.background = "#fff3cd";
-      toast.style.border = "1px solid #ffeeba";
-      break;
-    case "status":
-      toast.style.background = "#d1ecf1";
-      toast.style.border = "1px solid #bee5eb";
-      break;
-    default:
-      toast.style.background = "#d1ecf1";
-      toast.style.border = "1px solid #bee5eb";
-  }
-
   toast.innerText = message;
 
-  // ✅ Clickable toast
-  if (link) {
-    toast.onclick = () => {
-      window.location.href = link;
-    };
-  }
+  // clickable
+  if (link) toast.onclick = () => { window.location.href = link; };
 
-  // Add toast to container
   container.appendChild(toast);
 
-  // Fade in animation
-  toast.style.opacity = "0";
-  toast.style.transform = "translateY(-10px)";
-  setTimeout(() => {
-    toast.style.opacity = "1";
-    toast.style.transform = "translateY(0)";
-  }, 50);
-
-  // Increment badge
+  // increment badge
   unreadCount++;
-  const badge = document.getElementById("notificationCount");
-  if (badge) badge.innerText = unreadCount;
+  document.getElementById("notificationCount").innerText = unreadCount;
 
-  // Auto-remove toast after 5 seconds with fade-out
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateY(-10px)";
-    setTimeout(() => toast.remove(), 400);
-  }, 5000);
+  setTimeout(() => { toast.remove(); }, 5000);
 
   return toast;
 }
 
-// Optional: reset badge when bell clicked
+// ---------------- Add to Panel ----------------
+function addNoteToPanel(data) {
+  if (!data.message || !data.date || data.date !== todayDate) return;
+  if (data.type !== "NOTE_CHANGED") return;
+
+  const panelList = document.getElementById("notificationPanelList");
+  if (!panelList) return;
+
+  // create list item
+  const li = document.createElement("li");
+  li.style.padding = "8px 10px";
+  li.style.borderBottom = "1px solid #eee";
+  li.style.cursor = "pointer";
+  li.style.background = "#fffbea";
+
+  li.innerHTML = `
+    <b>${data.type}</b>: ${data.message}<br>
+    <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
+  `;
+
+  // mark as read and navigate when clicked
+  li.onclick = () => {
+    li.style.background = "#f0f0f0"; // mark as read visually
+    if (data.link) window.location.href = data.link;
+  };
+
+  panelList.prepend(li);
+
+  // save in todayNotes for memory
+  todayNotes.push({ ...data, element: li });
+}
+
+// ---------------- Toggle Panel ----------------
 document.getElementById("notificationBell").onclick = () => {
   unreadCount = 0;
-  const badge = document.getElementById("notificationCount");
-  if (badge) badge.innerText = "0";
+  document.getElementById("notificationCount").innerText = "0";
 
-  // ✅ Toggle visibility of toast container
-  const container = document.getElementById("toastContainer");
-  if (container) {
-    container.style.display = container.style.display === "block" ? "none" : "block";
-  }
+  const panel = document.getElementById("notificationPanel");
+  if (!panel) return;
+
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
 };
 
 
@@ -717,23 +729,19 @@ loadStars();
 if (user) {
   const socket = io("https://daily-effort-tracker-backend.onrender.com");
   const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
-
-  if (schoolMemberId) {
-    console.log("Joining socket room for kid:", schoolMemberId);
-    socket.emit("join", schoolMemberId);
-  } else {
-    console.warn("No schoolMemberId found in localStorage");
-  }
+  if (schoolMemberId) socket.emit("join", schoolMemberId);
 
   socket.on("notification", (data) => {
     console.log("🔔 New notification:", data);
 
-    // Show toast with link to relevant page
-    showToast(
-      `${data.type}: ${data.message}`,
-      data.type === "NOTE_CHANGED" ? "note" : "status",
-      data.link || "./fam-attendance.html"
-    );
+    // show only NOTE_CHANGED for panel
+    if (data.type === "NOTE_CHANGED" && data.user === schoolMemberId) {
+      showToast(data.message, "note", data.link || "./fam-attendance.html");
+      addNoteToPanel({
+        ...data,
+        date: new Date(data.createdAt).toISOString().split("T")[0]
+      });
+    }
   });
 }
 </script>
