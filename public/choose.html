@@ -425,11 +425,20 @@ async function loadFamilyTree() {
       </ol>
     `;
 localStorage.setItem("currentFamilyMembers", JSON.stringify(members));
-// 🔵 Set nursery name on button automatically
-if (members.length) {
-  const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase()) || members[0];
-  setNurseryButtonName(kid.nursery?.name || "Nursery");
-}
+// 🔵 Pick current kid
+    if (members.length) {
+      const kid = members.find(k => k.name.toLowerCase() === user.name.toLowerCase()) || members[0];
+
+      // Set nursery button
+      setNurseryButtonName(kid.nursery?.name || "Nursery");
+
+      // ✅ Save schoolMemberId
+      if (kid && kid._id) {
+        localStorage.setItem("currentSchoolMemberId", kid._id);
+      }
+    }
+
+
 
   } catch (err) {
     treeDiv.innerHTML = "❌ Failed to load family tree";
@@ -624,21 +633,17 @@ if (!user) {
 } else {
   const socket = io("https://daily-effort-tracker-backend.onrender.com");
 
-  // Load current family members from localStorage
-  const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
+  // ✅ Get the schoolMemberId saved from family tree
+  const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
 
-  // Pick the logged-in kid (fallback to first member)
-  let kid = members.find(k => (k.name || "").toLowerCase() === (user.name || "").toLowerCase());
-  if (!kid) kid = members[0];
-
-  if (kid && kid._id) {
-    console.log("Joining socket room for kid:", kid._id);
-    socket.emit("join", kid._id);
+  if (schoolMemberId) {
+    console.log("Joining socket room for kid:", schoolMemberId);
+    socket.emit("join", schoolMemberId);
   } else {
-    console.warn("No valid kid ID to join socket room");
+    console.warn("No schoolMemberId found in localStorage");
   }
 
-  // Listen for notifications
+  // 🔔 Listen for notifications
   socket.on("notification", (data) => {
     console.log("🔔 New notification:", data);
     const notificationList = document.getElementById("notificationList");
@@ -650,11 +655,15 @@ if (!user) {
     li.style.padding = "8px 12px";
     li.style.marginBottom = "6px";
     li.style.borderRadius = "8px";
-    li.innerHTML = `<b>${data.type}</b>: ${data.message} <br><small>${new Date().toLocaleTimeString()}</small>`;
+    li.innerHTML = `
+      <b>${data.type}</b>: ${data.message}<br>
+      <small>${new Date().toLocaleTimeString()}</small>
+    `;
     notificationList.prepend(li);
   });
 }
 </script>
+
 
 
 
