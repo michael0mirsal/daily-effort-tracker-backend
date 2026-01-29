@@ -398,7 +398,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 
 /* Differentiate types */
 #notificationPanelList li.status-changed {
-  background: linear-gradient(120deg, #d0f0fd, #a0e1ff);
+  background: linear-gradient(120deg, #d0f0fd5d, #a0e1ff);
   border-left: 4px solid #007bff;
 }
 #notificationPanelList li.note-changed {
@@ -901,15 +901,24 @@ if (user) {
 
   let displayMessage = data.message; // fallback
 
-  // Modify message for STATUS_CHANGED
-  if (data.type === "STATUS_CHANGED" && data.from && data.to && data.userName) {
-    if (data.from === "present" && data.to === "leave") {
-      displayMessage = `${data.userName} now left on the bus. 🚌`;
-    } else if (data.from === "leave" && data.to === "present") {
-      displayMessage = `${data.userName} now present in class. ✅`;
-    } else {
-      // fallback if other statuses appear
-      displayMessage = `${data.userName} status changed from "${data.from}" to "${data.to}"`;
+  // Only handle STATUS_CHANGED messages
+  if (data.type === "STATUS_CHANGED" && data.message) {
+    // Example message: "Status changed from 'leave' to 'present'"
+    const match = data.message.match(/Status changed from "(.*)" to "(.*)"/i);
+    if (match) {
+      const from = match[1];
+      const to = match[2];
+
+      // Get userName from data if available, otherwise fallback
+      const userName = data.userName || "A student";
+
+      if (from === "present" && to === "leave") {
+        displayMessage = `${userName} now left on the bus. 🚌`;
+      } else if (from === "leave" && to === "present") {
+        displayMessage = `${userName} now present in class. ✅`;
+      } else {
+        displayMessage = `${userName} status changed from "${from}" to "${to}"`;
+      }
     }
   }
 
