@@ -342,6 +342,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   box-shadow: 0 4px 12px rgba(0,0,0,0.2); overflow-y: auto; display: none; z-index: 1003;
   padding: 10px; font-family: Arial, sans-serif;">
   <h3 style="margin-top:0;">📌 Today’s Notes</h3>
+  <button id="markAllReadBtn" style="margin-bottom:10px;">✅ Mark all as read</button>
   <ul id="notificationPanelList" style="list-style:none; padding:0; margin:0;"></ul>
 </div>
 
@@ -640,9 +641,29 @@ function logout() {
 }
 
 let unreadCount = 0; // badge counter
+
+function incrementBadge() {
+  unreadCount++;
+  document.getElementById("notificationCount").innerText = unreadCount;
+}
+
+function resetBadge() {
+  unreadCount = 0;
+  document.getElementById("notificationCount").innerText = 0;
+}
+// badge counter
 const todayDate = new Date().toISOString().split("T")[0];
 const todayNotes = []; // keep today notes for the panel
+// ✅ Load saved notes from localStorage
+function loadTodayNotes() {
+  const saved = JSON.parse(localStorage.getItem(`todayNotes_${todayDate}`) || "[]");
+  saved.forEach(data => addNoteToPanel(data));
+}
 
+// ✅ Save notes to localStorage
+function saveTodayNotes() {
+  localStorage.setItem(`todayNotes_${todayDate}`, JSON.stringify(todayNotes));
+}
 // ---------------- Show Toast ----------------
 function showToast(message, type = "note", link = null) {
   const container = document.getElementById("toastContainer");
@@ -665,9 +686,9 @@ function showToast(message, type = "note", link = null) {
 
   container.appendChild(toast);
 
-  // increment badge
-  unreadCount++;
-  document.getElementById("notificationCount").innerText = unreadCount;
+  if (document.getElementById("notificationPanel").style.display !== "block") {
+  incrementBadge();
+}
 
   setTimeout(() => { toast.remove(); }, 5000);
 
@@ -704,24 +725,37 @@ function addNoteToPanel(data) {
 
   // save in todayNotes for memory
   todayNotes.push({ ...data, element: li });
+  saveTodayNotes(); 
 }
 
 // ---------------- Toggle Panel ----------------
 document.getElementById("notificationBell").onclick = () => {
-  unreadCount = 0;
-  document.getElementById("notificationCount").innerText = "0";
-
   const panel = document.getElementById("notificationPanel");
   if (!panel) return;
 
+  // toggle panel
   panel.style.display = panel.style.display === "block" ? "none" : "block";
+
+  // reset badge when opening
+  resetBadge();
 };
 
+document.getElementById("markAllReadBtn").onclick = () => {
+  todayNotes.forEach(n => n.element.style.background = "#f0f0f0"); // mark visually
+  resetBadge(); // reset badge
+};
+
+Object.keys(localStorage).forEach(key => {
+  if (key.startsWith("todayNotes_") && key !== `todayNotes_${todayDate}`) {
+    localStorage.removeItem(key);
+  }
+});
 
 
 // ================= Init =================
 loadFamilyTree();
 loadStars();
+loadTodayNotes();
 </script>
 <!-- 🔵 NEW: Socket.IO client -->
 <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
@@ -732,17 +766,18 @@ if (user) {
   if (schoolMemberId) socket.emit("join", schoolMemberId);
 
   socket.on("notification", (data) => {
-    console.log("🔔 New notification:", data);
+  console.log("🔔 New notification:", data);
 
-    // show only NOTE_CHANGED for panel
-    if (data.type === "NOTE_CHANGED" && data.user === schoolMemberId) {
-      showToast(data.message, "note", data.link || "./fam-attendance.html");
-      addNoteToPanel({
-        ...data,
-        date: new Date(data.createdAt).toISOString().split("T")[0]
-      });
-    }
-  });
+  // Only show notes for current kid today
+  if (data.type === "NOTE_CHANGED" && data.user === schoolMemberId) {
+    showToast(data.message, "note", data.link || "./fam-attendance.html");
+    addNoteToPanel({
+      ...data,
+      date: new Date(data.createdAt).toISOString().split("T")[0]
+    });
+  }
+});
+
 }
 </script>
 
