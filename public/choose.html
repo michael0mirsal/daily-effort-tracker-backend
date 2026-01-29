@@ -629,6 +629,10 @@ let unreadCount = 0; // badge counter
 
 function showToast(message, type = "info") {
   const container = document.getElementById("toastContainer");
+while (container.children.length > 5) {
+  container.removeChild(container.firstChild);
+}
+
   if (!container) return;
 
   const toast = document.createElement("div");
@@ -695,8 +699,10 @@ if (schoolMemberId) {
   // 🔹 Make toast clickable
   if (toast) {
     toast.onclick = () => {
-      window.location.href = data.link || "./fam-attendance.html";
-    };
+  setTimeout(() => {
+    window.location.href = data.link || "./fam-attendance.html";
+  }, 50); // 50ms delay is enough
+};
   }
 });
 
