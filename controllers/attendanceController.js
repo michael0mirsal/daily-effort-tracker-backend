@@ -71,16 +71,18 @@ export const updateAttendance = async (req, res) => {
 
     // 6️⃣ Save notifications AND emit via Socket.IO
     for (const n of notifications) {
-      const savedNotification = await Notification.create({
-        user: updatedAttendance.markedBy,
-        attendance: updatedAttendance._id,
-        type: n.type,
-        message: n.message,
-      });
+  const savedNotification = await Notification.create({
+    user: updatedAttendance.schoolMember, // ✅ kid (family room)
+    attendance: updatedAttendance._id,
+    type: n.type,
+    message: n.message,
+  });
 
-      // Emit notification to the specific user room
-      io.to(updatedAttendance.markedBy.toString()).emit("notification", savedNotification);
-    }
+  // ✅ Emit to kid / family socket room
+  io.to(updatedAttendance.schoolMember.toString())
+    .emit("notification", savedNotification);
+}
+
 
     res.status(200).json({
       success: true,
