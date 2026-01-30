@@ -788,10 +788,11 @@ function showToast(message, type = "note", link = null) {
 
   // clickable
   if (type === "note") {
-  toast.onclick = () => {
-    document.getElementById("notificationPanel").style.display = "block";
-    resetBadge();
-  };
+  toast.onclick = (e) => {
+  e.stopPropagation();
+  document.getElementById("notificationPanel").style.display = "block";
+  resetBadge();
+};
 }
 container.appendChild(toast);
 
@@ -841,11 +842,15 @@ function addNoteToPanel(data) {
 
 
 // ---------------- Toggle Panel ----------------
-document.getElementById("notificationBell").onclick = () => {
-  const panel = document.getElementById("notificationPanel");
+const bell = document.getElementById("notificationBell");
+const panel = document.getElementById("notificationPanel");
+
+bell.addEventListener("click", (e) => {
+  e.stopPropagation();
   panel.style.display = panel.style.display === "block" ? "none" : "block";
   resetBadge();
-};
+});
+
 
 document.getElementById("markAllReadBtn").onclick = () => {
   document
@@ -860,6 +865,22 @@ Object.keys(localStorage).forEach(key => {
     localStorage.removeItem(key);
   }
 });
+
+document.addEventListener("click", (e) => {
+  const panel = document.getElementById("notificationPanel");
+  const bell = document.getElementById("notificationBell");
+
+  if (!panel || panel.style.display !== "block") return;
+
+  // Click outside panel & bell → close
+  if (!panel.contains(e.target) && !bell.contains(e.target)) {
+    panel.style.display = "none";
+  }
+});
+document.getElementById("notificationPanel").addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
 
 
 // ================= Init =================
