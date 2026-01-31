@@ -14,7 +14,7 @@ import schoolRoutes from "./routes/schoolRoutes.js";
 import schTaskRoutes from "./routes/schTaskRoutes.js";
 import msgRoutes from "./routes/msgRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js"; // 📝 Attendance system
-
+import moodRoutes from "./routes/moodRoutes.js";
 
 // Import MongoDB models
 import Family from "./models/Family.js";
@@ -48,6 +48,7 @@ app.use("/api", schTaskRoutes);
 app.use("/api/msg", msgRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/families", familyRoutes);
+app.use("/api/mood", moodRoutes);
 app.get("/health", (req, res) => res.send("OK"));
 
 // ✅ Connect MongoDB and start server
