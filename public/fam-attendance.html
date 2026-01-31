@@ -206,6 +206,32 @@ async function fetchTodayAttendance() {
   return json.data || [];
 }
 
+async function hasMoodForToday() {
+  const today = getToday();
+
+  if (!reportClass?._id || !reportMemberSchoolId) return false;
+
+  const params = new URLSearchParams({
+    classId: reportClass._id,
+    date: today
+  });
+
+  try {
+    const res = await fetch(`${API}/mood?${params.toString()}`);
+    if (!res.ok) return false;
+
+    const json = await res.json();
+    const moods = json.data || [];
+
+    return moods.some(
+      m => m.schoolMember?._id === reportMemberSchoolId
+    );
+  } catch (err) {
+    console.error("Mood check failed:", err);
+    return false;
+  }
+}
+
 
 // ================= DOM =================
 const homePad = document.getElementById("homePad");
@@ -375,7 +401,13 @@ async function renderMembers() {
   `;
 
   targetPad.appendChild(div);
+  // ================= MOOD CHECK =================
+const moodExists = await hasMoodForToday();
+
+if (!moodExists) {
   openMoodPopup();
+}
+
 
 }
 
