@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kid Mood Popup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 🔲 Overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  /* 🪟 Popup box */
+  .popup {
+    background: white;
+    width: 90%;
+    max-width: 420px;
+    border-radius: 18px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    animation: scaleIn 0.25s ease;
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .popup h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .popup p {
+    color: #555;
+    font-size: 16px;
+  }
+
+  .moods {
+    margin-top: 25px;
+    font-size: 52px;
+  }
+
+  .mood-btn {
+    cursor: pointer;
+    margin: 0 10px;
+    transition: transform 0.2s, filter 0.2s;
+  }
+
+  .mood-btn:hover {
+    transform: scale(1.3);
+  }
+
+  .mood-btn.selected {
+    filter: drop-shadow(0 0 10px #4caf50);
+    transform: scale(1.3);
+  }
+
+  .status {
+    margin-top: 18px;
+    font-weight: bold;
+  }
+
+  .success { color: green; }
+  .error { color: red; }
+
+  /* ❌ Close button */
+  .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 22px;
+    cursor: pointer;
+    color: #999;
+  }
+
+  /* 🔘 Demo open button */
+  .open-btn {
+    margin: 80px auto;
+    display: block;
+    padding: 14px 26px;
+    font-size: 18px;
+    border: none;
+    border-radius: 12px;
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- 🔘 Example button (open popup) -->
+<button class="open-btn" onclick="openMoodPopup()">Open Mood Popup</button>
+
+<!-- 🔲 Popup Overlay -->
+<div class="overlay" id="moodOverlay">
+  <div class="popup">
+    <div class="close-btn" onclick="closeMoodPopup()">✖</div>
+
+    <h2>How did you feel today?</h2>
+    <p>Choose the face that shows your feeling</p>
+
+    <div class="moods">
+      <span class="mood-btn" data-mood="very_happy">😄</span>
+      <span class="mood-btn" data-mood="happy">🙂</span>
+      <span class="mood-btn" data-mood="okay">😐</span>
+      <span class="mood-btn" data-mood="sad">🙁</span>
+      <span class="mood-btn" data-mood="very_sad">😢</span>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script>
+  /******** REQUIRED IDS ********/
+  const nurseryId = "PUT_NURSERY_ID_HERE";
+  const classId = "PUT_CLASS_ID_HERE";
+  const schoolMemberId = "PUT_SCHOOL_MEMBER_ID_HERE";
+  const today = new Date().toISOString().slice(0, 10);
+
+  const overlay = document.getElementById("moodOverlay");
+  const statusEl = document.getElementById("status");
+  const moodButtons = document.querySelectorAll(".mood-btn");
+
+  function openMoodPopup() {
+    overlay.style.display = "flex";
+  }
+
+  function closeMoodPopup() {
+    overlay.style.display = "none";
+  }
+
+  moodButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      saveMood(btn.dataset.mood, btn);
+    });
+  });
+
+  function saveMood(mood, clickedBtn) {
+    moodButtons.forEach(b => b.classList.remove("selected"));
+    clickedBtn.classList.add("selected");
+
+    fetch("/api/mood", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: today,
+        nursery: nurseryId,
+        class: classId,
+        schoolMember: schoolMemberId,
+        mood,
+        recordedBy: "teacher"
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        statusEl.textContent = "Mood saved 💙";
+        statusEl.className = "status success";
+        setTimeout(closeMoodPopup, 1200);
+      } else {
+        throw new Error();
+      }
+    })
+    .catch(() => {
+      statusEl.textContent = "Error saving mood ❌";
+      statusEl.className = "status error";
+    });
+  }
+</script>
+
+</body>
+</html>
