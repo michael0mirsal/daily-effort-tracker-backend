@@ -768,12 +768,25 @@ async function loadStars() {
 const optionsDiv = document.getElementById("options");
 
 if (user.role === "dad" || user.role === "mom") {
+
+  // ✅ Show motivation text
   document.getElementById("motivationText").style.display = "block";
 
-  // Save familyId for other pages
-  // Save family info for other pages
-  localStorage.setItem('currentFamily', JSON.stringify({ family: user.family, passkey: user.passkey }));
+  // ✅ KEEP family tree visible (do NOT hide .left-half)
 
+  // ❌ Hide Kid UI elements
+  document.getElementById("starsBox").style.display = "none";
+  document.getElementById("todayMoodDisplay").style.display = "none";
+  document.getElementById("openFamAttendance").style.display = "none";
+  document.getElementById("nurseryReportBtn").style.display = "none";
+
+  // Save family info
+  localStorage.setItem('currentFamily', JSON.stringify({
+    family: user.family,
+    passkey: user.passkey
+  }));
+
+  // ✅ Parent options only
   optionsDiv.innerHTML = `
     <h2>👩‍👧 Parent Options</h2>
 
@@ -786,6 +799,7 @@ if (user.role === "dad" || user.role === "mom") {
     </button>
   `;
 }
+
 
 
 else if (user.role === "kid") {
