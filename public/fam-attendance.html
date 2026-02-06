@@ -244,17 +244,23 @@ function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
 function getToday() { return new Date().toISOString().split("T")[0]; }
 function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true }); }
 // ✅ Decide if mood popup should appear
-function shouldShowMoodPopup(attendance) {
-  if (!attendance) return false;
+function shouldShowMoodPopup(currentAttendance, previousAttendance) {
+  if (!currentAttendance || !previousAttendance) return false;
 
-  const status = attendance.status;
-  const notes = (attendance.notes || "").toLowerCase();
+  const currentStatus = currentAttendance.status;
+  const currentNotes = (currentAttendance.notes || "").toLowerCase();
+
+  const prevStatus = previousAttendance.status;
+  const prevNotes = (previousAttendance.notes || "").toLowerCase();
 
   return (
-    status === "absent" &&
-    notes.includes("marked by parent")
+    currentStatus === "absent" &&
+    currentNotes.includes("marked by parent") &&
+    prevStatus === "leave" &&
+    prevNotes.includes("marked by teacher")
   );
 }
+
 // ================= ATTENDANCE API =================
 async function markAttendance(status) {
   try {
