@@ -413,6 +413,10 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   font-size: 0.75rem;
   color: #666;
 }
+.mood-btn.selected {
+  transform: scale(1.4);
+  text-shadow: 0 0 8px gold;
+}
 
 </style>
 </head>
@@ -450,7 +454,10 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <button id="markAllReadBtn" style="margin-bottom:10px;">✅ Mark all as read</button>
   <ul id="notificationPanelList" style="list-style:none; padding:0; margin:0;"></ul>
 </div>
-<div id="todayMoodContainer" style="display:none; font-size: 3rem; margin-top: 20px; text-align:center;"></div>
+<!-- Right side container for today's mood -->
+<div id="todayMoodDisplay" style="font-size:3rem; text-align:center; margin-top:15px;">
+  😶 <!-- Default neutral face if no mood yet -->
+</div>
 
 
 
@@ -677,57 +684,53 @@ console.log("Saved Nursery object:", { _id: nurseryId, name: nurseryName });
   window.location.href = "./fam-attendance.html";
 }
 
-async function loadTodayMoodEmoji() {
-  const container = document.getElementById("todayMoodContainer");
-  if (!container) return;
-
-  const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
+async function loadTodayMoodEmoji(schoolMemberId) {
   const today = new Date().toISOString().split("T")[0];
+  const moodContainer = document.getElementById("todayMoodDisplay");
 
-  if (!schoolMemberId) return;
+  // Reset display
+  moodContainer.innerHTML = "😶"; // default neutral
+  document.querySelectorAll(".mood-btn").forEach(el => el.classList.remove("selected"));
+
+  if (!schoolMemberId) {
+    console.warn("No schoolMemberId provided");
+    return;
+  }
 
   try {
-    const res = await fetch(`${API_BASE}/api/mood/kid?schoolMember=${schoolMemberId}&date=${today}`, {
-      headers: { "Content-Type": "application/json" }
-    });
-
+    const res = await fetch(`${API_BASE}/api/mood/kid?schoolMember=${schoolMemberId}&date=${today}`);
+    
     if (!res.ok) {
       console.log("No mood for today or fetch error", res.status);
-      container.style.display = "none";
+      // Keep default neutral emoji
       return;
     }
 
     const data = await res.json();
-
     if (!data.success || !data.data) {
-      container.style.display = "none";
+      console.log("No mood found in response");
       return;
     }
 
-    const moodEntry = data.data;
+    const mood = data.data.mood; // e.g., "okay", "happy"
 
-    // Map mood string to emoji
-    const moodMap = {
-      "very_happy": "😄",
-      "happy": "🙂",
-      "okay": "😐",
-      "sad": "🙁",
-      "very_sad": "😢"
-    };
-
-    const emoji = moodMap[moodEntry.mood] || "❓";
-
-    container.innerHTML = `Today's mood: ${emoji}`;
-    container.style.display = "block";
+    // Update right side container
+    const emojiSpan = document.querySelector(`.mood-btn[data-mood="${mood}"]`);
+    if (emojiSpan) {
+      emojiSpan.classList.add("selected");
+      moodContainer.innerText = emojiSpan.innerText; // show the emoji on right panel
+    } else {
+      moodContainer.innerText = "😶"; // fallback
+    }
 
   } catch (err) {
-    console.error("Failed to load today's mood:", err);
-    container.style.display = "none";
+    console.error("Error loading today's mood:", err);
+    moodContainer.innerText = "😶"; // fallback
   }
 }
 
-// Call after page load
-loadTodayMoodEmoji();
+
+
 
 
 
