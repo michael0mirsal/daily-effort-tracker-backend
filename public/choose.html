@@ -811,10 +811,11 @@ if (user.role === "dad" || user.role === "mom") {
     });
 
     const data = await res.json();
-    if (!data.success) {
-      alert("Failed to load family info");
-      return;
+    if (!data || !data._id) {
+     alert("Failed to load family info");
+     return;
     }
+
 
     // Save family members for add-kids.html
     localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members));
