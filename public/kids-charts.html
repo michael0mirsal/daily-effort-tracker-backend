@@ -199,11 +199,13 @@ if (!families || families.length === 0) {
   return;
 }
 
-const family = families[0];              // <-- first family object
-if (!family.members || family.members.length === 0) {
+const family = await res.json(); // <-- now it's a single object
+
+if (!family || !family.members || family.members.length === 0) {
   alert("⚠ No members found in this family.");
   return;
 }
+
 
 const kids = family.members.filter(m => m.role === "kid");
 
