@@ -302,6 +302,40 @@ router.get("/:familyName", async (req, res) => {
   }
 });
 */
+// Get family by _id (dedicated endpoint, avoids conflicts)
+router.get("/by-id/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate Mongo ObjectId
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid family ID" });
+    }
+
+    // Fetch family and populate members (optional: only kids)
+    const familyDoc = await Family.findById(id)
+      .populate({
+        path: "members",
+        match: { role: "kid" } // optional, only kids
+      });
+
+    if (!familyDoc) {
+      return res.status(404).json({ message: "Family not found" });
+    }
+
+    res.json(familyDoc);
+
+  } catch (err) {
+    console.error("❌ Get family by ID error:", err);
+    res.status(500).json({
+      message: "Server error while fetching family by ID",
+      error: err.message
+    });
+  }
+});
+
+
+
 // ✅ Optional: Get family by _id explicitly
 router.get("/id/:id", async (req, res) => {
   try {
