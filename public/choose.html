@@ -817,8 +817,8 @@ if (user.role === "dad" || user.role === "mom") {
     }
 
 
-    // Save family members for add-kids.html
-    localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members || []));
+    // Save family members
+localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members || []));
 localStorage.setItem("currentFamily", JSON.stringify({
   family: data.name || "Unknown",
   familyId: data._id || "",
