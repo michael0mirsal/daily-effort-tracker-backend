@@ -1,7 +1,8 @@
 import express from "express";
 import {
   saveKidMood,
-  getMoodsByClassAndDate
+  getMoodsByClassAndDate,
+  getMoodByKidAndDate
 } from "../controllers/moodController.js";
 
 const router = express.Router();
