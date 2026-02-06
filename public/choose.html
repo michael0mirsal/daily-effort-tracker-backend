@@ -450,6 +450,17 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <button id="markAllReadBtn" style="margin-bottom:10px;">✅ Mark all as read</button>
   <ul id="notificationPanelList" style="list-style:none; padding:0; margin:0;"></ul>
 </div>
+<div id="moodImageContainer" style="
+  margin-top: 20px;
+  display: none;
+  width: 80%;
+  max-width: 300px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+">
+  <img id="moodImage" src="" alt="Today's Mood" style="width: 100%; display: block;" />
+</div>
 
 
 
@@ -675,6 +686,36 @@ console.log("Saved Nursery object:", { _id: nurseryId, name: nurseryName });
   window.location.href = "./fam-attendance.html";
 }
 
+async function loadTodayMoodImage() {
+  const container = document.getElementById("moodImageContainer");
+  const img = document.getElementById("moodImage");
+  if (!container || !img) return;
+
+  const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
+  const today = new Date().toISOString().split("T")[0];
+
+  if (!schoolMemberId) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/moods?schoolMember=${schoolMemberId}&date=${today}`, {
+      headers: { "Content-Type": "application/json" }
+    });
+    const data = await res.json();
+
+    if (!data.success || !data.moods || !data.moods.length) return;
+
+    // Pick the first mood of today
+    const moodEntry = data.moods[0];
+
+    if (moodEntry.imageUrl) {
+      img.src = moodEntry.imageUrl; // image URL from DB
+      container.style.display = "block"; // show the container
+    }
+
+  } catch (err) {
+    console.error("Failed to load today's mood image:", err);
+  }
+}
 
 
 
@@ -887,6 +928,8 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
 loadFamilyTree();
 loadStars();
 loadTodayNotes();
+loadTodayMoodImage();
+
 </script>
 <!-- 🔵 NEW: Socket.IO client -->
 <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
