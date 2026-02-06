@@ -350,9 +350,11 @@ const currentAttendance = updatedList.find(
 
 const moodExists = await hasMoodForToday();
 
-if (!moodExists && shouldShowMoodPopup(currentAttendance, previousAttendance)) {
+// TEMPORARY: bypass strict check
+if (!moodExists) {
   openMoodPopup();
 }
+
 await renderMembers();
 
   } catch (err) {
