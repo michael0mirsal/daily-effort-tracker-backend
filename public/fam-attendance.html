@@ -247,6 +247,9 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 function shouldShowMoodPopup(currentAttendance, previousAttendance) {
   if (!currentAttendance || !previousAttendance) return false;
 
+  // prevent same record overwrite bug
+  if (currentAttendance._id === previousAttendance._id) return false;
+
   const currentStatus = currentAttendance.status;
   const currentNotes = (currentAttendance.notes || "").toLowerCase();
 
@@ -260,6 +263,7 @@ function shouldShowMoodPopup(currentAttendance, previousAttendance) {
     prevNotes.includes("marked by teacher")
   );
 }
+
 
 // ================= ATTENDANCE API =================
 async function markAttendance(status) {
@@ -285,7 +289,8 @@ async function markAttendance(status) {
 
     // -------------------- MAP STATUS & NOTES --------------------
     let finalStatus = "";
-    let noteText = "Marked by Parent";
+    let noteText = "marked by parent";
+
 
     if (status === "home") {
       finalStatus = "absent";   // Kid at home
@@ -299,6 +304,13 @@ async function markAttendance(status) {
 
     console.log("finalStatus (mapped):", finalStatus);
     console.log("notes:", noteText);
+  
+    // ⭐ Capture previous attendance BEFORE updating
+const attendanceList = await fetchTodayAttendance();
+
+const previousAttendance = attendanceList.find(
+  a => a.schoolMember?._id === schoolMember
+);
 
     // -------------------- BUILD DATA --------------------
     const now = new Date();
@@ -328,7 +340,21 @@ async function markAttendance(status) {
       throw new Error(`HTTP ${res.status} - ${text}`);
     }
 
-    alert(`✅ Notification Sent : ${finalStatus.toUpperCase()}`);
+   alert(`✅ Notification Sent : ${finalStatus.toUpperCase()}`);
+
+// ⭐ Re-fetch updated attendance
+const updatedList = await fetchTodayAttendance();
+const currentAttendance = updatedList.find(
+  a => a.schoolMember?._id === schoolMember
+);
+
+const moodExists = await hasMoodForToday();
+
+if (!moodExists && shouldShowMoodPopup(currentAttendance, previousAttendance)) {
+  openMoodPopup();
+}
+await renderMembers();
+
   } catch (err) {
     console.error("Attendance error:", err);
     alert("❌ Failed to mark attendance");
@@ -419,13 +445,6 @@ async function renderMembers() {
 
   targetPad.appendChild(div);
   // ================= MOOD CHECK =================
-// ================= FINAL MOOD POPUP DECISION =================
-const moodExists = await hasMoodForToday();
-const allowPopup = shouldShowMoodPopup(todayAttendance);
-
-if (!moodExists && allowPopup) {
-  openMoodPopup();
-}
 
 
 
