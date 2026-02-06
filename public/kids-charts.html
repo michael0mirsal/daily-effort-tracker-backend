@@ -193,11 +193,6 @@ async function createKidsCharts() {
     const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`);
     if (!res.ok) throw new Error("Family not found");
 
-    const families = await res.json();       // <-- rename to plural
-if (!families || families.length === 0) {
-  alert("⚠ Family data missing on the server.");
-  return;
-}
 
 const family = await res.json(); // <-- now it's a single object
 
