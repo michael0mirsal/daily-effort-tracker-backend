@@ -115,3 +115,43 @@ export const getMoodsByClassAndDate = async (req, res) => {
     });
   }
 };
+/**
+ * 📅 Get today's mood for a specific kid
+ * GET /api/mood/kid?schoolMember=xxx&date=yyyy-mm-dd
+ */
+export const getMoodByKidAndDate = async (req, res) => {
+  try {
+    const { schoolMember, date } = req.query;
+
+    if (!schoolMember || !date) {
+      return res.status(400).json({
+        success: false,
+        message: "schoolMember and date are required"
+      });
+    }
+
+    const mood = await KidMood.findOne({
+      schoolMember,
+      date
+    });
+
+    if (!mood) {
+      return res.status(404).json({
+        success: false,
+        message: "No mood found for this kid today"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: mood
+    });
+
+  } catch (error) {
+    console.error("❌ Get Mood by Kid Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
