@@ -818,12 +818,13 @@ if (user.role === "dad" || user.role === "mom") {
 
 
     // Save family members for add-kids.html
-    localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members));
-    localStorage.setItem("currentFamily", JSON.stringify({
-      family: data.family.name,
-      familyId: data.family._id,
-      passkey: user.passkey
-    }));
+    localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members || []));
+localStorage.setItem("currentFamily", JSON.stringify({
+  family: data.name || "Unknown",
+  familyId: data._id || "",
+  passkey: user.passkey
+}));
+
 
     // Navigate to add-kids page
     window.location.href = "add-kids.html";
