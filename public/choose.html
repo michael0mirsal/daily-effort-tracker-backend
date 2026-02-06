@@ -535,8 +535,16 @@ async function loadFamilyTree() {
           <ol>
             <li>
               <div class="couple">
-                <div class="person"><div class="name">👨 ${family.dad}</div></div>
-                <div class="person"><div class="name">👩 ${family.mom}</div></div>
+                <div class="couple">
+                <div class="person ${user.role === "dad" && family.dad.toLowerCase() === user.name.toLowerCase() ? 'highlighted' : ''}">
+                <div class="name">👨 ${family.dad}</div>
+                </div>
+
+                <div class="person ${user.role === "mom" && family.mom.toLowerCase() === user.name.toLowerCase() ? 'highlighted' : ''}">
+                <div class="name">👩 ${family.mom}</div>
+                </div>
+                </div>
+
               </div>
               <ol>
                 ${members.map(k => `
