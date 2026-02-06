@@ -247,7 +247,6 @@ function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-
 function shouldShowMoodPopup(currentAttendance, previousAttendance) {
   if (!currentAttendance || !previousAttendance) return false;
 
-  // prevent same record overwrite bug
   if (currentAttendance._id === previousAttendance._id) return false;
 
   const currentStatus = currentAttendance.status;
@@ -263,6 +262,7 @@ function shouldShowMoodPopup(currentAttendance, previousAttendance) {
     prevNotes.includes("marked by teacher")
   );
 }
+
 
 
 // ================= ATTENDANCE API =================
@@ -382,11 +382,13 @@ async function drop(ev) {
   // Only mark for logged-in member
   if (id !== currentUser._id) return;
 // Get previous attendance BEFORE marking
+  // ⭐ Get previous attendance BEFORE marking
   const attendanceList = await fetchTodayAttendance();
   const previousAttendance = attendanceList.find(
     a => a.schoolMember?._id === reportMemberSchoolId
   );
-   await markAttendance(isBus ? "bus" : "home");
+
+  await markAttendance(isBus ? "bus" : "home", previousAttendance);
 }
 
 async function renderMembers() {
