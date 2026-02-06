@@ -190,7 +190,7 @@ async function createKidsCharts() {
 
   try {
     // 1️⃣ Load the family info (single object)
-    const res = await fetch(`${API_BASE}/api/families/${currentUser.family}`);
+    const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`);
     if (!res.ok) throw new Error("Family not found");
 
     const families = await res.json();       // <-- rename to plural
