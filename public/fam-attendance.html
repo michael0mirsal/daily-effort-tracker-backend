@@ -351,9 +351,10 @@ const currentAttendance = updatedList.find(
 const moodExists = await hasMoodForToday();
 
 // TEMPORARY: bypass strict check
-if (!moodExists) {
-  openMoodPopup();
-}
+// ✅ Only show mood popup when appropriate
+  if (!moodExists && shouldShowMoodPopup(currentAttendance, previousAttendance)) {
+    openMoodPopup();
+  }
 
 await renderMembers();
 
@@ -380,7 +381,11 @@ async function drop(ev) {
 
   // Only mark for logged-in member
   if (id !== currentUser._id) return;
-
+// Get previous attendance BEFORE marking
+  const attendanceList = await fetchTodayAttendance();
+  const previousAttendance = attendanceList.find(
+    a => a.schoolMember?._id === reportMemberSchoolId
+  );
    await markAttendance(isBus ? "bus" : "home");
 }
 
