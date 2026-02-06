@@ -697,19 +697,25 @@ async function loadTodayMoodImage() {
   if (!schoolMemberId) return;
 
   try {
-    const res = await fetch(`${API_BASE}/api/moods?schoolMember=${schoolMemberId}&date=${today}`, {
+    const res = await fetch(`${API_BASE}/api/mood/kid?schoolMember=${schoolMemberId}&date=${today}`, {
       headers: { "Content-Type": "application/json" }
     });
+
+    if (!res.ok) {
+      console.warn("No mood for today or fetch error", res.status);
+      return;
+    }
+
     const data = await res.json();
 
-    if (!data.success || !data.moods || !data.moods.length) return;
+    if (!data.success || !data.data) return;
 
-    // Pick the first mood of today
-    const moodEntry = data.moods[0];
+    const moodEntry = data.data;
 
+    // Check if imageUrl exists
     if (moodEntry.imageUrl) {
-      img.src = moodEntry.imageUrl; // image URL from DB
-      container.style.display = "block"; // show the container
+      img.src = moodEntry.imageUrl; // display image
+      container.style.display = "block";
     }
 
   } catch (err) {
