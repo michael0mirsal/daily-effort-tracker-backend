@@ -450,17 +450,8 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   <button id="markAllReadBtn" style="margin-bottom:10px;">✅ Mark all as read</button>
   <ul id="notificationPanelList" style="list-style:none; padding:0; margin:0;"></ul>
 </div>
-<div id="moodImageContainer" style="
-  margin-top: 20px;
-  display: none;
-  width: 80%;
-  max-width: 300px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-">
-  <img id="moodImage" src="" alt="Today's Mood" style="width: 100%; display: block;" />
-</div>
+<div id="todayMoodContainer" style="display:none; font-size: 3rem; margin-top: 20px; text-align:center;"></div>
+
 
 
 
@@ -686,10 +677,9 @@ console.log("Saved Nursery object:", { _id: nurseryId, name: nurseryName });
   window.location.href = "./fam-attendance.html";
 }
 
-async function loadTodayMoodImage() {
-  const container = document.getElementById("moodImageContainer");
-  const img = document.getElementById("moodImage");
-  if (!container || !img) return;
+async function loadTodayMoodEmoji() {
+  const container = document.getElementById("todayMoodContainer");
+  if (!container) return;
 
   const schoolMemberId = localStorage.getItem("currentSchoolMemberId");
   const today = new Date().toISOString().split("T")[0];
@@ -702,26 +692,43 @@ async function loadTodayMoodImage() {
     });
 
     if (!res.ok) {
-      console.warn("No mood for today or fetch error", res.status);
+      console.log("No mood for today or fetch error", res.status);
+      container.style.display = "none";
       return;
     }
 
     const data = await res.json();
 
-    if (!data.success || !data.data) return;
+    if (!data.success || !data.data) {
+      container.style.display = "none";
+      return;
+    }
 
     const moodEntry = data.data;
 
-    // Check if imageUrl exists
-    if (moodEntry.imageUrl) {
-      img.src = moodEntry.imageUrl; // display image
-      container.style.display = "block";
-    }
+    // Map mood string to emoji
+    const moodMap = {
+      "very_happy": "😄",
+      "happy": "🙂",
+      "okay": "😐",
+      "sad": "🙁",
+      "very_sad": "😢"
+    };
+
+    const emoji = moodMap[moodEntry.mood] || "❓";
+
+    container.innerHTML = `Today's mood: ${emoji}`;
+    container.style.display = "block";
 
   } catch (err) {
-    console.error("Failed to load today's mood image:", err);
+    console.error("Failed to load today's mood:", err);
+    container.style.display = "none";
   }
 }
+
+// Call after page load
+loadTodayMoodEmoji();
+
 
 
 
@@ -934,7 +941,7 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
 loadFamilyTree();
 loadStars();
 loadTodayNotes();
-loadTodayMoodImage();
+loadTodayMoodEmoji();
 
 </script>
 <!-- 🔵 NEW: Socket.IO client -->
