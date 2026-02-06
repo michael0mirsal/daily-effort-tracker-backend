@@ -427,7 +427,9 @@ async function renderMembers() {
   document.body.appendChild(label);
   return;
 }
-
+// ================= REMOVE DUPLICATE =================
+  const existingEl = document.getElementById(currentUser._id);
+  if (existingEl) existingEl.remove();
 
   // ================= CREATE MEMBER =================
   const div = document.createElement("div");
