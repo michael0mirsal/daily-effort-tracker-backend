@@ -569,6 +569,7 @@ localStorage.setItem("currentFamilyMembers", JSON.stringify(members));
   // ✅ Save BOTH IDs correctly
   localStorage.setItem("currentFamilyMemberId", kid._id);      // Family table ID
   localStorage.setItem("currentSchoolMemberId", kid.schoolMemberId || kid._id); // School/Nursery ID
+  if (kid.schoolMemberId) loadTodayMoodEmoji(kid.schoolMemberId);
 }
 
 
@@ -689,7 +690,7 @@ async function loadTodayMoodEmoji(schoolMemberId) {
   const moodContainer = document.getElementById("todayMoodDisplay");
 
   // Reset display
-  moodContainer.innerHTML = "😶"; // default neutral
+  moodContainer.innerHTML = "😶"; // default neutral face
   document.querySelectorAll(".mood-btn").forEach(el => el.classList.remove("selected"));
 
   if (!schoolMemberId) {
@@ -701,26 +702,31 @@ async function loadTodayMoodEmoji(schoolMemberId) {
     const res = await fetch(`${API_BASE}/api/mood/kid?schoolMember=${schoolMemberId}&date=${today}`);
     
     if (!res.ok) {
+      // If no mood is recorded today, just show neutral
       console.log("No mood for today or fetch error", res.status);
-      // Keep default neutral emoji
+      moodContainer.innerText = "😶";
       return;
     }
 
     const data = await res.json();
+
     if (!data.success || !data.data) {
+      // No mood recorded
       console.log("No mood found in response");
+      moodContainer.innerText = "😶";
       return;
     }
 
     const mood = data.data.mood; // e.g., "okay", "happy"
 
-    // Update right side container
+    // Update UI with correct emoji
     const emojiSpan = document.querySelector(`.mood-btn[data-mood="${mood}"]`);
     if (emojiSpan) {
       emojiSpan.classList.add("selected");
-      moodContainer.innerText = emojiSpan.innerText; // show the emoji on right panel
+      moodContainer.innerText = emojiSpan.innerText; // show emoji
     } else {
-      moodContainer.innerText = "😶"; // fallback
+      // fallback
+      moodContainer.innerText = "😶";
     }
 
   } catch (err) {
@@ -944,7 +950,7 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
 loadFamilyTree();
 loadStars();
 loadTodayNotes();
-loadTodayMoodEmoji();
+
 
 </script>
 <!-- 🔵 NEW: Socket.IO client -->
