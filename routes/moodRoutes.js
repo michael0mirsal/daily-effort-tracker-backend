@@ -18,5 +18,5 @@ router.post("/", saveKidMood);
  * GET /api/mood?classId=xxx&date=yyyy-mm-dd
  */
 router.get("/", getMoodsByClassAndDate);
-router.get("/mood/kid", getMoodByKidAndDate); // ✅ new route
+router.get("/kid", getMoodByKidAndDate); // ✅ new route
 export default router;
