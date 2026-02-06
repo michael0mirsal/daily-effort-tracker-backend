@@ -785,36 +785,55 @@ async function loadStars() {
 const optionsDiv = document.getElementById("options");
 
 if (user.role === "dad" || user.role === "mom") {
-
-  // ✅ Show motivation text
   document.getElementById("motivationText").style.display = "block";
 
-  // ✅ KEEP family tree visible (do NOT hide .left-half)
-
-  // ❌ Hide Kid UI elements
+  // Hide kid elements
   document.getElementById("starsBox").style.display = "none";
   document.getElementById("todayMoodDisplay").style.display = "none";
   document.getElementById("openFamAttendance").style.display = "none";
   document.getElementById("nurseryReportBtn").style.display = "none";
 
-  // Save family info
-  localStorage.setItem('currentFamily', JSON.stringify({
-    family: user.family,
-    passkey: user.passkey
-  }));
+  // Parent options container
+  optionsDiv.innerHTML = `<h2>👩‍👧 Parent Options</h2>`;
 
-  // ✅ Parent options only
-  optionsDiv.innerHTML = `
-    <h2>👩‍👧 Parent Options</h2>
+  // Add "Add / Manage Kids" button dynamically
+  const addKidsBtn = document.createElement("button");
+  addKidsBtn.innerText = "➕ Add / Manage Kids";
+  addKidsBtn.onclick = async () => {
+    if (!user.familyId) { alert("No family ID found!"); return; }
 
-    <button onclick="window.location.href='add-kids.html'">
-      ➕ Add / Manage Kids
-    </button>
+    try {
+      const res = await fetch(`${API_BASE}/api/families/${user.familyId}/school-info`, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-family-id": user.familyId
+        }
+      });
+      const data = await res.json();
+      if (!data.success) { alert("Failed to load family info"); return; }
 
-    <button onclick="window.location.href='kids-charts.html'">
-      📊 View Children's Efforts
-    </button>
-  `;
+      // Save family members
+      localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members));
+      localStorage.setItem("currentFamily", JSON.stringify({
+        family: data.family.name,
+        familyId: data.family._id,
+        passkey: user.passkey
+      }));
+
+      // Navigate to add-kids.html
+      window.location.href = "add-kids.html";
+    } catch (err) {
+      console.error(err);
+      alert("Error loading family members");
+    }
+  };
+  optionsDiv.appendChild(addKidsBtn);
+
+  // Add "View Children's Efforts" button
+  const chartsBtn = document.createElement("button");
+  chartsBtn.innerText = "📊 View Children's Efforts";
+  chartsBtn.onclick = () => { window.location.href = "kids-charts.html"; };
+  optionsDiv.appendChild(chartsBtn);
 }
 
 
