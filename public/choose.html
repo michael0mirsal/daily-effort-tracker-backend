@@ -800,33 +800,38 @@ if (user.role === "dad" || user.role === "mom") {
   const addKidsBtn = document.createElement("button");
   addKidsBtn.innerText = "➕ Add / Manage Kids";
   addKidsBtn.onclick = async () => {
-    if (!user.familyId) { alert("No family ID found!"); return; }
+  if (!user.familyId) { 
+    alert("No family ID found!"); 
+    return; 
+  }
 
-    try {
-      const res = await fetch(`${API_BASE}/api/families/${user.familyId}/school-info`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-family-id": user.familyId
-        }
-      });
-      const data = await res.json();
-      if (!data.success) { alert("Failed to load family info"); return; }
+  try {
+    const res = await fetch(`${API_BASE}/api/families/by-id/${user.familyId}`, {
+      headers: { "Content-Type": "application/json" }
+    });
 
-      // Save family members
-      localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members));
-      localStorage.setItem("currentFamily", JSON.stringify({
-        family: data.family.name,
-        familyId: data.family._id,
-        passkey: user.passkey
-      }));
-
-      // Navigate to add-kids.html
-      window.location.href = "add-kids.html";
-    } catch (err) {
-      console.error(err);
-      alert("Error loading family members");
+    const data = await res.json();
+    if (!data.success) {
+      alert("Failed to load family info");
+      return;
     }
-  };
+
+    // Save family members for add-kids.html
+    localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members));
+    localStorage.setItem("currentFamily", JSON.stringify({
+      family: data.family.name,
+      familyId: data.family._id,
+      passkey: user.passkey
+    }));
+
+    // Navigate to add-kids page
+    window.location.href = "add-kids.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Error loading family members");
+  }
+};
   optionsDiv.appendChild(addKidsBtn);
 
   // Add "View Children's Efforts" button
