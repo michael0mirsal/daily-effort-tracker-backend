@@ -244,10 +244,14 @@ function drag(ev) { ev.dataTransfer.setData("id", ev.target.id); }
 function getToday() { return new Date().toISOString().split("T")[0]; }
 function getCurrentTime() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true }); }
 // ✅ Decide if mood popup should appear
+
+console.log("📌 Previous Attendance:", previousAttendance);
+console.log("📌 Current Attendance:", currentAttendance);
+console.log("📌 Mood exists today?", moodExists);
+
+
 function shouldShowMoodPopup(currentAttendance, previousAttendance) {
   if (!currentAttendance || !previousAttendance) return false;
-
-  if (currentAttendance._id === previousAttendance._id) return false;
 
   const currentStatus = currentAttendance.status;
   const currentNotes = (currentAttendance.notes || "").toLowerCase();
@@ -255,13 +259,23 @@ function shouldShowMoodPopup(currentAttendance, previousAttendance) {
   const prevStatus = previousAttendance.status;
   const prevNotes = (previousAttendance.notes || "").toLowerCase();
 
-  return (
+  const result =
     currentStatus === "absent" &&
     currentNotes.includes("marked by parent") &&
     prevStatus === "leave" &&
-    prevNotes.includes("marked by teacher")
-  );
+    prevNotes.includes("marked by teacher");
+
+  console.log("✅ shouldShowMoodPopup check:", {
+    currentStatus,
+    currentNotes,
+    prevStatus,
+    prevNotes,
+    result
+  });
+
+  return result;
 }
+
 
 
 
