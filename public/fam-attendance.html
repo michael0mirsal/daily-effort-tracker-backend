@@ -253,26 +253,30 @@ function shouldShowMoodPopup(currentAttendance, previousAttendance) {
 
   const currentStatus = currentAttendance.status;
   const currentNotes = (currentAttendance.notes || "").toLowerCase();
-
   const prevStatus = previousAttendance.status;
   const prevNotes = (previousAttendance.notes || "").toLowerCase();
+
+  // ✅ Check if previous notes starts with "marked by "
+  const prevMarkedByTeacher = prevNotes.startsWith("marked by ");
 
   const result =
     currentStatus === "absent" &&
     currentNotes.includes("marked by parent") &&
     prevStatus === "leave" &&
-    prevNotes.includes("marked by teacher");
+    prevMarkedByTeacher;
 
   console.log("✅ shouldShowMoodPopup check:", {
     currentStatus,
     currentNotes,
     prevStatus,
     prevNotes,
+    prevMarkedByTeacher,
     result
   });
 
   return result;
 }
+
 
 
 
