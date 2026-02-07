@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
+console.log("JWT_SECRET:", process.env.JWT_SECRET);//
 import http from "http";
 import { Server } from "socket.io";
 // ======================================================
