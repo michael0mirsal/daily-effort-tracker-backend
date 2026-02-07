@@ -102,6 +102,8 @@ router.post("/signin", async (req, res) => {
   try {
     // Find family and populate members
     const found = await Family.findOne({ name: family }).populate("members");
+    console.log("Family found:", found); // ✅ log here in Node.js
+    console.log("Passhash:", found.passhash); // ✅ log the passhash
     if (!found) return res.status(404).json({ message: "Family not found" });
 
     // Check passkey
