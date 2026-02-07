@@ -1,10 +1,12 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 import http from "http";
 import { Server } from "socket.io";
 // ======================================================
 // ✅ Imports & Setup
 // ======================================================
 import express from "express";
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
@@ -38,7 +40,6 @@ const PORT = process.env.PORT; // ✅ use the platform-assigned port
 // ======================================================
 app.use(cors());
 app.use(express.json());
-dotenv.config({ path: ".env.local" });
 // Serve welcome page
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
