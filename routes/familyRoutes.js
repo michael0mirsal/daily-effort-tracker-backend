@@ -122,6 +122,22 @@ router.post("/signin", async (req, res) => {
     // Clear limiter on successful login
     if (signinAttempts.has(limiterKey)) signinAttempts.delete(limiterKey);
 
+    // Generate JWT token
+    // -----------------------------
+    const token = jwt.sign(
+      {
+        userId: detectedRole === "kid" 
+                  ? found.members.find(m => (m.name || "").trim().toLowerCase() === nameLower)._id 
+                  : null,
+        role: detectedRole,
+        familyId: found._id
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Return family info + user role + JWT
+
     // Return family + detected role for frontend
     res.json({
       message: "Login successful (family mode)",
