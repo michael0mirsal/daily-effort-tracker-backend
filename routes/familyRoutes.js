@@ -124,23 +124,36 @@ router.post("/signin", async (req, res) => {
 
     // Generate JWT token
     // -----------------------------
-    const token = jwt.sign(
-      {
-        userId: detectedRole === "kid" 
-                  ? found.members.find(m => (m.name || "").trim().toLowerCase() === nameLower)._id 
-                  : null,
-        role: detectedRole,
-        familyId: found._id
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+
+    // Safe JWT generation
+let userId = null;
+if (detectedRole === "kid") {
+  const member = found.members.find(m => (m.name || "").trim().toLowerCase() === nameLower);
+  if (!member) {
+    return res.status(500).json({ message: "Member not found for JWT generation" });
+  }
+  userId = member._id;
+}
+
+// Make sure JWT_SECRET exists
+if (!process.env.JWT_SECRET) {
+  console.error("JWT_SECRET is not defined in environment variables!");
+  return res.status(500).json({ message: "Server JWT configuration error" });
+}
+
+const token = jwt.sign(
+  { userId, role: detectedRole, familyId: found._id },
+  process.env.JWT_SECRET,
+  { expiresIn: "7d" }
+);
+
 
     // Return family info + user role + JWT
 
     // Return family + detected role for frontend
     res.json({
       message: "Login successful (family mode)",
+      token,  // ✅ Include the JWT here
       family: {
         _id: found._id,
         name: found.name,
