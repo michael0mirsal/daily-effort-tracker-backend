@@ -6,6 +6,7 @@ import FamilyMember from "../models/Member.js";
 import SchoolMember from "../models/sch-Member.js";
 import { requireFamily } from "../middlewares/requireFamily.js";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
 
 const router = express.Router();
@@ -94,7 +95,7 @@ router.post("/signin", async (req, res) => {
       message: "Too many signin attempts. Try again later.", 
       retryAfterSeconds: rl.retryAfter 
     });
-    
+
 
   // Validate input
   if (!family || !name || !passkey)
