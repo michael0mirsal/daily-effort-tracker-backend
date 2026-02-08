@@ -558,353 +558,311 @@
     </div>
   </div>
 
-  <script>
-    const API_URL = "https://daily-effort-tracker-backend.onrender.com";
+ <script>
+const API_URL = "https://daily-effort-tracker-backend.onrender.com";
 
-    const msg = document.getElementById('msg');
-    const kidsListDiv = document.getElementById('kidsList');
-    const familyPillName = document.getElementById('familyName');
-    const hintTag = document.getElementById('hintTag');
+const msg = document.getElementById('msg');
+const kidsListDiv = document.getElementById('kidsList');
+const familyPillName = document.getElementById('familyName');
+const hintTag = document.getElementById('hintTag');
 
-    const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
+const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
 
-    // ✅ Check for token instead of passkey
+// ✅ Check for token instead of passkey
 if (!familyData.family || !familyData.token) {
   alert('Family info missing or not logged in. Please sign in first.');
   window.location.href = 'signin.html';
 }
 
-    familyPillName.textContent = String(familyData.family);
+familyPillName.textContent = String(familyData.family);
 
-    let kids = [];
+let kids = [];
 
-    function showMsg(type, text){
-      msg.className = 'message show ' + (type || 'info');
-      msg.textContent = text;
-    }
-    function clearMsg(){
-      msg.className = 'message';
-      msg.textContent = '';
-    }
+// --------- Helper Messages ---------
+function showMsg(type, text){
+  msg.className = 'message show ' + (type || 'info');
+  msg.textContent = text;
+}
+function clearMsg(){
+  msg.className = 'message';
+  msg.textContent = '';
+}
 
-    async function updateAvatar(memberId, file) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "familytracker");
+// --------- Avatar Upload ---------
+async function updateAvatar(memberId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "familytracker");
 
-      const cloudRes = await fetch(
-        "https://api.cloudinary.com/v1_1/djzj9op1f/image/upload",
-        { method: "POST", body: formData }
-      );
+  const cloudRes = await fetch("https://api.cloudinary.com/v1_1/djzj9op1f/image/upload", { method: "POST", body: formData });
+  if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
 
-      if (!cloudRes.ok) throw new Error("Cloudinary upload failed");
+  const cloudData = await cloudRes.json();
+  const avatarUrl = cloudData.secure_url;
 
-      const cloudData = await cloudRes.json();
-      const avatarUrl = cloudData.secure_url;
+  const res = await fetch(`${API_URL}/api/families/update-avatar`, {
+    method: "PATCH",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + familyData.token
+    },
+    body: JSON.stringify({ memberId, avatarUrl })
+  });
+  if (!res.ok) throw new Error("Backend update failed");
 
-      const res = await fetch(`${API_URL}/api/families/update-avatar`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, avatarUrl })
-      });
+  return avatarUrl;
+}
 
-      if (!res.ok) throw new Error("Backend update failed");
+async function handleAvatarUpload(index) {
+  const fileInput = document.getElementById(`avatarFile${index}`);
+  if (!fileInput.files.length) return;
 
-      return avatarUrl;
-    }
+  const file = fileInput.files[0];
+  const memberId = kids[index]?._id;
+  if (!memberId) {
+    alert("Kid must be saved to server before uploading avatar.");
+    return;
+  }
 
-    async function handleAvatarUpload(index) {
-      const fileInput = document.getElementById(`avatarFile${index}`);
-      if (!fileInput.files.length) return;
+  try {
+    const oldAvatar = kids[index].avatar;
+    kids[index].avatar = oldAvatar || "default-avatar.png";
+    renderKids();
 
-      const file = fileInput.files[0];
-      const memberId = kids[index]?._id;
-      if (!memberId) {
-        alert("Kid must be saved to server before uploading avatar.");
-        return;
-      }
+    const avatarUrl = await updateAvatar(memberId, file);
+    kids[index].avatar = avatarUrl;
+    renderKids();
 
-      try {
-        // optimistic UI: show loading state by temporarily swapping avatar
-        const oldAvatar = kids[index].avatar;
-        kids[index].avatar = oldAvatar || "default-avatar.png";
-        renderKids();
+    showMsg('ok', `Avatar updated for ${kids[index].name}.`);
+  } catch (err) {
+    console.error(err);
+    showMsg('err', "Failed to update avatar. Please try again.");
+  } finally {
+    fileInput.value = "";
+  }
+}
 
-        const avatarUrl = await updateAvatar(memberId, file);
-        kids[index].avatar = avatarUrl;
-        renderKids();
-
-        showMsg('ok', `Avatar updated for ${kids[index].name}.`);
-      } catch (err) {
-        console.error(err);
-        showMsg('err', "Failed to update avatar. Please try again.");
-      } finally {
-        // allow re-upload same file by resetting input
-        fileInput.value = "";
-      }
-    }
-
-    async function loadKids() {
-      try {
-        // ✅ Send token in Authorization header
+// --------- Load Kids ---------
+async function loadKids() {
+  try {
     const res = await fetch(`${API_URL}/api/families/by-id/${familyData.familyId}`, {
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + familyData.token
       }
     });
-        const data = await res.json();
-        const family = data[0];
-        if (family?.members) {
-          kids = family.members.filter(m => m.role === 'kid');
-          renderKids();
-        }
-      } catch (err) {
-        console.error("Error loading kids:", err);
-      }
+    const data = await res.json();
+    const family = data[0];
+    if (family?.members) {
+      kids = family.members.filter(m => m.role === 'kid');
+      renderKids();
     }
+  } catch (err) {
+    console.error("Error loading kids:", err);
+  }
+}
 
-    function renderKids() {
-      kidsListDiv.innerHTML = '';
+// --------- Render Kids ---------
+function renderKids() {
+  kidsListDiv.innerHTML = '';
 
-      const hasUnsaved = kids.some(k => !k._id);
-      hintTag.style.display = hasUnsaved ? 'inline-flex' : 'none';
+  const hasUnsaved = kids.some(k => !k._id);
+  hintTag.style.display = hasUnsaved ? 'inline-flex' : 'none';
 
-      if (kids.length === 0) {
-        kidsListDiv.innerHTML = `
-          <div style="
-            grid-column:1/-1;
-            padding: 14px;
-            border-radius: 14px;
-            border: 1px dashed rgba(255,255,255,.18);
-            color: rgba(234,240,255,.70);
-            background: rgba(255,255,255,.05);
-          ">
-            No kids added yet. Use the form on the left to add your first kid.
-          </div>
-        `;
-        return;
+  if (kids.length === 0) {
+    kidsListDiv.innerHTML = `
+      <div style="
+        grid-column:1/-1;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px dashed rgba(255,255,255,.18);
+        color: rgba(234,240,255,.70);
+        background: rgba(255,255,255,.05);
+      ">
+        No kids added yet. Use the form on the left to add your first kid.
+      </div>
+    `;
+    return;
+  }
+
+  kids.forEach((k, index) => {
+    const div = document.createElement('div');
+    div.className = 'kidCard';
+
+    const safeName = (k.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const ageText = k.age ? `${k.age} yrs` : 'Age not set';
+
+    div.innerHTML = `
+      <img class="avatar" src="${k.avatar || 'default-avatar.png'}" alt="Avatar" />
+
+      <div class="kidMain">
+        <div class="kidName" title="${safeName}">${safeName}</div>
+        <div class="kidMeta">${ageText}</div>
+
+        <div class="kidBtns">
+          <button class="btn-secondary btn-small" onclick="editKid(${index})">Edit</button>
+          <button class="btn-danger btn-small" onclick="deleteKid(${index})">Delete</button>
+
+          <input
+            class="fileInput"
+            type="file"
+            id="avatarFile${index}"
+            accept="image/*"
+            onchange="handleAvatarUpload(${index})"
+          />
+
+          <button
+            class="btn-primary btn-small"
+            onclick="triggerUpload(${index})"
+            ${k._id ? '' : 'disabled'}
+            title="${k._id ? 'Upload avatar' : 'Save first to enable upload'}"
+          >
+            Upload Avatar
+          </button>
+        </div>
+      </div>
+    `;
+
+    kidsListDiv.appendChild(div);
+  });
+}
+
+function triggerUpload(index){
+  const fileInput = document.getElementById(`avatarFile${index}`);
+  fileInput.click();
+}
+
+// ---------------- ADD KID FUNCTION (HIGHLIGHT) ----------------
+function addKid() {
+  const name = document.getElementById('kidName').value.trim();
+  const ageRaw = document.getElementById('kidAge').value.trim();
+  const role = document.getElementById('kidGender').value;
+
+  clearMsg();
+
+  if (!name) {
+    showMsg('err', "Please enter kid's name.");
+    return;
+  }
+
+  const age = ageRaw ? Number(ageRaw) : null;
+
+  // ✅ Add new kid locally
+  kids.push({
+    name,
+    age: Number.isFinite(age) ? age : null,
+    role
+  });
+
+  renderKids(); // update UI
+
+  // Clear form fields
+  document.getElementById('kidName').value = '';
+  document.getElementById('kidAge').value = '';
+
+  showMsg('ok', `${name} added. Remember to Save to store in database.`);
+}
+// -----------------------------------------------------------------
+
+function editKid(index) {
+  const kid = kids[index];
+  const newName = prompt("Edit name:", kid.name);
+  if (!newName) return;
+
+  const newAge = prompt("Edit age (optional):", kid.age ?? '');
+  kids[index].name = newName.trim();
+  kids[index].age = newAge ? parseInt(newAge, 10) : null;
+
+  renderKids();
+  showMsg('info', `Updated ${kids[index].name}. Remember to Save.`);
+}
+
+async function deleteKid(index) {
+  const kid = kids[index];
+  if (!confirm(`Delete ${kid.name}?`)) return;
+
+  if (!kid._id) {
+    kids.splice(index, 1);
+    renderKids();
+    showMsg('info', "Removed locally.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/families/delete-member`, {
+      method: 'DELETE',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + familyData.token
+      },
+      body: JSON.stringify({ memberId: kid._id })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to delete on server");
+
+    kids.splice(index, 1);
+    renderKids();
+    showMsg('ok', "Deleted successfully.");
+  } catch (err) {
+    console.error(err);
+    showMsg('err', "Error deleting kid: " + err.message);
+  }
+}
+
+async function save() {
+  clearMsg();
+
+  if (kids.length === 0) {
+    showMsg('err', 'Add at least one kid.');
+    return;
+  }
+
+  try {
+    const updatedKids = [];
+
+    for (const kid of kids) {
+      if (kid._id) {
+        updatedKids.push(kid);
+        continue;
       }
 
-      kids.forEach((k, index) => {
-        const div = document.createElement('div');
-        div.className = 'kidCard';
+      const res = await fetch(`${API_URL}/api/families/add-member`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + familyData.token
+        },
+        body: JSON.stringify({
+          family: familyData.family,
+          name: kid.name,
+          role: kid.role,
+          age: kid.age || null
+        })
+      });
 
-        const safeName = (k.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const ageText = k.age ? `${k.age} yrs` : 'Age not set';
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to add kid');
 
-        div.innerHTML = `
-          <img class="avatar" src="${k.avatar || 'default-avatar.png'}" alt="Avatar" />
-
-          <div class="kidMain">
-            <div class="kidName" title="${safeName}">${safeName}</div>
-            <div class="kidMeta">${ageText}</div>
-
-            <div class="kidBtns">
-              <button class="btn-secondary btn-small" onclick="editKid(${index})">Edit</button>
-              <button class="btn-danger btn-small" onclick="deleteKid(${index})">Delete</button>
-
-              <input
-                class="fileInput"
-                type="file"
-                id="avatarFile${index}"
-                accept="image/*"
-                onchange="handleAvatarUpload(${index})"
-              />
-
-              <button
-                class="btn-primary btn-small"
-                onclick="triggerUpload(${index})"
-                ${k._id ? '' : 'disabled'}
-                title="${k._id ? 'Upload avatar' : 'Save first to enable upload'}"
-              >
-                Upload Avatar
-              </button>
-            </div>
-          </div>
-        `;
-
-        kidsListDiv.appendChild(div);
+      updatedKids.push({
+        ...kid,
+        _id: data.member._id,
+        avatar: data.member.avatar || ""
       });
     }
 
-    function triggerUpload(index){
-      const fileInput = document.getElementById(`avatarFile${index}`);
-      fileInput.click();
-    }
+    kids = updatedKids;
+    renderKids();
+    showMsg('ok', 'Kids saved successfully. Avatar upload is now enabled.');
+  } catch (err) {
+    console.error(err);
+    showMsg('err', 'Error: ' + err.message);
+  }
+}
 
-    function addKid() {
-      const name = document.getElementById('kidName').value.trim();
-      const ageRaw = document.getElementById('kidAge').value.trim();
-      const role = document.getElementById('kidGender').value;
+// ------------------ Init ------------------
+loadKids();
+</script>
 
-      clearMsg();
-
-      if (!name) {
-        showMsg('err', "Please enter kid's name.");
-        return;
-      }
-
-      const age = ageRaw ? Number(ageRaw) : null;
-      kids.push({ name, age: Number.isFinite(age) ? age : null, role });
-
-      renderKids();
-
-      document.getElementById('kidName').value = '';
-      document.getElementById('kidAge').value = '';
-    }
-
-    function editKid(index) {
-      const kid = kids[index];
-      const newName = prompt("Edit name:", kid.name);
-      if (!newName) return;
-
-      const newAge = prompt("Edit age (optional):", kid.age ?? '');
-      kids[index].name = newName.trim();
-      kids[index].age = newAge ? parseInt(newAge, 10) : null;
-
-      renderKids();
-      showMsg('info', `Updated ${kids[index].name}. Remember to Save.`);
-    }
-
-    async function deleteKid(index) {
-      const kid = kids[index];
-      if (!confirm(`Delete ${kid.name}?`)) return;
-
-      // Local-only
-      if (!kid._id) {
-        kids.splice(index, 1);
-        renderKids();
-        showMsg('info', "Removed locally.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/api/families/delete-member`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ family: familyData.family, name: kid.name })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to delete on server");
-
-        kids.splice(index, 1);
-        renderKids();
-        showMsg('ok', "Deleted successfully.");
-      } catch (err) {
-        console.error(err);
-        showMsg('err', "Error deleting kid: " + err.message);
-      }
-    }
-
-    async function save() {
-      clearMsg();
-
-      if (kids.length === 0) {
-        showMsg('err', 'Add at least one kid.');
-        return;
-      }
-
-      try {
-        const updatedKids = [];
-
-        for (const kid of kids) {
-          if (kid._id) {
-            updatedKids.push(kid);
-            continue;
-          }
-
-          const res = await fetch(`${API_URL}/api/families/add-member`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              family: familyData.family,
-              name: kid.name,
-              role: kid.role,
-              age: kid.age || null
-            })
-          });
-
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || 'Failed to add kid');
-
-          updatedKids.push({
-            ...kid,
-            _id: data.member._id,
-            avatar: data.member.avatar || ""
-          });
-        }
-
-        kids = updatedKids;
-        renderKids();
-        showMsg('ok', 'Kids saved successfully. Avatar upload is now enabled.');
-      } catch (err) {
-        console.error(err);
-        showMsg('err', 'Error: ' + err.message);
-      }
-    }
-
-    async function finish() {
-      clearMsg();
-
-      if (kids.length === 0) {
-        showMsg('err', 'Add at least one kid.');
-        return;
-      }
-
-      // Optional: you can enforce save-before-finish if you want:
-      // if (kids.some(k => !k._id)) { showMsg('err', 'Please Save first.'); return; }
-
-      showMsg('ok', 'Done. Redirecting to sign in...');
-      setTimeout(() => window.location.href = 'signin.html', 900);
-    }
-
-    // Subtle particles
-    function spawnParticle(){
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = (Math.random() * 100) + 'vw';
-      p.style.bottom = '-10vh';
-      p.style.opacity = (0.35 + Math.random()*0.45).toFixed(2);
-      p.style.animationDuration = (7 + Math.random()*6) + 's';
-      p.style.transform = `scale(${0.8 + Math.random()*1.2})`;
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 14000);
-    }
-   
-
-    const emojis = ['💖','⭐','✨','🌈','🎈','🍭'];
-    function createFloat() {
-      const el = document.createElement('div');
-      el.className = 'float';
-      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-      el.style.left = Math.random() * 100 + 'vw';
-      el.style.animationDuration = (6 + Math.random() * 5) + 's';
-      el.style.fontSize = (16 + Math.random() * 26) + 'px';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 9000);
-    }
-    setInterval(spawnParticle, 1200);
-    setInterval(createFloat, 1200);
-
-
-    // Motivation messages
-    const mot = document.getElementById("motivation");
-    const messages = [
-      "Consistency beats intensity. Track progress daily and celebrate small wins.",
-      "Celebrate effort, not only results. It builds confidence that lasts.",
-      "A calm routine + encouragement = real growth for kids.",
-      "Small daily habits create big long-term outcomes.",
-      "Keep it simple: add, save, celebrate."
-    ];
-    let i = 0;
-    setInterval(() => {
-      mot.textContent = messages[i % messages.length];
-      i++;
-    }, 6000);
-
-    loadKids();
-  </script>
 </body>
 </html>
