@@ -1,7 +1,7 @@
 // middlewares/requireFamily.js
 import jwt from "jsonwebtoken";
 
-export const requireFamily = (req, res, next) => {
+export const Familyauth = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).json({ message: "No token provided" });
 
