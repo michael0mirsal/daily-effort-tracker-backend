@@ -84,7 +84,7 @@ router.post("/signup", async (req, res) => {
 // ✅ POST /signin
 // ======================================================
 // ✅ POST /signin
-router.post("/signin",Familyauth, async (req, res) => {
+router.post("/signin", async (req, res) => {
   const { family, name, passkey } = req.body;
   const limiterKey = req.ip || req.headers["x-forwarded-for"] || "unknown";
 
@@ -336,7 +336,7 @@ router.get("/:familyName", async (req, res) => {
 });
 */
 // Get family by _id (dedicated endpoint, avoids conflicts)
-router.get("/by-id/:id", async (req, res) => {
+router.get("/by-id/:id",Familyauth, async (req, res) => {
   try {
     const { id } = req.params;
 
