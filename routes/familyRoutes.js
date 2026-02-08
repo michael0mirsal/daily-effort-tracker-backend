@@ -7,7 +7,7 @@ import SchoolMember from "../models/sch-Member.js";
 import { requireFamily } from "../middlewares/requireFamily.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-
+import { Familyauth } from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -84,7 +84,7 @@ router.post("/signup", async (req, res) => {
 // ✅ POST /signin
 // ======================================================
 // ✅ POST /signin
-router.post("/signin", async (req, res) => {
+router.post("/signin",Familyauth, async (req, res) => {
   const { family, name, passkey } = req.body;
   const limiterKey = req.ip || req.headers["x-forwarded-for"] || "unknown";
 
