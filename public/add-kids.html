@@ -646,7 +646,13 @@ if (!familyData.family || !familyData.token) {
 
     async function loadKids() {
       try {
-        const res = await fetch(`${API_URL}/api/families/family/${familyData.family}`);
+        // ✅ Send token in Authorization header
+    const res = await fetch(`${API_URL}/api/families/by-id/${familyData.familyId}`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + familyData.token
+      }
+    });
         const data = await res.json();
         const family = data[0];
         if (family?.members) {
