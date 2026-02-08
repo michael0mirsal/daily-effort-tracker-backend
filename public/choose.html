@@ -806,9 +806,14 @@ if (user.role === "dad" || user.role === "mom") {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/families/by-id/${user.familyId}`, {
-      headers: { "Content-Type": "application/json" }
-    });
+    const token = localStorage.getItem("jwtToken");
+const res = await fetch(`${API_BASE}/api/families/by-id/${user.familyId}`, {
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + token   // ✅ send JWT
+  }
+});
+
 
     const data = await res.json();
     if (!data || !data._id) {
@@ -822,7 +827,7 @@ localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members || []))
 localStorage.setItem("currentFamily", JSON.stringify({
   family: data.name || "Unknown",
   familyId: data._id || "",
-  passkey: user.passkey
+  token: localStorage.getItem("jwtToken") || ""  // ✅ save JWT token
 }));
 
 
