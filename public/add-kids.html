@@ -859,13 +859,27 @@ async function loadFullFamily() {
     });
     const data = await res.json();
     const family = data[0];
-    const members = family?.members || [];
+    const memberIds = family?.members || [];
+
+    const members = [];
+    for (const id of memberIds) {
+      const r = await fetch(`${API_URL}/api/families/member/${id}`, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + familyData.token
+        }
+      });
+      const m = await r.json();
+      members.push(m);
+    }
+
     renderFullFamily(members);
   } catch (err) {
     console.error("Error loading full family:", err);
     document.getElementById('familyListContent').innerText = "Failed to load family list.";
   }
 }
+
 
 function renderFullFamily(members) {
   const container = document.getElementById('familyListContent');
