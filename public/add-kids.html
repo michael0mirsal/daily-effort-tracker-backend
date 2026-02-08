@@ -568,10 +568,11 @@
 
     const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
 
-    if (!familyData.family || !familyData.passkey) {
-      alert('Family info missing. Please create a family first.');
-      window.location.href = 'signup.html';
-    }
+    // ✅ Check for token instead of passkey
+if (!familyData.family || !familyData.token) {
+  alert('Family info missing or not logged in. Please sign in first.');
+  window.location.href = 'signin.html';
+}
 
     familyPillName.textContent = String(familyData.family);
 
@@ -645,7 +646,13 @@
 
     async function loadKids() {
       try {
-        const res = await fetch(`${API_URL}/api/families/family/${familyData.family}`);
+        // ✅ Send token in Authorization header
+    const res = await fetch(`${API_URL}/api/families/by-id/${familyData.familyId}`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + familyData.token
+      }
+    });
         const data = await res.json();
         const family = data[0];
         if (family?.members) {
