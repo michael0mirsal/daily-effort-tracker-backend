@@ -934,7 +934,7 @@ container.appendChild(toast);
 // ---------------- Add to Panel ----------------
 function addNoteToPanel(data) {
   if (!data.message || !data.createdAt) return;
-  if (!["NOTE_CHANGED", "STATUS_CHANGED"].includes(data.type)) return;
+  if (!["NOTE_CHANGED", "STATUS_CHANGED", "MESSAGE"].includes(data.type)) return;
 
   const noteDate = new Date(data.createdAt).toISOString().split("T")[0];
   if (noteDate !== todayDate) return;
@@ -946,7 +946,8 @@ function addNoteToPanel(data) {
   li.className = data.type === "STATUS_CHANGED" ? "status-changed" : "note-changed";
 
   li.innerHTML = `
-    <b>${data.type.replace("_", " ")}</b>: ${data.message}
+    <b>${data.type === "MESSAGE" ? "MESSAGE" : data.type.replace("_", " ")}</b>
+: ${data.message}
     <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
   `;
 
@@ -1088,9 +1089,12 @@ if (user) {
 
   // Add to panel
   addNoteToPanel({
-    ...data,
-    message: displayMessage
-  });
+  type: data.type,
+  message: displayMessage,
+  createdAt: data.sentAt || new Date(),
+  link: "./family-messages.html"
+});
+
 
   // Increment badge if panel closed
   const panel = document.getElementById("notificationPanel");
