@@ -309,111 +309,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
-/* Notification Bell */
-#notificationBell {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  cursor: pointer;
-  z-index: 1001;
-  font-size: 24px;
-  color: #fff;
-  background: linear-gradient(135deg, #4f8cff, #3b6be3);
-  padding: 12px;
-  border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-#notificationBell:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-}
-#notificationCount {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #ff4b5c;
-  color: #fff;
-  border-radius: 50%;
-  padding: 2px 7px;
-  font-size: 12px;
-  font-weight: bold;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
 
-/* Notification Panel */
-#notificationPanel {
-  position: fixed;
-  top: 60px;
-  right: 20px;
-  width: 380px;
-  max-height: 500px;
-  background: linear-gradient(145deg, #ffffff9c, #f0f0f5b1);
-  border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.3);
-  overflow-y: auto;
-  display: none;
-  z-index: 1003;
-  padding: 15px;
-  font-family: 'Segoe UI', sans-serif;
-  backdrop-filter: blur(8px);
-  
-}
-#notificationPanel h3 {
-  margin-top: 0;
-  font-size: 1.2rem;
-  color: #333;
-}
-#markAllReadBtn {
-  background: linear-gradient(135deg, #00c6ff, #0072ff);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  margin-bottom: 10px;
-  transition: transform 0.2s, opacity 0.2s;
-}
-#markAllReadBtn:hover {
-  transform: translateY(-2px);
-  opacity: 0.9;
-}
-
-/* Notification list items */
-#notificationPanelList li {
-  padding: 12px 15px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  list-style: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-#notificationPanelList li:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Differentiate types */
-#notificationPanelList li.status-changed {
-  background: linear-gradient(120deg, #d0f0fd5d, #a0e1ff);
-  border-left: 4px solid #007bff;
-}
-#notificationPanelList li.note-changed {
-  background: linear-gradient(120deg, #fff8d6, #fff1a8);
-  border-left: 4px solid #ffbf00;
-}
-
-#notificationPanelList li small {
-  display: block;
-  margin-top: 5px;
-  font-size: 0.75rem;
-  color: #666;
-}
 .mood-btn.selected {
   transform: scale(1.4);
   text-shadow: 0 0 8px gold;
@@ -429,6 +325,140 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+#notificationBell {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+  cursor: pointer;
+
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  font-size: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 8px 24px rgba(79,70,229,.35);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#notificationBell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(79,70,229,.45);
+}
+
+#notificationCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+
+  background: #ef4444;
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  padding: 2px 7px;
+  border-radius: 999px;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,.3);
+}
+#notificationPanel {
+  position: fixed;
+  top: 78px;
+  right: 20px;
+
+  width: 360px;
+  max-height: 70vh;
+
+  background: #0f172a; /* slate-900 */
+  color: #e5e7eb;
+
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0,0,0,.5);
+
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1003;
+
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+#notificationPanel h3 {
+  margin: 0;
+  padding: 14px 18px;
+
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .3px;
+
+  background: linear-gradient(180deg, #111827, #0f172a);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+#notificationPanelList {
+  padding: 10px;
+  overflow-y: auto;
+}
+
+#notificationPanelList li {
+  list-style: none;
+
+  background: rgba(255,255,255,.04);
+  border-radius: 14px;
+
+  padding: 12px 14px;
+  margin-bottom: 10px;
+
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+}
+
+#notificationPanelList li:hover {
+  background: rgba(255,255,255,.08);
+  transform: translateY(-1px);
+}
+#notificationPanelList li.status-changed {
+  border-left: 4px solid #22c55e;
+}
+
+#notificationPanelList li.note-changed {
+  border-left: 4px solid #facc15;
+}
+
+#notificationPanelList li.message {
+  border-left: 4px solid #6366f1;
+}
+#notificationPanelList li b {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  margin-bottom: 6px;
+}
+
+#notificationPanelList li .message-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #e5e7eb;
+}
+
+#notificationPanelList li small {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
 
 </style>
 </head>
@@ -943,13 +973,19 @@ function addNoteToPanel(data) {
   if (!panelList) return;
 
   const li = document.createElement("li");
-  li.className = data.type === "STATUS_CHANGED" ? "status-changed" : "note-changed";
+  li.className =
+  data.type === "STATUS_CHANGED" ? "status-changed" :
+  data.type === "NOTE_CHANGED" ? "note-changed" :
+  "message"; // fallback for MESSAGE type
+
+  
 
   li.innerHTML = `
-    <b>${data.type === "MESSAGE" ? "MESSAGE" : data.type.replace("_", " ")}</b>
-: ${data.message}
-    <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
-  `;
+  <b>${data.type === "MESSAGE" ? "MESSAGE" : data.type.replace("_", " ")}</b>
+  <div class="message-text">${data.message}</div>
+  <small>${new Date(data.createdAt).toLocaleTimeString()}</small>
+`;
+
 
   li.onclick = () => {
     li.style.opacity = 0.6; // mark as read visually
