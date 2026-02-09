@@ -198,14 +198,18 @@ async function createKidsCharts() {
   try {
     // 1️⃣ Load the family info (single object) with token
     const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.token}` // <-- add your token here
-        }
-    });
+    method: "GET",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentUser.token}`
+    }
+});
 
-    if (!res.ok) throw new Error("Family not found");
+console.log("Response status:", res.status);
+const data = await res.text(); // use .text() to see raw response
+console.log("Raw response:", data);
+
+if (!res.ok) throw new Error("Family not found");
 
     const family = await res.json(); // <-- now it's a single object
 
