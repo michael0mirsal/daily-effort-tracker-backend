@@ -360,7 +360,9 @@
       loginBtn.disabled = false;
       loginNote.textContent = "";
       // Redirect to choose page (unchanged)
-      window.location.href = "choose.html";
+      setTimeout(() => {
+  window.location.href = "choose.html";
+}, 50);
 
     } catch (err) {
       console.error("Login error:", err);
