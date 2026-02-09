@@ -73,6 +73,18 @@ if (targetSchoolMember) {
 
 
     await msg.save();
+const io = req.app.get("io");
+
+for (const r of msg.receivers) {
+  io.to(r.receiver.toString()).emit("notification", {
+    type: "MESSAGE",
+    messageId: msg._id,
+    title: msg.title,
+    message: msg.message,
+    senderModel: msg.senderModel,
+    sentAt: msg.sentAt
+  });
+}
 
     res.json({
       success: true,
