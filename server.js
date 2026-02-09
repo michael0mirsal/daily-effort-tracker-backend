@@ -72,7 +72,7 @@ export const io = new Server(httpServer, {
     methods: ["GET", "POST"],
   },
 });
-app.set("io", io);
+
 
 // Socket.IO connection logic
 io.on("connection", (socket) => {
