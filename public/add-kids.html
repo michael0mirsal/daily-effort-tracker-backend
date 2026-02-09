@@ -751,7 +751,8 @@ if (!familyData.family || !familyData.token) {
       }
 
       const age = ageRaw ? Number(ageRaw) : null;
-      kids.push({ name, age: Number.isFinite(age) ? age : null, role });
+      kids.push({ name, age: Number.isFinite(age) ? age : null, role: role || 'kid' });
+
 
       renderKids();
 
@@ -891,21 +892,16 @@ function renderFullFamily(family, members) {
 
     ${members.map(m => `
       <div class="familyRow">
-        <div>
-          🧒 <strong>${m.name}</strong>
-          <small>(${m.age ?? "-"})</small>
-        </div>
-
-        <div class="actions">
-          <button onclick="editFamilyMember('${m._id}', '${m.name}', ${m.age ?? "null"})">
-            Edit
-          </button>
-          <button class="danger" onclick="deleteFamilyMember('${m._id}', '${m.name}')">
-            Delete
-          </button>
-        </div>
-      </div>
-    `).join("")}
+    <div>
+      🧒 <strong>${m.name || "-"}</strong>
+      <small>(${m.age ?? "-"})</small>
+    </div>
+    <div class="actions">
+      <button onclick="editFamilyMember('${m._id}', '${m.name}', ${m.age ?? "null"})">Edit</button>
+      <button class="danger" onclick="deleteFamilyMember('${m._id}', '${m.name}')">Delete</button>
+    </div>
+  </div>
+`).join("")}
   `;
 }
 
