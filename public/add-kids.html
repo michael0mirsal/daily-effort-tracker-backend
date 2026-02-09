@@ -559,9 +559,11 @@
   </div>
 <div id="fullFamilyPad" style="margin-top:40px; padding:20px; border:1px solid #888; border-radius:12px; background: rgba(255,255,255,.05);">
   <h3>Full Family List</h3>
-  <button class="editBtn" data-id="${m._id}" data-name="${m.name}" data-age="${m.age}">Edit</button>
-  <div id="familyListContent">Loading family members...</div>
+  <div id="familyTable">
+    Loading family members...
+  </div>
 </div>
+
 
   <script>
     const API_URL = "https://daily-effort-tracker-backend.onrender.com";
@@ -875,35 +877,45 @@ async function loadFullFamily() {
 }
 
 function renderFullFamily(family, members) {
-  const pad = document.getElementById("fullFamilyPad");
+  const pad = document.getElementById("familyTable");
 
   pad.innerHTML = `
-    <div class="familyRow">
-      <strong>👨 Dad:</strong>
-      <span>${family.dad}</span>
-    </div>
+    <table style="width:100%; border-collapse: collapse; text-align:left;">
+      <tr>
+        <th style="padding:6px 10px;">Role</th>
+        <th style="padding:6px 10px;">Name</th>
+        <th style="padding:6px 10px;">Age</th>
+        <th style="padding:6px 10px;">Actions</th>
+      </tr>
 
-    <div class="familyRow">
-      <strong>👩 Mom:</strong>
-      <span>${family.mom}</span>
-    </div>
+      <tr>
+        <td>👨 Dad</td>
+        <td>${family.dad}</td>
+        <td>-</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>👩 Mom</td>
+        <td>${family.mom}</td>
+        <td>-</td>
+        <td></td>
+      </tr>
 
-    <hr />
-
-    ${members.map(m => `
-      <div class="familyRow">
-    <div>
-      🧒 <strong>${m.name || "-"}</strong>
-      <small>(${m.age ?? "-"})</small>
-    </div>
-    <div class="actions">
-      <button onclick="editFamilyMember('${m._id}', '${m.name}', ${m.age ?? "null"})">Edit</button>
-      <button class="danger" onclick="deleteFamilyMember('${m._id}', '${m.name}')">Delete</button>
-    </div>
-  </div>
-`).join("")}
+      ${members.map(m => `
+        <tr>
+          <td>🧒 Kid</td>
+          <td>${m.name}</td>
+          <td>${m.age ?? '-'}</td>
+          <td>
+            <button onclick="editFamilyMember('${m._id}', '${m.name}', ${m.age ?? 'null'})">Edit</button>
+            <button onclick="deleteFamilyMember('${m._id}', '${m.name}')">Delete</button>
+          </td>
+        </tr>
+      `).join('')}
+    </table>
   `;
 }
+
 
 async function editFamilyMember(id, oldName, oldAge) {
   const name = prompt("New name:", oldName);
@@ -931,22 +943,30 @@ async function editFamilyMember(id, oldName, oldAge) {
 async function deleteFamilyMember(id, name) {
   if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
 
-  const res = await fetch(
-    "https://daily-effort-tracker-backend.onrender.com/api/families/delete-member",
-    {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${currentFamily.token}`,
-        "x-family-id": currentFamily.familyId
-      },
-      body: JSON.stringify({ memberId: id })
-    }
-  );
+  try {
+    const res = await fetch(
+      `${API_URL}/api/families/delete-member`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${familyData.token}`,
+          "x-family-id": familyData.familyId
+        },
+        body: JSON.stringify({ memberId: id })
+      }
+    );
 
-  if (res.ok) location.reload();
-  else alert("Failed to delete member");
+    if (!res.ok) throw new Error("Failed to delete member");
+
+    // Remove from local UI
+    loadFullFamily(); // reload list
+  } catch (err) {
+    console.error(err);
+    alert("Error deleting member: " + err.message);
+  }
 }
+
 
 // --------- Edit member in DB ---------
 async function editMemberDB(member) {
