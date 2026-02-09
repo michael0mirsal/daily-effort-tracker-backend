@@ -990,13 +990,18 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
 });
 
 // Ask permission for desktop notifications
-if ("Notification" in window) {
-  if (Notification.permission === "default") {
+window.addEventListener("DOMContentLoaded", () => {
+  if ("Notification" in window) {
     Notification.requestPermission().then(permission => {
-      console.log("Notification permission:", permission);
+      if (permission === "granted") {
+        new Notification("Test Notification", {
+          body: "This is a test",
+          icon: "./icons/notification-icon.png"
+        });
+      }
     });
   }
-}
+});
 
 
 
