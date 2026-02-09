@@ -1040,57 +1040,31 @@ if (user) {
   socket.on("notification", (data) => {
   console.log("🔔 New notification:", data);
 
-  let displayMessage = data.message; // fallback
+  let displayMessage = data.message || "New notification";
 
-  // Only handle STATUS_CHANGED messages
+  // Handle STATUS_CHANGED messages...
   if (data.type === "STATUS_CHANGED" && data.message) {
-    // Example message: "Status changed from 'leave' to 'present'"
     const match = data.message.match(/Status changed from "(.*)" to "(.*)"/i);
     if (match) {
       const from = match[1];
       const to = match[2];
-
-      // Get all members from localStorage
       const members = JSON.parse(localStorage.getItem("currentFamilyMembers") || "[]");
-
-      // Find the kid by schoolMemberId
       const kid = members.find(k => k.schoolMemberId === data.user || k._id === data.user);
-
       const userName = kid?.name || "A student";
 
-      if (from === "present" && to === "leave") {
-        displayMessage = `${userName} now left on the bus. 🚌`;
-      } else if (from === "leave" && to === "present") {
-        displayMessage = `${userName} now present in class. ✅`;
-      } else {
-        displayMessage = `${userName} status changed from "${from}" to "${to}"`;
-      }
+      if (from === "present" && to === "leave") displayMessage = `${userName} now left on the bus. 🚌`;
+      else if (from === "leave" && to === "present") displayMessage = `${userName} now present in class. ✅`;
+      else displayMessage = `${userName} status changed from "${from}" to "${to}"`;
     }
   }
 
-  // Show toast
-  showToast(
-    displayMessage,
-    data.type === "STATUS_CHANGED" ? "info" : "note",
-    "./fam-attendance.html"
-  );
-
-  // Add to panel
-  addNoteToPanel({
-  type: data.type,
-  message: displayMessage,
-  createdAt: data.sentAt || new Date(),
-  link: "./family-messages.html"
-});
-
-
-  // Increment badge if panel closed
+  // Show toast + add to panel + increment badge
+  showToast(displayMessage, data.type === "STATUS_CHANGED" ? "info" : "note", "./fam-attendance.html");
+  addNoteToPanel({ type: data.type, message: displayMessage, createdAt: data.sentAt || new Date(), link: "./family-messages.html" });
   const panel = document.getElementById("notificationPanel");
   if (panel.style.display !== "block") incrementBadge();
-});
 
-
-// ---------------- Desktop notification ----------------
+  // ---------------- Desktop notification ----------------
   if ("Notification" in window && Notification.permission === "granted") {
     try {
       const desktopNotif = new Notification("Daily Effort Tracker", {
@@ -1098,7 +1072,6 @@ if (user) {
         icon: "./icons/notification-icon.png",
         tag: data._id || Date.now(),
       });
-
       desktopNotif.onclick = () => {
         window.focus();
         document.getElementById("notificationPanel").style.display = "block";
@@ -1107,10 +1080,10 @@ if (user) {
       console.warn("Desktop notification failed:", err);
     }
   }
-
-
-
+});
 }
+
+
 </script>
 
 
