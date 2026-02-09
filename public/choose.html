@@ -458,7 +458,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   📘 Nursery Daily Report
 </button>
 
-
+<button id="enableNotif">Enable Notifications</button>
   <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
   <footer>Made with 🌻 Love and Joy</footer>
 </div>
@@ -990,7 +990,7 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
 });
 
 // Ask permission for desktop notifications
-window.addEventListener("DOMContentLoaded", () => {
+document.getElementById("enableNotif").addEventListener("click", () => {
   if ("Notification" in window) {
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
