@@ -200,14 +200,20 @@ async function createKidsCharts() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.token}` // <-- must be valid
+            "Authorization": `Bearer ${currentUser.token}`
         }
     });
 
     const family = await res.json();
 
     if (!res.ok) {
-        // show API error message instead of generic "Family not found"
+        // If token invalid or expired, ask user to login again
+        if (family.message && family.message.toLowerCase().includes("token")) {
+            alert("⚠ Your session expired. Please login again.");
+            // Optionally redirect to login page:
+            // window.location.href = "/login.html";
+            return;
+        }
         throw new Error(family.message || "Family not found");
     }
 
@@ -216,7 +222,6 @@ async function createKidsCharts() {
         return;
     }
 
-    // ✅ continue with family object
     console.log("Family loaded:", family);
 
 
