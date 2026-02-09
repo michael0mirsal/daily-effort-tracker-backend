@@ -989,6 +989,15 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
   e.stopPropagation();
 });
 
+// Ask permission for desktop notifications
+if ("Notification" in window) {
+  if (Notification.permission === "default") {
+    Notification.requestPermission().then(permission => {
+      console.log("Notification permission:", permission);
+    });
+  }
+}
+
 
 
 // ================= Init =================
@@ -1079,6 +1088,22 @@ if (user) {
   const panel = document.getElementById("notificationPanel");
   if (panel.style.display !== "block") incrementBadge();
 });
+
+// ---------------- Desktop notification ----------------
+if ("Notification" in window && Notification.permission === "granted") {
+  const desktopNotif = new Notification("Daily Effort Tracker", {
+    body: displayMessage,
+    icon: "./icons/notification-icon.png", // small icon file in /public/icons
+    tag: data._id || Date.now(),           // unique tag
+  });
+
+  // Optional: click to open panel
+  desktopNotif.onclick = () => {
+    window.focus();
+    document.getElementById("notificationPanel").style.display = "block";
+  };
+}
+
 
 }
 </script>
