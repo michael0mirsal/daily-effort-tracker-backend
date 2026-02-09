@@ -135,6 +135,13 @@
 <div id="kidsChartsContainer"></div>
 
 <script>
+const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
+
+if (!currentFamily.token || !currentFamily.familyId) {
+  alert("Not logged in. Please sign in again.");
+  window.location.href = "signin.html";
+}
+
 document.getElementById("backBtn").onclick = ()=>{window.location.href="choose.html";};
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem("currentUser");
@@ -189,17 +196,23 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend.onrender.com";
 
   try {
-    // 1️⃣ Load the family info (single object)
-    const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`);
+    // 1️⃣ Load the family info (single object) with token
+    const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentUser.token}` // <-- add your token here
+        }
+    });
+
     if (!res.ok) throw new Error("Family not found");
 
+    const family = await res.json(); // <-- now it's a single object
 
-const family = await res.json(); // <-- now it's a single object
-
-if (!family || !family.members || family.members.length === 0) {
-  alert("⚠ No members found in this family.");
-  return;
-}
+    if (!family || !family.members || family.members.length === 0) {
+        alert("⚠ No members found in this family.");
+        return;
+    }
 
 
 const kids = family.members.filter(m => m.role === "kid");
