@@ -494,6 +494,14 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
+const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
+
+if (!currentFamily.token || !currentFamily.familyId) {
+  alert("Not logged in. Please sign in again.");
+  window.location.href = "signin.html";
+}
+
+
 // 🔵 NEW — Set nursery name dynamically on button
 function setNurseryButtonName(name) {
   const btn = document.getElementById("nurseryReportBtn");
