@@ -1090,7 +1090,7 @@ if (user) {
     try {
       const desktopNotif = new Notification("Daily Effort Tracker", {
         body: displayMessage,
-        icon: "./icons/notification-icon.png",
+        
         tag: data._id || Date.now(),
       });
       desktopNotif.onclick = () => {
