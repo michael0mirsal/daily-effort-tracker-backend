@@ -196,24 +196,18 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend.onrender.com";
 
   try {
-    const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`, {
+    const res = await fetch(`${API_BASE}/api/families/by-id/${currentFamily.familyId}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.token}`
+            "Authorization": `Bearer ${currentFamily.token}` // ✅ send the token here
         }
     });
 
     const family = await res.json();
 
     if (!res.ok) {
-        // If token invalid or expired, ask user to login again
-        if (family.message && family.message.toLowerCase().includes("token")) {
-            alert("⚠ Your session expired. Please login again.");
-            // Optionally redirect to login page:
-            // window.location.href = "/login.html";
-            return;
-        }
+        // show API message (like invalid/expired token)
         throw new Error(family.message || "Family not found");
     }
 
