@@ -991,16 +991,31 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
 
 // Ask permission for desktop notifications
 document.getElementById("enableNotif").addEventListener("click", () => {
-  if ("Notification" in window) {
-    Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
-        new Notification("Test Notification", {
-          body: "This is a test",
-          icon: "./icons/notification-icon.png"
-        });
-      }
-    });
+  // Check if browser supports notifications
+  if (!("Notification" in window)) {
+    alert("Your browser does not support desktop notifications");
+    return;
   }
+
+  // Ask permission
+  Notification.requestPermission().then(permission => {
+    console.log("Permission:", permission);
+
+    if (permission === "granted") {
+      // Show test notification
+      const notif = new Notification("Test Notification", {
+        body: "Notifications are working! ✅",
+        icon: "./icons/notification-icon.png"
+      });
+
+      notif.onclick = () => {
+        alert("You clicked the notification!");
+        window.focus();
+      };
+    } else if (permission === "denied") {
+      alert("You denied notifications. You need to allow them in your browser settings.");
+    }
+  });
 });
  
 
