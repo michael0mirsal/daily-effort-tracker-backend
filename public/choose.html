@@ -1091,19 +1091,23 @@ if (user) {
 
 
 // ---------------- Desktop notification ----------------
-if ("Notification" in window && Notification.permission === "granted") {
-  const desktopNotif = new Notification("Daily Effort Tracker", {
-    body: displayMessage,
-    icon: "./icons/notification-icon.png", // small icon file in /public/icons
-    tag: data._id || Date.now(),           // unique tag
-  });
+  if ("Notification" in window && Notification.permission === "granted") {
+    try {
+      const desktopNotif = new Notification("Daily Effort Tracker", {
+        body: displayMessage,
+        icon: "./icons/notification-icon.png",
+        tag: data._id || Date.now(),
+      });
 
-  // Optional: click to open panel
-  desktopNotif.onclick = () => {
-    window.focus();
-    document.getElementById("notificationPanel").style.display = "block";
-  };
-}
+      desktopNotif.onclick = () => {
+        window.focus();
+        document.getElementById("notificationPanel").style.display = "block";
+      };
+    } catch (err) {
+      console.warn("Desktop notification failed:", err);
+    }
+  }
+
 
 
 }
