@@ -196,27 +196,28 @@ async function createKidsCharts() {
     : "https://daily-effort-tracker-backend.onrender.com";
 
   try {
-    // 1️⃣ Load the family info (single object) with token
     const res = await fetch(`${API_BASE}/api/families/by-id/${currentUser.familyId}`, {
-    method: "GET",
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${currentUser.token}`
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentUser.token}` // <-- must be valid
+        }
+    });
+
+    const family = await res.json();
+
+    if (!res.ok) {
+        // show API error message instead of generic "Family not found"
+        throw new Error(family.message || "Family not found");
     }
-});
-
-console.log("Response status:", res.status);
-const data = await res.text(); // use .text() to see raw response
-console.log("Raw response:", data);
-
-if (!res.ok) throw new Error("Family not found");
-
-    const family = await res.json(); // <-- now it's a single object
 
     if (!family || !family.members || family.members.length === 0) {
         alert("⚠ No members found in this family.");
         return;
     }
+
+    // ✅ continue with family object
+    console.log("Family loaded:", family);
 
 
 const kids = family.members.filter(m => m.role === "kid");
