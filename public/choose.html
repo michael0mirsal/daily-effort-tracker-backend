@@ -374,6 +374,34 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   font-size: 0.7rem;
   color: #666;
 }
+/* Modern small "Mark all as read" button */
+#markAllReadBtn {
+  position: absolute;      /* float in panel corner */
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5); /* deep purple gradient */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 8px;       /* smaller padding */
+  font-size: 0.75rem;     /* smaller font */
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  z-index: 1004;
+}
+
+#markAllReadBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  opacity: 0.95;
+}
+
+#markAllReadBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
 
 </style>
 </head>
