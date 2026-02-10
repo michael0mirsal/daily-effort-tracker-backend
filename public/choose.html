@@ -465,16 +465,14 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 
 <script>
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
-fetch(`${API_BASE}/health`, {
-  credentials: "include"
-})
-.then(r => {
-  console.log("Health status:", r.status);
-  if (r.status !== 200) {
-    alert("❌ Not logged in");
-    location.href = "login.html";
-  }
-});
+// Test if cookies are sent to backend
+  fetch(`${API_BASE}/testcookie`, { credentials: "include" })
+    .then(r => r.json())
+    .then(data => {
+      console.log("Server received cookies:", data.cookies);
+      alert("Check console for cookie info");
+    })
+    .catch(err => console.error("Cookie test failed:", err));
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
