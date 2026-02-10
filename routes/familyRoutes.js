@@ -44,11 +44,7 @@ setInterval(() => {
   }
 }, LIMIT_WINDOW_MS);
 
-// ======================================================
-app.get("/testcookie", (req, res) => {
-  console.log("Cookies received:", req.cookies);
-  res.json({ cookies: req.cookies });
-});
+
 
 // ✅ POST /signup
 // ======================================================
@@ -88,6 +84,11 @@ router.post("/signup", async (req, res) => {
 // ======================================================
 // ✅ POST /signin
 // ======================================================
+// ======================================================
+app.get("/testcookie", (req, res) => {
+  console.log("Cookies received:", req.cookies);
+  res.json({ cookies: req.cookies });
+});
 // ✅ POST /signin
 router.post("/signin", async (req, res) => {
   const { family, name, passkey } = req.body;
