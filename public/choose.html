@@ -466,23 +466,6 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 <script>
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 // Test if cookies are sent to backend
-
-
-
-
-
-  fetch(`${API_BASE}/api/families/me`, {
-  credentials: "include"
-})
-.then(r => {
-  if (!r.ok) throw new Error("Not authenticated");
-  return r.json();
-})
-.catch(err => {
-  console.warn("Auth-check failed (debug):", err.message);
-
-});
-
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
