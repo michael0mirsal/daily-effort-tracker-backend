@@ -458,7 +458,7 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
   📘 Nursery Daily Report
 </button>
 
-<button id="enableNotif">Enable Notifications</button>
+
   <button id="logoutBtn" onclick="logout()">🔒 Logout</button>
   <footer>Made with 🌻 Love and Joy</footer>
 </div>
@@ -999,20 +999,12 @@ document.getElementById("notificationPanel").addEventListener("click", (e) => {
   e.stopPropagation();
 });
 
-// Ask permission for desktop notifications
-document.getElementById("enableNotif").addEventListener("click", () => {
+// ✅ Automatic desktop notification permission
+if ("Notification" in window && Notification.permission === "default") {
   Notification.requestPermission().then(permission => {
-    console.log("Permission:", permission);
-
-    if (permission === "granted") {
-      setTimeout(() => {
-        new Notification("TEST NOTIFICATION", {
-          body: "Switch tabs or minimize the browser 👀"
-        });
-      }, 3000);
-    }
+    console.log("Notification permission:", permission);
   });
-});
+}
 
  
 
