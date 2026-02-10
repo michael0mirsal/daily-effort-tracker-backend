@@ -137,7 +137,7 @@
 <script>
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
 
-if (!currentFamily.token || !currentFamily.familyId) {
+if ( !currentFamily.familyId) {
   alert("Not logged in. Please sign in again.");
   window.location.href = "signin.html";
 }
@@ -198,10 +198,8 @@ async function createKidsCharts() {
   try {
     const res = await fetch(`${API_BASE}/api/families/by-id/${currentFamily.familyId}`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentFamily.token}` // ✅ send the token here
-        }
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", 
     });
 
     const family = await res.json();
