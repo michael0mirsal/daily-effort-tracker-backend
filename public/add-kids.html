@@ -576,7 +576,7 @@
     const familyData = JSON.parse(localStorage.getItem('currentFamily') || '{}');
 
     // ✅ Check for token instead of passkey
-if (!familyData.family || !familyData.token) {
+if (!familyData.family ) {
   alert('Family info missing or not logged in. Please sign in first.');
   window.location.href = 'signin.html';
 }
@@ -612,6 +612,7 @@ if (!familyData.family || !familyData.token) {
       const res = await fetch(`${API_URL}/api/families/update-avatar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ memberId, avatarUrl })
       });
 
@@ -655,10 +656,8 @@ if (!familyData.family || !familyData.token) {
       try {
         // ✅ Send token in Authorization header
     const res = await fetch(`${API_URL}/api/families/by-id/${familyData.familyId}`, {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + familyData.token
-      }
+      headers: { 'Content-Type': 'application/json' },
+      credentials: "include"
     });
         const data = await res.json();
         const family = data[0];
@@ -858,12 +857,13 @@ async function loadFullFamily() {
     const res = await fetch(
       `${API_URL}/api/families/${familyData.familyId}/school-info`,
       {
-        headers: {
-          Authorization: `Bearer ${familyData.token}`,
-          "x-family-id": familyData.familyId
-        }
-      }
-    );
+    headers: { 
+      'Content-Type': 'application/json', 
+      'x-family-id': familyData.familyId 
+    },
+    credentials: 'include'  // <-- must be **outside** headers
+  }
+);
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to fetch family");
@@ -927,11 +927,11 @@ async function editFamilyMember(id, oldName, oldAge) {
     "https://daily-effort-tracker-backend.onrender.com/api/families/update-member",
     {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${currentFamily.token}`,
+      headers: { 'Content-Type': 'application/json' ,
+     
         "x-family-id": currentFamily.familyId
       },
+       credentials: "include",
       body: JSON.stringify({ memberId: id, name, age })
     }
   );
@@ -948,11 +948,11 @@ async function deleteFamilyMember(id, name) {
       `${API_URL}/api/families/delete-member`,
       {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${familyData.token}`,
+        headers: { 'Content-Type': 'application/json' ,
+      
           "x-family-id": familyData.familyId
         },
+        credentials: "include",
         body: JSON.stringify({ memberId: id })
       }
     );
@@ -979,10 +979,10 @@ async function editMemberDB(member) {
   try {
     const res = await fetch(`${API_URL}/api/families/update-member`, {
       method: 'PATCH',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + familyData.token
+      headers: { 'Content-Type': 'application/json' ,
+      
       },
+      credentials: "include",
       body: JSON.stringify({
         memberId: member._id,
         name: newName.trim(),
@@ -1008,10 +1008,10 @@ async function deleteMemberDB(member) {
   try {
     const res = await fetch(`${API_URL}/api/families/delete-member`, {
       method: 'DELETE',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + familyData.token
+      headers: { 'Content-Type': 'application/json' ,
+      
       },
+      credentials: "include",
       body: JSON.stringify({ memberId: member._id })
     });
 
