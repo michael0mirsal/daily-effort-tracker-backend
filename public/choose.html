@@ -466,21 +466,22 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 <script>
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 // Test if cookies are sent to backend
-  fetch(`${API_BASE}/testcookie`, { credentials: "include" })
-    .then(r => r.json())
-    .then(data => {
-      console.log("Server received cookies:", data.cookies);
-      alert("Check console for cookie info");
-    })
-    .catch(err => console.error("Cookie test failed:", err));
+  fetch(`${API_BASE}/api/families/me`, {
+  credentials: "include"
+})
+.then(r => {
+  if (!r.ok) throw new Error("Not authenticated");
+  return r.json();
+})
+.catch(() => {
+  window.location.href = "signin.html";
+});
+
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
 
-if (!currentFamily.token || !currentFamily.familyId) {
-  alert("Not logged in. Please sign in again.");
-  window.location.href = "signin.html";
-}
+
 
 
 // 🔵 NEW — Set nursery name dynamically on button
