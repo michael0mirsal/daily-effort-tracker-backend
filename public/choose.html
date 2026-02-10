@@ -467,10 +467,6 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 // Test if cookies are sent to backend
 
-console.log("===== PAGE LOAD =====");
-console.log("document.cookie:", document.cookie);
-console.log("currentUser:", localStorage.getItem("currentUser"));
-console.log("currentFamily:", localStorage.getItem("currentFamily"));
 
 
 
@@ -490,19 +486,6 @@ console.log("currentFamily:", localStorage.getItem("currentFamily"));
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
-
-const dbg = document.createElement("pre");
-dbg.style.position = "fixed";
-dbg.style.bottom = "0";
-dbg.style.left = "0";
-dbg.style.background = "#000";
-dbg.style.color = "#0f0";
-dbg.style.padding = "8px";
-dbg.style.zIndex = "99999";
-dbg.textContent =
-  "USER:\n" + localStorage.getItem("currentUser") +
-  "\n\nFAMILY:\n" + localStorage.getItem("currentFamily");
-document.body.appendChild(dbg);
 
 
 
@@ -818,7 +801,6 @@ if (user.role === "dad" || user.role === "mom") {
   }
 
   try {
-    const token = localStorage.getItem("jwtToken");
     const res = await fetch(`${API_BASE}/api/families/by-id/${user.familyId}`, {
       credentials: "include"
       });
@@ -837,7 +819,6 @@ localStorage.setItem("currentFamilyMembers", JSON.stringify(data.members || []))
 localStorage.setItem("currentFamily", JSON.stringify({
   family: data.name || "Unknown",
   familyId: data._id || "",
-  token: localStorage.getItem("jwtToken") || ""  // ✅ save JWT token
 }));
 
 
