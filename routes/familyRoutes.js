@@ -156,7 +156,7 @@ const token = jwt.sign(
     httpOnly: true,       // JS cannot read it
     secure: true,         // HTTPS only
     sameSite: "None",     // required for mobile cross-site
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days//
   });
     // Return family info + user role + JWT
 
