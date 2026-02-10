@@ -466,6 +466,23 @@ button:hover{ transform:translateY(-4px) scale(1.05); }
 <script>
 const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
 // Test if cookies are sent to backend
+
+console.log("===== PAGE LOAD =====");
+console.log("document.cookie:", document.cookie);
+console.log("currentUser:", localStorage.getItem("currentUser"));
+console.log("currentFamily:", localStorage.getItem("currentFamily"));
+
+fetch(url, { credentials: "include" })
+  .then(r => {
+    console.log("FETCH:", url, "STATUS:", r.status);
+    if (r.status === 401) {
+      alert("🚨 BACKEND SAYS NOT AUTHENTICATED");
+      throw new Error("401");
+    }
+    return r.json();
+  });
+
+
   fetch(`${API_BASE}/api/families/me`, {
   credentials: "include"
 })
@@ -474,13 +491,27 @@ const API_BASE = "https://daily-effort-tracker-backend.onrender.com";
   return r.json();
 })
 .catch(() => {
-  window.location.href = "signin.html";
+  alert("🚨 REDIRECT triggered here");
+throw new Error("STOP — redirect");
+
 });
 
 const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
 
+const dbg = document.createElement("pre");
+dbg.style.position = "fixed";
+dbg.style.bottom = "0";
+dbg.style.left = "0";
+dbg.style.background = "#000";
+dbg.style.color = "#0f0";
+dbg.style.padding = "8px";
+dbg.style.zIndex = "99999";
+dbg.textContent =
+  "USER:\n" + localStorage.getItem("currentUser") +
+  "\n\nFAMILY:\n" + localStorage.getItem("currentFamily");
+document.body.appendChild(dbg);
 
 
 
