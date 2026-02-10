@@ -472,15 +472,7 @@ console.log("document.cookie:", document.cookie);
 console.log("currentUser:", localStorage.getItem("currentUser"));
 console.log("currentFamily:", localStorage.getItem("currentFamily"));
 
-fetch(url, { credentials: "include" })
-  .then(r => {
-    console.log("FETCH:", url, "STATUS:", r.status);
-    if (r.status === 401) {
-      alert("🚨 BACKEND SAYS NOT AUTHENTICATED");
-      throw new Error("401");
-    }
-    return r.json();
-  });
+
 
 
   fetch(`${API_BASE}/api/families/me`, {
@@ -490,9 +482,8 @@ fetch(url, { credentials: "include" })
   if (!r.ok) throw new Error("Not authenticated");
   return r.json();
 })
-.catch(() => {
-  alert("🚨 REDIRECT triggered here");
-throw new Error("STOP — redirect");
+.catch(err => {
+  console.warn("Auth-check failed (debug):", err.message);
 
 });
 
@@ -828,12 +819,10 @@ if (user.role === "dad" || user.role === "mom") {
 
   try {
     const token = localStorage.getItem("jwtToken");
-const res = await fetch(`${API_BASE}/api/families/by-id/${user.familyId}`, {
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + token   // ✅ send JWT
-  }
-});
+    const res = await fetch(`${API_BASE}/api/families/by-id/${user.familyId}`, {
+      credentials: "include"
+      });
+
 
 
     const data = await res.json();
