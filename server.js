@@ -7,6 +7,7 @@ import { Server } from "socket.io";
 // ✅ Imports & Setup
 // ======================================================
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import fs from "fs";
 import path from "path";
@@ -49,7 +50,7 @@ app.use(cookieParser());
 
 app.use(cors({
   origin: [
-    "https://daily-effort-tracker.onrender.com", // ✅ FRONTEND URL
+    "https://daily-effort-tracker-backend.onrender.com", // ✅ FRONTEND URL
     "http://localhost:5500",
     "http://127.0.0.1:5500"
   ],
