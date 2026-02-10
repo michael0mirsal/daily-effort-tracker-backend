@@ -143,6 +143,7 @@
     const res = await fetch(`${API_URL}/api/families/signin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include", // 🔥 REQUIRED
       body: JSON.stringify({ family, name, passkey })
     });
 
