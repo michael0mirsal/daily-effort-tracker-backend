@@ -228,6 +228,7 @@
       const res = await fetch(`${API_BASE}/api/families/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // 🔥 REQUIRED
         body: JSON.stringify({ family, name, role: userRoleInput, passkey })
       });
 
@@ -326,12 +327,7 @@
         return;
       }
        
-      // 🔥 ADDED: Save JWT token if backend returned it
-      // ------------------------
-      if (data.token) { // 🔥 ADDED
-        localStorage.setItem("jwtToken", data.token); // 🔥 ADDED
-        console.log("✅ JWT token saved"); // 🔥 ADDED
-      }
+      
 
       // ------------------------
       // Save only minimal, non-sensitive user info in localStorage.
@@ -374,14 +370,7 @@
     }
   }
     
-  // 🔥 ADDED: helper function for authenticated fetch
-  // -----------------------
-  function authFetch(url, options = {}) { // 🔥 ADDED
-    const token = localStorage.getItem("jwtToken"); // 🔥 ADDED
-    options.headers = options.headers || {}; // 🔥 ADDED
-    if (token) options.headers["Authorization"] = "Bearer " + token; // 🔥 ADDED
-    return fetch(url, options); // 🔥 ADDED
-  }
+  
   // -----------------------
   // Rotating motivational tips (kept from original)
   // -----------------------
