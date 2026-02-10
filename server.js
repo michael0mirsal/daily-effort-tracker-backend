@@ -7,6 +7,7 @@ import { Server } from "socket.io";
 // ✅ Imports & Setup
 // ======================================================
 import express from "express";
+import cookieParser from "cookie-parser";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
@@ -38,8 +39,23 @@ const PORT = process.env.PORT; // ✅ use the platform-assigned port
 // ======================================================
 // ✅ Middleware
 // ======================================================
-app.use(cors());
+// ======================================================
+// ✅ Middleware (ORDER MATTERS)
+// ======================================================
+
 app.use(express.json());
+
+app.use(cookieParser());
+
+app.use(cors({
+  origin: [
+    "https://daily-effort-tracker.onrender.com", // ✅ FRONTEND URL
+    "http://localhost:5500",
+    "http://127.0.0.1:5500"
+  ],
+  credentials: true
+}));
+
 // Serve welcome page
 app.get("/", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public", "welcome.html"));
