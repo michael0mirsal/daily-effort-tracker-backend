@@ -151,13 +151,19 @@ const token = jwt.sign(
   { expiresIn: "7d" }
 );
 
-
+// 🔑 4️⃣ Set HttpOnly cookie here
+  res.cookie("jwt", token, {
+    httpOnly: true,       // JS cannot read it
+    secure: true,         // HTTPS only
+    sameSite: "None",     // required for mobile cross-site
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
     // Return family info + user role + JWT
 
     // Return family + detected role for frontend
     res.json({
       message: "Login successful (family mode)",
-      token,  // ✅ Include the JWT here
+      
       family: {
         _id: found._id,
         name: found.name,
