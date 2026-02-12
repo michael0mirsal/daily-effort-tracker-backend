@@ -470,11 +470,7 @@ const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
 
-if ('serviceWorker' in navigator && 'PushManager' in window) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('✅ Service Worker registered:', reg))
-    .catch(err => console.error('❌ SW registration failed:', err));
-}
+
 
 async function subscribeUser() {
   const reg = await navigator.serviceWorker.ready;
@@ -1114,6 +1110,49 @@ if (user) {
 }
 
 
+</script>
+<script>
+async function initPush() {
+  if (!("serviceWorker" in navigator)) return;
+  if (!("PushManager" in window)) return;
+
+  const reg = await navigator.serviceWorker.register("/sw.js");
+  console.log("✅ SW registered");
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return;
+
+  // Get VAPID public key from server
+  const res = await fetch("/api/vapid-public-key");
+  const publicKey = await res.text();
+
+  const convertedKey = urlBase64ToUint8Array(publicKey);
+
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: convertedKey
+  });
+
+  await fetch("/api/save-subscription", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sub)
+  });
+
+  console.log("✅ Device subscribed");
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+initPush();
 </script>
 
 
