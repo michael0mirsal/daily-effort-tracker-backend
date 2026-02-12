@@ -9,6 +9,7 @@ import { Server } from "socket.io";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import webpush from "web-push";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -69,6 +70,79 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/families", familyRoutes);
 app.use("/api/mood", moodRoutes);
 app.get("/health", (req, res) => res.send("OK"));
+
+webpush.setVapidDetails(
+  "mailto:admin@daily-effort.com",
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+app.get("/api/vapid-public-key", (req, res) => {
+  res.send(process.env.VAPID_PUBLIC_KEY);
+});
+const PushSubscriptionSchema = new mongoose.Schema({
+  endpoint: String,
+  keys: {
+    p256dh: String,
+    auth: String,
+  },
+}, { timestamps: true });
+
+const PushSubscription = mongoose.model("PushSubscription", PushSubscriptionSchema);
+
+
+// ================= PUSH NOTIFICATION ROUTES =================
+
+// Save browser subscription to DB
+app.post("/api/save-subscription", async (req, res) => {
+  try {
+    const sub = req.body;
+
+    if (!sub || !sub.endpoint) {
+      return res.status(400).send({ success: false });
+    }
+
+    await PushSubscription.updateOne(
+      { endpoint: sub.endpoint },
+      sub,
+      { upsert: true }
+    );
+
+    console.log("✅ Push subscription saved");
+
+    res.send({ success: true });
+  } catch (err) {
+    console.error("❌ Error saving subscription:", err);
+    res.status(500).send({ success: false });
+  }
+});
+
+// Send notification to all saved devices
+app.post("/api/sendNotification", async (req, res) => {
+  try {
+    const subs = await PushSubscription.find();
+
+    const payload = JSON.stringify({
+      title: "Daily Effort Tracker",
+      message: "📢 New update available",
+      url: "/choose.html"
+    });
+
+    for (const sub of subs) {
+      try {
+        await webpush.sendNotification(sub.toObject(), payload);
+      } catch (err) {
+        await PushSubscription.deleteOne({ _id: sub._id });
+      }
+    }
+
+    console.log("✅ Notifications sent");
+    res.send({ success: true });
+
+  } catch (err) {
+    console.error("❌ Push error:", err);
+    res.status(500).send({ success: false });
+  }
+});
 
 // ✅ Connect MongoDB and start server
 // ======================================================
