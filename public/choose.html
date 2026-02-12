@@ -470,6 +470,12 @@ const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
 const currentFamily = JSON.parse(localStorage.getItem("currentFamily") || "{}");
 
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('✅ Service Worker registered:', reg))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
+
 
 
 // 🔵 NEW — Set nursery name dynamically on button
