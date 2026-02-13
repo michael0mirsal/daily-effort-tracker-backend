@@ -6,6 +6,7 @@ import Attendance from "../models/Attendance.js";
 import Notification from "../models/Notification.js";
 import AttendanceHistory from "../models/AttendanceHistory.js";
 import webpush from "web-push";
+import PushSubscription from "../models/PushSubscription.js";
 
 
 // ✅ UPDATE attendance (professional version)
@@ -77,7 +78,7 @@ export const updateAttendance = async (req, res) => {
 
         // ✅ Emit to the correct socket room (schoolMemberId)
         io.to(updatedAttendance.schoolMember.toString()).emit("notification", savedNotification);
-/*
+
         // ✅ Send web push to all saved subscriptions
     const payload = JSON.stringify({
       title: "Daily Effort Tracker",
@@ -92,7 +93,6 @@ export const updateAttendance = async (req, res) => {
       return PushSubscription.deleteOne({ _id: sub._id });
     })
   ));
-  */
       }
     }
 
