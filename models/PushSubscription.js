@@ -10,4 +10,5 @@ const PushSubscriptionSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-export default mongoose.model("PushSubscription", PushSubscriptionSchema);
+export default mongoose.models.PushSubscription || mongoose.model("PushSubscription", PushSubscriptionSchema);
+
