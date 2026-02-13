@@ -15,10 +15,26 @@ if ("serviceWorker" in navigator && "PushManager" in window) {
       const convertedKey = urlBase64ToUint8Array(publicKey);
 
       // Subscribe user
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedKey
-      });
+      
+      let sub = await reg.pushManager.getSubscription();
+
+if (!sub) {
+  sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: convertedKey
+  });
+
+  await fetch("/api/save-subscription", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sub)
+  });
+
+  console.log("✅ New device subscribed");
+} else {
+  console.log("✅ Already subscribed (no duplicate)");
+}
+
 
       // Send subscription to backend
       await fetch("/api/save-subscription", {
