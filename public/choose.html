@@ -489,7 +489,8 @@ async function subscribeUser() {
 
   console.log('✅ User subscribed to push notifications');
 }
-
+subscribeUser().catch(console.error);
+*/
 // Convert base64 VAPID to UInt8Array
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -501,8 +502,7 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
 }
 
-subscribeUser().catch(console.error);
-*/
+
 
 
 // 🔵 NEW — Set nursery name dynamically on button
