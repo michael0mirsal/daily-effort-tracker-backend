@@ -58,3 +58,33 @@ function urlBase64ToUint8Array(base64String) {
   const rawData = atob(base64);
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
+
+// ================= SOCKET CONNECTION =================
+const socket = io("https://daily-effort-tracker-backend.onrender.com");
+
+// get logged user
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+if (currentUser?._id) {
+  socket.emit("join", currentUser._id);   // join personal room
+  console.log("🟢 Joined socket room:", currentUser._id);
+}
+
+// ================= RECEIVE NOTIFICATION =================
+socket.on("notification", (data) => {
+  console.log("📩 Notification received:", data);
+
+  // Show browser notification
+  if (Notification.permission === "granted") {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.showNotification("📢 School Update", {
+          body: data.message,
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-192.png",
+          data: { url: "/routine.html" }
+        });
+      }
+    });
+  }
+});
