@@ -10,5 +10,4 @@ const PushSubscriptionSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// ✅ Prevent OverwriteModelError
-export default mongoose.models.PushSubscription || mongoose.model("PushSubscription", PushSubscriptionSchema);
+export default mongoose.model("PushSubscription", PushSubscriptionSchema);
