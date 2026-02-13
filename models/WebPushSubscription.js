@@ -12,3 +12,4 @@ const WebPushSubscriptionSchema = new mongoose.Schema({
 // ✅ Reuse existing model if it exists
 export default mongoose.models.WebPushSubscription || 
        mongoose.model("WebPushSubscription", WebPushSubscriptionSchema);
+       
