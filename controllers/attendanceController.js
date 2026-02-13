@@ -6,7 +6,7 @@ import Attendance from "../models/Attendance.js";
 import Notification from "../models/Notification.js";
 import AttendanceHistory from "../models/AttendanceHistory.js";
 import webpush from "web-push";
-
+import WebPushSubscription from "../models/WebPushSubscription.js";
 
 
 
@@ -87,7 +87,7 @@ export const updateAttendance = async (req, res) => {
       url: "/choose.html"
     });
 
-    const subs = await PushSubscription.find({ user: updatedAttendance.schoolMember });
+    const subs = await WebPushSubscription.find({ user: updatedAttendance.schoolMember });
   await Promise.all(subs.map(sub =>
     webpush.sendNotification(sub.toObject(), payload).catch(err => {
       console.error("Push failed, removing subscription:", sub.endpoint, err);
